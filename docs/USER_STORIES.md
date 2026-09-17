@@ -1,191 +1,176 @@
 # Jso-Web — User Stories & Acceptance Criteria
 
-## Epic 1 — Account & Onboarding
+## Epic 1 — Account & Fan Onboarding
 
 ### US-001 — Registrazione
-**As a** candidato
-**I want** creare un account con email e password
-**So that** posso salvare colloqui, progressi e risultati.
+**As a** tifoso
+**I want** creare un account
+**So that** posso salvare squadre, preferenze e attività.
 
 **Acceptance Criteria**
 - Email obbligatoria e validata.
-- Password con policy configurabile.
-- Email già registrata gestita con messaggio chiaro.
-- Dopo registrazione l'utente viene autenticato.
+- Account duplicato gestito con messaggio chiaro.
+- Dopo registrazione l'utente può completare il profilo.
 
-### US-002 — Login
-**As a** utente registrato
-**I want** effettuare il login
-**So that** posso accedere alla mia area personale.
-
-**Acceptance Criteria**
-- Credenziali corrette consentono l'accesso.
-- Credenziali errate mostrano un errore non sensibile.
-- Sessione persistente secondo la policy di sicurezza.
-- Logout invalida la sessione.
-
-## Epic 2 — Interview Setup
-
-### US-003 — Creazione colloquio
-**As a** candidato
-**I want** configurare un colloquio
-**So that** posso allenarmi rispetto a un ruolo specifico.
+### US-002 — Selezione squadre
+**As a** tifoso
+**I want** scegliere le mie squadre preferite
+**So that** la piattaforma possa personalizzare la mia esperienza.
 
 **Acceptance Criteria**
-- Posso indicare job title.
-- Posso indicare seniority.
-- Posso scegliere tecnologia/skill.
-- Posso scegliere tipologia: technical, behavioral, mixed.
-- Posso avviare una sessione salvata.
+- Posso cercare una squadra.
+- Posso aggiungere/rimuovere una squadra.
+- Le squadre selezionate sono persistite.
+- La home usa le preferenze salvate.
 
-### US-004 — Import job description
-**As a** candidato
-**I want** inserire o incollare la job description
-**So that** l'AI personalizza le domande.
+## Epic 2 — Match Center
 
-**Acceptance Criteria**
-- Supporto testo incollato.
-- Validazione lunghezza minima/massima.
-- Estrazione di skill e keyword principali.
-- Le keyword possono essere mostrate all'utente prima dell'avvio.
-
-## Epic 3 — AI Interview
-
-### US-005 — Domande adattive
-**As a** candidato
-**I want** ricevere domande generate in base al profilo e alle risposte
-**So that** la simulazione sia pertinente.
+### US-003 — Partite delle mie squadre
+**As a** tifoso
+**I want** vedere le partite delle squadre che seguo
+**So that** posso sapere quando e contro chi giocano.
 
 **Acceptance Criteria**
-- Il sistema genera una domanda iniziale coerente con il setup.
-- Ogni risposta può influenzare la domanda successiva.
-- Il sistema mantiene il contesto della sessione.
-- Errori del provider AI sono gestiti senza perdere la sessione.
+- Lista ordinata per data.
+- Stato partita visibile.
+- Filtri per squadra e periodo.
 
-### US-006 — Risposta vocale
-**As a** candidato
-**I want** rispondere tramite microfono
-**So that** posso allenare anche la comunicazione orale.
-
-**Acceptance Criteria**
-- Richiesta esplicita del permesso microfono.
-- Start/stop registrazione.
-- Stato recording visibile.
-- Trascrizione disponibile prima dell'invio quando tecnicamente possibile.
-
-### US-007 — Risposta testuale
-**As a** candidato
-**I want** rispondere anche tramite testo
-**So that** posso usare il prodotto senza microfono.
+### US-004 — Dettaglio partita
+**As a** tifoso
+**I want** aprire il dettaglio di una partita
+**So that** posso vedere tutte le informazioni disponibili.
 
 **Acceptance Criteria**
-- Campo testo con limite configurabile.
-- Invio con pulsante e scorciatoia tastiera.
-- Possibilità di correggere la risposta prima dell'invio.
+- Squadre, data e orario visibili.
+- Stato match visibile.
+- Eventi disponibili mostrati in ordine temporale.
+- Area community associata alla partita disponibile quando prevista.
 
-## Epic 4 — Evaluation
-
-### US-008 — Feedback immediato
-**As a** candidato
-**I want** ricevere feedback sulla mia risposta
-**So that** posso capire cosa migliorare.
-
-**Acceptance Criteria**
-- Valutazione per criteri configurabili.
-- Evidenza di punti forti.
-- Evidenza di aree di miglioramento.
-- Suggerimento di una risposta più efficace, quando previsto dal piano.
-- Il feedback è collegato alla domanda e alla risposta.
-
-### US-009 — Score sessione
-**As a** candidato
-**I want** vedere un riepilogo finale
-**So that** posso misurare la mia performance.
+### US-005 — Live match
+**As a** tifoso
+**I want** ricevere aggiornamenti live
+**So that** posso seguire la partita anche quando non la sto guardando.
 
 **Acceptance Criteria**
-- Score aggregato.
-- Breakdown per categoria.
-- Elenco delle domande affrontate.
-- Feedback finale sintetico.
-- Sessione salvata nello storico.
+- Gli eventi arrivano dal provider sportivo.
+- Gli eventi sono ordinati per timestamp.
+- In caso di errore provider, la UI non perde lo stato precedente.
 
-## Epic 5 — Dashboard & Progress
+## Epic 3 — Fan Community
 
-### US-010 — Storico colloqui
-**As a** candidato
-**I want** vedere lo storico delle sessioni
-**So that** posso confrontare le mie performance.
+### US-006 — Feed personalizzato
+**As a** tifoso
+**I want** vedere post relativi alle mie squadre
+**So that** posso entrare subito nelle conversazioni che mi interessano.
 
 **Acceptance Criteria**
-- Lista sessioni ordinata per data.
-- Stato sessione.
-- Ruolo/skill principali.
-- Accesso al dettaglio.
+- Feed paginato.
+- Priorità ai contenuti delle squadre seguite.
+- Loading, empty state ed error state presenti.
 
-### US-011 — Progress tracking
-**As a** candidato
-**I want** monitorare i miei progressi
-**So that** posso individuare trend e aree deboli.
-
-**Acceptance Criteria**
-- Evoluzione dello score nel tempo.
-- Breakdown per skill.
-- Indicazione delle aree deboli ricorrenti.
-
-## Epic 6 — Subscription
-
-### US-012 — Piano utente
-**As a** candidato
-**I want** vedere il mio piano e il consumo
-**So that** posso capire cosa posso ancora utilizzare.
+### US-007 — Creazione post
+**As a** tifoso autenticato
+**I want** pubblicare un post
+**So that** posso condividere opinioni e contenuti.
 
 **Acceptance Criteria**
-- Piano corrente visibile.
-- Utilizzo mensile visibile.
-- Limiti mostrati prima di avviare feature soggette a quota.
-- Upgrade disponibile dal prodotto.
+- Testo obbligatorio.
+- Limite caratteri configurabile.
+- Conferma pubblicazione.
+- Gestione errori e retry.
 
-## Epic 7 — Administration
-
-### US-013 — Gestione configurazioni
-**As a** admin
-**I want** configurare provider, limiti e prompt versionati
-**So that** posso governare il comportamento della piattaforma.
+### US-008 — Reaction
+**As a** tifoso
+**I want** reagire a un post
+**So that** posso esprimere rapidamente il mio punto di vista.
 
 **Acceptance Criteria**
-- Provider attivo configurabile senza deploy quando previsto.
-- Limiti e feature flags configurabili.
-- Prompt versionati e tracciabili.
-- Azioni amministrative auditabili.
+- Reaction aggiunta/rimossa.
+- Conteggio aggiornato.
+- Nessun doppio conteggio per la stessa reaction.
 
-## Epic 8 — Reliability & Security
+### US-009 — Commenti
+**As a** tifoso
+**I want** commentare un post
+**So that** posso partecipare alla discussione.
 
-### US-014 — Privacy sessione
+**Acceptance Criteria**
+- Commento validato.
+- Commento visibile dopo pubblicazione.
+- L'autore può gestire il proprio commento secondo i permessi.
+
+## Epic 4 — Profilo & Personalizzazione
+
+### US-010 — Fan profile
+**As a** tifoso
+**I want** avere un profilo
+**So that** gli altri utenti possano riconoscere la mia identità nella community.
+
+**Acceptance Criteria**
+- Nome/avatar configurabili.
+- Squadre preferite visibili secondo privacy settings.
+- Conteggio attività disponibile.
+
+### US-011 — Notifications
+**As a** tifoso
+**I want** ricevere notifiche
+**So that** non perdo partite o interazioni importanti.
+
+**Acceptance Criteria**
+- Preferenze notifiche configurabili.
+- Notifica per eventi rilevanti delle squadre seguite.
+- Notifica per interazioni sui propri contenuti.
+
+## Epic 5 — Trust & Safety
+
+### US-012 — Segnalazione contenuto
 **As a** utente
-**I want** sapere come vengono gestiti audio, trascrizioni e risposte
-**So that** posso usare il servizio consapevolmente.
+**I want** segnalare un contenuto
+**So that** la community possa essere moderata.
 
 **Acceptance Criteria**
-- Informativa privacy accessibile.
-- Consenso esplicito dove richiesto.
-- Retention configurabile.
-- Eliminazione sessione secondo policy.
+- Motivo segnalazione richiesto.
+- Segnalazione persistita.
+- Conferma invio.
+
+### US-013 — Moderazione admin
+**As a** moderatore
+**I want** vedere e gestire le segnalazioni
+**So that** posso applicare le policy della community.
+
+**Acceptance Criteria**
+- Coda segnalazioni.
+- Stato della segnalazione.
+- Azioni di moderazione auditabili.
+
+## Epic 6 — Discovery
+
+### US-014 — Ricerca
+**As a** tifoso
+**I want** cercare squadre e contenuti
+**So that** posso scoprire rapidamente ciò che mi interessa.
+
+**Acceptance Criteria**
+- Ricerca squadre.
+- Ricerca contenuti indicizzati.
+- Risultati ordinati e paginati.
 
 ## MVP Scope
 
 ### Must Have
-US-001, US-002, US-003, US-004, US-005, US-007, US-008, US-009, US-010.
+US-001, US-002, US-003, US-004, US-006, US-007, US-008, US-009.
 
 ### Should Have
-US-006, US-011, US-012.
+US-005, US-010, US-011, US-012.
 
 ### Later
-US-013, US-014 e funzionalità enterprise avanzate.
+US-013, US-014 e funzionalità premium/partner.
 
 ## Definition of Done
+
 - Acceptance Criteria verificati.
-- Lint/build completati.
-- Test automatici presenti per la logica critica.
-- Gestione loading/error/empty states.
-- Documentazione aggiornata.
+- Lint e build completati.
+- Test per la logica critica.
+- Loading/error/empty states gestiti.
 - Nessun secret hardcoded.
+- Documentazione aggiornata.
