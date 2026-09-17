@@ -1,127 +1,128 @@
 # Jso-Web — Technical Backlog
 
-## Phase 0 — Foundation
+## Phase 0 — Frontend Foundation
 
 ### FE-001 — Application shell
-- Create `src/app` structure.
-- Move global application composition out of `App.jsx`.
-- Define Header, Sidebar and page container primitives.
+- Feature-based source structure.
+- Header/navigation.
+- Responsive page container.
+- Shared UI primitives.
 
 ### FE-002 — Routing
-- Add client-side routing.
-- Routes: `/`, `/login`, `/register`, `/dashboard`, `/interview/new`, `/interview/:id`, `/history`, `/settings`.
-- Add protected route behavior for authenticated pages.
+- `/`
+- `/teams`
+- `/teams/:id`
+- `/matches`
+- `/matches/:id`
+- `/community`
+- `/profile/:id`
+- `/notifications`
+- Auth routes when enabled.
 
-### FE-003 — Shared UI
-- Buttons, inputs, textarea, modal, card, badge, progress indicator, spinner, toast.
-- Consistent accessibility states.
-
-### FE-004 — API client
+### FE-003 — API client
 - Central HTTP client.
-- Base URL from environment variables.
-- Request/response error normalization.
-- Authentication token handling according to backend contract.
+- Environment-based API URL.
+- Error normalization.
+- Authentication/session handling.
 
-### FE-005 — Query/state strategy
-- Introduce server-state management only where needed.
-- Keep transient UI state local.
-- Define session state model for interview flow.
+### FE-004 — Query and cache strategy
+- Server-state cache for matches/feed.
+- Pagination/infinite scroll.
+- Cache invalidation after social actions.
 
-## Phase 1 — Authentication
+## Phase 1 — Fan Identity
 
-### BE-001 — Identity API
-- Register.
-- Login.
-- Logout.
-- Refresh/session validation.
-- Password reset flow.
+### BE-001 — Account API
+- Register/login/logout.
+- User profile.
+- Followed teams.
+- Notification preferences.
 
-### FE-006 — Auth screens
-- Login.
-- Registration.
-- Forgot password.
-- Validation and error states.
+### FE-005 — Onboarding
+- Welcome flow.
+- Team search.
+- Favorite team selection.
+- Preferences.
 
-## Phase 2 — Interview Core
+### FE-006 — Fan profile
+- Profile header.
+- Favorite teams.
+- Recent activity.
+- Privacy settings.
 
-### BE-002 — Interview aggregate
-- Interview session.
-- Questions.
-- Candidate answers.
-- Evaluation records.
-- Session lifecycle: draft, active, completed, abandoned.
+## Phase 2 — Teams & Match Center
 
-### BE-003 — AI orchestration
+### BE-002 — Sports data boundary
 - Provider abstraction.
-- Prompt templates/versioning.
-- Context management.
-- Retry/fallback strategy.
-- Usage metering.
+- Team synchronization.
+- Competition synchronization.
+- Fixture synchronization.
+- Match state/events.
+- Provider error/fallback handling.
 
-### FE-007 — Interview setup
-- Job title.
-- Seniority.
-- Technologies/skills.
-- Interview type.
-- Job description.
+### FE-007 — Teams
+- Search.
+- Team detail.
+- Follow/unfollow.
+- Upcoming matches.
 
-### FE-008 — Interview room
-- Current question.
-- Text answer.
-- Optional voice answer.
-- Timer/session status.
-- Submit/retry/error states.
-
-### FE-009 — Evaluation view
-- Per-answer feedback.
-- Category scores.
-- Strengths.
-- Improvements.
-- Suggested answer where enabled.
-
-## Phase 3 — Dashboard
-
-### BE-004 — History API
-- Paginated interview history.
-- Interview detail.
-- Aggregated scores.
-
-### FE-010 — Dashboard
-- Recent interviews.
-- Usage summary.
-- Progress metrics.
-- Weak skill areas.
-
-### FE-011 — History
+### FE-008 — Match Center
+- Match list.
 - Filters.
-- Sorting.
-- Detail view.
+- Match detail.
+- Timeline/events.
+- Live state.
 
-## Phase 4 — Subscription
+## Phase 3 — Community
 
-### BE-005 — Billing boundary
-- Plans.
-- Entitlements.
-- Usage counters.
-- Payment provider integration boundary.
+### BE-003 — Social domain
+- Posts.
+- Comments.
+- Reactions.
+- Feed ranking/basic ordering.
+- Pagination.
 
-### FE-012 — Pricing/subscription
-- Current plan.
-- Usage.
-- Upgrade CTA.
-- Plan comparison.
+### FE-009 — Fan feed
+- Personalized feed.
+- Create post.
+- Post detail.
+- Comments.
+- Reactions.
+
+### BE-004 — Trust & Safety
+- Reports.
+- Block/mute.
+- Moderation state.
+- Audit trail.
+- Rate limiting / anti-spam controls.
+
+## Phase 4 — Notifications
+
+### BE-005 — Notification service
+- Match reminders.
+- Match start notifications.
+- Social interactions.
+- Read/unread state.
+
+### FE-010 — Notification center
+- List.
+- Mark as read.
+- Preferences.
 
 ## Phase 5 — Quality & Operations
 
-### QA-001 — Frontend tests
-- Unit tests for utilities/services.
-- Component tests for critical flows.
+### QA-001 — Unit/component tests
+- Shared utilities.
+- Match components.
+- Feed components.
+- Critical interactions.
 
-### QA-002 — End-to-end tests
-- Registration/login.
-- Interview setup.
-- Interview completion.
-- History retrieval.
+### QA-002 — E2E tests
+- Onboarding.
+- Team follow.
+- Match detail.
+- Create post.
+- Reaction/comment.
 
 ### DEVOPS-001 — CI
 - `npm ci`.
@@ -129,35 +130,44 @@
 - build.
 - test.
 
-### DEVOPS-002 — Environment configuration
+### DEVOPS-002 — Environment management
 - `.env.example`.
-- Development/staging/production conventions.
-- Secret management outside source control.
+- Dev/staging/prod configuration.
+- Secrets outside source control.
 
-## Architecture target
+## Target Architecture
 
 ```text
-React/Vite
-  -> Pages / Features
-  -> Shared UI
-  -> API Client
-  -> ASP.NET Core .NET 10 API
-  -> Application Services
-  -> Domain
-  -> Infrastructure
-      -> SQL Server
-      -> AI Providers
-      -> Payment Provider
+React + Vite
+   ├── Pages
+   ├── Features
+   ├── Shared UI
+   ├── Services / API client
+   └── State / Cache
+           ↓
+ASP.NET Core .NET 10 API
+   ├── Application
+   ├── Domain
+   └── Infrastructure
+           ↓
+SQL Server
+   ├── Users / Profiles
+   ├── Teams / Competitions
+   ├── Matches / Events
+   └── Posts / Comments / Reactions
+           ↓
+External Sports Data Provider
 ```
 
-## Immediate implementation order
-1. FE-001 Application shell.
-2. FE-002 Routing.
-3. FE-003 Shared UI.
-4. FE-004 API client.
-5. FE-006 Authentication screens.
-6. BE-001 Identity API.
-7. BE-002 Interview aggregate.
-8. BE-003 AI orchestration.
-9. FE-007 Interview setup.
-10. FE-008 Interview room.
+## Immediate Implementation Order
+
+1. Application shell and responsive layout.
+2. Team discovery and selection.
+3. Match Center UI.
+4. Fan Feed UI.
+5. .NET 10 API contract.
+6. SQL Server domain schema.
+7. Sports provider adapter.
+8. Authentication.
+9. Social write operations.
+10. Notifications and moderation.
