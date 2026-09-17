@@ -1,0 +1,87 @@
+<svg width="1600" height="620" viewBox="0 0 1600 620" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="620" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0A0D14"/>
+      <stop offset="1" stop-color="#1A2230"/>
+    </linearGradient>
+    <linearGradient id="pitch" x1="0" y1="1" x2="1" y2="0">
+      <stop stop-color="#18382C"/>
+      <stop offset="1" stop-color="#2A6A4D"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="blur" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="32"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="620" rx="32" fill="url(#bg)"/>
+  <ellipse cx="1175" cy="175" rx="310" ry="170" fill="#6FA7FF" fill-opacity="0.16" filter="url(#blur)"/>
+  <ellipse cx="390" cy="460" rx="270" ry="150" fill="#59D89B" fill-opacity="0.10" filter="url(#blur)"/>
+
+  <g opacity="0.24" fill="#FFFFFF">
+    <circle cx="75" cy="470" r="22"/><circle cx="135" cy="456" r="25"/><circle cx="200" cy="472" r="21"/>
+    <circle cx="280" cy="448" r="26"/><circle cx="345" cy="468" r="20"/><circle cx="410" cy="452" r="24"/>
+    <circle cx="485" cy="470" r="22"/><circle cx="560" cy="448" r="25"/><circle cx="640" cy="470" r="21"/>
+    <circle cx="730" cy="454" r="25"/><circle cx="815" cy="470" r="22"/><circle cx="900" cy="450" r="24"/>
+    <circle cx="990" cy="468" r="21"/><circle cx="1070" cy="450" r="25"/><circle cx="1150" cy="470" r="22"/>
+    <circle cx="1230" cy="448" r="25"/><circle cx="1310" cy="470" r="21"/><circle cx="1385" cy="456" r="25"/><circle cx="1460" cy="470" r="22"/>
+    <circle cx="1530" cy="452" r="24"/>
+  </g>
+
+  <g transform="translate(850 110)">
+    <rect x="0" y="0" width="620" height="390" rx="28" fill="#111722" stroke="#FFFFFF" stroke-opacity="0.12"/>
+    <rect x="22" y="22" width="576" height="58" rx="17" fill="#1B2230"/>
+    <circle cx="52" cy="51" r="10" fill="#66D6A4"/>
+    <rect x="72" y="42" width="130" height="11" rx="5.5" fill="#E9EDF5" fill-opacity="0.86"/>
+    <rect x="425" y="39" width="145" height="20" rx="10" fill="#FFFFFF" fill-opacity="0.08"/>
+
+    <rect x="22" y="98" width="350" height="205" rx="22" fill="url(#pitch)"/>
+    <path d="M47 122H347V280H47V122Z" stroke="#FFFFFF" stroke-opacity="0.42" stroke-width="2"/>
+    <path d="M197 122V280" stroke="#FFFFFF" stroke-opacity="0.42" stroke-width="2"/>
+    <circle cx="197" cy="201" r="28" stroke="#FFFFFF" stroke-opacity="0.42" stroke-width="2"/>
+    <rect x="47" y="165" width="58" height="72" stroke="#FFFFFF" stroke-opacity="0.42" stroke-width="2"/>
+    <rect x="289" y="165" width="58" height="72" stroke="#FFFFFF" stroke-opacity="0.42" stroke-width="2"/>
+
+    <circle cx="135" cy="190" r="13" fill="#F4F6F8"/>
+    <circle cx="256" cy="214" r="13" fill="#6EA6FF"/>
+    <circle cx="212" cy="181" r="7" fill="#F0C674"/>
+
+    <rect x="391" y="98" width="207" height="98" rx="20" fill="#1A2230"/>
+    <text x="411" y="126" fill="#8D98A9" font-family="Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="2">NEXT MATCH</text>
+    <text x="411" y="156" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="19" font-weight="700">HOME</text>
+    <text x="560" y="156" text-anchor="end" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="19" font-weight="700">AWAY</text>
+    <text x="505" y="183" text-anchor="middle" fill="#66D6A4" font-family="Arial, sans-serif" font-size="12" font-weight="700">SAT · 20:45</text>
+
+    <rect x="391" y="209" width="207" height="94" rx="20" fill="#1A2230"/>
+    <text x="411" y="239" fill="#8D98A9" font-family="Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="2">FAN FEED</text>
+    <circle cx="423" cy="266" r="13" fill="#6EA6FF" fill-opacity="0.9"/>
+    <rect x="447" y="257" width="125" height="8" rx="4" fill="#E9EDF5" fill-opacity="0.80"/>
+    <rect x="447" y="272" width="93" height="7" rx="3.5" fill="#8D98A9" fill-opacity="0.52"/>
+    <rect x="447" y="286" width="112" height="7" rx="3.5" fill="#8D98A9" fill-opacity="0.34"/>
+
+    <rect x="22" y="322" width="576" height="46" rx="16" fill="url(#glow)"/>
+    <text x="42" y="351" fill="#FFFFFF" fill-opacity="0.86" font-family="Arial, sans-serif" font-size="12" font-weight="700">MATCH CENTER</text>
+    <text x="575" y="351" text-anchor="end" fill="#AAB4C4" font-family="Arial, sans-serif" font-size="12">Live updates · Community · Alerts</text>
+  </g>
+
+  <g transform="translate(90 138)">
+    <text x="0" y="0" fill="#71D8B2" font-family="Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="3">Jso FAN PLATFORM</text>
+    <text x="0" y="78" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="56" font-weight="800">Your club.</text>
+    <text x="0" y="140" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="56" font-weight="800">Your matches.</text>
+    <text x="0" y="202" fill="#AEB8C8" font-family="Arial, sans-serif" font-size="24">One home for the fan community.</text>
+
+    <rect x="0" y="254" width="174" height="46" rx="23" fill="#FFFFFF" fill-opacity="0.08" stroke="#FFFFFF" stroke-opacity="0.12"/>
+    <circle cx="24" cy="277" r="7" fill="#71D8B2"/>
+    <text x="42" y="282" fill="#EDF2F8" font-family="Arial, sans-serif" font-size="14" font-weight="700">My teams</text>
+
+    <rect x="186" y="254" width="174" height="46" rx="23" fill="#FFFFFF" fill-opacity="0.08" stroke="#FFFFFF" stroke-opacity="0.12"/>
+    <circle cx="210" cy="277" r="7" fill="#6EA6FF"/>
+    <text x="228" y="282" fill="#EDF2F8" font-family="Arial, sans-serif" font-size="14" font-weight="700">Match center</text>
+
+    <rect x="0" y="320" width="360" height="1" fill="#FFFFFF" fill-opacity="0.12"/>
+    <text x="0" y="356" fill="#8D98A9" font-family="Arial, sans-serif" font-size="13">Follow · Discuss · React · Share</text>
+  </g>
+</svg>
