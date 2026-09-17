@@ -1,172 +1,185 @@
 import { useState } from 'react'
 import './App.css'
 
-const matches = [
-  { label: 'PROSSIMA PARTITA', competition: 'Lega Regionale', date: 'Sab 10 Mag', time: '16:00', opponent: 'USM El Harrach', live: true },
-  { label: 'IN ARRIVO', competition: 'Lega Regionale', date: 'Sab 17 Mag', time: '16:00', opponent: 'RC Arba' },
-  { label: 'COPPA', competition: 'Coppa', date: 'Sab 24 Mag', time: '18:00', opponent: 'JS Saoura' },
+const primaryNav = [
+  ['Home', 'home'],
+  ['Club', 'club'],
+  ['Équipe', 'team'],
+  ['Match Center', 'matches'],
+  ['Actualités', 'news'],
+  ['Media', 'media'],
 ]
 
-const features = [
-  ['▶', 'Partite in diretta', 'Guarda e commenta insieme'],
-  ['◉', 'Community attiva', 'Tifosi, chat e contenuti'],
-  ['🛍', 'Fan Shop', 'Prodotti ufficiali e merchandising'],
-  ['♛', 'News e aggiornamenti', 'Tutte le novità sulla squadra'],
+const news = [
+  { category: 'CLUB', title: 'JSO prépare la nouvelle saison', meta: 'Actualité du club', accent: 'blue' },
+  { category: 'MATCH', title: 'Le prochain rendez-vous approche', meta: 'Match Center', accent: 'gold' },
+  { category: 'ACADEMY', title: 'Les talents d’Oudhref en lumière', meta: 'Formation', accent: 'cyan' },
 ]
 
-const products = [
-  ['/jersey.svg', 'Maglia ufficiale 2024/2025', '€ 49,90', '124'],
-  ['/scarf.svg', 'Sciarpa Chabiba Bouderf', '€ 19,90', '89'],
-  ['/cap.svg', 'Cappellino ufficiale', '€ 24,90', '67'],
-  ['/hoodie.svg', 'Felpa con cappuccio', '€ 44,90', '52'],
+const squad = [
+  ['01', 'GK', 'Portier'],
+  ['04', 'CB', 'Défenseur'],
+  ['08', 'CM', 'Milieu'],
+  ['10', 'FW', 'Attaquant'],
 ]
 
-const community = [
-  ['Yassine_10', '2 ore fa', 'Sempre con voi 💛💙', '312', '24'],
-  ['ChabibaFans', '5 ore fa', 'Atmosfera incredibile al Bouderf! 💙💛', '428', '36'],
-  ['IlhamCRB', '1 giorno fa', 'La passione non si spegne mai!', '517', '41'],
-  ['Bouderf1937', '2 giorni fa', 'Storia, orgoglio e futuro 💛💙', '289', '18'],
+const clubPillars = [
+  ['01', 'MATCHDAY', 'Suivre chaque rendez-vous du club avec un centre de match pensé pour le direct.'],
+  ['02', 'MEDIA HOUSE', 'Photos, vidéos, interviews et archives dans une expérience éditoriale premium.'],
+  ['03', 'COMMUNITY', 'Créer une vraie place digitale pour les supporters autour de JSO.'],
+  ['04', 'CLUB SHOP', 'Maillots, accessoires et produits du club dans une boutique intégrée.'],
 ]
 
 function App() {
-  const [premiumOpen, setPremiumOpen] = useState(false)
-  const [postOpen, setPostOpen] = useState(false)
+  const [activeNav, setActiveNav] = useState('Home')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [showVideo, setShowVideo] = useState(false)
+  const [lang, setLang] = useState('FR')
+
+  const navigate = (label, anchor) => {
+    setActiveNav(label)
+    setMenuOpen(false)
+    document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   return (
-    <main className="fan-app">
-      <header className="site-header">
-        <a className="brand" href="#top">
-          <span className="brand-mark">FM</span>
-          <span>Fan<span>Match</span></span>
-        </a>
-        <nav className="site-nav">
-          <a href="#top" className="active">Home</a>
-          <a href="#matches">Partite</a>
-          <a href="#shop">Fan Shop</a>
-          <a href="#community">Community</a>
-          <a href="#premium">Premium</a>
+    <main className="jso-site">
+      <div className="background-noise" />
+      <div className="orb orb-a" />
+      <div className="orb orb-b" />
+
+      <header className="navbar">
+        <button className="brand" type="button" onClick={() => navigate('Home', 'home')} aria-label="JSO home">
+          <span className="brand-mark"><img src="/jso-club-mark.svg" alt="JSO" /></span>
+          <span className="brand-text"><strong>JSO</strong><small>Jeunesse Sportive d'Oudhref</small></span>
+        </button>
+
+        <nav className={`nav-links ${menuOpen ? 'open' : ''}`} aria-label="Navigation principale">
+          {primaryNav.map(([label, anchor]) => (
+            <button key={label} type="button" className={activeNav === label ? 'active' : ''} onClick={() => navigate(label, anchor)}>{label}</button>
+          ))}
         </nav>
-        <div className="header-actions">
-          <button className="round-btn" type="button" aria-label="Cerca">⌕</button>
-          <button className="round-btn" type="button" aria-label="Notifiche">♧</button>
-          <button className="login-btn" type="button">Accedi</button>
+
+        <div className="nav-actions">
+          <button className="language-switch" type="button" onClick={() => setLang(lang === 'FR' ? 'AR' : 'FR')} aria-label="Changer la langue">{lang} <span>⌄</span></button>
+          <button className="icon-glass" type="button" aria-label="Recherche">⌕</button>
+          <button className="nav-cta" type="button" onClick={() => navigate('Match Center', 'matches')}>Match Center <span>↗</span></button>
+          <button className="menu-toggle" type="button" onClick={() => setMenuOpen((open) => !open)} aria-label="Menu">☰</button>
         </div>
       </header>
 
-      <section className="hero" id="top">
+      <section className="hero" id="home">
         <div className="hero-copy">
-          <span className="eyebrow">LA COMMUNITY UFFICIALE DEI TIFOSI</span>
-          <h1>Il tuo club.<br /><span>La tua passione.</span></h1>
-          <p>Segui le partite, vivi l’emozione, condividi la passione con migliaia di tifosi e porta sempre con te i colori della tua squadra.</p>
+          <div className="hero-badges"><span className="eyebrow">JEUNESSE SPORTIVE D'OUDHREF</span><span className="season-badge">SAISON 2026/27</span></div>
+          <h1>Le club.<br /><span>En grand.</span></h1>
+          <p>Une nouvelle expérience digitale pour JSO : identité, matchday, équipe, actualités, médias et communauté dans une seule plateforme.</p>
           <div className="hero-actions">
-            <a className="yellow-btn" href="#matches">▶ &nbsp; Scopri FanMatch</a>
-            <button className="outline-btn" type="button" onClick={() => setPostOpen(true)}>Unisciti alla community</button>
+            <button className="btn-primary" type="button" onClick={() => navigate('Match Center', 'matches')}>Explorer le Match Center <span>→</span></button>
+            <button className="btn-glass" type="button" onClick={() => setShowVideo(true)}><span className="play">▶</span> Découvrir JSO</button>
           </div>
-          <div className="hero-note"><span /> 15.2K tifosi già nella community</div>
+          <div className="hero-meta"><span className="live-dot" /> <strong>Club digital nouvelle génération</strong><span>·</span><span>Oudhref / Tunisie</span></div>
         </div>
-        <div className="hero-art">
-          <img src="/team-hero.svg" alt="FanMatch stadium and supporters" />
-          <div className="arabic-tag">مع بعضنا<br /><b>نكملو المسيرة…</b></div>
-        </div>
-      </section>
 
-      <section className="section" id="matches">
-        <div className="section-heading">
-          <div><span className="eyebrow">VIVI OGNI MATCH INSIEME</span><h2>Prossime partite</h2><p>Entra nella stanza, commenta il match e resta vicino alla squadra.</p></div>
-          <a className="section-link" href="#matches">Vedi calendario →</a>
-        </div>
-        <div className="matches-grid">
-          {matches.map((match) => (
-            <article key={match.opponent} className={`match-card ${match.live ? 'match-featured' : ''}`}>
-              <div className="match-card-top"><span>{match.label}</span><b>{match.competition}</b></div>
-              <div className="match-row">
-                <div className="club"><div className="club-crest">JM</div><strong>Chabiba<br />Riadia Bouderf</strong></div>
-                <div className="match-date"><strong>{match.date}</strong><b>{match.time}</b></div>
-                <div className="club opponent"><div className="club-crest opponent-crest">VS</div><strong>{match.opponent}</strong></div>
-              </div>
-              <button className={match.live ? 'match-cta yellow-btn' : 'match-cta dark-btn'} type="button" onClick={() => match.live && setPremiumOpen(true)}>
-                {match.live ? '▶  Entra nella stanza' : '♧  Imposta promemoria'}
-              </button>
-              {match.live && <span className="ready-users">● 1.2K tifosi pronti</span>}
-            </article>
-          ))}
-          <article className="premium-card" id="premium">
-            <div>
-              <span className="eyebrow">FANMATCH PREMIUM</span>
-              <h3>Diventa Premium</h3>
-              <p>Accedi alle dirette, chat esclusive, contenuti speciali e supporta la nostra squadra.</p>
-              <button className="blue-btn" type="button" onClick={() => setPremiumOpen(true)}>Scopri i piani →</button>
+        <div className="hero-visual">
+          <div className="hero-grid-lines" />
+          <div className="hero-circle circle-one" />
+          <div className="hero-circle circle-two" />
+          <div className="hero-card">
+            <div className="hero-card-head"><span>JSO / MATCHDAY</span><b>NEXT</b></div>
+            <div className="hero-card-center">
+              <div className="hero-side"><img src="/jso-club-mark.svg" alt="JSO" /><strong>JSO</strong><small>OUDHREF</small></div>
+              <div className="hero-vs"><span>À VENIR</span><strong>VS</strong><small>Date à confirmer</small></div>
+              <div className="hero-side"><div className="opponent-mark">TBA</div><strong>ADVERSAIRE</strong><small>À confirmer</small></div>
             </div>
-            <img src="/jersey.svg" alt="FanMatch official jersey" />
+            <div className="hero-card-bottom"><span>Live score</span><span>Line-up</span><span>Stats</span><span>Chat</span></div>
+          </div>
+          <div className="hero-floating floating-top glass-card"><span>01</span><div><small>CLUB IDENTITY</small><strong>Born in Oudhref.</strong></div></div>
+          <div className="hero-floating floating-bottom glass-card"><small>DIGITAL HUB</small><strong>JSO / 24·7</strong><div className="signal-bars"><i /><i /><i /><i /><i /><i /></div></div>
+        </div>
+      </section>
+
+      <section className="marquee"><div className="marquee-track"><span>JSO / MATCHDAY</span><b>✦</b><span>JSO / NEWS</span><b>✦</b><span>JSO / MEDIA</span><b>✦</b><span>JSO / COMMUNITY</span><b>✦</b><span>JSO / CLUB SHOP</span><b>✦</b><span>JSO / MATCHDAY</span><b>✦</b></div></section>
+
+      <section className="section-frame" id="club">
+        <div className="section-top"><div><span className="section-number">01 / CLUB</span><h2>Une identité forte.<br /><span>Une expérience moderne.</span></h2></div><p>Le nouveau visage numérique de JSO est pensé comme un club média : contenu, données, matchday et communauté.</p></div>
+        <div className="pillar-grid">
+          {clubPillars.map(([num, title, text]) => <article className="pillar-card" key={num}><span>{num}</span><small>{title}</small><p>{text}</p><strong>↗</strong></article>)}
+        </div>
+      </section>
+
+      <section className="section-frame" id="matches">
+        <div className="section-top"><div><span className="section-number">02 / MATCH CENTER</span><h2>Tout commence<br /><span>par le match.</span></h2></div><button className="text-link" type="button" onClick={() => setShowVideo(true)}>Ouvrir l’expérience match ↗</button></div>
+        <div className="match-layout">
+          <article className="featured-match glass-card">
+            <div className="match-kicker"><span>PROCHAIN MATCH</span><b>À VENIR</b></div>
+            <div className="match-versus">
+              <div className="team-large"><img src="/jso-club-mark.svg" alt="JSO" /><strong>JSO</strong><small>Jeunesse Sportive d'Oudhref</small></div>
+              <div className="match-time"><span>DATE / HORAIRE</span><strong>-- : --</strong><small>Calendrier à synchroniser</small><i>VS</i></div>
+              <div className="team-large"><div className="tba-large">TBA</div><strong>ADVERSAIRE</strong><small>À confirmer</small></div>
+            </div>
+            <div className="match-data-row"><span>Composition</span><span>Événements</span><span>Statistiques</span><span>Commentaires</span><button type="button" onClick={() => setShowVideo(true)}>Entrer dans le match →</button></div>
           </article>
+          <aside className="side-match-card">
+            <span className="section-number">DERNIER SCORE</span>
+            <div className="side-score"><strong>JSO</strong><span>—</span><strong>TBA</strong></div>
+            <p>Les résultats seront alimentés automatiquement depuis la future source de données du club.</p>
+            <div className="stat-mini"><span>Score</span><b>--</b></div><div className="stat-mini"><span>Classement</span><b>--</b></div><div className="stat-mini"><span>Forme</span><b>— — —</b></div>
+          </aside>
         </div>
       </section>
 
-      <section className="feature-grid">
-        {features.map(([icon, title, text]) => (
-          <article key={title} className="feature-tile">
-            <div className="feature-icon">{icon}</div><div><strong>{title}</strong><span>{text}</span></div>
+      <section className="section-frame" id="news">
+        <div className="section-top"><div><span className="section-number">03 / NEWSROOM</span><h2>Le club<br /><span>en mouvement.</span></h2></div><button className="text-link" type="button">Toutes les actualités →</button></div>
+        <div className="news-layout">
+          <article className="news-hero-card">
+            <div className="editorial-art"><span>JSO</span><strong>IDENTITY</strong><small>OUDHREF / 2026</small><div className="editorial-ring" /></div>
+            <div className="news-hero-copy"><span>À LA UNE</span><h3>Le nouveau chapitre digital de Jeunesse Sportive d'Oudhref.</h3><p>Une plateforme conçue pour moderniser la relation entre le club, les joueurs, les supporters et la ville.</p><button type="button">Lire l’article ↗</button></div>
           </article>
-        ))}
-      </section>
-
-      <section className="section" id="shop">
-        <div className="section-heading">
-          <div><span className="eyebrow">PORTA SEMPRE CON TE I NOSTRI COLORI</span><h2>Fan Shop</h2><p>Prodotti ufficiali per vivere la tua squadra anche fuori dallo stadio.</p></div>
-          <a className="section-link" href="#shop">Vedi tutti i prodotti →</a>
-        </div>
-        <div className="product-grid">
-          {products.map(([image, title, price, reviews]) => (
-            <article key={title} className="product-card">
-              <div className="product-image"><img src={image} alt={title} /></div>
-              <div className="rating">★ ★ ★ ★ ★ <span>({reviews})</span></div>
-              <h3>{title}</h3>
-              <div className="product-bottom"><strong>{price}</strong><button type="button" aria-label={`Aggiungi ${title}`}>＋</button></div>
-            </article>
-          ))}
+          <div className="news-stack">
+            {news.map((item) => <article className="news-item" key={item.title}><div className={`news-thumb ${item.accent}`}><span>{item.category}</span></div><div><small>{item.meta}</small><h3>{item.title}</h3><button type="button">Lire ↗</button></div></article>)}
+          </div>
         </div>
       </section>
 
-      <section className="section" id="community">
-        <div className="section-heading">
-          <div><span className="eyebrow">FOTO, VIDEO E MOMENTI DEI NOSTRI TIFOSI</span><h2>Dalla nostra community</h2><p>Condividi l’emozione, commenta le partite e vivi la passione con gli altri fan.</p></div>
-          <button className="section-link button-link" type="button" onClick={() => setPostOpen(true)}>Vedi tutti i post →</button>
-        </div>
-        <div className="community-grid">
-          {community.map(([author, time, caption, likes, comments], index) => (
-            <article key={author} className="community-card">
-              <img src="/team-hero.svg" alt="Community post" style={{ objectPosition: `${25 + index * 20}% center` }} />
-              <div className="community-body"><div className="post-meta"><strong>{author}</strong><span>{time}</span></div><p>{caption}</p><div className="post-actions"><span>♥ {likes}</span><span>◌ {comments}</span><span>↗</span></div></div>
-            </article>
-          ))}
+      <section className="section-frame" id="team">
+        <div className="section-top"><div><span className="section-number">04 / ÉQUIPE</span><h2>Les couleurs.<br /><span>La nouvelle génération.</span></h2></div><button className="text-link" type="button">Voir l’effectif →</button></div>
+        <div className="squad-grid">
+          {squad.map(([number, position, role], index) => <article className={`player-card player-${index + 1}`} key={number}><div className="player-top"><span>{position}</span><b>{number}</b></div><div className="player-silhouette">JSO</div><div className="player-footer"><small>{role}</small><strong>Profil joueur</strong><span>↗</span></div></article>)}
         </div>
       </section>
 
-      <section className="stats-band">
-        <div><strong>15.2K</strong><span>Tifosi registrati</span></div>
-        <div><strong>8.1K</strong><span>Utenti attivi</span></div>
-        <div><strong>120+</strong><span>Partite trasmesse</span></div>
-        <div><strong>1</strong><span>Grande passione</span></div>
-        <div className="stats-arabic">شبيبتنا<br /><span>فخر المنطقة</span></div>
+      <section className="media-section section-frame" id="media">
+        <div className="media-header"><div><span className="section-number">05 / MEDIA HOUSE</span><h2>Voir le club.<br /><span>Ressentir le club.</span></h2></div><button className="text-link" type="button" onClick={() => setShowVideo(true)}>Ouvrir Media House →</button></div>
+        <div className="media-layout">
+          <button className="media-feature" type="button" onClick={() => setShowVideo(true)}><div className="media-art"><span>JSO</span><strong>MATCHDAY</strong><small>HIGHLIGHTS / 00:42</small></div><span className="media-play">▶</span><div className="media-label"><small>VIDEO / 01</small><strong>Les moments qui restent.</strong></div></button>
+          <div className="media-list"><article><div>PRESS</div><span><small>INTERVIEW</small><strong>Dans le vestiaire JSO</strong></span><b>↗</b></article><article><div>YOUTH</div><span><small>ACADEMY</small><strong>La relève d'Oudhref</strong></span><b>↗</b></article><article><div>ROOTS</div><span><small>ARCHIVES</small><strong>Une histoire à raconter</strong></span><b>↗</b></article></div>
+        </div>
       </section>
 
-      <footer className="site-footer">
-        <div className="footer-brand"><span className="brand-mark">FM</span><div><strong>FanMatch</strong><span>La community dei tifosi</span></div></div>
-        <div className="footer-links"><a href="#top">Chi siamo</a><a href="#top">Contatti</a><a href="#top">Privacy</a><a href="#top">Termini</a><a href="#top">FAQ</a></div>
-        <div className="footer-social">● ● ● ● ●<span>© 2026 FanMatch · Tutti i diritti riservati.</span></div>
+      <section className="community-band section-frame" id="community">
+        <div className="community-glass">
+          <div className="community-copy"><span className="section-number">06 / COMMUNITY</span><h2>La tribune<br /><span>ne s'arrête jamais.</span></h2><p>Posts, réactions, commentaires, rendez-vous de match et contenu supporter : une couche sociale pensée directement dans le site du club.</p><button className="btn-primary" type="button">Rejoindre la communauté <span>→</span></button></div>
+          <div className="community-stack"><article><span>J</span><div><strong>@jso_support</strong><p>Le prochain match, on le vit ensemble. 💙</p><small>il y a 3 min · 124 réactions</small></div></article><article><span>O</span><div><strong>@oudhref_fans</strong><p>Une équipe, une ville, une seule identité.</p><small>il y a 16 min · 87 réactions</small></div></article><article><span>JS</span><div><strong>@jso_media</strong><p>Nouvelle série vidéo bientôt disponible.</p><small>il y a 28 min · 63 réactions</small></div></article></div>
+        </div>
+      </section>
+
+      <section className="shop-section section-frame" id="shop">
+        <div className="section-top"><div><span className="section-number">07 / CLUB SHOP</span><h2>Porter<br /><span>les couleurs.</span></h2></div><button className="text-link" type="button">Voir la boutique →</button></div>
+        <div className="shop-grid">
+          {[['01', 'Maillot JSO', 'HOME'], ['02', 'Écharpe JSO', 'CLASSIC'], ['03', 'Casquette', 'OUDHREF'], ['04', 'Hoodie', 'ESSENTIALS']].map(([n, name, tag], index) => <article className="shop-card" key={n}><div className={`shop-product product-${index + 1}`}><span>JSO</span><small>{tag}</small></div><div className="shop-info"><div><strong>{name}</strong><span>Collection 2026/27</span></div><button type="button">＋</button></div></article>)}
+        </div>
+      </section>
+
+      <section className="closing-section section-frame">
+        <div className="closing-grid"><div><span className="section-number">JSO / DIGITAL CLUB</span><h2>Built for the<br /><span>next generation.</span></h2><p>Une plateforme web moderne, évolutive et prête pour le live, la donnée, la communauté et le mobile.</p><button className="btn-primary" type="button" onClick={() => navigate('Home', 'home')}>Retour à l’accueil <span>↑</span></button></div><div className="closing-orb"><div className="closing-ring" /><img src="/jso-club-mark.svg" alt="JSO" /></div></div>
+      </section>
+
+      <footer className="footer">
+        <div className="footer-main"><div className="footer-brand"><img src="/jso-club-mark.svg" alt="JSO" /><div><strong>JSO</strong><span>Jeunesse Sportive d'Oudhref</span></div></div><div className="footer-nav"><a href="#club">Club</a><a href="#team">Équipe</a><a href="#matches">Match Center</a><a href="#news">Actualités</a><a href="#media">Media</a><a href="#community">Community</a><a href="#shop">Shop</a></div></div>
+        <div className="footer-bottom"><span>© 2026 JSO · Digital Club Experience</span><span>Oudhref / Tunisia</span></div>
       </footer>
 
-      {(premiumOpen || postOpen) && (
-        <div className="modal-backdrop" onClick={() => { setPremiumOpen(false); setPostOpen(false) }}>
-          <div className="modal" onClick={(event) => event.stopPropagation()}>
-            <button className="modal-close" type="button" onClick={() => { setPremiumOpen(false); setPostOpen(false) }}>×</button>
-            <span className="eyebrow">{premiumOpen ? 'FANMATCH PREMIUM' : 'COMMUNITY'}</span>
-            <h2>{premiumOpen ? 'Scopri l’esperienza Premium' : 'Unisciti ai tifosi'}</h2>
-            <p>{premiumOpen ? 'Le funzioni Premium sono pronte per essere collegate al backend: dirette, chat esclusive, contenuti speciali e vantaggi per i sostenitori.' : 'La prossima versione collegherà il profilo, i post, i commenti, le reaction e le notifiche alla community reale.'}</p>
-            <button className="yellow-btn" type="button" onClick={() => { setPremiumOpen(false); setPostOpen(false) }}>Continua →</button>
-          </div>
-        </div>
-      )}
+      {showVideo && <div className="modal-backdrop" onClick={() => setShowVideo(false)}><div className="modal-video" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="video-title"><button className="modal-close" type="button" onClick={() => setShowVideo(false)} aria-label="Fermer">×</button><div className="modal-screen"><span>JSO</span><strong>MEDIA HOUSE</strong><small>VIDEO PLAYER READY</small></div><div className="modal-body"><span className="section-number">MEDIA HOUSE</span><h2 id="video-title">The club, in motion.</h2><p>Cette zone est prête à être connectée au futur CMS vidéo du club.</p></div></div></div>}
     </main>
   )
 }
