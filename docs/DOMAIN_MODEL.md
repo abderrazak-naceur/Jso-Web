@@ -1,129 +1,176 @@
-# Jso-Web — Domain & Functional Model
+# Jso-Web — Domain Model
 
-## Core aggregates
+## Core Aggregates
 
 ### User
 - `id`
 - `email`
 - `displayName`
-- `role`
+- `avatarUrl`
 - `status`
 - `createdAt`
 
-### InterviewSession
+### Team
 - `id`
-- `userId`
-- `jobTitle`
-- `seniority`
-- `interviewType`
-- `jobDescription`
+- `externalId`
+- `name`
+- `shortName`
+- `logoUrl`
+- `country`
+- `competitionId`
 - `status`
-- `startedAt`
-- `completedAt`
-- `overallScore`
 
-### InterviewQuestion
+### Competition
 - `id`
-- `sessionId`
-- `sequence`
-- `category`
-- `text`
-- `difficulty`
+- `externalId`
+- `name`
+- `country`
+- `season`
+
+### UserTeam
+- `userId`
+- `teamId`
+- `createdAt`
+- `notificationEnabled`
+
+### Match
+- `id`
+- `externalId`
+- `competitionId`
+- `homeTeamId`
+- `awayTeamId`
+- `startAt`
+- `status`
+- `homeScore`
+- `awayScore`
+- `venue`
+
+### MatchEvent
+- `id`
+- `matchId`
+- `type`
+- `minute`
+- `teamId`
+- `playerName`
+- `description`
 - `createdAt`
 
-### CandidateAnswer
+### Post
 - `id`
-- `questionId`
-- `text`
-- `transcript`
-- `durationSeconds`
-- `submittedAt`
+- `authorId`
+- `teamId`
+- `matchId`
+- `content`
+- `status`
+- `createdAt`
+- `updatedAt`
 
-### Evaluation
+### Comment
 - `id`
-- `answerId`
-- `overallScore`
-- `technicalScore`
-- `communicationScore`
-- `structureScore`
-- `relevanceScore`
-- `strengths`
-- `improvements`
-- `suggestedAnswer`
-- `model`
-- `promptVersion`
+- `postId`
+- `authorId`
+- `content`
+- `status`
+- `createdAt`
 
-### UsageRecord
+### Reaction
+- `id`
+- `postId`
+- `userId`
+- `type`
+- `createdAt`
+
+### Notification
 - `id`
 - `userId`
-- `sessionId`
-- `provider`
-- `model`
-- `inputTokens`
-- `outputTokens`
-- `estimatedCost`
+- `type`
+- `title`
+- `message`
+- `entityType`
+- `entityId`
+- `readAt`
 - `createdAt`
+
+### Report
+- `id`
+- `reporterId`
+- `targetType`
+- `targetId`
+- `reason`
+- `status`
+- `createdAt`
+- `resolvedAt`
 
 ## Relationships
 
 ```text
-User 1 --- N InterviewSession
-InterviewSession 1 --- N InterviewQuestion
-InterviewQuestion 1 --- N CandidateAnswer
-CandidateAnswer 1 --- 1 Evaluation
-User 1 --- N UsageRecord
-InterviewSession 1 --- N UsageRecord
+User 1 --- N UserTeam N --- 1 Team
+Competition 1 --- N Team
+Competition 1 --- N Match
+Team 1 --- N Match (home)
+Team 1 --- N Match (away)
+Match 1 --- N MatchEvent
+User 1 --- N Post
+Team 1 --- N Post
+Match 1 --- N Post
+Post 1 --- N Comment
+Post 1 --- N Reaction
+User 1 --- N Comment
+User 1 --- N Reaction
+User 1 --- N Notification
+User 1 --- N Report
 ```
 
-## Interview lifecycle
+## Match Lifecycle
 
 ```text
-Draft -> Active -> Completed
-           |
-           +-> Abandoned
+Scheduled → Live → Finished
+              |
+              +→ Postponed
+              +→ Cancelled
 ```
 
-Rules:
-- A session can only receive answers while `Active`.
-- A completed session is immutable from the candidate UI.
-- Each submitted answer is linked to exactly one question.
-- Evaluation may be asynchronous but must preserve answer/question/session correlation.
-- Usage is recorded per AI operation for quota and observability.
-
-## API boundary proposal
+## Post Lifecycle
 
 ```text
-POST   /api/auth/register
-POST   /api/auth/login
-POST   /api/auth/logout
-POST   /api/auth/refresh
-
-POST   /api/interviews
-GET    /api/interviews/{id}
-POST   /api/interviews/{id}/start
-POST   /api/interviews/{id}/answers
-POST   /api/interviews/{id}/complete
-GET    /api/interviews
-
-GET    /api/dashboard
-GET    /api/usage
-
-GET    /api/plans
-POST   /api/subscription/checkout
-GET    /api/subscription
+Draft → Published → Hidden
+              |
+              +→ Reported → Moderation → Published / Hidden
 ```
 
-## Error contract
+## API Boundary Proposal
 
-Recommended consistent API response:
+```text
+GET    /api/teams
+GET    /api/teams/{id}
+POST   /api/teams/{id}/follow
+DELETE /api/teams/{id}/follow
+GET    /api/me/teams
 
-```json
-{
-  "code": "INTERVIEW_NOT_ACTIVE",
-  "message": "The interview session is not active.",
-  "traceId": "...",
-  "details": []
-}
+GET    /api/matches
+GET    /api/matches/{id}
+GET    /api/matches/{id}/events
+
+GET    /api/feed
+POST   /api/posts
+GET    /api/posts/{id}
+POST   /api/posts/{id}/comments
+POST   /api/posts/{id}/reactions
+DELETE /api/posts/{id}/reactions/me
+
+GET    /api/notifications
+POST   /api/notifications/{id}/read
+
+GET    /api/users/{id}
+GET    /api/reports
+POST   /api/reports
 ```
 
-Client behavior should map known business error codes to actionable UI messages while avoiding exposure of internal exception details.
+## Key Domain Rules
+
+- A user can follow a team only once.
+- A reaction is unique per user/post/type according to the configured reaction model.
+- Match data is owned by the sports-data integration boundary; the frontend never hardcodes live data.
+- Social content belongs to a user and can optionally be associated with a team or match.
+- Reported content can be hidden without deleting the original record.
+- Notification delivery must be idempotent.
