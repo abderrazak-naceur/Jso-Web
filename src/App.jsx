@@ -1,207 +1,169 @@
 import { useState } from 'react'
 import './App.css'
 
-const teams = [
-  { name: 'My Team', meta: 'Next match · Sat 20:45', accent: 'green' },
-  { name: 'Second Team', meta: 'League · Round 8', accent: 'blue' },
-  { name: 'Women', meta: 'Match tomorrow · 18:00', accent: 'gold' },
+const matches = [
+  { label: 'PROSSIMA PARTITA', competition: 'Lega Regionale', date: 'Sab 10 Mag', time: '16:00', opponent: 'USM El Harrach', live: true },
+  { label: 'IN ARRIVO', competition: 'Lega Regionale', date: 'Sab 17 Mag', time: '16:00', opponent: 'RC Arba' },
+  { label: 'COPPA', competition: 'Coppa', date: 'Sab 24 Mag', time: '18:00', opponent: 'JS Saoura' },
 ]
 
-const feed = [
-  { author: 'Marco', time: '8 min', title: 'La partita si avvicina: cosa ne pensate della formazione?', reactions: 32 },
-  { author: 'Luca', time: '21 min', title: 'Il nuovo acquisto può cambiare il nostro attacco.', reactions: 18 },
-  { author: 'Sara', time: '43 min', title: 'Pronostico per il weekend: dite la vostra 👇', reactions: 27 },
+const features = [
+  ['▶', 'Partite in diretta', 'Guarda e commenta insieme'],
+  ['◉', 'Community attiva', 'Tifosi, chat e contenuti'],
+  ['🛍', 'Fan Shop', 'Prodotti ufficiali e merchandising'],
+  ['♛', 'News e aggiornamenti', 'Tutte le novità sulla squadra'],
+]
+
+const products = [
+  ['/jersey.svg', 'Maglia ufficiale 2024/2025', '€ 49,90', '124'],
+  ['/scarf.svg', 'Sciarpa Chabiba Bouderf', '€ 19,90', '89'],
+  ['/cap.svg', 'Cappellino ufficiale', '€ 24,90', '67'],
+  ['/hoodie.svg', 'Felpa con cappuccio', '€ 44,90', '52'],
+]
+
+const community = [
+  ['Yassine_10', '2 ore fa', 'Sempre con voi 💛💙', '312', '24'],
+  ['ChabibaFans', '5 ore fa', 'Atmosfera incredibile al Bouderf! 💙💛', '428', '36'],
+  ['IlhamCRB', '1 giorno fa', 'La passione non si spegne mai!', '517', '41'],
+  ['Bouderf1937', '2 giorni fa', 'Storia, orgoglio e futuro 💛💙', '289', '18'],
 ]
 
 function App() {
-  const [selectedTeam, setSelectedTeam] = useState(0)
-  const [showPostComposer, setShowPostComposer] = useState(false)
-  const [activeReaction, setActiveReaction] = useState(null)
+  const [premiumOpen, setPremiumOpen] = useState(false)
+  const [postOpen, setPostOpen] = useState(false)
 
   return (
-    <main className="app-shell">
-      <header className="topbar">
-        <a className="brand" href="#home" aria-label="Jso home">
-          <span className="brand-mark">J</span>
-          <span>Jso<span>Fans</span></span>
+    <main className="fan-app">
+      <header className="site-header">
+        <a className="brand" href="#top">
+          <span className="brand-mark">FM</span>
+          <span>Fan<span>Match</span></span>
         </a>
-
-        <nav className="nav-links" aria-label="Main navigation">
-          <a className="active" href="#home">Home</a>
+        <nav className="site-nav">
+          <a href="#top" className="active">Home</a>
           <a href="#matches">Partite</a>
+          <a href="#shop">Fan Shop</a>
           <a href="#community">Community</a>
-          <a href="#teams">Squadre</a>
+          <a href="#premium">Premium</a>
         </nav>
-
-        <div className="topbar-actions">
-          <button className="icon-button" type="button" aria-label="Notifications">◌</button>
-          <button className="profile-button" type="button">AB</button>
+        <div className="header-actions">
+          <button className="round-btn" type="button" aria-label="Cerca">⌕</button>
+          <button className="round-btn" type="button" aria-label="Notifiche">♧</button>
+          <button className="login-btn" type="button">Accedi</button>
         </div>
       </header>
 
-      <section className="hero" id="home">
+      <section className="hero" id="top">
         <div className="hero-copy">
-          <span className="eyebrow">FAN PLATFORM</span>
-          <h1>Il tuo club.<br />La tua community.</h1>
-          <p>Segui le tue squadre, vivi le partite e parla con altri tifosi in un unico spazio.</p>
+          <span className="eyebrow">LA COMMUNITY UFFICIALE DEI TIFOSI</span>
+          <h1>Il tuo club.<br /><span>La tua passione.</span></h1>
+          <p>Segui le partite, vivi l’emozione, condividi la passione con migliaia di tifosi e porta sempre con te i colori della tua squadra.</p>
           <div className="hero-actions">
-            <a className="primary-button" href="#matches">Vai al Match Center <span>→</span></a>
-            <button className="ghost-button" type="button" onClick={() => setShowPostComposer(true)}>Scrivi un post</button>
+            <a className="yellow-btn" href="#matches">▶ &nbsp; Scopri FanMatch</a>
+            <button className="outline-btn" type="button" onClick={() => setPostOpen(true)}>Unisciti alla community</button>
           </div>
+          <div className="hero-note"><span /> 15.2K tifosi già nella community</div>
         </div>
-
-        <div className="hero-card" aria-label="Fan dashboard preview">
-          <div className="hero-card-header">
-            <div>
-              <span>LIVE MATCH CENTER</span>
-              <strong>La prossima partita</strong>
-            </div>
-            <span className="live-badge"><i /> Live soon</span>
-          </div>
-          <div className="scoreboard">
-            <div className="club-block">
-              <div className="club-badge club-home">H</div>
-              <strong>HOME</strong>
-              <small>Home team</small>
-            </div>
-            <div className="match-time">
-              <small>SABATO</small>
-              <strong>20:45</strong>
-              <span>Campionato</span>
-            </div>
-            <div className="club-block">
-              <div className="club-badge club-away">A</div>
-              <strong>AWAY</strong>
-              <small>Away team</small>
-            </div>
-          </div>
-          <div className="match-pills">
-            <span>Formazioni</span><span>Eventi</span><span>Commenti</span>
-          </div>
+        <div className="hero-art">
+          <img src="/team-hero.svg" alt="FanMatch stadium and supporters" />
+          <div className="arabic-tag">مع بعضنا<br /><b>نكملو المسيرة…</b></div>
         </div>
       </section>
 
-      <div className="content-grid">
-        <aside className="sidebar">
-          <section className="panel" id="teams">
-            <div className="panel-title-row">
-              <div>
-                <span className="eyebrow">MY TEAMS</span>
-                <h2>Le tue squadre</h2>
-              </div>
-              <button className="small-button" type="button">+ Aggiungi</button>
-            </div>
-
-            <div className="team-list">
-              {teams.map((team, index) => (
-                <button
-                  key={team.name}
-                  className={`team-item ${selectedTeam === index ? 'selected' : ''}`}
-                  type="button"
-                  onClick={() => setSelectedTeam(index)}
-                >
-                  <span className={`team-icon ${team.accent}`}>{index === 0 ? '★' : index === 1 ? '◉' : '✦'}</span>
-                  <span>
-                    <strong>{team.name}</strong>
-                    <small>{team.meta}</small>
-                  </span>
-                  <span className="chevron">›</span>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section className="side-stat">
-            <span>FAN STREAK</span>
-            <strong>12 giorni</strong>
-            <p>Hai seguito la tua squadra per 12 giorni consecutivi.</p>
-          </section>
-        </aside>
-
-        <div className="main-column">
-          <section className="panel" id="matches">
-            <div className="panel-title-row">
-              <div>
-                <span className="eyebrow">MATCH CENTER</span>
-                <h2>Partite in evidenza</h2>
-              </div>
-              <a className="text-link" href="#matches">Vedi tutte →</a>
-            </div>
-
-            <div className="match-grid">
-              <article className="match-card featured-match">
-                <div className="match-card-top"><span>OGGI · 20:45</span><b>IN ARRIVO</b></div>
-                <div className="match-teams">
-                  <div><span className="club-badge club-home large">H</span><strong>HOME</strong></div>
-                  <span className="vs">VS</span>
-                  <div><span className="club-badge club-away large">A</span><strong>AWAY</strong></div>
-                </div>
-                <div className="match-footer"><span>Campionato</span><span>🔔 Attiva alert</span></div>
-              </article>
-              <article className="match-card">
-                <div className="match-card-top"><span>DOM · 17:00</span><b>UPCOMING</b></div>
-                <div className="compact-score">
-                  <span className="mini-club">H</span><strong>HOME</strong>
-                  <span className="versus">–</span>
-                  <strong>AWAY</strong><span className="mini-club away">A</span>
-                </div>
-                <p>Round 8 · League</p>
-              </article>
-            </div>
-          </section>
-
-          <section className="panel" id="community">
-            <div className="panel-title-row">
-              <div>
-                <span className="eyebrow">COMMUNITY</span>
-                <h2>Cosa dicono i tifosi</h2>
-              </div>
-              <button className="small-button dark" type="button" onClick={() => setShowPostComposer(true)}>+ Nuovo post</button>
-            </div>
-
-            <div className="composer-mini" onClick={() => setShowPostComposer(true)} role="button" tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && setShowPostComposer(true)}>
-              <div className="avatar">AB</div>
-              <span>Condividi un pensiero sulla tua squadra...</span>
-              <button type="button">Pubblica</button>
-            </div>
-
-            <div className="feed-list">
-              {feed.map((post, index) => (
-                <article className="feed-card" key={post.author + post.time}>
-                  <div className="feed-header">
-                    <div className="avatar small">{post.author.slice(0, 1)}</div>
-                    <div><strong>{post.author}</strong><small>{post.time} fa · Tifoso</small></div>
-                    <button className="more-button" type="button" aria-label="Altre opzioni">•••</button>
-                  </div>
-                  <p>{post.title}</p>
-                  <div className="feed-actions">
-                    <button type="button" className={activeReaction === index ? 'reacted' : ''} onClick={() => setActiveReaction(activeReaction === index ? null : index)}>♥ {post.reactions}</button>
-                    <button type="button">◌ Commenta</button>
-                    <button type="button">↗ Condividi</button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
+      <section className="section" id="matches">
+        <div className="section-heading">
+          <div><span className="eyebrow">VIVI OGNI MATCH INSIEME</span><h2>Prossime partite</h2><p>Entra nella stanza, commenta il match e resta vicino alla squadra.</p></div>
+          <a className="section-link" href="#matches">Vedi calendario →</a>
         </div>
-      </div>
+        <div className="matches-grid">
+          {matches.map((match) => (
+            <article key={match.opponent} className={`match-card ${match.live ? 'match-featured' : ''}`}>
+              <div className="match-card-top"><span>{match.label}</span><b>{match.competition}</b></div>
+              <div className="match-row">
+                <div className="club"><div className="club-crest">JM</div><strong>Chabiba<br />Riadia Bouderf</strong></div>
+                <div className="match-date"><strong>{match.date}</strong><b>{match.time}</b></div>
+                <div className="club opponent"><div className="club-crest opponent-crest">VS</div><strong>{match.opponent}</strong></div>
+              </div>
+              <button className={match.live ? 'match-cta yellow-btn' : 'match-cta dark-btn'} type="button" onClick={() => match.live && setPremiumOpen(true)}>
+                {match.live ? '▶  Entra nella stanza' : '♧  Imposta promemoria'}
+              </button>
+              {match.live && <span className="ready-users">● 1.2K tifosi pronti</span>}
+            </article>
+          ))}
+          <article className="premium-card" id="premium">
+            <div>
+              <span className="eyebrow">FANMATCH PREMIUM</span>
+              <h3>Diventa Premium</h3>
+              <p>Accedi alle dirette, chat esclusive, contenuti speciali e supporta la nostra squadra.</p>
+              <button className="blue-btn" type="button" onClick={() => setPremiumOpen(true)}>Scopri i piani →</button>
+            </div>
+            <img src="/jersey.svg" alt="FanMatch official jersey" />
+          </article>
+        </div>
+      </section>
 
-      <footer className="footer">
-        <span>© 2026 Jso Fans</span>
-        <span>Fan platform · Frontend MVP</span>
+      <section className="feature-grid">
+        {features.map(([icon, title, text]) => (
+          <article key={title} className="feature-tile">
+            <div className="feature-icon">{icon}</div><div><strong>{title}</strong><span>{text}</span></div>
+          </article>
+        ))}
+      </section>
+
+      <section className="section" id="shop">
+        <div className="section-heading">
+          <div><span className="eyebrow">PORTA SEMPRE CON TE I NOSTRI COLORI</span><h2>Fan Shop</h2><p>Prodotti ufficiali per vivere la tua squadra anche fuori dallo stadio.</p></div>
+          <a className="section-link" href="#shop">Vedi tutti i prodotti →</a>
+        </div>
+        <div className="product-grid">
+          {products.map(([image, title, price, reviews]) => (
+            <article key={title} className="product-card">
+              <div className="product-image"><img src={image} alt={title} /></div>
+              <div className="rating">★ ★ ★ ★ ★ <span>({reviews})</span></div>
+              <h3>{title}</h3>
+              <div className="product-bottom"><strong>{price}</strong><button type="button" aria-label={`Aggiungi ${title}`}>＋</button></div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="section" id="community">
+        <div className="section-heading">
+          <div><span className="eyebrow">FOTO, VIDEO E MOMENTI DEI NOSTRI TIFOSI</span><h2>Dalla nostra community</h2><p>Condividi l’emozione, commenta le partite e vivi la passione con gli altri fan.</p></div>
+          <button className="section-link button-link" type="button" onClick={() => setPostOpen(true)}>Vedi tutti i post →</button>
+        </div>
+        <div className="community-grid">
+          {community.map(([author, time, caption, likes, comments], index) => (
+            <article key={author} className="community-card">
+              <img src="/team-hero.svg" alt="Community post" style={{ objectPosition: `${25 + index * 20}% center` }} />
+              <div className="community-body"><div className="post-meta"><strong>{author}</strong><span>{time}</span></div><p>{caption}</p><div className="post-actions"><span>♥ {likes}</span><span>◌ {comments}</span><span>↗</span></div></div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="stats-band">
+        <div><strong>15.2K</strong><span>Tifosi registrati</span></div>
+        <div><strong>8.1K</strong><span>Utenti attivi</span></div>
+        <div><strong>120+</strong><span>Partite trasmesse</span></div>
+        <div><strong>1</strong><span>Grande passione</span></div>
+        <div className="stats-arabic">شبيبتنا<br /><span>فخر المنطقة</span></div>
+      </section>
+
+      <footer className="site-footer">
+        <div className="footer-brand"><span className="brand-mark">FM</span><div><strong>FanMatch</strong><span>La community dei tifosi</span></div></div>
+        <div className="footer-links"><a href="#top">Chi siamo</a><a href="#top">Contatti</a><a href="#top">Privacy</a><a href="#top">Termini</a><a href="#top">FAQ</a></div>
+        <div className="footer-social">● ● ● ● ●<span>© 2026 FanMatch · Tutti i diritti riservati.</span></div>
       </footer>
 
-      {showPostComposer && (
-        <div className="modal-backdrop" role="presentation" onClick={() => setShowPostComposer(false)}>
-          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="post-title" onClick={(event) => event.stopPropagation()}>
-            <button className="modal-close" type="button" onClick={() => setShowPostComposer(false)} aria-label="Chiudi">×</button>
-            <span className="eyebrow">COMMUNITY POST</span>
-            <h2 id="post-title">Cosa vuoi condividere?</h2>
-            <textarea placeholder="Scrivi qualcosa per gli altri tifosi..." rows="5" />
-            <div className="modal-actions">
-              <button className="ghost-button" type="button" onClick={() => setShowPostComposer(false)}>Annulla</button>
-              <button className="primary-button" type="button" onClick={() => setShowPostComposer(false)}>Pubblica <span>→</span></button>
-            </div>
+      {(premiumOpen || postOpen) && (
+        <div className="modal-backdrop" onClick={() => { setPremiumOpen(false); setPostOpen(false) }}>
+          <div className="modal" onClick={(event) => event.stopPropagation()}>
+            <button className="modal-close" type="button" onClick={() => { setPremiumOpen(false); setPostOpen(false) }}>×</button>
+            <span className="eyebrow">{premiumOpen ? 'FANMATCH PREMIUM' : 'COMMUNITY'}</span>
+            <h2>{premiumOpen ? 'Scopri l’esperienza Premium' : 'Unisciti ai tifosi'}</h2>
+            <p>{premiumOpen ? 'Le funzioni Premium sono pronte per essere collegate al backend: dirette, chat esclusive, contenuti speciali e vantaggi per i sostenitori.' : 'La prossima versione collegherà il profilo, i post, i commenti, le reaction e le notifiche alla community reale.'}</p>
+            <button className="yellow-btn" type="button" onClick={() => { setPremiumOpen(false); setPostOpen(false) }}>Continua →</button>
           </div>
         </div>
       )}
