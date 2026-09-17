@@ -1,0 +1,18 @@
+<svg width="640" height="640" viewBox="0 0 640 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="80" y1="40" x2="570" y2="610" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#35D6FF"/>
+      <stop offset="0.5" stop-color="#155BFF"/>
+      <stop offset="1" stop-color="#F4C644"/>
+    </linearGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="22"/></filter>
+  </defs>
+  <circle cx="320" cy="320" r="240" fill="#0B1220" stroke="rgba(255,255,255,0.14)" stroke-width="3"/>
+  <circle cx="320" cy="320" r="210" fill="#101B2E"/>
+  <circle cx="320" cy="320" r="172" stroke="url(#g)" stroke-width="28" opacity="0.96"/>
+  <circle cx="320" cy="320" r="112" fill="url(#g)" opacity="0.16" filter="url(#blur)"/>
+  <path d="M320 152L370 232L463 250L396 317L410 412L320 370L230 412L244 317L177 250L270 232L320 152Z" fill="#F4C644" fill-opacity="0.95"/>
+  <path d="M320 188L350 245L413 257L368 301L377 362L320 335L263 362L272 301L227 257L290 245L320 188Z" fill="#07111F"/>
+  <text x="320" y="445" text-anchor="middle" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="800" letter-spacing="8">JSO</text>
+  <text x="320" y="483" text-anchor="middle" fill="#9EABBE" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" letter-spacing="6">OUDHREF</text>
+</svg>
