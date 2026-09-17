@@ -1,71 +1,75 @@
-# Jso-Web — Analisi tecnica
+# Jso-Web — Technical Analysis
 
-## 1. Snapshot del repository
+## 1. Repository Snapshot
+
 - Repository: `abderrazak-naceur/Jso-Web`
-- Branch analizzato: `main`
-- Tipologia: frontend React + Vite
-- Stato: starter/template Vite-React ancora non trasformato in applicazione di dominio.
+- Branch: `main`
+- Type: React + Vite web application
+- Product domain: **fan platform / supporter community**
+- Current stage: frontend MVP with mock data, being evolved toward a full application.
 
-## 2. Stack rilevato
-Dal `package.json` risultano:
-- React `18.3.1`
-- React DOM `18.3.1`
-- Vite `6.4.1`
-- `@vitejs/plugin-react` `4.3.4`
-- Oxlint `1.81.0`
-- Moduli ES (`type: module`)
+## 2. Current Frontend Stack
 
-Script disponibili:
+- React 18
+- React DOM 18
+- Vite 6
+- `@vitejs/plugin-react`
+- Oxlint
+- JavaScript / JSX
+
+Available scripts:
+
 - `npm run dev`
 - `npm run build`
 - `npm run lint`
 - `npm run preview`
 
-## 3. Struttura attuale
-Il repository contiene una struttura minima tipica di uno starter Vite:
-- `index.html`
-- `package.json`
-- `package-lock.json`
-- `vite.config.js`
-- `src/main.jsx`
-- `src/App.jsx`
-- `src/App.css`
-- `src/index.css`
-- `src/assets/hero.png`
-- asset SVG React/Vite
-- `public/favicon.svg`
-- `public/icons.svg`
+## 3. Current Product Experience
 
-## 4. Analisi funzionale
-`src/App.jsx` mostra ancora contenuti dimostrativi dello starter:
-- titolo “Get started”
-- contatore React locale
-- collegamenti alla documentazione Vite/React
-- collegamenti community Vite
-- asset/logo di Vite e React
+The frontend now presents a fan-oriented dashboard containing:
 
-Non risultano, nella struttura corrente analizzata, funzionalità applicative di dominio, routing, autenticazione, gestione stato globale, chiamate API o persistenza dati.
+- personalized “My Teams” area
+- featured Match Center
+- upcoming matches
+- fan feed
+- create-post interaction
+- reactions
+- responsive navigation
+- fan profile placeholder
+- notification placeholder
 
-## 5. Valutazione architetturale
-L'architettura attuale è adatta come punto di partenza, ma non è ancora organizzata per una codebase frontend di produzione.
+## 4. Proposed Product Modules
 
-### Gap principali
-1. Separazione delle responsabilità: la logica e la UI sono concentrate in `App.jsx`.
-2. Componentizzazione: mancano componenti riutilizzabili organizzati per feature.
-3. Routing: nessun router rilevato.
-4. Data layer: nessun client/API layer rilevato.
-5. Stato applicativo: presente solo `useState` locale nel componente principale.
-6. Test: nessuna struttura test rilevata.
-7. Quality gates: lint presente, ma non risultano workflow CI/CD nel tree analizzato.
+```text
+Public Home
+   ├── Team discovery
+   ├── Match discovery
+   └── Community preview
 
-## 6. Rischi tecnici
-- Evoluzione difficile se tutte le funzionalità vengono aggiunte direttamente in `App.jsx`.
-- Assenza di confini tra UI, stato e accesso ai dati.
-- Mancanza di test automatici per prevenire regressioni.
-- Mancanza di convenzioni documentate per naming, feature folders e gestione errori.
+Authenticated Fan Area
+   ├── My Teams
+   ├── Match Center
+   ├── Fan Feed
+   ├── Notifications
+   └── Profile
 
-## 7. Target architecture consigliata
-Una possibile struttura evolutiva:
+Trust & Safety
+   ├── Reports
+   ├── Moderation
+   └── Anti-spam
+```
+
+## 5. Architecture Gaps
+
+1. The frontend still needs a feature-based folder structure.
+2. Routing is not yet implemented.
+3. Match and team data are currently mock/demo data.
+4. There is no API client or backend integration yet.
+5. Authentication and authorization are not connected.
+6. Social data is not persisted.
+7. There is no automated test suite yet.
+
+## 6. Target Frontend Structure
 
 ```text
 src/
@@ -75,46 +79,77 @@ src/
     providers/
   components/
     ui/
+    layout/
   features/
-    <feature>/
-      components/
-      hooks/
-      services/
-      types/
-  pages/
+    teams/
+    matches/
+    feed/
+    profile/
+    notifications/
+    auth/
   services/
     api/
   hooks/
   utils/
+  pages/
   assets/
 ```
 
-Principi:
-- feature-based organization
-- componenti piccoli e riutilizzabili
-- API isolate dal livello UI
-- gestione centralizzata degli errori
-- configurazione tramite environment variables
-- test per componenti e servizi
+## 7. Target Backend
 
-## 8. Backlog prioritizzato
-### P0 — Fondazioni
-- Rimuovere lo starter UI di Vite.
-- Definire layout applicativo e routing.
-- Definire convenzioni di progetto.
-- Introdurre un API client centralizzato.
-- Configurare environment development/production.
+```text
+React + Vite
+      ↓
+ASP.NET Core .NET 10
+      ↓
+Application Layer
+      ↓
+Domain Layer
+      ↓
+Infrastructure
+      ├── SQL Server
+      ├── Sports Data Provider
+      ├── Notifications
+      └── Search / Media
+```
 
-### P1 — Qualità
-- Aggiungere test unitari/componenti.
-- Aggiungere CI per install, lint e build.
-- Aggiungere gestione errori e loading states.
-- Introdurre una strategia per logging lato frontend.
+## 8. Quality & Security
 
-### P2 — Evoluzione
-- Aggiungere state management solo se richiesto dalle feature.
-- Ottimizzare code splitting e lazy loading.
-- Aggiungere controlli accessibilità e performance.
+- Keep external provider credentials server-side.
+- Validate all user-generated content server-side.
+- Add authorization checks for social operations.
+- Add anti-spam and rate limiting.
+- Add moderation and report workflows.
+- Add automated build/lint/test pipeline.
+- Add observability for provider failures and user-facing API errors.
 
-## 9. Prossimo passo operativo
-Prima di sviluppare nuove feature conviene trasformare lo starter in una base applicativa pulita: layout + routing + componenti condivisi + API layer + configurazione ambienti + quality checks. Successivamente le feature di business possono essere implementate una per volta con test e criteri di accettazione.
+## 9. Priority Backlog
+
+### P0
+
+- Frontend routing.
+- Team search and selection.
+- Match Center pages.
+- Fan feed pages.
+- API contract.
+- .NET 10 backend foundation.
+
+### P1
+
+- Authentication.
+- SQL Server persistence.
+- Sports provider integration.
+- Posts/comments/reactions.
+- Notifications.
+
+### P2
+
+- Advanced statistics.
+- Search improvements.
+- Media.
+- Premium features.
+- Club and partner features.
+
+## 10. Implementation Direction
+
+The repository should be developed as a **fan-first product**, with the frontend organized around teams, matches, community and personalization. AI or unrelated interview features are outside this product scope unless a future business requirement explicitly adds them.
