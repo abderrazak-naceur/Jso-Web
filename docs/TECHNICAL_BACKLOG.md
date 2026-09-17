@@ -1,173 +1,320 @@
 # Jso-Web — Technical Backlog
 
-## Phase 0 — Frontend Foundation
+## Phase 0 — Visual / Frontend Foundation
 
-### FE-001 — Application shell
-- Feature-based source structure.
+### FE-001 — JSO Design System
+- Design tokens for navy, blue, cyan, gold and white.
+- Typography: Manrope + Inter.
+- Glassmorphism surfaces.
+- Card, button, pill, badge and modal primitives.
+- Responsive spacing/grid system.
+- Motion and hover conventions.
+
+### FE-002 — Application shell
 - Header/navigation.
 - Responsive page container.
+- Footer.
+- Route-level layouts.
 - Shared UI primitives.
 
-### FE-002 — Routing
+### FE-003 — Routing
 - `/`
-- `/teams`
-- `/teams/:id`
+- `/club`
+- `/team`
+- `/team/:id`
 - `/matches`
 - `/matches/:id`
+- `/news`
+- `/news/:slug`
+- `/media`
 - `/community`
-- `/profile/:id`
-- `/notifications`
-- Auth routes when enabled.
+- `/shop`
+- `/membership`
+- Admin routes under `/admin/*`.
 
-### FE-003 — API client
+### FE-004 — API client
 - Central HTTP client.
 - Environment-based API URL.
 - Error normalization.
-- Authentication/session handling.
+- Auth/session handling.
 
-### FE-004 — Query and cache strategy
-- Server-state cache for matches/feed.
-- Pagination/infinite scroll.
-- Cache invalidation after social actions.
+## Phase 1 — Public Club Experience
 
-## Phase 1 — Fan Identity
+### FE-005 — Home
+- Hero.
+- Next match.
+- Last result.
+- News cards.
+- Team highlights.
+- Media block.
+- Community block.
+- Shop block.
+- Membership CTA.
 
-### BE-001 — Account API
-- Register/login/logout.
-- User profile.
-- Followed teams.
-- Notification preferences.
+### FE-006 — Club
+- History.
+- Values.
+- Stadium.
+- Contacts.
+- Sponsors.
 
-### FE-005 — Onboarding
-- Welcome flow.
-- Team search.
-- Favorite team selection.
-- Preferences.
+### FE-007 — Team
+- Squad listing.
+- Player detail.
+- Staff.
+- Season filtering.
 
-### FE-006 — Fan profile
-- Profile header.
-- Favorite teams.
-- Recent activity.
-- Privacy settings.
+## Phase 2 — Sports / Match Center
 
-## Phase 2 — Teams & Match Center
-
-### BE-002 — Sports data boundary
+### BE-001 — Sports data boundary
 - Provider abstraction.
 - Team synchronization.
 - Competition synchronization.
 - Fixture synchronization.
 - Match state/events.
-- Provider error/fallback handling.
-
-### FE-007 — Teams
-- Search.
-- Team detail.
-- Follow/unfollow.
-- Upcoming matches.
+- Provider health and fallback handling.
 
 ### FE-008 — Match Center
-- Match list.
+- Calendar.
 - Filters.
 - Match detail.
-- Timeline/events.
+- Results.
+- Timeline.
 - Live state.
+- Statistics.
 
-## Phase 3 — Community
+## Phase 3 — News & Media
 
-### BE-003 — Social domain
+### BE-002 — Content domain
+- News.
+- Categories.
+- Tags.
+- Media assets.
+- Publishing states.
+- Homepage content blocks.
+
+### FE-009 — Newsroom
+- Listing.
+- Category filters.
+- Article detail.
+
+### FE-010 — Media House
+- Gallery.
+- Video library.
+- Highlights.
+- Archive.
+
+## Phase 4 — Admin / Back Office Foundation
+
+### BE-003 — Admin identity
+- Admin authentication.
+- RBAC.
+- Permissions.
+- MFA-ready design.
+- Session policy.
+
+### FE-011 — Admin shell
+- Sidebar.
+- Topbar.
+- Breadcrumbs.
+- Search.
+- Command-style navigation where useful.
+- Responsive admin layout.
+
+### FE-012 — Admin dashboard
+- KPIs.
+- Recent activity.
+- Match alerts.
+- Pending moderation.
+- Content status.
+- Integration health.
+
+### BE-004 — Audit
+- AuditLog model.
+- Actor/action/entity metadata.
+- Request/trace ID.
+- Immutable append-only behavior.
+
+## Phase 5 — Admin CMS
+
+### BE-005 — News CMS
+- Draft/review/scheduled/published/archive.
+- Rich text sanitization.
+- SEO metadata.
+- Publish scheduling.
+
+### FE-013 — News CMS UI
+- List.
+- Editor.
+- Preview.
+- Publish/schedule workflows.
+
+### FE-014 — Media library
+- Upload.
+- Search/filter.
+- Metadata.
+- Gallery selection.
+- Alt text.
+
+### BE-006 — Homepage builder
+- Section model.
+- Ordering.
+- Enable/disable.
+- Versioning/publish state.
+
+### FE-015 — Homepage builder UI
+- Drag/reorder.
+- Section configuration.
+- Preview.
+- Publish.
+
+## Phase 6 — Admin Sports Operations
+
+### BE-007 — Team/player management
+- Teams.
+- Players.
+- Staff.
+- Season assignment.
+
+### FE-016 — Team manager
+- Roster CRUD.
+- Player editor.
+- Media assignment.
+- Publish state.
+
+### BE-008 — Match management
+- Match CRUD.
+- Manual score updates.
+- Match events.
+- Lineups.
+- Provider/manual/hybrid mode.
+
+### FE-017 — Match manager
+- Calendar table.
+- Match editor.
+- Event timeline editor.
+- Sync action.
+- Manual override workflow.
+
+## Phase 7 — Community / Moderation
+
+### BE-009 — Social domain
 - Posts.
 - Comments.
 - Reactions.
-- Feed ranking/basic ordering.
+- Feed.
 - Pagination.
 
-### FE-009 — Fan feed
-- Personalized feed.
-- Create post.
-- Post detail.
-- Comments.
-- Reactions.
-
-### BE-004 — Trust & Safety
+### BE-010 — Trust & Safety
 - Reports.
-- Block/mute.
 - Moderation state.
-- Audit trail.
-- Rate limiting / anti-spam controls.
+- User block/suspension.
+- Rate limiting.
+- Audit actions.
 
-## Phase 4 — Notifications
+### FE-018 — Community moderation
+- Moderation queue.
+- Content detail.
+- User detail.
+- Bulk actions.
 
-### BE-005 — Notification service
-- Match reminders.
-- Match start notifications.
-- Social interactions.
-- Read/unread state.
+## Phase 8 — Commerce / Growth
 
-### FE-010 — Notification center
-- List.
-- Mark as read.
-- Preferences.
+### BE-011 — Shop
+- Products.
+- Categories.
+- Variants.
+- Stock.
+- Orders.
 
-## Phase 5 — Quality & Operations
+### FE-019 — Shop admin
+- Product CRUD.
+- Stock management.
+- Orders.
+
+### BE-012 — Membership
+- Plans.
+- Entitlements.
+- Member status.
+
+### FE-020 — Membership admin
+- Plan management.
+- Benefits.
+- Member overview.
+
+## Phase 9 — Quality / Operations
 
 ### QA-001 — Unit/component tests
-- Shared utilities.
+- Shared UI.
 - Match components.
-- Feed components.
-- Critical interactions.
+- News CMS.
+- Admin permissions.
+- Moderation logic.
 
 ### QA-002 — E2E tests
-- Onboarding.
-- Team follow.
-- Match detail.
-- Create post.
-- Reaction/comment.
+- Public home.
+- Match Center.
+- Admin login.
+- News publish.
+- Match update.
+- Team/player update.
+- Moderation flow.
 
 ### DEVOPS-001 — CI
 - `npm ci`.
 - lint.
 - build.
-- test.
+- tests.
 
-### DEVOPS-002 — Environment management
+### DEVOPS-002 — Environments
 - `.env.example`.
-- Dev/staging/prod configuration.
-- Secrets outside source control.
+- dev/staging/prod configuration.
+- secret management.
+
+### DEVOPS-003 — Observability
+- structured logs;
+- error monitoring;
+- API health checks;
+- integration health;
+- admin operational metrics.
 
 ## Target Architecture
 
 ```text
-React + Vite
-   ├── Pages
-   ├── Features
-   ├── Shared UI
-   ├── Services / API client
-   └── State / Cache
-           ↓
-ASP.NET Core .NET 10 API
-   ├── Application
-   ├── Domain
-   └── Infrastructure
-           ↓
-SQL Server
-   ├── Users / Profiles
-   ├── Teams / Competitions
-   ├── Matches / Events
-   └── Posts / Comments / Reactions
-           ↓
-External Sports Data Provider
+Public Web                         Admin Web
+React + Vite                      React + Vite
+     │                                  │
+     └──────────────┬───────────────────┘
+                    ▼
+             ASP.NET Core .NET 10
+          Auth · RBAC · API · CMS
+                    │
+      ┌─────────────┼─────────────┐
+      ▼             ▼             ▼
+   Domain        Admin/CMS    Integrations
+      │             │             │
+      └─────────────┼─────────────┘
+                    ▼
+                 SQL Server
+                    │
+        ┌───────────┼───────────┐
+        ▼           ▼           ▼
+ Sports Provider  Media      Analytics
 ```
 
 ## Immediate Implementation Order
 
-1. Application shell and responsive layout.
-2. Team discovery and selection.
-3. Match Center UI.
-4. Fan Feed UI.
-5. .NET 10 API contract.
-6. SQL Server domain schema.
-7. Sports provider adapter.
-8. Authentication.
-9. Social write operations.
-10. Notifications and moderation.
+1. JSO visual system.
+2. Public homepage and shared UI.
+3. Club/team model.
+4. Match Center.
+5. Backend .NET 10 + SQL Server.
+6. Admin authentication + RBAC.
+7. Admin dashboard.
+8. Team/player management.
+9. Match management + sports provider adapter.
+10. News CMS + media library.
+11. Homepage builder.
+12. Community + moderation.
+13. Analytics.
+14. Shop/membership/ticketing.
