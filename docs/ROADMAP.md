@@ -1,77 +1,119 @@
 # Jso-Web — Product Roadmap
 
-## Phase 1 — Fan Foundation
+## Phase 1 — Visual Foundation
 
-- Finalizzare brand, navigation e responsive shell.
-- Team discovery e team selection.
-- Home personalizzata.
-- Routing frontend.
-- API contract iniziale.
+- Finalizzare brand JSO.
+- Premium visual system.
+- Responsive navigation.
+- Homepage experience.
+- Reusable cards, buttons, glass surfaces e layout primitives.
+- Club identity / hero / Match Center preview / newsroom / team / media / community / shop preview.
 
-**Exit criteria:** un utente può scegliere le proprie squadre e navigare una home personalizzata.
+**Exit criteria:** sito pubblico con identità JSO moderna, responsive e coerente.
 
-## Phase 2 — Match Center
+## Phase 2 — Club Core
 
-- Lista partite.
-- Filtri per squadra/data.
+- Club page.
+- History.
+- Values.
+- Stadium/infrastructure.
+- Team roster.
+- Players.
+- Staff.
+- Season model.
+
+**Exit criteria:** tutte le informazioni strutturali del club sono modellate e gestibili.
+
+## Phase 3 — Match Center
+
+- Match list.
+- Filters.
 - Match detail.
-- Stato live.
-- Timeline eventi.
-- Provider sportivo adapter.
+- Results.
+- League/competition context.
+- Live state.
+- Timeline events.
+- Provider adapter.
+- Fallback/manual data mode.
 
-**Exit criteria:** una partita può essere consultata end-to-end e i dati possono arrivare da un provider esterno.
+**Exit criteria:** una partita può essere consultata end-to-end con dati reali o simulati tramite lo stesso contratto API.
 
-## Phase 3 — Fan Community
+## Phase 4 — News & Media House
 
+- Newsroom.
+- Article detail.
+- Categories/tags.
+- Images.
+- Videos.
+- Highlights.
+- Galleries.
+- Historical archive.
+
+**Exit criteria:** il club può pubblicare e mostrare contenuti editoriali/media.
+
+## Phase 5 — Admin Foundation
+
+- Admin login.
+- RBAC.
+- Admin shell.
+- Dashboard.
+- Audit log.
+- Club settings.
+- Feature flags.
+
+**Exit criteria:** un amministratore autorizzato può entrare nel back office e vedere solo le funzioni consentite dal proprio ruolo.
+
+## Phase 6 — Admin CMS & Sport Operations
+
+- Team/player management.
+- Match management.
+- Sports provider sync.
+- News CMS.
+- Media library.
+- Homepage builder.
+- Menu/footer configuration.
+
+**Exit criteria:** il club può gestire autonomamente squadra, partite e contenuti del sito senza deploy.
+
+## Phase 7 — Community & Trust
+
+- Fan profiles.
 - Feed.
-- Creazione post.
-- Commenti.
-- Reaction.
-- Paginazione.
-- Moderazione base.
+- Posts.
+- Comments.
+- Reactions.
+- Notifications.
+- Reports.
+- Moderation queue.
+- User suspension/block.
 
-**Exit criteria:** i tifosi possono pubblicare e interagire in modo sicuro.
+**Exit criteria:** community funzionante con moderazione e strumenti di trust & safety.
 
-## Phase 4 — Personalization & Notifications
+## Phase 8 — Analytics & Growth
 
-- Profilo tifoso.
-- Preferenze.
-- Notification center.
-- Match alerts.
-- Social notifications.
+- Public analytics.
+- Admin analytics.
+- Content performance.
+- Match engagement.
+- Community engagement.
+- Integration health.
+- Sponsors.
+- Membership/Premium.
+- Shop.
+- Ticketing.
 
-**Exit criteria:** l'esperienza cambia in base alle squadre seguite e alle preferenze utente.
-
-## Phase 5 — Backend Production Foundation
-
-- ASP.NET Core .NET 10.
-- SQL Server.
-- Authentication.
-- User/team/match/post domains.
-- Caching.
-- Observability.
-- CI/CD.
-
-**Exit criteria:** frontend e backend comunicano tramite API reali con dati persistiti.
-
-## Phase 6 — Scale & Growth
-
-- Search.
-- Advanced statistics.
-- Better recommendation/feed ranking.
-- Media support.
-- Premium opportunities.
-- Club/partner capabilities.
-
-**Exit criteria:** prodotto pronto per una beta pubblica più ampia.
+**Exit criteria:** piattaforma pronta per la crescita e per servizi commerciali futuri.
 
 ## Release Strategy
 
 ### Alpha
-Frontend fan experience + mock data + core navigation.
+Visual JSO experience + static/mock data + responsive UI.
 
 ### Beta
-Teams + matches + community + backend + authentication.
+Real backend + SQL Server + teams + matches + newsroom + Admin CMS.
 
 ### Public MVP
-Production sports data, notifications, moderation, monitoring e supporto operativo.
+Sports data integration + community + moderation + analytics + production hardening.
+
+### Growth
+Shop + membership + ticketing + sponsors + advanced media/live experiences.
