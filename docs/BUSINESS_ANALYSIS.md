@@ -1,424 +1,288 @@
-# Jso-Web — Business Analysis
+# Jso-Web — Business & Functional Analysis
 
 ## 1. Executive Summary
 
-Jso-Web è attualmente un frontend starter React/Vite. L'obiettivo di prodotto definito in questa fase è evolvere il repository in una piattaforma **Interview AI** web-first per supportare candidati e professionisti nella preparazione e simulazione di colloqui di lavoro.
+Jso-Web è una piattaforma digitale **per tifosi**. L'obiettivo è offrire un punto unico in cui un supporter possa seguire le proprie squadre, consultare le partite, ricevere aggiornamenti e partecipare alla community.
 
-La piattaforma deve combinare simulazione del colloquio, analisi delle risposte, feedback AI, storico delle sessioni e percorsi personalizzati di miglioramento.
-
-Il repository attuale non contiene ancora funzionalità di dominio: la codebase è una base tecnica da trasformare in un prodotto applicativo. fileciteturn9file0L2-L2
+Il prodotto non è una semplice pagina di risultati: il valore principale è la combinazione di **personalizzazione + match experience + community**.
 
 ## 2. Visione di Business
 
-**Vision:** diventare un assistente digitale per la preparazione ai colloqui, capace di simulare intervistatori, analizzare le risposte e trasformare ogni sessione in un piano di miglioramento misurabile.
+**Vision:** diventare la casa digitale del tifoso durante tutta la settimana e soprattutto nei giorni di partita.
 
-### Obiettivi business
+### Obiettivi
 
-1. Aumentare la qualità della preparazione ai colloqui.
-2. Ridurre il tempo necessario per esercitarsi.
-3. Fornire feedback strutturato e comprensibile.
-4. Creare uno storico dei progressi.
-5. Supportare diversi profili professionali, seniority e tipologie di colloquio.
-6. Preparare un modello SaaS con funzionalità Free e Premium.
+1. Aumentare il tempo e la frequenza di permanenza dei tifosi.
+2. Personalizzare l'esperienza in base alle squadre seguite.
+3. Centralizzare le informazioni sulle partite.
+4. Creare una community attiva attorno ai club.
+5. Costruire una base per funzionalità premium e partnership future.
 
 ## 3. Target Users
 
-### Persona A — Job Seeker
+### Persona A — Supporter abituale
+Segue una o più squadre ogni settimana e vuole avere in un solo posto partite, aggiornamenti e community.
 
-Candidato che deve prepararsi a un colloquio imminente e vuole esercitarsi rapidamente.
+### Persona B — Super fan
+Vuole maggiore personalizzazione, statistiche, notifiche e cronologia dell'attività.
 
-**Bisogni:**
-- simulazione realistica
-- domande pertinenti al ruolo
-- feedback immediato
-- suggerimenti pratici
+### Persona C — Fan occasionale
+Entra principalmente in occasione di partite importanti e vuole trovare subito stato della partita, contenuti e commenti.
 
-### Persona B — Experienced Professional
-
-Professionista con esperienza che vuole migliorare comunicazione, struttura delle risposte e preparazione tecnica.
-
-**Bisogni:**
-- scenari avanzati
-- personalizzazione per ruolo
-- analisi comparativa tra sessioni
-- storico dei risultati
-
-### Persona C — Student / Junior
-
-Utente con poca esperienza di colloqui.
-
-**Bisogni:**
-- onboarding guidato
-- domande semplici e progressive
-- spiegazione degli errori
-- percorso formativo
+### Persona D — Creator / Community contributor
+Pubblica opinioni, post e contenuti per gli altri tifosi.
 
 ## 4. Value Proposition
 
-La piattaforma deve offrire in un unico flusso:
+Il flusso principale del prodotto è:
 
-**Profile → Job/CV Context → Interview Simulation → AI Analysis → Feedback → Improvement Plan**
+```text
+Scegli le squadre
+      ↓
+Home personalizzata
+      ↓
+Partite + aggiornamenti
+      ↓
+Community e contenuti
+      ↓
+Reazioni / commenti / post
+      ↓
+Notifiche e ritorno sulla piattaforma
+```
 
-Il valore non è solo generare domande, ma chiudere il ciclo di apprendimento dopo il colloquio.
+## 5. Core Product Areas
 
-## 5. Business Model
+### 5.1 My Teams
+L'utente seleziona le squadre preferite e riceve un'esperienza personalizzata.
 
-### Free
+### 5.2 Match Center
+Pagina dedicata alle partite con stato, orario, squadre, eventi e aggiornamenti live quando disponibili.
 
-- account base
-- numero limitato di simulazioni
-- feedback sintetico
-- accesso a un numero limitato di scenari
+### 5.3 Fan Feed
+Feed di post e contenuti pubblicati dagli utenti e, in futuro, da fonti editoriali o partner.
 
-### Premium
+### 5.4 Community
+Commenti, reaction, discussioni e interazione tra tifosi.
 
-- simulazioni estese
-- analisi completa delle risposte
-- personalizzazione tramite CV e job description
-- storico completo
-- report dettagliati
-- coaching e suggerimenti avanzati
+### 5.5 Fan Profile
+Profilo personale con squadre preferite, attività, badge e storico sociale.
 
-### Possibile futuro B2B
+### 5.6 Notifications
+Alert su inizio partita, risultato, eventi e nuovi contenuti delle squadre seguite.
 
-- licenze per career center
-- università
-- bootcamp
-- HR / recruiting
-- programmi di outplacement
+## 6. Business Model — Future Ready
 
-## 6. Core Business Flows
+Il primo MVP può essere gratuito. Sono possibili in seguito:
+
+- Premium fan features.
+- Sponsorizzazioni e advertising.
+- Partnership con club e media.
+- Affiliate / merchandise.
+- Funzionalità B2B per club o community ufficiali.
+
+Questi modelli sono opportunità future e non devono bloccare il rilascio del primo MVP.
+
+## 7. Main Functional Flows
 
 ### Flow 1 — Onboarding
 
-1. Utente apre la piattaforma.
-2. Creazione account/login.
-3. Selezione ruolo professionale.
-4. Inserimento seniority.
-5. Upload/import CV opzionale.
-6. Inserimento job description opzionale.
-7. Configurazione preferenze colloquio.
-8. Accesso dashboard.
+1. L'utente apre la piattaforma.
+2. Crea account oppure entra come guest, se previsto.
+3. Seleziona le squadre preferite.
+4. Sceglie le notifiche.
+5. Accede alla home personalizzata.
 
-### Flow 2 — Start Interview
+### Flow 2 — Follow a Team
 
-1. Utente sceglie il tipo di colloquio.
-2. Seleziona ruolo e seniority.
-3. Seleziona difficoltà.
-4. Avvia sessione.
-5. AI pone una domanda.
-6. Utente risponde tramite testo o voce.
-7. Sistema salva la risposta.
-8. AI analizza la risposta.
-9. Sistema presenta feedback.
-10. Passaggio alla domanda successiva.
-11. Conclusione sessione.
-12. Generazione report finale.
+1. L'utente apre la sezione Squadre.
+2. Cerca una squadra.
+3. Apre il profilo squadra.
+4. Seleziona “Segui”.
+5. La squadra entra in My Teams.
+6. Match e aggiornamenti della squadra entrano nel feed personalizzato.
 
-### Flow 3 — Review
+### Flow 3 — Match Experience
 
-1. Utente apre una sessione precedente.
-2. Visualizza domande e risposte.
-3. Visualizza feedback AI.
-4. Visualizza aree di miglioramento.
-5. Visualizza score e trend.
-6. Avvia nuova simulazione mirata.
+1. L'utente apre il Match Center.
+2. Visualizza la partita.
+3. Consulta stato e dettagli.
+4. Legge gli aggiornamenti.
+5. Interagisce con la community associata alla partita.
 
-## 7. Functional Requirements
+### Flow 4 — Community Post
 
-### FR-001 Authentication
+1. L'utente apre il feed.
+2. Scrive un post.
+3. Pubblica.
+4. Altri utenti possono reagire e commentare.
+5. Il sistema registra l'attività nel profilo.
 
-Il sistema deve permettere registrazione, login, logout e gestione sessione utente.
+## 8. Functional Requirements
 
-### FR-002 User Profile
+### FR-001 Account
+Registrazione, login e logout quando l'account è abilitato.
 
-L'utente deve poter gestire ruolo, seniority, competenze e preferenze.
+### FR-002 Fan Profile
+Gestione del profilo tifoso e delle squadre preferite.
 
-### FR-003 CV Management
+### FR-003 Team Search
+Ricerca e consultazione delle squadre disponibili.
 
-L'utente deve poter caricare un CV e associarlo alle sessioni di colloquio.
+### FR-004 Follow Team
+Segui/non seguire una squadra.
 
-### FR-004 Job Description
+### FR-005 Personalized Home
+La home deve mostrare contenuti rilevanti per le squadre seguite.
 
-L'utente deve poter inserire una job description per generare simulazioni contestualizzate.
+### FR-006 Match List
+Visualizzazione delle partite per giornata/data/stato.
 
-### FR-005 Interview Configuration
+### FR-007 Match Detail
+Dettaglio della partita con squadre, orario, stato e dati disponibili.
 
-La piattaforma deve permettere di configurare:
-- tipo di colloquio
-- ruolo
-- seniority
-- difficoltà
-- numero domande
-- lingua
-- modalità risposta
+### FR-008 Live Events
+Visualizzazione di eventi live quando il provider sportivo li rende disponibili.
 
-### FR-006 Interview Session
+### FR-009 Fan Feed
+Visualizzazione paginata dei post della community.
 
-Il sistema deve creare e gestire una sessione con stato, timestamp, domande e risposte.
+### FR-010 Create Post
+L'utente autenticato può creare un post.
 
-### FR-007 AI Question Generation
+### FR-011 Reactions
+L'utente può reagire a un post.
 
-Il sistema deve generare domande coerenti con il profilo e il contesto del colloquio.
+### FR-012 Comments
+L'utente può commentare un post.
 
-### FR-008 Answer Capture
+### FR-013 Notifications
+L'utente può ricevere notifiche relative alle squadre seguite e alle interazioni.
 
-Il sistema deve supportare almeno risposta testuale. La risposta vocale può essere introdotta come estensione del MVP.
+### FR-014 Moderation
+I contenuti devono poter essere segnalati e moderati.
 
-### FR-009 AI Answer Analysis
-
-Il sistema deve analizzare ogni risposta secondo criteri configurabili.
-
-Criteri iniziali:
-- relevance
-- structure
-- clarity
-- technical accuracy
-- completeness
-- communication
-
-### FR-010 Feedback
-
-Il sistema deve restituire feedback leggibile, punti di forza, criticità e suggerimenti di miglioramento.
-
-### FR-011 Final Report
-
-Alla fine della sessione il sistema deve produrre un report riepilogativo.
-
-### FR-012 History
-
-L'utente deve poter visualizzare lo storico delle sessioni.
-
-### FR-013 Progress Tracking
-
-Il sistema deve mostrare l'evoluzione dei risultati nel tempo.
-
-### FR-014 Subscription
-
-Il sistema deve distinguere le funzionalità disponibili in base al piano utente.
-
-## 8. Non Functional Requirements
+## 9. Non Functional Requirements
 
 ### NFR-001 Performance
+La home e il match center devono essere percepiti come rapidi anche con feed e dati dinamici.
 
-La UI deve mantenere una navigazione fluida e ridurre al minimo i tempi percepiti durante l'interazione con l'AI.
-
-### NFR-002 Security
-
-- autenticazione sicura
-- autorizzazione server-side
-- protezione dei dati utente
-- secret esclusivamente tramite environment/configuration
-- nessuna API key AI nel frontend
+### NFR-002 Mobile First
+La principale esperienza deve funzionare bene su smartphone.
 
 ### NFR-003 Scalability
+Il sistema deve permettere di aggiungere nuove competizioni, squadre e provider senza cambiare il frontend di dominio.
 
-Il design applicativo deve consentire l'aggiunta di nuovi provider AI senza modificare le feature UI.
+### NFR-004 Security
+Autorizzazione server-side, validazione input, rate limiting per azioni sociali e protezione dei dati utente.
 
-### NFR-004 Observability
+### NFR-005 Moderation
+Spam, abuso, report e blocco contenuti devono essere gestibili lato backend.
 
-Errori, eventi tecnici e metriche principali devono essere osservabili lato backend.
+## 10. MVP Scope
 
-## 9. Domain Model — Logical
+### Must Have
 
-Entità principali previste:
+- Landing/home pubblica.
+- Account base.
+- Selezione squadre preferite.
+- Home personalizzata.
+- Match Center.
+- Match Detail.
+- Fan Feed.
+- Creazione post.
+- Reaction.
+- Commenti.
 
-- User
-- Subscription
-- UserProfile
-- Resume
-- JobDescription
-- InterviewTemplate
-- InterviewSession
-- InterviewQuestion
-- InterviewAnswer
-- AnswerAnalysis
-- Feedback
-- SessionReport
-- UsageRecord
+### Should Have
 
-Relazioni principali:
+- Notifiche.
+- Ricerca squadre.
+- Profilo tifoso.
+- Segnalazione contenuti.
 
-`User → UserProfile`
+### Later
 
-`User → Subscription`
+- Video/live media.
+- Ticketing.
+- Merchandise.
+- Premium membership.
+- Official club tools.
+- Advanced statistics.
 
-`User → Resume`
-
-`User → InterviewSession`
-
-`InterviewSession → InterviewQuestion[]`
-
-`InterviewQuestion → InterviewAnswer`
-
-`InterviewAnswer → AnswerAnalysis`
-
-`InterviewSession → SessionReport`
-
-## 10. Business Rules
+## 11. Business Rules
 
 ### BR-001
-Una sessione deve appartenere a un utente autenticato.
+Una squadra seguita deve essere associata al profilo del tifoso.
 
 ### BR-002
-Una risposta deve appartenere a una domanda della sessione corrente.
+La home personalizzata deve dare priorità ai contenuti delle squadre seguite.
 
 ### BR-003
-Una sessione completata non deve perdere le risposte già registrate.
+Solo utenti autorizzati possono creare contenuti social.
 
 ### BR-004
-Le funzionalità Premium devono essere validate dal backend e non solo dalla UI.
+Il backend deve validare ownership e permessi prima di modificare post, commenti o profilo.
 
 ### BR-005
-Il sistema deve registrare l'utilizzo delle funzionalità soggette a quota.
+Un contenuto segnalato deve entrare in un workflow di moderazione.
 
 ### BR-006
-Una job description può essere associata a più sessioni.
-
-### BR-007
-Un CV può essere riutilizzato in più sessioni, mantenendo la versione utilizzata nella sessione.
-
-## 11. MVP Scope
-
-### In scope
-
-- Landing page
-- Authentication
-- Dashboard
-- Profilo utente
-- Creazione interview
-- Configurazione colloquio
-- Sessione domanda/risposta
-- Analisi AI testuale
-- Feedback
-- Report finale
-- Storico sessioni
-
-### Out of scope iniziale
-
-- video interview completa
-- live avatar AI
-- integrazione con recruiter
-- marketplace coach
-- B2B administration
-- mobile native app
+I dati delle partite devono arrivare da un provider/API e non essere hardcoded nel frontend.
 
 ## 12. KPI di Prodotto
 
-Metriche iniziali da monitorare:
+- utenti attivi giornalieri e mensili
+- squadre seguite per utente
+- match detail views
+- sessioni durante le partite
+- post per utente
+- commenti/reaction per sessione
+- retention 7/30 giorni
+- notifiche aperte
+- percentuale utenti che seguono almeno una squadra
 
-- signup conversion
-- interview started
-- interview completion rate
-- average sessions per user
-- repeat usage
-- free-to-paid conversion
-- average session duration
-- average analysis latency
-- AI cost per session
+## 13. Acceptance Criteria — MVP
 
-## 13. Prioritized Business Backlog
+### AC-001 Team Selection
+**Given** un nuovo utente
+**When** seleziona una o più squadre
+**Then** la home deve utilizzare queste squadre per personalizzare i contenuti.
 
-### P0
+### AC-002 Match Center
+**Given** una squadra seguita
+**When** l'utente apre il Match Center
+**Then** deve poter vedere le partite rilevanti della squadra.
 
-- Definizione dominio
-- UX principale
-- Authentication
-- Dashboard
-- Interview setup
-- Interview session
-- AI question generation
-- Answer analysis
-- Final report
-
-### P1
-
-- Resume parsing
-- Job description matching
-- Session history
-- Progress dashboard
-- Subscription management
-
-### P2
-
-- Voice interview
-- Advanced coaching
-- Team/B2B features
-- Integrations
-
-## 14. Functional Acceptance Criteria — MVP
-
-### AC-001 Interview Creation
-
+### AC-003 Community Post
 **Given** un utente autenticato
-**When** configura ruolo, seniority e tipo colloquio
-**Then** il sistema deve creare una nuova sessione e mostrare la prima domanda.
+**When** pubblica un post valido
+**Then** il post deve apparire nel feed e risultare associato al suo profilo.
 
-### AC-002 Answer Submission
+### AC-004 Reaction
+**Given** un post esistente
+**When** l'utente seleziona una reaction
+**Then** il contatore deve aggiornarsi senza creare duplicazioni per la stessa reaction.
 
-**Given** una domanda attiva
-**When** l'utente invia una risposta
-**Then** la risposta deve essere persistita e associata alla domanda corretta.
+### AC-005 Moderation
+**Given** un contenuto segnalato
+**When** la segnalazione viene inviata
+**Then** il contenuto deve risultare disponibile per il workflow di moderazione.
 
-### AC-003 AI Feedback
-
-**Given** una risposta valida
-**When** l'analisi AI termina
-**Then** il sistema deve mostrare valutazione, punti di forza, criticità e suggerimento.
-
-### AC-004 Final Report
-
-**Given** tutte le domande completate
-**When** la sessione termina
-**Then** il sistema deve creare un report finale consultabile.
-
-### AC-005 History
-
-**Given** un utente con sessioni concluse
-**When** apre la cronologia
-**Then** deve vedere le sessioni e poter aprire il relativo report.
-
-## 15. Target Architecture
-
-Il frontend attuale è React + Vite e contiene ancora una struttura starter senza routing, API layer, autenticazione o persistenza applicativa. fileciteturn9file0L2-L2
-
-Target:
+## 14. Target Architecture
 
 ```text
-React/Vite Frontend
-        |
-        v
+React + Vite
+      ↓
+Feature-based Frontend
+      ↓
 ASP.NET Core .NET 10 API
-        |
-  Application Layer
-        |
- Domain / Infrastructure
-        |
- SQL Server
-        |
- AI Provider Abstraction
-   /        |        \
- OpenAI   Claude    Gemini
+      ↓
+Application / Domain
+      ↓
+SQL Server
+      ↓
+Sports Data Provider
+Notifications / Media / Search
 ```
 
-Il frontend deve comunicare esclusivamente con API applicative. Le credenziali dei provider AI devono rimanere lato backend.
-
-## 16. Recommended Delivery Sequence
-
-1. Business/domain baseline.
-2. Frontend application shell.
-3. Backend .NET 10 foundation.
-4. Authentication and user profile.
-5. Interview setup.
-6. Interview session engine.
-7. AI orchestration layer.
-8. Feedback/reporting.
-9. History/progress.
-10. Subscription and quotas.
-11. CI/CD, security and observability.
-
-## 17. Current Repository Assessment
-
-La base tecnica esistente è adatta per iniziare, ma il progetto è ancora allo stadio iniziale: il repository presenta una struttura minima Vite/React e l'`App.jsx` originale era ancora composto principalmente da contenuti demo dello starter. fileciteturn9file0L2-L2
-
-La prossima fase deve quindi concentrarsi sulla trasformazione da starter frontend a **prodotto applicativo guidato dal dominio**.
+Il frontend non deve conoscere direttamente le credenziali dei provider esterni.
