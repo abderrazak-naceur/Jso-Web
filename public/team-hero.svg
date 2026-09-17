@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620" role="img" aria-labelledby="title desc">
+  <title id="title">FanMatch stadium hero artwork</title>
+  <desc id="desc">Abstract football stadium scene in navy and yellow with a supporter scarf and jersey.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#071733"/><stop offset="1" stop-color="#123a73"/></linearGradient>
+    <linearGradient id="light" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd83d"/><stop offset="1" stop-color="#ffb700"/></linearGradient>
+  </defs>
+  <rect width="900" height="620" rx="40" fill="url(#bg)"/>
+  <path d="M0 400 C120 345 195 355 300 410 C410 470 525 450 660 382 C755 334 820 340 900 365 V620 H0Z" fill="#0b2751"/>
+  <path d="M0 115 C125 65 230 70 335 122 C475 190 575 154 700 95 C785 54 845 62 900 80" fill="none" stroke="#ffd83d" stroke-width="24" opacity=".95"/>
+  <path d="M62 470 H838" stroke="#ffd83d" stroke-width="5" stroke-dasharray="12 14" opacity=".55"/>
+  <g transform="translate(520 132)">
+    <path d="M95 48 150 0 224 28 272 95 236 145 185 119 158 198 86 198 58 120 10 145 -18 98 4 52 44 27Z" fill="#ffd83d"/>
+    <path d="M88 48 151 16 214 44 191 76 151 62 112 80Z" fill="#071733" opacity=".88"/>
+    <path d="M52 121 18 132 3 191 43 204 70 156Z" fill="#f5c62d"/>
+    <path d="M216 122 253 132 271 191 229 204 201 155Z" fill="#f5c62d"/>
+    <circle cx="151" cy="104" r="29" fill="#f2b98f"/>
+    <path d="M123 104 C126 73 142 58 160 59 C179 60 190 76 185 98 C166 88 145 88 123 104Z" fill="#1c1d24"/>
+    <rect x="94" y="90" width="114" height="92" rx="22" fill="#123a73"/>
+    <path d="M151 91 v90" stroke="#ffd83d" stroke-width="9"/>
+    <text x="151" y="139" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#fff">JM</text>
+  </g>
+  <g transform="translate(78 245)">
+    <rect width="300" height="118" rx="26" fill="#f8f3df" opacity=".98" transform="rotate(-7 150 59)"/>
+    <path d="M34 36 H266" stroke="#ffd83d" stroke-width="19"/>
+    <path d="M34 83 H266" stroke="#123a73" stroke-width="19"/>
+    <text x="150" y="65" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="#071733">FANMATCH</text>
+  </g>
+  <g fill="#ffd83d" opacity=".8">
+    <circle cx="95" cy="165" r="5"/><circle cx="122" cy="150" r="4"/><circle cx="152" cy="170" r="6"/><circle cx="192" cy="146" r="4"/>
+    <circle cx="235" cy="170" r="6"/><circle cx="276" cy="152" r="4"/><circle cx="320" cy="170" r="5"/>
+  </g>
+</svg>
