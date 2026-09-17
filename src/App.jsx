@@ -1,198 +1,206 @@
 import { useState } from 'react'
 import './App.css'
 
-const features = [
-  {
-    icon: '◈',
-    title: 'Interview practice',
-    text: 'Simulate realistic technical and behavioral interviews in a focused workspace.',
-  },
-  {
-    icon: '↗',
-    title: 'AI feedback',
-    text: 'Get clear feedback on your answers, structure, clarity, and confidence.',
-  },
-  {
-    icon: '✦',
-    title: 'Career insights',
-    text: 'Track your progress and identify the areas that matter most for your next interview.',
-  },
+const teams = [
+  { name: 'My Team', meta: 'Next match · Sat 20:45', accent: 'green' },
+  { name: 'Second Team', meta: 'League · Round 8', accent: 'blue' },
+  { name: 'Women', meta: 'Match tomorrow · 18:00', accent: 'gold' },
+]
+
+const feed = [
+  { author: 'Marco', time: '8 min', title: 'La partita si avvicina: cosa ne pensate della formazione?', reactions: 32 },
+  { author: 'Luca', time: '21 min', title: 'Il nuovo acquisto può cambiare il nostro attacco.', reactions: 18 },
+  { author: 'Sara', time: '43 min', title: 'Pronostico per il weekend: dite la vostra 👇', reactions: 27 },
 ]
 
 function App() {
-  const [demoOpen, setDemoOpen] = useState(false)
+  const [selectedTeam, setSelectedTeam] = useState(0)
+  const [showPostComposer, setShowPostComposer] = useState(false)
+  const [activeReaction, setActiveReaction] = useState(null)
 
   return (
     <main className="app-shell">
-      <nav className="navbar">
-        <a className="brand" href="#top" aria-label="Interview AI home">
-          <span className="brand-mark">AI</span>
-          <span>Interview<span>AI</span></span>
+      <header className="topbar">
+        <a className="brand" href="#home" aria-label="Jso home">
+          <span className="brand-mark">J</span>
+          <span>Jso<span>Fans</span></span>
         </a>
 
-        <div className="nav-links">
-          <a href="#features">Features</a>
-          <a href="#how-it-works">How it works</a>
-          <a href="#pricing">Pricing</a>
+        <nav className="nav-links" aria-label="Main navigation">
+          <a className="active" href="#home">Home</a>
+          <a href="#matches">Partite</a>
+          <a href="#community">Community</a>
+          <a href="#teams">Squadre</a>
+        </nav>
+
+        <div className="topbar-actions">
+          <button className="icon-button" type="button" aria-label="Notifications">◌</button>
+          <button className="profile-button" type="button">AB</button>
         </div>
+      </header>
 
-        <button className="nav-cta" type="button" onClick={() => setDemoOpen(true)}>
-          Try demo
-        </button>
-      </nav>
-
-      <section className="hero-section" id="top">
+      <section className="hero" id="home">
         <div className="hero-copy">
-          <div className="eyebrow">AI-POWERED INTERVIEW COACH</div>
-          <h1>
-            Walk into your next interview with
-            <span> confidence.</span>
-          </h1>
-          <p className="hero-subtitle">
-            Practice realistic interviews, receive instant AI feedback, and turn every session into measurable progress.
-          </p>
-
+          <span className="eyebrow">FAN PLATFORM</span>
+          <h1>Il tuo club.<br />La tua community.</h1>
+          <p>Segui le tue squadre, vivi le partite e parla con altri tifosi in un unico spazio.</p>
           <div className="hero-actions">
-            <button className="primary-button" type="button" onClick={() => setDemoOpen(true)}>
-              Start practicing <span>→</span>
-            </button>
-            <a className="secondary-link" href="#how-it-works">See how it works</a>
-          </div>
-
-          <div className="trust-row">
-            <span className="status-dot" />
-            <span>No credit card required</span>
-            <span className="trust-divider">•</span>
-            <span>Built for technical &amp; behavioral interviews</span>
+            <a className="primary-button" href="#matches">Vai al Match Center <span>→</span></a>
+            <button className="ghost-button" type="button" onClick={() => setShowPostComposer(true)}>Scrivi un post</button>
           </div>
         </div>
 
-        <div className="hero-visual" aria-label="AI interview dashboard preview">
-          <div className="glow glow-one" />
-          <div className="glow glow-two" />
-          <div className="dashboard-card">
-            <div className="dashboard-topbar">
-              <span className="mini-title">Live interview</span>
-              <span className="live-pill"><span /> LIVE</span>
+        <div className="hero-card" aria-label="Fan dashboard preview">
+          <div className="hero-card-header">
+            <div>
+              <span>LIVE MATCH CENTER</span>
+              <strong>La prossima partita</strong>
             </div>
-
-            <div className="question-block">
-              <div className="question-label">QUESTION 03</div>
-              <h2>Tell me about a challenging project you delivered.</h2>
-              <div className="waveform" aria-hidden="true">
-                {Array.from({ length: 34 }).map((_, index) => (
-                  <i key={index} style={{ height: `${12 + ((index * 17) % 40)}px` }} />
-                ))}
-              </div>
+            <span className="live-badge"><i /> Live soon</span>
+          </div>
+          <div className="scoreboard">
+            <div className="club-block">
+              <div className="club-badge club-home">H</div>
+              <strong>HOME</strong>
+              <small>Home team</small>
             </div>
-
-            <div className="score-grid">
-              <div className="score-card">
-                <span>Clarity</span>
-                <strong>92</strong>
-                <small>Excellent</small>
-              </div>
-              <div className="score-card">
-                <span>Structure</span>
-                <strong>87</strong>
-                <small>Very good</small>
-              </div>
-              <div className="score-card highlight-card">
-                <span>Confidence</span>
-                <strong>94</strong>
-                <small>Excellent</small>
-              </div>
+            <div className="match-time">
+              <small>SABATO</small>
+              <strong>20:45</strong>
+              <span>Campionato</span>
             </div>
+            <div className="club-block">
+              <div className="club-badge club-away">A</div>
+              <strong>AWAY</strong>
+              <small>Away team</small>
+            </div>
+          </div>
+          <div className="match-pills">
+            <span>Formazioni</span><span>Eventi</span><span>Commenti</span>
+          </div>
+        </div>
+      </section>
 
-            <div className="insight-card">
+      <div className="content-grid">
+        <aside className="sidebar">
+          <section className="panel" id="teams">
+            <div className="panel-title-row">
               <div>
-                <span className="insight-kicker">AI INSIGHT</span>
-                <p>Strong example. Add a measurable outcome to make your answer more impactful.</p>
+                <span className="eyebrow">MY TEAMS</span>
+                <h2>Le tue squadre</h2>
               </div>
-              <span className="spark">✦</span>
+              <button className="small-button" type="button">+ Aggiungi</button>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <section className="stats-strip" aria-label="Product highlights">
-        <div><strong>10k+</strong><span>practice sessions</span></div>
-        <div><strong>4.9/5</strong><span>user rating</span></div>
-        <div><strong>24/7</strong><span>AI coaching</span></div>
-        <div><strong>3 min</strong><span>to your first session</span></div>
-      </section>
+            <div className="team-list">
+              {teams.map((team, index) => (
+                <button
+                  key={team.name}
+                  className={`team-item ${selectedTeam === index ? 'selected' : ''}`}
+                  type="button"
+                  onClick={() => setSelectedTeam(index)}
+                >
+                  <span className={`team-icon ${team.accent}`}>{index === 0 ? '★' : index === 1 ? '◉' : '✦'}</span>
+                  <span>
+                    <strong>{team.name}</strong>
+                    <small>{team.meta}</small>
+                  </span>
+                  <span className="chevron">›</span>
+                </button>
+              ))}
+            </div>
+          </section>
 
-      <section className="features-section" id="features">
-        <div className="section-heading">
-          <span className="eyebrow">DESIGNED AROUND YOUR SUCCESS</span>
-          <h2>Everything you need to interview better.</h2>
-        </div>
+          <section className="side-stat">
+            <span>FAN STREAK</span>
+            <strong>12 giorni</strong>
+            <p>Hai seguito la tua squadra per 12 giorni consecutivi.</p>
+          </section>
+        </aside>
 
-        <div className="feature-grid">
-          {features.map((feature) => (
-            <article className="feature-card" key={feature.title}>
-              <div className="feature-icon">{feature.icon}</div>
-              <h3>{feature.title}</h3>
-              <p>{feature.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
+        <div className="main-column">
+          <section className="panel" id="matches">
+            <div className="panel-title-row">
+              <div>
+                <span className="eyebrow">MATCH CENTER</span>
+                <h2>Partite in evidenza</h2>
+              </div>
+              <a className="text-link" href="#matches">Vedi tutte →</a>
+            </div>
 
-      <section className="workflow-section" id="how-it-works">
-        <div className="workflow-copy">
-          <span className="eyebrow">HOW IT WORKS</span>
-          <h2>Practice. Improve. Repeat.</h2>
-          <p>
-            A simple workflow designed to keep you focused on the conversation instead of the tool.
-          </p>
-          <div className="steps">
-            <div><span>01</span><div><h3>Choose your interview</h3><p>Select a role, difficulty, and interview style.</p></div></div>
-            <div><span>02</span><div><h3>Answer naturally</h3><p>Practice with realistic questions and timed responses.</p></div></div>
-            <div><span>03</span><div><h3>Review your feedback</h3><p>Understand what worked and what to improve next.</p></div></div>
-          </div>
-        </div>
+            <div className="match-grid">
+              <article className="match-card featured-match">
+                <div className="match-card-top"><span>OGGI · 20:45</span><b>IN ARRIVO</b></div>
+                <div className="match-teams">
+                  <div><span className="club-badge club-home large">H</span><strong>HOME</strong></div>
+                  <span className="vs">VS</span>
+                  <div><span className="club-badge club-away large">A</span><strong>AWAY</strong></div>
+                </div>
+                <div className="match-footer"><span>Campionato</span><span>🔔 Attiva alert</span></div>
+              </article>
+              <article className="match-card">
+                <div className="match-card-top"><span>DOM · 17:00</span><b>UPCOMING</b></div>
+                <div className="compact-score">
+                  <span className="mini-club">H</span><strong>HOME</strong>
+                  <span className="versus">–</span>
+                  <strong>AWAY</strong><span className="mini-club away">A</span>
+                </div>
+                <p>Round 8 · League</p>
+              </article>
+            </div>
+          </section>
 
-        <div className="review-card">
-          <div className="review-header">
-            <span>SESSION REVIEW</span>
-            <strong>08:42</strong>
-          </div>
-          <div className="review-score">
-            <div className="score-ring"><span>91</span><small>/100</small></div>
-            <div><h3>Great session</h3><p>You are becoming more concise and structured.</p></div>
-          </div>
-          <div className="progress-line"><span style={{ width: '91%' }} /></div>
-          <div className="review-meta"><span>Clarity <b>92%</b></span><span>Confidence <b>94%</b></span><span>Structure <b>87%</b></span></div>
-        </div>
-      </section>
+          <section className="panel" id="community">
+            <div className="panel-title-row">
+              <div>
+                <span className="eyebrow">COMMUNITY</span>
+                <h2>Cosa dicono i tifosi</h2>
+              </div>
+              <button className="small-button dark" type="button" onClick={() => setShowPostComposer(true)}>+ Nuovo post</button>
+            </div>
 
-      <section className="pricing-section" id="pricing">
-        <div className="pricing-card">
-          <div>
-            <span className="eyebrow">START TODAY</span>
-            <h2>Your next interview starts here.</h2>
-            <p>Use the demo now and validate the experience before connecting the real AI backend.</p>
-          </div>
-          <button className="primary-button" type="button" onClick={() => setDemoOpen(true)}>Open demo <span>→</span></button>
+            <div className="composer-mini" onClick={() => setShowPostComposer(true)} role="button" tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && setShowPostComposer(true)}>
+              <div className="avatar">AB</div>
+              <span>Condividi un pensiero sulla tua squadra...</span>
+              <button type="button">Pubblica</button>
+            </div>
+
+            <div className="feed-list">
+              {feed.map((post, index) => (
+                <article className="feed-card" key={post.author + post.time}>
+                  <div className="feed-header">
+                    <div className="avatar small">{post.author.slice(0, 1)}</div>
+                    <div><strong>{post.author}</strong><small>{post.time} fa · Tifoso</small></div>
+                    <button className="more-button" type="button" aria-label="Altre opzioni">•••</button>
+                  </div>
+                  <p>{post.title}</p>
+                  <div className="feed-actions">
+                    <button type="button" className={activeReaction === index ? 'reacted' : ''} onClick={() => setActiveReaction(activeReaction === index ? null : index)}>♥ {post.reactions}</button>
+                    <button type="button">◌ Commenta</button>
+                    <button type="button">↗ Condividi</button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
         </div>
-      </section>
+      </div>
 
       <footer className="footer">
-        <span>© 2026 InterviewAI</span>
-        <span>Frontend MVP · React + Vite</span>
+        <span>© 2026 Jso Fans</span>
+        <span>Fan platform · Frontend MVP</span>
       </footer>
 
-      {demoOpen && (
-        <div className="modal-backdrop" role="presentation" onClick={() => setDemoOpen(false)}>
-          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="demo-title" onClick={(event) => event.stopPropagation()}>
-            <button className="modal-close" type="button" onClick={() => setDemoOpen(false)} aria-label="Close">×</button>
-            <span className="eyebrow">INTERVIEW DEMO</span>
-            <h2 id="demo-title">Ready for question one?</h2>
-            <p>This frontend demo is ready. The next step is connecting the session to your .NET API and AI provider.</p>
+      {showPostComposer && (
+        <div className="modal-backdrop" role="presentation" onClick={() => setShowPostComposer(false)}>
+          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="post-title" onClick={(event) => event.stopPropagation()}>
+            <button className="modal-close" type="button" onClick={() => setShowPostComposer(false)} aria-label="Chiudi">×</button>
+            <span className="eyebrow">COMMUNITY POST</span>
+            <h2 id="post-title">Cosa vuoi condividere?</h2>
+            <textarea placeholder="Scrivi qualcosa per gli altri tifosi..." rows="5" />
             <div className="modal-actions">
-              <button className="primary-button" type="button" onClick={() => setDemoOpen(false)}>Start demo <span>→</span></button>
-              <button className="secondary-button" type="button" onClick={() => setDemoOpen(false)}>Maybe later</button>
+              <button className="ghost-button" type="button" onClick={() => setShowPostComposer(false)}>Annulla</button>
+              <button className="primary-button" type="button" onClick={() => setShowPostComposer(false)}>Pubblica <span>→</span></button>
             </div>
           </div>
         </div>
