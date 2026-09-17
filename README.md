@@ -1,183 +1,154 @@
-# InterviewAI — Jso-Web
+# Jso-Web — Fan Platform
 
 <p align="center">
-  <img src="./src/assets/hero.png" alt="InterviewAI" width="720" />
+  <img src="public/fan-platform-hero.svg" alt="Jso fan platform" width="900" />
 </p>
 
 <p align="center">
-  <strong>AI-powered interview preparation platform</strong><br />
-  Practice realistic interviews, capture answers, and receive structured feedback.
+  <strong>Una piattaforma digitale per tifosi, squadre, partite e community.</strong>
 </p>
 
-<p align="center">
-  <a href="https://github.com/abderrazak-naceur/Jso-Web">Repository</a> ·
-  <a href="./docs/BUSINESS_ANALYSIS.md">Business Analysis</a> ·
-  <a href="./docs/USER_STORIES.md">User Stories</a> ·
-  <a href="./docs/TECHNICAL_BACKLOG.md">Technical Backlog</a> ·
-  <a href="./docs/ROADMAP.md">Roadmap</a>
-</p>
+Jso-Web è il frontend di una piattaforma pensata per riunire in un'unica esperienza tutto ciò che interessa a un tifoso: squadre preferite, partite, aggiornamenti, contenuti e interazione con la community.
 
-## Overview
+## Visione
 
-InterviewAI is being built as a web-first SaaS application for candidates who want to prepare for technical and behavioral interviews in a realistic way.
+Creare uno spazio dove il tifoso possa entrare, scegliere i propri club e vivere una home personalizzata con il meglio dell'esperienza sportiva e sociale.
 
-The product direction includes:
+### Esperienza principale
 
-- AI mock interviews
-- Technical and behavioral interview modes
-- Answer capture and structured evaluation
-- Personalized feedback and improvement areas
-- Interview history and progress tracking
-- Usage limits and subscription plans
-- Future B2B capabilities for recruiters and training teams
+```text
+Choose your teams
+      ↓
+Personalized Home
+      ↓
+Matches + Updates + Community
+      ↓
+Engage / Comment / React / Follow
+      ↓
+Build your fan profile
+```
 
-## Current Status
+## Core Features
 
-The repository started as a minimal React + Vite application and is being progressively transformed into the InterviewAI product foundation.
-
-Current frontend stack:
-
-| Technology | Version / Role |
+| Area | Obiettivo |
 |---|---|
-| React | 18.3.1 |
-| Vite | 6.4.1 |
-| React DOM | 18.3.1 |
-| @vitejs/plugin-react | 4.3.4 |
-| Oxlint | 1.81.0 |
+| **My Teams** | Seguire uno o più club e personalizzare il feed |
+| **Match Center** | Consultare partite, stato, eventi e risultati |
+| **Fan Feed** | Leggere e pubblicare contenuti della community |
+| **Fan Profile** | Identità, club preferiti e attività del tifoso |
+| **Notifications** | Ricevere aggiornamenti sui team e sulle partite |
+| **Community** | Commenti, reaction, discussioni e contenuti social |
 
-Available scripts:
+## MVP
 
-```bash
-npm install
-npm run dev
-npm run build
-npm run lint
-npm run preview
-```
+Il primo MVP è orientato a quattro percorsi principali:
 
-## Frontend MVP
+1. Registrazione e profilo tifoso.
+2. Selezione delle squadre preferite.
+3. Home personalizzata con match center e feed.
+4. Interazione con la community tramite post, commenti e reaction.
 
-The current UI provides the first visual direction for the product, including a modern landing page, product positioning, feature presentation, interview workflow sections, and an interview demo interaction.
+## Frontend Stack
 
-The next frontend evolution is planned around a production-oriented structure with routing, reusable UI components, feature-based modules, API integration, authentication, loading/error states, and automated tests.
+- React 18
+- Vite 6
+- JavaScript / JSX
+- CSS responsive
+- Oxlint
 
-## Planned Architecture
-
-```text
-Jso-Web/
-├── src/
-│   ├── app/
-│   │   ├── App.jsx
-│   │   ├── router.jsx
-│   │   └── providers/
-│   ├── components/
-│   │   └── ui/
-│   ├── features/
-│   │   ├── auth/
-│   │   ├── interview/
-│   │   ├── evaluation/
-│   │   ├── dashboard/
-│   │   └── billing/
-│   ├── pages/
-│   ├── services/
-│   │   └── api/
-│   ├── hooks/
-│   ├── utils/
-│   └── assets/
-├── docs/
-│   ├── ANALYSIS.md
-│   ├── BUSINESS_ANALYSIS.md
-│   ├── USER_STORIES.md
-│   ├── TECHNICAL_BACKLOG.md
-│   ├── DOMAIN_MODEL.md
-│   └── ROADMAP.md
-└── package.json
-```
-
-## Product Flow
+## Target Architecture
 
 ```text
-Landing Page
+React + Vite
     ↓
-Sign Up / Login
+Feature-based Frontend
     ↓
-Interview Setup
+ASP.NET Core .NET 10 API
     ↓
-AI Interview Session
+Application / Domain / Infrastructure
     ↓
-Answer Capture
+SQL Server
     ↓
-AI Evaluation
-    ↓
-Score + Feedback
-    ↓
-Progress Dashboard
+Sports Data Providers / Notifications / Media
+```
+
+Il frontend deve rimanere indipendente dai provider dati: partite, classifiche, news e notifiche saranno esposti tramite API applicative.
+
+## Repository Structure
+
+```text
+src/
+  app/
+  components/
+  features/
+  pages/
+  services/
+  hooks/
+  utils/
+  assets/
+
+docs/
+  ANALYSIS.md
+  BUSINESS_ANALYSIS.md
+  USER_STORIES.md
+  TECHNICAL_BACKLOG.md
+  DOMAIN_MODEL.md
+  ROADMAP.md
 ```
 
 ## Documentation
 
-The project documentation is maintained alongside the code:
-
-- [Technical Analysis](./docs/ANALYSIS.md)
-- [Business & Functional Analysis](./docs/BUSINESS_ANALYSIS.md)
-- [User Stories & Acceptance Criteria](./docs/USER_STORIES.md)
-- [Technical Backlog](./docs/TECHNICAL_BACKLOG.md)
-- [Domain Model](./docs/DOMAIN_MODEL.md)
-- [Product Roadmap](./docs/ROADMAP.md)
-
-## Development Roadmap
-
-The planned delivery sequence is:
-
-1. Frontend/application foundation
-2. ASP.NET Core .NET 10 backend foundation
-3. Authentication and user management
-4. Interview session engine
-5. AI provider orchestration
-6. Evaluation and dashboard
-7. Usage metering and billing
-8. Testing, security, CI/CD and beta readiness
+- [Technical Analysis](docs/ANALYSIS.md)
+- [Business & Functional Analysis](docs/BUSINESS_ANALYSIS.md)
+- [User Stories](docs/USER_STORIES.md)
+- [Technical Backlog](docs/TECHNICAL_BACKLOG.md)
+- [Domain Model](docs/DOMAIN_MODEL.md)
+- [Roadmap](docs/ROADMAP.md)
 
 ## Local Development
 
-Requirements:
-
-- Node.js 22+
-- npm 10+
-
-Run the project:
-
 ```bash
-git clone https://github.com/abderrazak-naceur/Jso-Web.git
-cd Jso-Web
 npm install
 npm run dev
 ```
 
-Then open the local URL shown by Vite, normally:
+Build di produzione:
 
-```text
-http://localhost:5173
+```bash
+npm run build
 ```
 
-## Quality Checks
-
-Before committing frontend changes:
+Lint:
 
 ```bash
 npm run lint
-npm run build
 ```
 
 ## Product Principles
 
-- Realistic interview experience
-- Useful, actionable feedback
-- Clear separation between UI, domain logic and infrastructure
-- Privacy and security by design
-- Provider-agnostic AI integration
-- Incremental delivery with testable features
+- Mobile-first e responsive.
+- UX semplice per il tifoso.
+- Personalizzazione basata sui club seguiti.
+- Dati sportivi separati dalla UI.
+- Community moderabile e sicura.
+- API key e segreti esclusivamente lato backend.
 
-## License
+## Roadmap sintetica
 
-License to be defined.
+**Phase 1** — Frontend foundation + navigation + team selection
+
+**Phase 2** — Match Center + live events
+
+**Phase 3** — Fan Feed + comments + reactions
+
+**Phase 4** — Profiles + notifications + personalization
+
+**Phase 5** — Backend .NET 10 + SQL Server + sports data integration
+
+**Phase 6** — Moderation, analytics, performance and production hardening
+
+## Status
+
+🚧 **In development — MVP**
+
+Il repository è in fase di trasformazione da starter Vite/React a piattaforma fan-oriented.
