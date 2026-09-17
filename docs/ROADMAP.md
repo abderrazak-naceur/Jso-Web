@@ -1,75 +1,77 @@
-# Jso-Web — Delivery Roadmap
+# Jso-Web — Product Roadmap
 
-## Sprint 1 — Product foundation
-- Finalize product language and navigation.
-- Refactor frontend into feature-based structure.
-- Add routing and shared UI primitives.
-- Add environment configuration.
-- Add CI: install, lint, build.
+## Phase 1 — Fan Foundation
 
-**Exit criteria:** application shell is production-oriented and no longer depends on the Vite starter composition.
+- Finalizzare brand, navigation e responsive shell.
+- Team discovery e team selection.
+- Home personalizzata.
+- Routing frontend.
+- API contract iniziale.
 
-## Sprint 2 — Authentication
-- Backend .NET 10 identity endpoints.
-- Frontend login/register/reset screens.
-- Protected routes.
-- Session handling and error states.
+**Exit criteria:** un utente può scegliere le proprie squadre e navigare una home personalizzata.
 
-**Exit criteria:** a user can register, log in, log out and reach the dashboard.
+## Phase 2 — Match Center
 
-## Sprint 3 — Interview setup
-- Interview configuration form.
-- Job description ingestion.
-- Persist draft session.
-- Validation.
+- Lista partite.
+- Filtri per squadra/data.
+- Match detail.
+- Stato live.
+- Timeline eventi.
+- Provider sportivo adapter.
 
-**Exit criteria:** user can create and start an interview session.
+**Exit criteria:** una partita può essere consultata end-to-end e i dati possono arrivare da un provider esterno.
 
-## Sprint 4 — AI interview engine
-- Provider abstraction.
-- Prompt templates.
-- Context handling.
-- Question generation.
-- Answer submission.
-- Evaluation pipeline.
+## Phase 3 — Fan Community
 
-**Exit criteria:** one complete end-to-end interview can be executed and evaluated.
+- Feed.
+- Creazione post.
+- Commenti.
+- Reaction.
+- Paginazione.
+- Moderazione base.
 
-## Sprint 5 — Dashboard and history
-- Dashboard metrics.
-- Recent interviews.
-- History filters.
-- Session detail.
-- Progress tracking.
+**Exit criteria:** i tifosi possono pubblicare e interagire in modo sicuro.
 
-**Exit criteria:** user can inspect and compare completed sessions.
+## Phase 4 — Personalization & Notifications
 
-## Sprint 6 — Subscription and limits
-- Plans.
-- Entitlements.
-- Usage counters.
-- Checkout boundary.
-- Upgrade flow.
+- Profilo tifoso.
+- Preferenze.
+- Notification center.
+- Match alerts.
+- Social notifications.
 
-**Exit criteria:** product usage can be restricted and surfaced based on subscription entitlements.
+**Exit criteria:** l'esperienza cambia in base alle squadre seguite e alle preferenze utente.
 
-## Sprint 7 — Hardening
-- Unit/component/E2E tests.
-- Accessibility checks.
-- Performance checks.
-- Error monitoring.
-- Security review.
-- Documentation.
+## Phase 5 — Backend Production Foundation
 
-**Exit criteria:** MVP is ready for controlled beta release.
+- ASP.NET Core .NET 10.
+- SQL Server.
+- Authentication.
+- User/team/match/post domains.
+- Caching.
+- Observability.
+- CI/CD.
 
-## Release strategy
+**Exit criteria:** frontend e backend comunicano tramite API reali con dati persistiti.
+
+## Phase 6 — Scale & Growth
+
+- Search.
+- Advanced statistics.
+- Better recommendation/feed ranking.
+- Media support.
+- Premium opportunities.
+- Club/partner capabilities.
+
+**Exit criteria:** prodotto pronto per una beta pubblica più ampia.
+
+## Release Strategy
 
 ### Alpha
-Core interview loop with internal users.
+Frontend fan experience + mock data + core navigation.
 
 ### Beta
-Authentication + interview + evaluation + dashboard + basic usage limits.
+Teams + matches + community + backend + authentication.
 
 ### Public MVP
-Stable production deployment, subscription flow, observability and support documentation.
+Production sports data, notifications, moderation, monitoring e supporto operativo.
