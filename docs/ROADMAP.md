@@ -386,3 +386,32 @@ Match Center integrato, CMS completo, media library, community iniziale, moderaz
 ### Growth
 
 Boutique, membership, ticketing, sponsor, analytics avanzati e funzionalità live.
+
+
+## 9. Implementation Status — 2026-09-18
+
+### Phase 0 — Foundation & Architecture
+
+**Status: in progress.** Planning and architecture documentation are present. Backend solution foundation and local Docker orchestration have now been added.
+
+### Phase 1 — Public Visual Experience
+
+**Status: implemented as visual MVP.** React/Vite/Tailwind public experience exists with responsive navigation and the main JSO sections.
+
+### Phase 2 — Backend & Data Core
+
+**Status: in progress.** Added ASP.NET Core .NET 10 solution with Domain, Application, Infrastructure and API projects; EF Core SQL Server integration; initial core entities; public read API endpoints; Swagger; health check; Dockerfile and local SQL Server/API Compose setup.
+
+Remaining Phase 2 work: EF Core migrations, full domain model, DTO/application services, validation, pagination/filtering/sorting, standardized errors, logging, tests and authentication foundation.
+
+### Next execution order
+
+1. Complete EF Core migrations and database initialization.
+2. Add automated backend tests.
+3. Implement authentication and RBAC.
+4. Build Admin shell and Dashboard.
+5. Add Team/Player CRUD.
+6. Add Match Management and Match Center.
+7. Add News CMS and connect public React data.
+8. Add Media Library abstraction.
+9. Add CI/CD and production hardening.
