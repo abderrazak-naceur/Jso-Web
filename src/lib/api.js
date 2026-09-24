@@ -1,0 +1,17 @@
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5080/api').replace(/\/$/, '')
+
+async function request(path, signal) {
+  const response = await fetch(API_BASE_URL + path, {
+    headers: { Accept: 'application/json' },
+    signal,
+  })
+
+  if (!response.ok) throw new Error('API request failed: ' + response.status)
+  return response.json()
+}
+
+export const publicApi = {
+  getClub: (signal) => request('/club', signal),
+  getMatches: (signal) => request('/matches', signal),
+  getNews: (signal) => request('/news', signal),
+}
