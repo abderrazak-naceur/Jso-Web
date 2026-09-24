@@ -44,6 +44,9 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [active, setActive] = useState('Accueil')
   const [demoOpen, setDemoOpen] = useState(false)
+  const [selectedMatch, setSelectedMatch] = useState(null)
+  const [matchEvents, setMatchEvents] = useState([])
+  const [matchLoading, setMatchLoading] = useState(false)
   const [club, setClub] = useState(null)
   const [matches, setMatches] = useState([])
   const [articles, setArticles] = useState([])
@@ -71,6 +74,24 @@ function App() {
       })
     return () => controller.abort()
   }, [])
+
+  async function openMatch(match) {
+    setSelectedMatch(match)
+    setMatchEvents([])
+    setMatchLoading(true)
+    try {
+      const [details, events] = await Promise.all([
+        publicApi.getMatch(match.Id),
+        publicApi.getMatchEvents(match.Id),
+      ])
+      setSelectedMatch({ ...match, ...details })
+      setMatchEvents(events || [])
+    } catch {
+      setMatchEvents([])
+    } finally {
+      setMatchLoading(false)
+    }
+  }
 
   const goTo = (label, id) => {
     setActive(label)
@@ -171,7 +192,7 @@ function App() {
               <div className="mt-5 flex flex-wrap gap-2 text-sm text-slate-500">
                 {match.Venue && <span className="rounded-full bg-slate-100 px-3 py-2">{match.Venue}</span>}
                 <span className="rounded-full bg-slate-100 px-3 py-2">{match.IsHome ? 'Domicile' : 'Extérieur'}</span>
-              </div>
+              </div>              <button onClick={() => openMatch(match)} className="mt-5 rounded-full bg-jso-navy px-5 py-3 text-sm font-extrabold text-white hover:bg-jso-blue">Voir le détail <ChevronRight className="ml-1 inline" size={16}/></button>
             </article>
           )) : <div className="rounded-[2rem] bg-white p-8 text-slate-500">Aucun match publié.</div>}
         </div>
@@ -187,6 +208,22 @@ function App() {
 
       <section id="shop" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><div className="rounded-[2.5rem] bg-jso-gold p-8 sm:p-12"><div className="flex flex-col justify-between gap-8 md:flex-row md:items-end"><div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-navy/60">06 / BOUTIQUE</p><h2 className="mt-3 text-4xl font-black tracking-tight text-jso-navy sm:text-6xl">Porte les couleurs.<br />Vis l’identité.</h2></div><button onClick={() => setDemoOpen(true)} className="rounded-full bg-jso-navy px-6 py-4 font-extrabold text-white transition hover:bg-jso-blue"><ShoppingBag className="mr-2 inline" size={18} /> Boutique bientôt disponible</button></div></div></section>
 
+      {selectedMatch && <div className="fixed inset-0 z-[70] overflow-y-auto bg-jso-navy/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+        <div className="mx-auto mt-10 max-w-2xl rounded-[2rem] bg-white p-6 shadow-2xl sm:p-8">
+          <div className="flex items-start justify-between gap-5">
+            <div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">MATCH CENTER</p><h2 className="mt-2 text-3xl font-black">JSO Oudhref <span className="text-slate-400">vs</span> {selectedMatch.OpponentName}</h2></div>
+            <button onClick={() => setSelectedMatch(null)} className="rounded-full border border-slate-200 p-2"><X size={18}/></button>
+          </div>
+          <div className="mt-6 rounded-2xl bg-jso-navy p-6 text-center text-white">
+            <p className="text-sm text-white/60">{new Date(selectedMatch.KickoffAt).toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' })}</p>
+            <div className="my-4 text-5xl font-black">{selectedMatch.HomeScore != null && selectedMatch.AwayScore != null ? selectedMatch.HomeScore + ' - ' + selectedMatch.AwayScore : 'VS'}</div>
+            <p className="text-sm text-white/70">{selectedMatch.Venue || 'Lieu à confirmer'} · {selectedMatch.IsHome ? 'Domicile' : 'Extérieur'}</p>
+          </div>
+          <div className="mt-7"><h3 className="text-xl font-black">Événements</h3>
+            {matchLoading ? <p className="mt-4 text-sm text-slate-500">Chargement…</p> : matchEvents.length ? <div className="mt-4 space-y-3">{matchEvents.map(event => <div key={event.Id} className="flex gap-4 rounded-xl bg-slate-50 p-4"><span className="font-black text-jso-blue">{event.Minute}'</span><div><b>{event.Type}</b>{event.PlayerName && <p className="text-sm text-slate-500">{event.PlayerName}</p>}{event.Notes && <p className="text-sm text-slate-500">{event.Notes}</p>}</div></div>)}</div> : <p className="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Nessun evento registrato per questa partita.</p>}
+          </div>
+        </div>
+      </div>}
       <footer className="mt-12 bg-jso-navy px-5 py-10 text-white lg:px-8"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-5 sm:flex-row sm:items-center"><div><div className="text-xl font-black">JSO · Jeunesse Sportive de Oudhref</div><p className="mt-1 text-sm text-white/60">Plus qu’un club. Une identité.</p></div><p className="text-sm text-white/50">© 2026 JSO. Tous droits réservés.</p></div></footer>
 
       {demoOpen && <div className="fixed inset-0 z-[60] grid place-items-center bg-jso-navy/60 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Présentation JSO"><div className="w-full max-w-lg rounded-[2rem] bg-white p-8 shadow-2xl"><div className="flex items-start justify-between gap-5"><div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">JSO DIGITAL</p><h2 className="mt-3 text-3xl font-black">Bienvenue dans la nouvelle maison du club.</h2></div><button aria-label="Fermer" onClick={() => setDemoOpen(false)} className="rounded-full border border-slate-200 p-2"><X size={18} /></button></div><p className="mt-4 leading-7 text-slate-600">Cette interface est une première version visuelle. Les données réelles, les comptes administrateur, les résultats et la boutique seront connectés dans les prochaines étapes.</p><button onClick={() => setDemoOpen(false)} className="mt-7 rounded-full bg-jso-navy px-5 py-3 font-extrabold text-white">Continuer</button></div></div>}
