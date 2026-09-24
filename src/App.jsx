@@ -64,7 +64,6 @@ function App() {
         })
       })
       .then(() => setApiState('ready'))
-      })
       .catch((error) => {
         if (error.name !== 'AbortError') setApiState('offline')
       })
