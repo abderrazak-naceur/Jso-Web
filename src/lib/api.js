@@ -15,6 +15,7 @@ export const publicApi = {
   getClub: (signal) => request('/club', signal),
   getMatches: (signal) => request('/matches', signal),
   getNews: (signal) => request('/news', signal),
+  getMedia: (signal) => request('/media', signal),
   getTeams: (signal) => request('/teams', signal),
   getTeamPlayers: (teamId, signal) => request('/teams/' + teamId + '/players', signal),
   getMatch: (id, signal) => request('/matches/' + id, signal),
