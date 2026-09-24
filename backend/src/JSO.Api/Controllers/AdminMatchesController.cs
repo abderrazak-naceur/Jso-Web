@@ -9,7 +9,7 @@ namespace JSO.Api.Controllers;
 [ApiController]
 [Authorize(Roles = "SuperAdmin,ClubAdmin,MatchManager")]
 [Route("api/admin/matches")]
-public sealed class AdminMatchesController(JsoDbContext db) : ControllerBase
+public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken ct) =>
@@ -37,6 +37,7 @@ public sealed class AdminMatchesController(JsoDbContext db) : ControllerBase
         };
         db.Matches.Add(match);
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("CREATE", "Match", match.Id.ToString(), User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(), ct: ct);
         return Created($"/api/admin/matches/{match.Id}", match);
     }
 
@@ -55,13 +56,24 @@ public sealed class AdminMatchesController(JsoDbContext db) : ControllerBase
         match.AwayScore = request.AwayScore;
         match.IsPublished = request.IsPublished;
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("UPDATE", "Match", id.ToString(), User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(), ct: ct);
         return Ok(match);
+    }
+
+    [HttpGet("{id:guid}/events")]
+    public async Task<IActionResult> GetEvents(Guid id, CancellationToken ct)
+    {
+        if (!await db.Matches.AnyAsync(x => x.Id == id, ct)) return NotFound();
+        return Ok(await db.MatchEvents.AsNoTracking().Where(x => x.MatchId == id).OrderBy(x => x.Minute).ThenBy(x => x.Id).ToListAsync(ct));
     }
 
     [HttpPost("{id:guid}/events")]
     public async Task<IActionResult> AddEvent(Guid id, MatchEventRequest request, CancellationToken ct)
     {
         if (!await db.Matches.AnyAsync(x => x.Id == id, ct)) return NotFound();
+        if (request.Minute < 0 || request.Minute > 200) return BadRequest(new { message = "Minute must be between 0 and 200." });
+        if (string.IsNullOrWhiteSpace(request.Type)) return BadRequest(new { message = "Event type is required." });
+
         var matchEvent = new MatchEvent
         {
             MatchId = id,
@@ -72,7 +84,19 @@ public sealed class AdminMatchesController(JsoDbContext db) : ControllerBase
         };
         db.MatchEvents.Add(matchEvent);
         await db.SaveChangesAsync(ct);
+        await audit.LogAsync("CREATE", "MatchEvent", matchEvent.Id.ToString(), User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(), new { matchId = id }, ct);
         return Created($"/api/admin/matches/{id}/events/{matchEvent.Id}", matchEvent);
+    }
+
+    [HttpDelete("{id:guid}/events/{eventId:guid}")]
+    public async Task<IActionResult> DeleteEvent(Guid id, Guid eventId, CancellationToken ct)
+    {
+        var matchEvent = await db.MatchEvents.SingleOrDefaultAsync(x => x.Id == eventId && x.MatchId == id, ct);
+        if (matchEvent is null) return NotFound();
+        db.MatchEvents.Remove(matchEvent);
+        await db.SaveChangesAsync(ct);
+        await audit.LogAsync("DELETE", "MatchEvent", eventId.ToString(), User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(), new { matchId = id }, ct);
+        return NoContent();
     }
 }
 
