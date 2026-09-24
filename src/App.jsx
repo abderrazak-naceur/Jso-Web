@@ -10,7 +10,8 @@ import {
   Trophy,
   Users,
   X,
-} from 'lucide-react'\nimport { publicApi } from './lib/api'
+} from 'lucide-react'
+import { publicApi } from './lib/api'
 
 const navigation = [
   ['Accueil', 'home'],
@@ -42,7 +43,26 @@ function SectionTitle({ eyebrow, title, muted }) {
 function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [active, setActive] = useState('Accueil')
-  const [demoOpen, setDemoOpen] = useState(false)\n  const [club, setClub] = useState(null)\n  const [matches, setMatches] = useState([])\n  const [articles, setArticles] = useState([])\n  const [apiState, setApiState] = useState('loading')\n\n  useEffect(() => {\n    const controller = new AbortController()\n    Promise.all([publicApi.getClub(controller.signal), publicApi.getMatches(controller.signal), publicApi.getNews(controller.signal)])\n      .then(([clubData, matchData, newsData]) => {\n        setClub(clubData)\n        setMatches(matchData)\n        setArticles(newsData.map((item) => ({ category: item.Status || 'CLUB', title: item.Title, text: item.Excerpt || '', slug: item.Slug })))\n        setApiState('ready')\n      })\n      .catch((error) => {\n        if (error.name !== 'AbortError') setApiState('offline')\n      })\n    return () => controller.abort()\n  }, [])
+  const [demoOpen, setDemoOpen] = useState(false)
+  const [club, setClub] = useState(null)
+  const [matches, setMatches] = useState([])
+  const [articles, setArticles] = useState([])
+  const [apiState, setApiState] = useState('loading')
+
+  useEffect(() => {
+    const controller = new AbortController()
+    publicApi.getHome(controller.signal)
+      .then((home) => {
+        setClub(home.club)
+        setMatches([...(home.nextMatch ? [home.nextMatch] : []), ...(home.recentMatches || [])])
+        setArticles((home.news || []).map((item) => ({ category: item.Status || 'CLUB', title: item.Title, text: item.Excerpt || '', slug: item.Slug })))
+        setApiState('ready')
+      })
+      .catch((error) => {
+        if (error.name !== 'AbortError') setApiState('offline')
+      })
+    return () => controller.abort()
+  }, [])
 
   const goTo = (label, id) => {
     setActive(label)
