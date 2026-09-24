@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ArrowUpRight,
   CalendarDays,
@@ -10,7 +10,7 @@ import {
   Trophy,
   Users,
   X,
-} from 'lucide-react'
+} from 'lucide-react'\nimport { publicApi } from './lib/api'
 
 const navigation = [
   ['Accueil', 'home'],
@@ -22,7 +22,7 @@ const navigation = [
   ['Boutique', 'shop'],
 ]
 
-const news = [
+const fallbackNews = [
   { category: 'CLUB', title: 'Une nouvelle identité digitale pour JSO', text: 'Le club entre dans une nouvelle ère avec une expérience moderne et pensée pour toute sa communauté.' },
   { category: 'MATCH', title: 'Tout suivre au même endroit', text: 'Calendrier, résultats, compositions et informations de match réunis dans un seul espace.' },
   { category: 'FORMATION', title: 'Construire la relève d’Oudhref', text: 'Une attention particulière portée aux jeunes joueurs et à la formation.' },
@@ -42,7 +42,7 @@ function SectionTitle({ eyebrow, title, muted }) {
 function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [active, setActive] = useState('Accueil')
-  const [demoOpen, setDemoOpen] = useState(false)
+  const [demoOpen, setDemoOpen] = useState(false)\n  const [club, setClub] = useState(null)\n  const [matches, setMatches] = useState([])\n  const [articles, setArticles] = useState([])\n  const [apiState, setApiState] = useState('loading')\n\n  useEffect(() => {\n    const controller = new AbortController()\n    Promise.all([publicApi.getClub(controller.signal), publicApi.getMatches(controller.signal), publicApi.getNews(controller.signal)])\n      .then(([clubData, matchData, newsData]) => {\n        setClub(clubData)\n        setMatches(matchData)\n        setArticles(newsData)\n        setApiState('ready')\n      })\n      .catch((error) => {\n        if (error.name !== 'AbortError') setApiState('offline')\n      })\n    return () => controller.abort()\n  }, [])
 
   const goTo = (label, id) => {
     setActive(label)
@@ -91,12 +91,12 @@ function App() {
         <div>
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-jso-gold/40 bg-jso-gold/10 px-4 py-2 text-xs font-extrabold tracking-[0.16em] text-jso-navy"><span className="h-2 w-2 rounded-full bg-jso-gold" /> SAISON 2026 / 27</div>
           <h1 className="max-w-3xl text-5xl font-black leading-[0.94] tracking-[-0.06em] sm:text-7xl lg:text-8xl">Toujours plus haut.<br /><span className="text-jso-blue">Toujours JSO.</span></h1>
-          <p className="mt-7 max-w-xl text-lg leading-8 text-slate-600">Bienvenue sur la maison digitale de la Jeunesse Sportive de Oudhref. Une plateforme pour vivre le club, suivre les matchs et partager la passion d’une ville.</p>
+          <p className="mt-7 max-w-xl text-lg leading-8 text-slate-600">{club?.Description || 'La maison digitale de la Jeunesse Sportive de Oudhref. Une plateforme pour vivre le club, suivre les matchs et partager la passion d’une ville.'} Une plateforme pour vivre le club, suivre les matchs et partager la passion d’une ville.</p>
           <div className="mt-9 flex flex-wrap gap-3">
             <button onClick={() => goTo('Matchs', 'matches')} className="rounded-full bg-jso-navy px-6 py-4 font-extrabold text-white transition hover:-translate-y-1 hover:bg-jso-blue">Découvrir le Match Center <ArrowUpRight className="ml-2 inline" size={18} /></button>
             <button onClick={() => setDemoOpen(true)} className="rounded-full border border-slate-300 bg-white px-6 py-4 font-extrabold text-jso-navy transition hover:border-jso-blue hover:text-jso-blue"><CirclePlay className="mr-2 inline" size={18} /> Découvrir JSO</button>
           </div>
-          <div className="mt-10 flex flex-wrap gap-7 text-sm text-slate-500"><span><strong className="text-jso-navy">01</strong> Club historique</span><span><strong className="text-jso-navy">24/7</strong> Actualités</span><span><strong className="text-jso-navy">100%</strong> Passion</span></div>
+          <div className="mt-10 flex flex-wrap gap-7 text-sm text-slate-500"><span><strong className="text-jso-navy">{club?.City || 'Oudhref'}</strong> Club</span><span><strong className="text-jso-navy">{apiState === 'ready' ? matches.length : '—'}</strong> Matchs</span><span><strong className="text-jso-navy">100%</strong> Passion</span></div>
         </div>
 
         <div className="relative min-h-[430px] lg:min-h-[560px]">
@@ -108,7 +108,7 @@ function App() {
             <div className="absolute inset-x-0 top-24 text-center text-[9rem] font-black leading-none text-white/10 sm:text-[13rem]">JSO</div>
             <div className="absolute bottom-0 left-1/2 h-[68%] w-[75%] -translate-x-1/2 rounded-t-full border border-white/20 bg-gradient-to-t from-white/15 to-transparent" />
             <div className="absolute bottom-12 left-1/2 -translate-x-1/2 text-center text-white"><div className="text-7xl font-black tracking-[-0.08em] sm:text-8xl">JSO</div><div className="mt-2 text-xs font-extrabold tracking-[0.3em] text-jso-gold">JEUNESSE SPORTIVE</div><div className="text-xs font-extrabold tracking-[0.3em] text-white/70">DE OUDHREF</div></div>
-            <div className="absolute left-5 top-28 rounded-3xl border border-white/20 bg-white/15 p-4 text-white shadow-xl backdrop-blur-xl sm:left-8"><div className="text-[10px] font-extrabold tracking-widest text-white/70">NEXT MATCH</div><div className="mt-1 flex items-center gap-3"><strong className="text-2xl">JSO</strong><span className="text-xs text-jso-gold">VS</span><strong className="text-2xl">TBA</strong></div><div className="mt-2 text-xs text-white/70">Date à confirmer</div></div>
+            <div className="absolute left-5 top-28 rounded-3xl border border-white/20 bg-white/15 p-4 text-white shadow-xl backdrop-blur-xl sm:left-8"><div className="text-[10px] font-extrabold tracking-widest text-white/70">NEXT MATCH</div><div className="mt-1 flex items-center gap-3"><strong className="text-2xl">JSO</strong><span className="text-xs text-jso-gold">VS</span><strong className="text-2xl">{matches[0]?.OpponentName || 'TBA'}</strong></div><div className="mt-2 text-xs text-white/70">{matches[0] ? new Date(matches[0].KickoffAt).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }) : 'Date à confirmer'}</div></div>
             <div className="absolute bottom-6 right-5 rounded-3xl border border-white/20 bg-white/15 p-4 text-white shadow-xl backdrop-blur-xl sm:right-8"><div className="text-xs font-extrabold text-jso-gold">DIGITAL CLUB</div><div className="mt-1 text-lg font-black">Built for the future.</div></div>
           </div>
         </div>
@@ -116,7 +116,7 @@ function App() {
 
       <section id="matches" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
         <SectionTitle eyebrow="01 / MATCHDAY" title="Le match," muted="en direct." />
-        <div className="mt-8 grid gap-5 lg:grid-cols-[1.4fr_0.6fr]">
+        <div className="mb-5 flex items-center justify-between"><span className={`rounded-full px-3 py-1 text-xs font-extrabold ${apiState === 'ready' ? 'bg-emerald-100 text-emerald-700' : apiState === 'offline' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>{apiState === 'ready' ? 'API CONNESSA' : apiState === 'offline' ? 'MODALITÀ DEMO' : 'CONNESSIONE API...'}</span></div><div className="mt-8 grid gap-5 lg:grid-cols-[1.4fr_0.6fr]">
           <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50 sm:p-8">
             <div className="flex items-center justify-between text-xs font-extrabold text-slate-500"><span className="rounded-full bg-jso-gold/20 px-3 py-1 text-jso-navy">PROCHAIN MATCH</span><span>À VENIR</span></div>
             <div className="grid items-center gap-5 py-10 sm:grid-cols-[1fr_auto_1fr]"><div className="text-center"><div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-jso-navy text-2xl font-black text-jso-gold">JSO</div><h3 className="mt-3 text-xl font-black">JSO Oudhref</h3><p className="text-sm text-slate-500">Domicile</p></div><div className="text-center"><div className="text-xs font-extrabold text-slate-400">DATE À CONFIRMER</div><div className="my-2 text-4xl font-black text-jso-navy">VS</div><div className="text-xs text-slate-500">Stade d’Oudhref</div></div><div className="text-center"><div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl border border-slate-200 bg-slate-50 text-xl font-black text-slate-400">TBA</div><h3 className="mt-3 text-xl font-black">Adversaire</h3><p className="text-sm text-slate-500">À confirmer</p></div></div>
@@ -128,7 +128,7 @@ function App() {
 
       <section id="club" className="mx-auto max-w-7xl px-5 py-20 lg:px-8"><div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end"><SectionTitle eyebrow="02 / LE CLUB" title="Une histoire." muted="Une ville. Une passion." /><p className="max-w-xl text-lg leading-8 text-slate-600">JSO est plus qu’un nom sur un maillot. C’est une identité collective, un lien entre les générations et une ambition pour l’avenir du football à Oudhref.</p></div><div className="mt-10 grid gap-4 sm:grid-cols-3">{[['Identité forte','Un langage visuel premium et une présence digitale cohérente.'],['Communauté','Supporters, joueurs, familles et passionnés réunis.'],['Nouvelle génération','Une plateforme rapide, responsive et pensée pour le futur.']].map(([title, text], index) => <div key={title} className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40"><div className="text-2xl font-black text-jso-blue">0{index + 1}</div><h3 className="mt-8 text-xl font-black">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-500">{text}</p></div>)}</div></section>
 
-      <section id="news" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow="03 / NEWSROOM" title="Le club" muted="en mouvement." /><div className="mt-10 grid gap-5 md:grid-cols-3">{news.map((item) => <article key={item.title} className="group rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40 transition hover:-translate-y-1 hover:shadow-xl"><span className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">{item.category}</span><h3 className="mt-8 text-2xl font-black tracking-tight">{item.title}</h3><p className="mt-3 leading-7 text-slate-500">{item.text}</p><button onClick={() => setDemoOpen(true)} className="mt-8 font-extrabold text-jso-blue">Lire la suite <ChevronRight className="inline" size={17} /></button></article>)}</div></section>
+      <section id="news" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow="03 / NEWSROOM" title="Le club" muted="en mouvement." /><div className="mt-10 grid gap-5 md:grid-cols-3">{(articles.length ? articles : fallbackNews).map((item) => <article key={item.title} className="group rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40 transition hover:-translate-y-1 hover:shadow-xl"><span className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">{item.category}</span><h3 className="mt-8 text-2xl font-black tracking-tight">{item.title}</h3><p className="mt-3 leading-7 text-slate-500">{item.text}</p><button onClick={() => setDemoOpen(true)} className="mt-8 font-extrabold text-jso-blue">Lire la suite <ChevronRight className="inline" size={17} /></button></article>)}</div></section>
 
       <section id="team" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow="04 / ÉQUIPE" title="Les visages" muted="de JSO." /><div className="mt-8 grid gap-5 sm:grid-cols-3"><div className="rounded-[2rem] bg-jso-navy p-6 text-white"><Users size={28} className="text-jso-gold" /><h3 className="mt-12 text-2xl font-black">Équipe première</h3><p className="mt-2 text-white/65">Effectif, staff et profils des joueurs.</p></div><div className="rounded-[2rem] border border-slate-200 bg-white p-6"><Trophy size={28} className="text-jso-blue" /><h3 className="mt-12 text-2xl font-black">Palmarès</h3><p className="mt-2 text-slate-500">Les moments et les résultats qui ont marqué le club.</p></div><div className="rounded-[2rem] border border-slate-200 bg-white p-6"><Shield size={28} className="text-jso-blue" /><h3 className="mt-12 text-2xl font-black">Formation</h3><p className="mt-2 text-slate-500">La nouvelle génération de talents d’Oudhref.</p></div></div></section>
 
