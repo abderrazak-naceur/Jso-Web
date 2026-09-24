@@ -8,7 +8,7 @@ public sealed record LoginRequest(string Email, string Password);
 
 [ApiController]
 [Route("api/auth")]
-public sealed class AuthController(JsoDbContext db, JwtTokenService tokens) : ControllerBase
+public sealed class AuthController(JsoDbContext db, JwtTokenService tokens, AuditService audit) : ControllerBase
 {
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request, CancellationToken ct)
