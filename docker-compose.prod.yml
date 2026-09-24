@@ -1,4 +1,16 @@
 services:
+  database:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: JSO
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - jso-postgres-data:/var/lib/postgresql/data
+    networks:
+      - jso-internal
+
   api:
     build:
       context: ./backend
@@ -8,10 +20,13 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       Jwt__Key: ${JWT_SECRET:?Set JWT_SECRET}
-      ConnectionStrings__DefaultConnection: ${DATABASE_CONNECTION_STRING:?Set DATABASE_CONNECTION_STRING}
+      Database__Provider: postgres
+      ConnectionStrings__DefaultConnection: Host=database;Port=5432;Database=JSO;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       Cors__AllowedOrigins__0: ${PUBLIC_ORIGIN:?Set PUBLIC_ORIGIN}
     expose:
       - "8080"
+    depends_on:
+      - database
     networks:
       - jso-internal
 
@@ -27,6 +42,9 @@ services:
       - ./dist:/usr/share/nginx/html:ro
     networks:
       - jso-internal
+
+volumes:
+  jso-postgres-data:
 
 networks:
   jso-internal:
