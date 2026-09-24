@@ -12,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuditService>();
+builder.Services.AddScoped<DatabaseInitializer>();
 
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
@@ -67,13 +68,7 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<JsoDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DevelopmentDataSeeder");
-    await DevelopmentDataSeeder.SeedAsync(db, logger, builder.Configuration);
-}
+await app.Services.GetRequiredService<DatabaseInitializer>().InitializeAsync();
 
 if (app.Environment.IsDevelopment())
 {
