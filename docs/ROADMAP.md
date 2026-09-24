@@ -1,4 +1,4 @@
-# JSO Web — Product Planning & Roadmap
+## Implementation Status — 2026-09-24\n\n### Admin MVP connected\n- Admin login uses JWT authentication and role-based navigation.\n- Dashboard consumes `/api/admin/dashboard`.\n- Teams and players CRUD are connected to the back office.\n- Match Center supports match creation/editing and reference data (season, competition, team).\n- News CMS supports create/edit/publish workflows.\n- Backend match reference endpoint added at `GET /api/admin/matches/references`.\n- Admin UI is responsive and hides modules the current role cannot access.\n\n### Next implementation block\n- Add audit log persistence and admin security/session management.\n- Add media management and homepage/content configuration.\n- Add richer Match Center event management.\n- Add automated API/frontend tests and CI verification.\n\n# JSO Web — Product Planning & Roadmap
 
 ## 1. Vision
 
