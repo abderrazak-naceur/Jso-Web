@@ -61,6 +61,66 @@ function Field({ label, ...props }) {
   return <label className="block text-sm font-bold">{label}<input {...props} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-jso-blue" /></label>
 }
 
+const emptyContent = { key: '', value: '' }
+
+function ContentModule({ onError }) {
+  const [items, setItems] = useState([])
+  const [selected, setSelected] = useState(null)
+  const [value, setValue] = useState('')
+  const [loading, setLoading] = useState(true)
+
+  async function load() {
+    try {
+      setLoading(true)
+      const data = await api('/admin/content')
+      setItems(data)
+      if (selected) {
+        const current = data.find(x => x.key === selected.key)
+        if (current) setValue(current.value)
+      }
+    } catch (e) { onError(e.message) } finally { setLoading(false) }
+  }
+
+  useEffect(() => { load() }, [])
+
+  function select(item) {
+    setSelected(item)
+    setValue(item.value)
+  }
+
+  async function save(e) {
+    e.preventDefault()
+    if (!selected) return
+    try {
+      await api('/admin/content/' + encodeURIComponent(selected.key), {
+        method: 'PUT',
+        body: JSON.stringify({ value }),
+      })
+      await load()
+    } catch (e) { onError(e.message) }
+  }
+
+  return <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+      <div className="flex items-center justify-between">
+        <div><h2 className="text-xl font-black">Contenus du site</h2><p className="mt-1 text-sm text-slate-500">Textes éditables de la homepage.</p></div>
+        <button onClick={load} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold">Actualiser</button>
+      </div>
+      <div className="mt-5 space-y-2">
+        {loading ? <p className="text-sm text-slate-400">Chargement…</p> : items.map(item => <button key={item.key} onClick={() => select(item)} className={'w-full rounded-xl p-3 text-left ' + (selected?.key === item.key ? 'bg-jso-navy text-white' : 'bg-slate-50 hover:bg-slate-100')}><b>{item.key}</b><span className="mt-1 block truncate text-xs opacity-70">{item.value}</span></button>)}
+        {!loading && !items.length && <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Aucun contenu enregistré.</p>}
+      </div>
+    </div>
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+      <h2 className="text-xl font-black">{selected ? selected.key : 'Sélectionner un contenu'}</h2>
+      {selected ? <form onSubmit={save} className="mt-5">
+        <label className="block text-sm font-bold">Valeur<textarea value={value} onChange={e => setValue(e.target.value)} rows="14" className="mt-2 w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-jso-blue" /></label>
+        <button className="mt-4 flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/>Enregistrer</button>
+      </form> : <p className="mt-3 text-sm text-slate-500">Choisis un champ à modifier.</p>}
+    </div>
+  </div>
+}
+
 function SecurityModule({ onError }) {\n  const [users,setUsers]=useState([]); const [logs,setLogs]=useState([])\n  useEffect(()=>{ Promise.all([api('/admin/security/users'),api('/admin/audit?take=50')]).then(([u,l])=>{setUsers(u);setLogs(l)}).catch(e=>onError(e.message)) },[])\n  return <div className="space-y-6"><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Utilisateurs administrateurs</h2><div className="mt-4 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Utilisateur</th><th className="p-2">Rôle</th><th className="p-2">Statut</th><th className="p-2">Dernière connexion</th></tr></thead><tbody>{users.map(u=><tr key={u.id} className="border-b last:border-0"><td className="p-2"><b>{u.displayName}</b><div className="text-xs text-slate-500">{u.email}</div></td><td className="p-2 font-semibold">{u.role}</td><td className="p-2">{u.isActive?'Actif':'Désactivé'}</td><td className="p-2">{u.lastLoginAt?new Date(u.lastLoginAt).toLocaleString('fr-FR'):'Jamais'}</td></tr>)}</tbody></table></div></div><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Audit Log</h2><div className="mt-4 space-y-2">{logs.map(l=><div key={l.id} className="rounded-xl bg-slate-50 p-3 text-sm"><div className="flex justify-between gap-3"><b>{l.action} · {l.entityType}</b><span className="text-xs text-slate-400">{new Date(l.createdAt).toLocaleString('fr-FR')}</span></div><p className="mt-1 text-xs text-slate-500">{l.userEmail||'Système'}{l.entityId?' · '+l.entityId:''}</p></div>)}</div></div></div>\n}\n\nfunction AdminDashboard({ user, onLogout }) {
   const [open, setOpen] = useState(false)
   const [section, setSection] = useState('dashboard')
@@ -73,6 +133,7 @@ function SecurityModule({ onError }) {\n  const [users,setUsers]=useState([]); c
     ['teams', 'Équipes & joueurs', Users, ['SuperAdmin','ClubAdmin']],
     ['news', 'News CMS', Newspaper, ['SuperAdmin','ClubAdmin','Editor']],
     ['security', 'Sécurité', ShieldCheck, ['SuperAdmin']],\n    ['media', 'Médias', Images, ['SuperAdmin','ClubAdmin','Editor']],
+    ['content', 'Contenus', Pencil, ['SuperAdmin','ClubAdmin','Editor']],
   ]
   const visibleItems = items.filter(([, , , roles]) => roles.includes(user.Role))
 
