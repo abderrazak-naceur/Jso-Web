@@ -154,6 +154,29 @@ function App() {
         </div>
       </section>
 
+      <section id="matches" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
+        <SectionTitle eyebrow="01 / MATCH CENTER" title="Calendario." muted="Résultats." />
+        <div className="mt-8 grid gap-4">
+          {matches.length ? matches.map((match) => (
+            <article key={match.Id} className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40">
+              <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                <span>{match.Status || 'Scheduled'}</span>
+                <span>{new Date(match.KickoffAt).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+              </div>
+              <div className="mt-5 grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
+                <div><p className="text-xs font-bold text-slate-400">JSO</p><h3 className="text-2xl font-black">JSO Oudhref</h3></div>
+                <div className="text-center text-3xl font-black text-jso-blue">{match.HomeScore != null && match.AwayScore != null ? match.HomeScore + ' - ' + match.AwayScore : 'VS'}</div>
+                <div className="sm:text-right"><p className="text-xs font-bold text-slate-400">ADVERSAIRE</p><h3 className="text-2xl font-black">{match.OpponentName}</h3></div>
+              </div>
+              <div className="mt-5 flex flex-wrap gap-2 text-sm text-slate-500">
+                {match.Venue && <span className="rounded-full bg-slate-100 px-3 py-2">{match.Venue}</span>}
+                <span className="rounded-full bg-slate-100 px-3 py-2">{match.IsHome ? 'Domicile' : 'Extérieur'}</span>
+              </div>
+            </article>
+          )) : <div className="rounded-[2rem] bg-white p-8 text-slate-500">Aucun match publié.</div>}
+        </div>
+      </section>
+
       <section id="club" className="mx-auto max-w-7xl px-5 py-20 lg:px-8"><div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end"><SectionTitle eyebrow={content.club_eyebrow || '02 / LE CLUB'} title={content.club_title || 'Une histoire.'} muted={content.club_muted || 'Une ville. Une passion.'} /><p className="max-w-xl text-lg leading-8 text-slate-600">JSO est plus qu’un nom sur un maillot. C’est une identité collective, un lien entre les générations et une ambition pour l’avenir du football à Oudhref.</p></div><div className="mt-10 grid gap-4 sm:grid-cols-3">{[['Identité forte','Un langage visuel premium et une présence digitale cohérente.'],['Communauté','Supporters, joueurs, familles et passionnés réunis.'],['Nouvelle génération','Une plateforme rapide, responsive et pensée pour le futur.']].map(([title, text], index) => <div key={title} className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40"><div className="text-2xl font-black text-jso-blue">0{index + 1}</div><h3 className="mt-8 text-xl font-black">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-500">{text}</p></div>)}</div></section>
 
       <section id="news" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow={content.news_eyebrow || '03 / NEWSROOM'} title={content.news_title || 'Le club'} muted={content.news_muted || 'en mouvement.'} /><div className="mt-10 grid gap-5 md:grid-cols-3">{(articles.length ? articles : fallbackNews).map((item) => <article key={item.title} className="group rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40 transition hover:-translate-y-1 hover:shadow-xl"><span className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">{item.category}</span><h3 className="mt-8 text-2xl font-black tracking-tight">{item.title}</h3><p className="mt-3 leading-7 text-slate-500">{item.text}</p><button onClick={() => setDemoOpen(true)} className="mt-8 font-extrabold text-jso-blue">Lire la suite <ChevronRight className="inline" size={17} /></button></article>)}</div></section>
