@@ -1,0 +1,45 @@
+name: JSO Security Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  secrets-and-config:
+    name: Secret/config checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check forbidden local environment files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if find . -type f \( -name '.env' -o -name '.env.prod' -o -name '.env.production' \) -not -path './.git/*' | grep -q .; then
+            echo 'Forbidden environment file found in repository.'
+            exit 1
+          fi
+
+      - name: Check common private-key files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if find . -type f \( -name '*.pem' -o -name '*.p12' -o -name '*.pfx' \) -not -path './.git/*' | grep -q .; then
+            echo 'Potential private-key/certificate file found in repository.'
+            exit 1
+          fi
+
+      - name: Check obvious hard-coded production secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE 'password[[:space:]]*[:=][[:space:]]*["'"'][^<>{}[:space:]]{12,}["'"']|JWT_SECRET[[:space:]]*=[[:space:]]*(?!replace-with)' . --exclude-dir=.git --exclude='*.md' 2>/dev/null; then
+            echo 'Potential hard-coded secret found.'
+            exit 1
+          fi
