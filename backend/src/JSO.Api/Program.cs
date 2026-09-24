@@ -1,5 +1,8 @@
 using JSO.Infrastructure;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.RateLimiting;
@@ -7,6 +10,27 @@ using System.Threading.RateLimiting;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddScoped<JwtTokenService>();
+
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
+    throw new InvalidOperationException("Jwt:Key must contain at least 32 characters.");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "JSO",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "JSO.Admin",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+builder.Services.AddAuthorization();
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -61,6 +85,8 @@ else
 }
 
 app.UseExceptionHandler();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseCors("Frontend");
 app.UseRateLimiter();
 
