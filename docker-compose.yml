@@ -10,6 +10,9 @@ services:
     build: { context: ./backend, dockerfile: Dockerfile }
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      Jwt__Key: "${JWT_SECRET}"
+      ADMIN_BOOTSTRAP_EMAIL: "${ADMIN_BOOTSTRAP_EMAIL:-admin@jso.tn}"
+      ADMIN_BOOTSTRAP_PASSWORD: "${ADMIN_BOOTSTRAP_PASSWORD}"
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=JSO;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;Encrypt=False"
       Cors__AllowedOrigins__0: "http://localhost:5173"
     ports: ["8080:8080"]
