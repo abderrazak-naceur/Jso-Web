@@ -134,6 +134,27 @@ public static class DevelopmentDataSeeder
             );
         }
 
+        var defaultContent = new Dictionary<string, string>
+        {
+            ["hero_title"] = "Toujours plus haut.",
+            ["hero_highlight"] = "Toujours JSO.",
+            ["hero_description"] = "La maison digitale de la Jeunesse Sportive de Oudhref. Une plateforme pour vivre le club, suivre les matchs et partager la passion d’une ville.",
+            ["club_eyebrow"] = "02 / LE CLUB",
+            ["club_title"] = "Une histoire.",
+            ["club_muted"] = "Une ville. Une passion.",
+            ["news_eyebrow"] = "03 / NEWSROOM",
+            ["news_title"] = "Le club",
+            ["news_muted"] = "en mouvement."
+        };
+
+        foreach (var pair in defaultContent)
+        {
+            if (!await db.SiteContents.AnyAsync(x => x.Key == pair.Key, ct))
+            {
+                db.SiteContents.Add(new SiteContent { Key = pair.Key, Value = pair.Value, UpdatedBy = "system" });
+            }
+        }
+
         await db.SaveChangesAsync(ct);
         logger.LogInformation("JSO development data is ready for {Club}.", club.Name);
     }
