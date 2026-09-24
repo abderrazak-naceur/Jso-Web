@@ -121,7 +121,36 @@ function ContentModule({ onError }) {
   </div>
 }
 
-function SecurityModule({ onError }) {\n  const [users,setUsers]=useState([]); const [logs,setLogs]=useState([])\n  useEffect(()=>{ Promise.all([api('/admin/security/users'),api('/admin/audit?take=50')]).then(([u,l])=>{setUsers(u);setLogs(l)}).catch(e=>onError(e.message)) },[])\n  return <div className="space-y-6"><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Utilisateurs administrateurs</h2><div className="mt-4 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Utilisateur</th><th className="p-2">Rôle</th><th className="p-2">Statut</th><th className="p-2">Dernière connexion</th></tr></thead><tbody>{users.map(u=><tr key={u.id} className="border-b last:border-0"><td className="p-2"><b>{u.displayName}</b><div className="text-xs text-slate-500">{u.email}</div></td><td className="p-2 font-semibold">{u.role}</td><td className="p-2">{u.isActive?'Actif':'Désactivé'}</td><td className="p-2">{u.lastLoginAt?new Date(u.lastLoginAt).toLocaleString('fr-FR'):'Jamais'}</td></tr>)}</tbody></table></div></div><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Audit Log</h2><div className="mt-4 space-y-2">{logs.map(l=><div key={l.id} className="rounded-xl bg-slate-50 p-3 text-sm"><div className="flex justify-between gap-3"><b>{l.action} · {l.entityType}</b><span className="text-xs text-slate-400">{new Date(l.createdAt).toLocaleString('fr-FR')}</span></div><p className="mt-1 text-xs text-slate-500">{l.userEmail||'Système'}{l.entityId?' · '+l.entityId:''}</p></div>)}</div></div></div>\n}\n\nfunction AdminDashboard({ user, onLogout }) {
+function SecurityModule({ onError }) {
+  const [users,setUsers]=useState([]); const [logs,setLogs]=useState([])
+  useEffect(()=>{ Promise.all([api('/admin/security/users'),api('/admin/audit?take=50')]).then(([u,l])=>{setUsers(u);setLogs(l)}).catch(e=>onError(e.message)) },[])
+  return <div className="space-y-6"><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Utilisateurs administrateurs</h2><div className="mt-4 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Utilisateur</th><th className="p-2">Rôle</th><th className="p-2">Statut</th><th className="p-2">Dernière connexion</th></tr></thead><tbody>{users.map(u=><tr key={u.id} className="border-b last:border-0"><td className="p-2"><b>{u.displayName}</b><div className="text-xs text-slate-500">{u.email}</div></td><td className="p-2 font-semibold">{u.role}</td><td className="p-2">{u.isActive?'Actif':'Désactivé'}</td><td className="p-2">{u.lastLoginAt?new Date(u.lastLoginAt).toLocaleString('fr-FR'):'Jamais'}</td></tr>)}</tbody></table></div></div><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Audit Log</h2><div className="mt-4 space-y-2">{logs.map(l=><div key={l.id} className="rounded-xl bg-slate-50 p-3 text-sm"><div className="flex justify-between gap-3"><b>{l.action} · {l.entityType}</b><span className="text-xs text-slate-400">{new Date(l.createdAt).toLocaleString('fr-FR')}</span></div><p className="mt-1 text-xs text-slate-500">{l.userEmail||'Système'}{l.entityId?' · '+l.entityId:''}</p></div>)}</div></div></div>
+}
+
+function MediaModule({ onError }) {
+  const [items,setItems]=useState([]); const [editing,setEditing]=useState(null)
+  const [form,setForm]=useState({title:'',url:'',type:'Image',thumbnailUrl:'',caption:'',isPublished:true})
+  async function load(){try{setItems(await api('/admin/media'))}catch(e){onError(e.message)}}
+  useEffect(()=>{load()},[])
+  async function save(e){e.preventDefault();try{const body={...form};if(editing)await api('/admin/media/'+editing,{method:'PUT',body:JSON.stringify(body)});else await api('/admin/media',{method:'POST',body:JSON.stringify(body)});setEditing(null);setForm({title:'',url:'',type:'Image',thumbnailUrl:'',caption:'',isPublished:true});await load()}catch(e){onError(e.message)}}
+  async function remove(id){if(!confirm('Supprimer ce média ?'))return;try{await api('/admin/media/'+id,{method:'DELETE'});await load()}catch(e){onError(e.message)}}
+  return <div className="grid gap-6 xl:grid-cols-[1fr_1.2fr]">
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Médiathèque</h2><div className="mt-5 space-y-2">{items.map(item=><div key={item.id} className="flex items-center gap-3 rounded-xl bg-slate-50 p-3"><div className="h-14 w-20 overflow-hidden rounded-lg bg-slate-200">{item.thumbnailUrl||item.url?<img src={item.thumbnailUrl||item.url} alt="" className="h-full w-full object-cover"/>:null}</div><div className="min-w-0 flex-1"><b className="block truncate">{item.title}</b><span className="text-xs text-slate-500">{item.type} · {item.isPublished?'Publié':'Masqué'}</span></div><button onClick={()=>{setEditing(item.id);setForm({...item})}} className="text-jso-blue"><Pencil size={16}/></button><button onClick={()=>remove(item.id)} className="text-red-600"><X size={16}/></button></div>)}</div></div>
+    <form onSubmit={save} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 space-y-3"><h2 className="text-xl font-black">{editing?'Modifier le média':'Nouveau média'}</h2><Field label="Titre" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required/><Field label="URL" value={form.url} onChange={e=>setForm({...form,url:e.target.value})} required/><Field label="Thumbnail URL" value={form.thumbnailUrl||''} onChange={e=>setForm({...form,thumbnailUrl:e.target.value})}/><label className="block text-sm font-bold">Type<select value={form.type||'Image'} onChange={e=>setForm({...form,type:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"><option>Image</option><option>Video</option><option>Gallery</option></select></label><label className="block text-sm font-bold">Légende<textarea value={form.caption||''} onChange={e=>setForm({...form,caption:e.target.value})} rows="4" className="mt-2 w-full rounded-xl border border-slate-200 p-3"/></label><label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={form.isPublished!==false} onChange={e=>setForm({...form,isPublished:e.target.checked})}/> Publié</label><button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/>Enregistrer</button></form>
+  </div>
+}
+
+function EventsModule({ onError }) {
+  const [matches,setMatches]=useState([]); const [selected,setSelected]=useState(''); const [events,setEvents]=useState([]); const [form,setForm]=useState({minute:0,type:'Goal',playerName:'',notes:''})
+  async function load(){try{const data=await api('/admin/matches');setMatches(data);if(!selected&&data[0])loadEvents(data[0].id)}catch(e){onError(e.message)}}
+  async function loadEvents(id){try{setSelected(id);setEvents(await api('/admin/matches/'+id+'/events'))}catch(e){onError(e.message)}}
+  useEffect(()=>{load()},[])
+  async function add(e){e.preventDefault();try{await api('/admin/matches/'+selected+'/events',{method:'POST',body:JSON.stringify({...form,minute:Number(form.minute)})});setForm({minute:0,type:'Goal',playerName:'',notes:''});await loadEvents(selected)}catch(e){onError(e.message)}}
+  async function remove(id){try{await api('/admin/matches/'+selected+'/events/'+id,{method:'DELETE'});await loadEvents(selected)}catch(e){onError(e.message)}}
+  return <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]"><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Matchs</h2><div className="mt-4 space-y-2">{matches.map(m=><button key={m.id} onClick={()=>loadEvents(m.id)} className={'w-full rounded-xl p-3 text-left '+(selected===m.id?'bg-jso-navy text-white':'bg-slate-50')}><b>JSO — {m.opponentName}</b><span className="block text-xs opacity-70">{new Date(m.kickoffAt).toLocaleString('fr-FR')}</span></button>)}</div></div><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Événements</h2>{selected?<><form onSubmit={add} className="mt-4 grid gap-3 sm:grid-cols-2"><Field label="Minute" type="number" min="0" max="200" value={form.minute} onChange={e=>setForm({...form,minute:e.target.value})} required/><label className="text-sm font-bold">Type<select value={form.type} onChange={e=>setForm({...form,type:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"><option>Goal</option><option>YellowCard</option><option>RedCard</option><option>Substitution</option><option>VAR</option><option>Other</option></select></label><Field label="Joueur" value={form.playerName} onChange={e=>setForm({...form,playerName:e.target.value})}/><Field label="Note" value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/><button className="sm:col-span-2 flex items-center justify-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Plus size={16}/>Ajouter l’événement</button></form><div className="mt-6 space-y-2">{events.map(ev=><div key={ev.id} className="flex items-center justify-between rounded-xl bg-slate-50 p-3"><div><b>{ev.minute}' · {ev.type}</b><span className="ml-2 text-sm text-slate-600">{ev.playerName||''}</span>{ev.notes&&<p className="text-xs text-slate-500">{ev.notes}</p>}</div><button onClick={()=>remove(ev.id)} className="text-red-600"><X size={16}/></button></div>)}{!events.length&&<p className="text-sm text-slate-500">Aucun événement enregistré.</p>}</div></>:<p className="mt-3 text-sm text-slate-500">Sélectionne un match.</p>}</div></div>
+}
+
+function AdminDashboard({ user, onLogout }) {
   const [open, setOpen] = useState(false)
   const [section, setSection] = useState('dashboard')
   const [stats, setStats] = useState(null)
@@ -130,9 +159,11 @@ function SecurityModule({ onError }) {\n  const [users,setUsers]=useState([]); c
   const items = [
     ['dashboard', 'Dashboard', LayoutDashboard, ['SuperAdmin','ClubAdmin','Editor','MatchManager','CommunityManager','ShopManager']],
     ['matches', 'Match Center', Trophy, ['SuperAdmin','ClubAdmin','MatchManager']],
+    ['events', 'Événements', Trophy, ['SuperAdmin','ClubAdmin','MatchManager']],
     ['teams', 'Équipes & joueurs', Users, ['SuperAdmin','ClubAdmin']],
     ['news', 'News CMS', Newspaper, ['SuperAdmin','ClubAdmin','Editor']],
-    ['security', 'Sécurité', ShieldCheck, ['SuperAdmin']],\n    ['media', 'Médias', Images, ['SuperAdmin','ClubAdmin','Editor']],
+    ['security', 'Sécurité', ShieldCheck, ['SuperAdmin']],
+    ['media', 'Médias', Images, ['SuperAdmin','ClubAdmin','Editor']],
     ['content', 'Contenus', Pencil, ['SuperAdmin','ClubAdmin','Editor']],
   ]
   const visibleItems = items.filter(([, , , roles]) => roles.includes(user.Role))
@@ -167,8 +198,10 @@ function SecurityModule({ onError }) {\n  const [users,setUsers]=useState([]); c
         {section === 'dashboard' && <DashboardStats stats={stats}/>}
         {section === 'teams' && <TeamsModule onError={setError}/>}
         {section === 'matches' && <MatchesModule onError={setError}/>}
+        {section === 'events' && <EventsModule onError={setError}/>}
         {section === 'news' && <NewsModule onError={setError}/>}
-        {section === 'security' && <SecurityModule onError={setError}/>}\n        {section === 'media' && <MediaModule onError={setError}/>}
+        {section === 'security' && <SecurityModule onError={setError}/>}
+        {section === 'media' && <MediaModule onError={setError}/>}
       </section>
     </div>
   </main>
