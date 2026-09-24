@@ -154,7 +154,7 @@ function App() {
         </div>
       </section>
 
-      <section id="matches" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
+      <section id="match-highlight" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
         <SectionTitle eyebrow="01 / MATCH CENTER" title="Calendario." muted="Résultats." />
         <div className="mt-8 grid gap-4">
           {matches.length ? matches.map((match) => (
