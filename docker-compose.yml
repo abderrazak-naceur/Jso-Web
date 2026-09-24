@@ -3,14 +3,14 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-JSO_LocalOnly_ChangeMe123!}"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env before starting Docker Compose}"
     ports: ["1433:1433"]
     volumes: ["jso-sql-data:/var/opt/mssql"]
   api:
     build: { context: ./backend, dockerfile: Dockerfile }
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=JSO;User Id=sa;Password=$${MSSQL_SA_PASSWORD:-JSO_LocalOnly_ChangeMe123!};TrustServerCertificate=True;Encrypt=False"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=JSO;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;Encrypt=False"
       Cors__AllowedOrigins__0: "http://localhost:5173"
     ports: ["8080:8080"]
     depends_on: [sqlserver]
