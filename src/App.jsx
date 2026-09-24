@@ -47,6 +47,7 @@ function App() {
   const [club, setClub] = useState(null)
   const [matches, setMatches] = useState([])
   const [articles, setArticles] = useState([])
+  const [teamPlayers, setTeamPlayers] = useState([])
   const [apiState, setApiState] = useState('loading')
 
   useEffect(() => {
@@ -56,7 +57,13 @@ function App() {
         setClub(home.club)
         setMatches([...(home.nextMatch ? [home.nextMatch] : []), ...(home.recentMatches || [])])
         setArticles((home.news || []).map((item) => ({ category: item.Status || 'CLUB', title: item.Title, text: item.Excerpt || '', slug: item.Slug })))
-        setApiState('ready')
+        return publicApi.getTeams(controller.signal).then((teams) => {
+          const firstTeam = teams[0]
+          if (!firstTeam) return
+          return publicApi.getTeamPlayers(firstTeam.Id, controller.signal).then(setTeamPlayers)
+        })
+      })
+      .then(() => setApiState('ready'))
       })
       .catch((error) => {
         if (error.name !== 'AbortError') setApiState('offline')
@@ -150,7 +157,7 @@ function App() {
 
       <section id="news" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow="03 / NEWSROOM" title="Le club" muted="en mouvement." /><div className="mt-10 grid gap-5 md:grid-cols-3">{(articles.length ? articles : fallbackNews).map((item) => <article key={item.title} className="group rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40 transition hover:-translate-y-1 hover:shadow-xl"><span className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">{item.category}</span><h3 className="mt-8 text-2xl font-black tracking-tight">{item.title}</h3><p className="mt-3 leading-7 text-slate-500">{item.text}</p><button onClick={() => setDemoOpen(true)} className="mt-8 font-extrabold text-jso-blue">Lire la suite <ChevronRight className="inline" size={17} /></button></article>)}</div></section>
 
-      <section id="team" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow="04 / ÉQUIPE" title="Les visages" muted="de JSO." /><div className="mt-8 grid gap-5 sm:grid-cols-3"><div className="rounded-[2rem] bg-jso-navy p-6 text-white"><Users size={28} className="text-jso-gold" /><h3 className="mt-12 text-2xl font-black">Équipe première</h3><p className="mt-2 text-white/65">Effectif, staff et profils des joueurs.</p></div><div className="rounded-[2rem] border border-slate-200 bg-white p-6"><Trophy size={28} className="text-jso-blue" /><h3 className="mt-12 text-2xl font-black">Palmarès</h3><p className="mt-2 text-slate-500">Les moments et les résultats qui ont marqué le club.</p></div><div className="rounded-[2rem] border border-slate-200 bg-white p-6"><Shield size={28} className="text-jso-blue" /><h3 className="mt-12 text-2xl font-black">Formation</h3><p className="mt-2 text-slate-500">La nouvelle génération de talents d’Oudhref.</p></div></div></section>
+      <section id="team" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow="04 / ÉQUIPE" title="Les visages" muted="de JSO." /><div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">{teamPlayers.length ? teamPlayers.map((player) => (<div key={player.Id} className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/40"><div className="grid h-28 place-items-center rounded-2xl bg-jso-navy text-4xl font-black text-jso-gold">{'{player.ShirtNumber || "—"}'}</div><h3 className="mt-4 font-black">{'{player.FirstName} {player.LastName}'}</h3><p className="mt-1 text-sm text-slate-500">{'{player.Position || "Joueur"}'}</p></div>')) : (<div className="rounded-[2rem] bg-jso-navy p-6 text-white sm:col-span-2 lg:col-span-5"><Users size={28} className="text-jso-gold" /><h3 className="mt-12 text-2xl font-black">Équipe première</h3><p className="mt-2 text-white/65">Effectif, staff et profils des joueurs.</p></div>')}</div></section>
 
       <section id="media" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow="05 / MEDIA HOUSE" title="Voir, vivre," muted="partager." /><div className="mt-8 grid gap-5 md:grid-cols-[1.3fr_0.7fr]"><div className="flex min-h-64 items-end rounded-[2rem] bg-gradient-to-br from-jso-navy to-jso-blue p-7 text-white shadow-xl"><div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">GALERIE JSO</p><h3 className="mt-3 text-3xl font-black">Les couleurs du club.</h3><p className="mt-2 max-w-md text-white/70">Photos, vidéos et moments forts de la communauté.</p></div></div><div className="rounded-[2rem] border border-slate-200 bg-white p-7"><p className="text-xs font-extrabold tracking-[0.2em] text-slate-400">À VENIR</p><h3 className="mt-8 text-3xl font-black">Le contenu du club, autrement.</h3><p className="mt-3 text-slate-500">Un espace média moderne pour chaque supporter.</p></div></div></section>
 
