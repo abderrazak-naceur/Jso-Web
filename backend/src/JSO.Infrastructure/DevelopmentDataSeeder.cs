@@ -1,14 +1,30 @@
 using JSO.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 
 namespace JSO.Infrastructure;
 
 public static class DevelopmentDataSeeder
 {
-    public static async Task SeedAsync(JsoDbContext db, ILogger logger, CancellationToken ct = default)
+    public static async Task SeedAsync(JsoDbContext db, ILogger logger, IConfiguration configuration, CancellationToken ct = default)
     {
         await db.Database.EnsureCreatedAsync(ct);
+
+        var bootstrapPassword = configuration["ADMIN_BOOTSTRAP_PASSWORD"];
+        if (!string.IsNullOrWhiteSpace(bootstrapPassword) && !await db.AdminUsers.AnyAsync(ct))
+        {
+            db.AdminUsers.Add(new AdminUser
+            {
+                Email = configuration["ADMIN_BOOTSTRAP_EMAIL"]?.Trim().ToLowerInvariant() ?? "admin@jso.tn",
+                DisplayName = "JSO Administrator",
+                PasswordHash = PasswordHasher.Hash(bootstrapPassword),
+                Role = "SuperAdmin",
+                IsActive = true
+            });
+            await db.SaveChangesAsync(ct);
+            logger.LogInformation("JSO bootstrap administrator created.");
+        }
 
         var club = await db.Clubs.SingleAsync(x => x.ShortName == "JSO", ct);
 
