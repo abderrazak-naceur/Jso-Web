@@ -10,7 +10,7 @@ async function request(path, signal) {
   return response.json()
 }
 
-export const publicApi = {
+export const publicApi = {\n  getHome: (signal) => request('/home', signal),
   getClub: (signal) => request('/club', signal),
   getMatches: (signal) => request('/matches', signal),
   getNews: (signal) => request('/news', signal),
