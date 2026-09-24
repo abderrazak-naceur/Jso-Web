@@ -1,2 +1,62 @@
-using JSO.Infrastructure; using Microsoft.EntityFrameworkCore;
-var builder=WebApplication.CreateBuilder(args); builder.Services.AddInfrastructure(builder.Configuration); builder.Services.AddControllers(); builder.Services.AddEndpointsApiExplorer(); builder.Services.AddSwaggerGen(); builder.Services.AddHealthChecks().AddDbContextCheck<JsoDbContext>(); var origins=builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? []; builder.Services.AddCors(o=>o.AddPolicy("Frontend",p=>{if(origins.Length>0)p.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod();})); var app=builder.Build(); if(app.Environment.IsDevelopment()){app.UseSwagger();app.UseSwaggerUI();} app.UseHttpsRedirection();app.UseCors("Frontend");app.MapControllers();app.MapHealthChecks("/health");app.Run();
+using JSO.Infrastructure;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.RateLimiting;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddProblemDetails();
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<JsoDbContext>();
+
+var origins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? [];
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        if (origins.Length > 0)
+            policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod();
+    });
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("public-api", limiter =>
+    {
+        limiter.PermitLimit = 120;
+        limiter.Window = TimeSpan.FromMinutes(1);
+        limiter.QueueLimit = 0;
+        limiter.AutoReplenishment = true;
+    });
+});
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+else
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseExceptionHandler();
+app.UseCors("Frontend");
+app.UseRateLimiter();
+
+app.MapControllers().RequireRateLimiting("public-api");
+app.MapHealthChecks("/health");
+
+app.Run();
