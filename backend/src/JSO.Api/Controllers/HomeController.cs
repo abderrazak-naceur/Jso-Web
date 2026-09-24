@@ -36,12 +36,16 @@ public sealed class HomeController(JsoDbContext db) : ControllerBase
             .Take(3)
             .ToListAsync(ct);
 
+        var content = await db.SiteContents.AsNoTracking()
+            .ToDictionaryAsync(x => x.Key, x => x.Value, ct);
+
         return Ok(new
         {
             club,
             nextMatch,
             recentMatches,
-            news
+            news,
+            content
         });
     }
 }
