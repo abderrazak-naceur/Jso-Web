@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, X, Plus, Pencil, Save, Eye, EyeOff } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, EyeOff } from 'lucide-react'
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5080/api').replace(/\/$/, '')
 
@@ -72,7 +72,7 @@ function SecurityModule({ onError }) {\n  const [users,setUsers]=useState([]); c
     ['matches', 'Match Center', Trophy, ['SuperAdmin','ClubAdmin','MatchManager']],
     ['teams', 'Équipes & joueurs', Users, ['SuperAdmin','ClubAdmin']],
     ['news', 'News CMS', Newspaper, ['SuperAdmin','ClubAdmin','Editor']],
-    ['security', 'Sécurité', ShieldCheck, ['SuperAdmin']],
+    ['security', 'Sécurité', ShieldCheck, ['SuperAdmin']],\n    ['media', 'Médias', Images, ['SuperAdmin','ClubAdmin','Editor']],
   ]
   const visibleItems = items.filter(([, , , roles]) => roles.includes(user.Role))
 
@@ -107,7 +107,7 @@ function SecurityModule({ onError }) {\n  const [users,setUsers]=useState([]); c
         {section === 'teams' && <TeamsModule onError={setError}/>}
         {section === 'matches' && <MatchesModule onError={setError}/>}
         {section === 'news' && <NewsModule onError={setError}/>}
-        {section === 'security' && <SecurityModule onError={setError}/>}
+        {section === 'security' && <SecurityModule onError={setError}/>}\n        {section === 'media' && <MediaModule onError={setError}/>}
       </section>
     </div>
   </main>
