@@ -61,7 +61,7 @@ function Field({ label, ...props }) {
   return <label className="block text-sm font-bold">{label}<input {...props} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-jso-blue" /></label>
 }
 
-function AdminDashboard({ user, onLogout }) {
+function SecurityModule({ onError }) {\n  const [users,setUsers]=useState([]); const [logs,setLogs]=useState([])\n  useEffect(()=>{ Promise.all([api('/admin/security/users'),api('/admin/audit?take=50')]).then(([u,l])=>{setUsers(u);setLogs(l)}).catch(e=>onError(e.message)) },[])\n  return <div className="space-y-6"><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Utilisateurs administrateurs</h2><div className="mt-4 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Utilisateur</th><th className="p-2">Rôle</th><th className="p-2">Statut</th><th className="p-2">Dernière connexion</th></tr></thead><tbody>{users.map(u=><tr key={u.id} className="border-b last:border-0"><td className="p-2"><b>{u.displayName}</b><div className="text-xs text-slate-500">{u.email}</div></td><td className="p-2 font-semibold">{u.role}</td><td className="p-2">{u.isActive?'Actif':'Désactivé'}</td><td className="p-2">{u.lastLoginAt?new Date(u.lastLoginAt).toLocaleString('fr-FR'):'Jamais'}</td></tr>)}</tbody></table></div></div><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Audit Log</h2><div className="mt-4 space-y-2">{logs.map(l=><div key={l.id} className="rounded-xl bg-slate-50 p-3 text-sm"><div className="flex justify-between gap-3"><b>{l.action} · {l.entityType}</b><span className="text-xs text-slate-400">{new Date(l.createdAt).toLocaleString('fr-FR')}</span></div><p className="mt-1 text-xs text-slate-500">{l.userEmail||'Système'}{l.entityId?' · '+l.entityId:''}</p></div>)}</div></div></div>\n}\n\nfunction AdminDashboard({ user, onLogout }) {
   const [open, setOpen] = useState(false)
   const [section, setSection] = useState('dashboard')
   const [stats, setStats] = useState(null)
@@ -107,7 +107,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'teams' && <TeamsModule onError={setError}/>}
         {section === 'matches' && <MatchesModule onError={setError}/>}
         {section === 'news' && <NewsModule onError={setError}/>}
-        {section === 'security' && <div className="rounded-[1.5rem] border border-slate-200 bg-white p-7"><h2 className="text-xl font-black">Sécurité</h2><p className="mt-2 text-sm text-slate-500">JWT + rôles serveur actifs. Le prochain bloc sécurité sera l’audit log et la gestion des sessions.</p></div>}
+        {section === 'security' && <SecurityModule onError={setError}/>}
       </section>
     </div>
   </main>
