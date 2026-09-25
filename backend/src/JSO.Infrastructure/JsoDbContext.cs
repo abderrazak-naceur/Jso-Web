@@ -9,6 +9,9 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<StaffMember> StaffMembers => Set<StaffMember>();
  public DbSet<Match> Matches => Set<Match>();
  public DbSet<MatchEvent> MatchEvents => Set<MatchEvent>();
+ public DbSet<MatchLineup> MatchLineups => Set<MatchLineup>();
+ public DbSet<MatchOfficial> MatchOfficials => Set<MatchOfficial>();
+ public DbSet<MatchStat> MatchStats => Set<MatchStat>();
  public DbSet<Article> Articles => Set<Article>();
  public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
  public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
@@ -25,6 +28,9 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<AuditLog>().HasIndex(x=>new{x.EntityType,x.EntityId});
   modelBuilder.Entity<MediaAsset>().HasIndex(x=>x.CreatedAt);
   modelBuilder.Entity<SiteContent>().HasIndex(x=>x.Key).IsUnique();
+  modelBuilder.Entity<MatchLineup>().HasIndex(x=>new{x.MatchId,x.PlayerId}).IsUnique();
+  modelBuilder.Entity<MatchOfficial>().HasIndex(x=>x.MatchId);
+  modelBuilder.Entity<MatchStat>().HasIndex(x=>new{x.MatchId,x.Name}).IsUnique();
   modelBuilder.Entity<Club>().HasData(new Club { Id=Guid.Parse("8d8c1ef6-1c9d-4d1c-9a0f-8a5b6b5c1001"), Name="Jeunesse Sportive de Oudhref", ShortName="JSO", Country="Tunisie", City="Oudhref" });
  }
 }
