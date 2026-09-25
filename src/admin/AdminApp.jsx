@@ -409,15 +409,36 @@ function MatchesModule({ onError }) {
 }
 
 function NewsModule({ onError }) {
-  const [items,setItems]=useState([]); const [editing,setEditing]=useState(null); const [form,setForm]=useState(emptyNews)
+  const [items,setItems]=useState([]); const [editing,setEditing]=useState(null)
+  const [form,setForm]=useState({...emptyNews,authorName:'',category:'Club',tags:'',metaTitle:'',metaDescription:''})
   async function load(){try{setItems(await api('/admin/news'))}catch(e){onError(e.message)}}
   useEffect(()=>{load()},[])
-  function edit(item){setEditing(item.id);setForm({...item,publishedAt:item.publishedAt?.slice(0,16)||''})}
-  async function save(e){e.preventDefault();try{const body={...form,publishedAt:form.publishedAt?new Date(form.publishedAt).toISOString():null};if(editing)await api('/admin/news/'+editing,{method:'PUT',body:JSON.stringify(body)});else await api('/admin/news',{method:'POST',body:JSON.stringify(body)});setEditing(null);setForm(emptyNews);await load()}catch(e){onError(e.message)}}
-  async function publish(id){try{await api('/admin/news/'+id+'/publish',{method:'POST'});await load()}catch(e){onError(e.message)}}
-  return <div className="grid gap-6 xl:grid-cols-[1fr_1.2fr]">
-    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><div className="flex items-center justify-between"><h2 className="text-xl font-black">News CMS</h2><button onClick={()=>{setEditing(null);setForm(emptyNews)}} className="rounded-xl bg-jso-navy p-2 text-white"><Plus size={18}/></button></div><div className="mt-5 space-y-2">{items.map(n=><div key={n.id} className="rounded-xl bg-slate-50 p-4"><div className="flex justify-between gap-3"><div><b>{n.title}</b><p className="text-xs text-slate-500">{n.status} · {n.slug}</p></div><div className="flex gap-2"><button onClick={()=>edit(n)} className="text-jso-blue"><Pencil size={16}/></button>{n.status!=='Published'&&<button onClick={()=>publish(n.id)} className="text-emerald-600"><Eye size={16}/></button>}</div></div></div>)}</div></div>
-    <form onSubmit={save} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 space-y-3"><h2 className="text-xl font-black">{editing?'Modifier l’article':'Nouvel article'}</h2><Field label="Titre" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required/><Field label="Slug" value={form.slug} onChange={e=>setForm({...form,slug:e.target.value})} required/><Field label="Extrait" value={form.excerpt} onChange={e=>setForm({...form,excerpt:e.target.value})}/><label className="block text-sm font-bold">Contenu<textarea value={form.body} onChange={e=>setForm({...form,body:e.target.value})} rows="9" className="mt-2 w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-jso-blue"/></label><Field label="Cover URL" value={form.coverImageUrl} onChange={e=>setForm({...form,coverImageUrl:e.target.value})}/><button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/>Enregistrer</button></form>
+  function reset(){setEditing(null);setForm({...emptyNews,authorName:'',category:'Club',tags:'',metaTitle:'',metaDescription:''})}
+  async function edit(id){try{const r=await api('/admin/news/'+id);const a=r.article||r;const m=r.metadata||{};setEditing(a.id);setForm({...a,publishedAt:a.publishedAt?.slice(0,16)||'',authorName:m.authorName||'',category:m.category||'Club',tags:m.tags||'',metaTitle:m.metaTitle||'',metaDescription:m.metaDescription||''})}catch(e){onError(e.message)}}
+  async function save(e){e.preventDefault();try{const body={...form,publishedAt:form.publishedAt?new Date(form.publishedAt).toISOString():null};if(editing)await api('/admin/news/'+editing,{method:'PUT',body:JSON.stringify(body)});else await api('/admin/news',{method:'POST',body:JSON.stringify(body)});reset();await load()}catch(e){onError(e.message)}}
+  async function action(id,name){try{await api('/admin/news/'+id+'/'+name,{method:'POST'});await load()}catch(e){onError(e.message)}}
+  async function remove(id){if(!confirm('Supprimer définitivement cet article ?'))return;try{await api('/admin/news/'+id,{method:'DELETE'});if(editing===id)reset();await load()}catch(e){onError(e.message)}}
+  return <div className="grid gap-6 xl:grid-cols-[1fr_1.3fr]">
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+      <div className="flex items-center justify-between"><div><h2 className="text-xl font-black">News CMS</h2><p className="text-xs text-slate-500">{items.length} articles · brouillons et publications</p></div><button onClick={reset} className="rounded-xl bg-jso-navy p-2 text-white"><Plus size={18}/></button></div>
+      <div className="mt-5 space-y-2">{items.map(n=><div key={n.id} className="rounded-xl bg-slate-50 p-4">
+        <div className="flex justify-between gap-3"><div className="min-w-0"><b className="block truncate">{n.title}</b><p className="text-xs text-slate-500">{n.status} · {n.slug}</p></div><button onClick={()=>edit(n.id)} className="text-jso-blue"><Pencil size={16}/></button></div>
+        <div className="mt-3 flex flex-wrap gap-2">{n.status==='Published'?<button onClick={()=>action(n.id,'unpublish')} className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800"><EyeOff size={13} className="mr-1 inline"/>Dépublier</button>:<button onClick={()=>action(n.id,'publish')} className="rounded-lg bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700"><Eye size={13} className="mr-1 inline"/>Publier</button>}<button onClick={()=>remove(n.id)} className="rounded-lg bg-red-50 px-2 py-1 text-xs font-bold text-red-700"><X size={13} className="mr-1 inline"/>Supprimer</button></div>
+      </div>)}</div>
+    </div>
+    <form onSubmit={save} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 space-y-4">
+      <div className="flex items-center justify-between"><div><h2 className="text-xl font-black">{editing?'Modifier l’article':'Nouvel article'}</h2><p className="text-xs text-slate-500">Workflow éditorial + SEO.</p></div>{editing&&<button type="button" onClick={reset} className="text-sm font-bold text-slate-500">Nouveau</button>}</div>
+      <Field label="Titre" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required maxLength="180"/>
+      <Field label="Slug" value={form.slug} onChange={e=>setForm({...form,slug:e.target.value})} required maxLength="180"/>
+      <div className="grid gap-3 sm:grid-cols-2"><Field label="Auteur" value={form.authorName} onChange={e=>setForm({...form,authorName:e.target.value})}/><Field label="Catégorie" value={form.category} onChange={e=>setForm({...form,category:e.target.value})}/></div>
+      <Field label="Tags (séparés par virgule)" value={form.tags} onChange={e=>setForm({...form,tags:e.target.value})}/>
+      <Field label="Extrait" value={form.excerpt} onChange={e=>setForm({...form,excerpt:e.target.value})}/>
+      <label className="block text-sm font-bold">Contenu<textarea value={form.body} onChange={e=>setForm({...form,body:e.target.value})} rows="12" required className="mt-2 w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-jso-blue"/></label>
+      <div className="grid gap-3 sm:grid-cols-2"><Field label="Cover URL" value={form.coverImageUrl} onChange={e=>setForm({...form,coverImageUrl:e.target.value})}/><Field label="Publication programmée" type="datetime-local" value={form.publishedAt} onChange={e=>setForm({...form,publishedAt:e.target.value})}/></div>
+      <div className="grid gap-3 sm:grid-cols-2"><Field label="Meta title" value={form.metaTitle} onChange={e=>setForm({...form,metaTitle:e.target.value})} maxLength="180"/><Field label="Meta description" value={form.metaDescription} onChange={e=>setForm({...form,metaDescription:e.target.value})} maxLength="320"/></div>
+      <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={form.status==='Published'} onChange={e=>setForm({...form,status:e.target.checked?'Published':'Draft'})}/> Pubblicato</label>
+      <button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-3 font-bold text-white"><Save size={16}/>Enregistrer l’article</button>
+    </form>
   </div>
 }
 
