@@ -15,6 +15,16 @@ public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) 
     public async Task<IActionResult> Get(CancellationToken ct) =>
         Ok(await db.Matches.AsNoTracking().OrderByDescending(x => x.KickoffAt).Take(100).ToListAsync(ct));
 
+    [HttpGet("references")]
+    public async Task<IActionResult> GetReferences(CancellationToken ct)
+    {
+        var seasons = await db.Seasons.AsNoTracking().OrderByDescending(x => x.IsActive).ThenByDescending(x => x.Name).ToListAsync(ct);
+        var competitions = await db.Competitions.AsNoTracking().OrderBy(x => x.Name).ToListAsync(ct);
+        var teams = await db.Teams.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.Name).ToListAsync(ct);
+
+        return Ok(new { seasons, competitions, teams });
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(MatchRequest request, CancellationToken ct)
     {
