@@ -13,6 +13,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<MatchOfficial> MatchOfficials => Set<MatchOfficial>();
  public DbSet<MatchStat> MatchStats => Set<MatchStat>();
  public DbSet<Article> Articles => Set<Article>();
+ public DbSet<ArticleMetadata> ArticleMetadata => Set<ArticleMetadata>();
  public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
  public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
  public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
@@ -28,6 +29,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<AuditLog>().HasIndex(x=>new{x.EntityType,x.EntityId});
   modelBuilder.Entity<MediaAsset>().HasIndex(x=>x.CreatedAt);
   modelBuilder.Entity<SiteContent>().HasIndex(x=>x.Key).IsUnique();
+  modelBuilder.Entity<ArticleMetadata>().HasIndex(x=>x.ArticleId).IsUnique();
   modelBuilder.Entity<MatchLineup>().HasIndex(x=>new{x.MatchId,x.PlayerId}).IsUnique();
   modelBuilder.Entity<MatchOfficial>().HasIndex(x=>x.MatchId);
   modelBuilder.Entity<MatchStat>().HasIndex(x=>new{x.MatchId,x.Name}).IsUnique();
