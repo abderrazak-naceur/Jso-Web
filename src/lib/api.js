@@ -5,7 +5,6 @@ async function request(path, signal) {
     headers: { Accept: 'application/json' },
     signal,
   })
-
   if (!response.ok) throw new Error('API request failed: ' + response.status)
   return response.json()
 }
@@ -20,5 +19,8 @@ export const publicApi = {
   getTeamPlayers: (teamId, signal) => request('/teams/' + teamId + '/players', signal),
   getMatch: (id, signal) => request('/matches/' + id, signal),
   getMatchEvents: (id, signal) => request('/matches/' + id + '/events', signal),
+  getMatchLineup: (id, signal) => request('/matches/' + id + '/lineup', signal),
+  getMatchOfficials: (id, signal) => request('/matches/' + id + '/officials', signal),
+  getMatchStats: (id, signal) => request('/matches/' + id + '/stats', signal),
   getNewsArticle: (slug, signal) => request('/news/' + encodeURIComponent(slug), signal),
 }
