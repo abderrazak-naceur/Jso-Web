@@ -71,3 +71,8 @@ jobs:
           dotnet ef migrations add CiPostgresValidation --project src/JSO.Infrastructure --startup-project src/JSO.Api --output-dir /tmp/JSOMigrations/Postgres
           test -f /tmp/JSOMigrations/Postgres/*_CiPostgresValidation.cs
           dotnet ef database update --project src/JSO.Infrastructure --startup-project src/JSO.Api
+      - name: Upload generated PostgreSQL migration
+        uses: actions/upload-artifact@v4
+        with:
+          name: jso-postgres-migration
+          path: /tmp/JSOMigrations/Postgres/*
