@@ -282,22 +282,129 @@ function TeamsModule({ onError }) {
 }
 
 function MatchesModule({ onError }) {
-  const [matches,setMatches]=useState([]); const [refs,setRefs]=useState({seasons:[],competitions:[],teams:[]}); const [editing,setEditing]=useState(null)
+  const [matches,setMatches]=useState([])
+  const [refs,setRefs]=useState({seasons:[],competitions:[],teams:[]})
+  const [selected,setSelected]=useState(null)
+  const [tab,setTab]=useState('details')
+  const [players,setPlayers]=useState([])
+  const [lineup,setLineup]=useState([])
+  const [officials,setOfficials]=useState([])
+  const [stats,setStats]=useState([])
+  const [events,setEvents]=useState([])
   const [form,setForm]=useState({opponentName:'',kickoffAt:'',venue:'',isHome:true,homeScore:'',awayScore:'',status:'Scheduled',isPublished:false,seasonId:'',competitionId:'',teamId:''})
-  async function load(){try{const [m,r]=await Promise.all([api('/admin/matches'),api('/admin/matches/references')]);setMatches(m);setRefs(r);if(!form.seasonId&&r.seasons[0])setForm(f=>({...f,seasonId:r.seasons[0].id,competitionId:r.competitions[0]?.id||'',teamId:r.teams[0]?.id||''}))}catch(e){onError(e.message)}}
+  const [eventForm,setEventForm]=useState({minute:0,type:'Goal',playerName:'',notes:''})
+  const [officialForm,setOfficialForm]=useState({name:'',role:'Referee'})
+  const [statForm,setStatForm]=useState({name:'Possession',homeValue:'',awayValue:''})
+
+  async function load() {
+    try {
+      const [m,r]=await Promise.all([api('/admin/matches'),api('/admin/matches/references')])
+      setMatches(m); setRefs(r)
+      if(!form.seasonId && r.seasons?.[0]) setForm(x=>({...x,seasonId:r.seasons[0].id,competitionId:r.competitions?.[0]?.id||'',teamId:r.teams?.[0]?.id||''}))
+      if(!selected && m[0]) await selectMatch(m[0])
+    } catch(e){onError(e.message)}
+  }
   useEffect(()=>{load()},[])
-  function startEdit(m){setEditing(m.id);setForm({...m,kickoffAt:m.kickoffAt?.slice(0,16)||'',homeScore:m.homeScore??'',awayScore:m.awayScore??''})}
-  async function save(e){e.preventDefault();try{const body={...form,kickoffAt:new Date(form.kickoffAt).toISOString(),homeScore:form.homeScore===''?null:Number(form.homeScore),awayScore:form.awayScore===''?null:Number(form.awayScore),isPublished:Boolean(form.isPublished)};if(editing)await api('/admin/matches/'+editing,{method:'PUT',body:JSON.stringify(body)});else await api('/admin/matches',{method:'POST',body:JSON.stringify(body)});setEditing(null);setForm(f=>({...f,opponentName:'',venue:'',homeScore:'',awayScore:''}));await load()}catch(e){onError(e.message)}}
-  return <div className="space-y-6">
-    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">{editing?'Modifier le match':'Créer un match'}</h2><form onSubmit={save} className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-      <Field label="Adversaire" value={form.opponentName} onChange={e=>setForm({...form,opponentName:e.target.value})} required/><Field label="Coup d’envoi" type="datetime-local" value={form.kickoffAt} onChange={e=>setForm({...form,kickoffAt:e.target.value})} required/><Field label="Stade" value={form.venue} onChange={e=>setForm({...form,venue:e.target.value})}/>
-      <label className="text-sm font-bold">Statut<select value={form.status} onChange={e=>setForm({...form,status:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"><option>Scheduled</option><option>Live</option><option>Finished</option><option>Postponed</option><option>Cancelled</option></select></label>
-      {!editing && <><label className="text-sm font-bold">Saison<select value={form.seasonId} onChange={e=>setForm({...form,seasonId:e.target.value})} className="mt-2 w-full rounded-xl border p-2.5">{refs.seasons.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label><label className="text-sm font-bold">Compétition<select value={form.competitionId} onChange={e=>setForm({...form,competitionId:e.target.value})} className="mt-2 w-full rounded-xl border p-2.5">{refs.competitions.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label><label className="text-sm font-bold">Équipe<select value={form.teamId} onChange={e=>setForm({...form,teamId:e.target.value})} className="mt-2 w-full rounded-xl border p-2.5">{refs.teams.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label></>}
-      <Field label="Score domicile" type="number" value={form.homeScore} onChange={e=>setForm({...form,homeScore:e.target.value})}/><Field label="Score extérieur" type="number" value={form.awayScore} onChange={e=>setForm({...form,awayScore:e.target.value})}/>
-      <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={form.isHome} onChange={e=>setForm({...form,isHome:e.target.checked})}/> JSO à domicile</label><label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={form.isPublished} onChange={e=>setForm({...form,isPublished:e.target.checked})}/> Publié</label>
-      <button className="flex items-center justify-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/>Enregistrer</button>
-    </form></div>
-    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Matchs</h2><div className="mt-4 space-y-2">{matches.map(m=><div key={m.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-4"><div><b>{m.isHome?'JSO':'Ext.'} — {m.opponentName}</b><p className="text-xs text-slate-500">{new Date(m.kickoffAt).toLocaleString('fr-FR')} · {m.status} · {m.isPublished?'Publié':'Brouillon'}</p></div><button onClick={()=>startEdit(m)} className="rounded-lg bg-white px-3 py-2 text-sm font-bold text-jso-blue"><Pencil size={15} className="mr-1 inline"/>Modifier</button></div>)}</div></div>
+
+  async function selectMatch(m) {
+    setSelected(m); setTab('details')
+    try {
+      const [l,o,s,e]=await Promise.all([
+        api('/admin/matches/'+m.id+'/lineup'),
+        api('/admin/matches/'+m.id+'/officials'),
+        api('/admin/matches/'+m.id+'/stats'),
+        api('/admin/matches/'+m.id+'/events')
+      ])
+      setLineup(l); setOfficials(o); setStats(s); setEvents(e)
+      const p=await api('/admin/teams/'+m.teamId+'/players')
+      setPlayers(p)
+    } catch(e){onError(e.message)}
+  }
+
+  function startNew(){
+    setSelected(null); setTab('details')
+    setForm(x=>({...x,opponentName:'',kickoffAt:'',venue:'',homeScore:'',awayScore:'',status:'Scheduled',isPublished:false}))
+  }
+  function startEdit(m){
+    setSelected(m); setTab('details')
+    setForm({...m,kickoffAt:m.kickoffAt?.slice(0,16)||'',homeScore:m.homeScore??'',awayScore:m.awayScore??''})
+    selectMatch(m)
+  }
+  async function save(e){
+    e.preventDefault()
+    try {
+      const body={...form,kickoffAt:new Date(form.kickoffAt).toISOString(),homeScore:form.homeScore===''?null:Number(form.homeScore),awayScore:form.awayScore===''?null:Number(form.awayScore),isPublished:Boolean(form.isPublished)}
+      const saved=selected ? await api('/admin/matches/'+selected.id,{method:'PUT',body:JSON.stringify(body)}) : await api('/admin/matches',{method:'POST',body:JSON.stringify(body)})
+      await load(); if(saved?.id) await selectMatch(saved)
+    } catch(e){onError(e.message)}
+  }
+  async function saveLineup(){
+    try { await api('/admin/matches/'+selected.id+'/lineup',{method:'PUT',body:JSON.stringify({items:lineup.map(x=>({playerId:x.playerId,role:x.role,positionOrder:x.positionOrder||null,position:x.position||'',isCaptain:Boolean(x.isCaptain)}))})}); await selectMatch(selected) }
+    catch(e){onError(e.message)}
+  }
+  function addPlayer(player, role='Starter'){
+    if(lineup.some(x=>x.playerId===player.id)) return
+    setLineup(x=>[...x,{playerId:player.id,firstName:player.firstName,lastName:player.lastName,shirtNumber:player.shirtNumber,role,position:player.position||'',positionOrder:x.length+1,isCaptain:false}])
+  }
+  function removePlayer(id){setLineup(x=>x.filter(p=>p.playerId!==id))}
+  async function addEvent(e){
+    e.preventDefault()
+    try { await api('/admin/matches/'+selected.id+'/events',{method:'POST',body:JSON.stringify({...eventForm,minute:Number(eventForm.minute)})}); setEventForm({minute:0,type:'Goal',playerName:'',notes:''}); await selectMatch(selected) }
+    catch(e){onError(e.message)}
+  }
+  async function deleteEvent(id){try{await api('/admin/matches/'+selected.id+'/events/'+id,{method:'DELETE'});await selectMatch(selected)}catch(e){onError(e.message)}}
+  async function saveOfficials(){
+    try { await api('/admin/matches/'+selected.id+'/officials',{method:'PUT',body:JSON.stringify({items:officials.map(x=>({name:x.name,role:x.role}))})}); await selectMatch(selected) }
+    catch(e){onError(e.message)}
+  }
+  async function saveStats(){
+    try { await api('/admin/matches/'+selected.id+'/stats',{method:'PUT',body:JSON.stringify({items:stats.map(x=>({name:x.name,homeValue:x.homeValue===null||x.homeValue===''?null:Number(x.homeValue),awayValue:x.awayValue===null||x.awayValue===''?null:Number(x.awayValue)}))})}); await selectMatch(selected) }
+    catch(e){onError(e.message)}
+  }
+  function addOfficial(){if(!officialForm.name.trim())return;setOfficials(x=>[...x,{...officialForm,name:officialForm.name.trim()}]);setOfficialForm({name:'',role:'Referee'})}
+  function addStat(){if(!statForm.name.trim())return;setStats(x=>[...x,{...statForm,name:statForm.name.trim()}]);setStatForm({name:'',homeValue:'',awayValue:''})}
+
+  return <div className="grid gap-6 xl:grid-cols-[0.75fr_1.55fr]">
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+      <div className="flex items-center justify-between"><div><h2 className="text-xl font-black">Match Center</h2><p className="text-xs text-slate-500">{matches.length} matchs</p></div><button onClick={startNew} className="rounded-xl bg-jso-navy p-2 text-white"><Plus size={18}/></button></div>
+      <div className="mt-5 space-y-2">{matches.map(m=><button key={m.id} onClick={()=>selectMatch(m)} className={'w-full rounded-xl p-3 text-left '+(selected?.id===m.id?'bg-jso-navy text-white':'bg-slate-50 hover:bg-slate-100')}><b>JSO — {m.opponentName}</b><span className="block text-xs opacity-70">{new Date(m.kickoffAt).toLocaleString('fr-FR')} · {m.status}</span></button>)}</div>
+    </div>
+    <div className="space-y-5">
+      <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+        <div className="flex flex-wrap gap-2 border-b pb-4">{[['details','Match'],['lineup','Formation'],['events','Événements'],['officials','Officiels'],['stats','Stats']].map(([id,label])=><button key={id} onClick={()=>setTab(id)} className={'rounded-full px-4 py-2 text-sm font-extrabold '+(tab===id?'bg-jso-navy text-white':'bg-slate-100 text-slate-600')}>{label}</button>)}</div>
+        {tab==='details' && <form onSubmit={save} className="mt-5 grid gap-3 md:grid-cols-2">
+          <Field label="Adversaire" value={form.opponentName} onChange={e=>setForm({...form,opponentName:e.target.value})} required/>
+          <Field label="Coup d’envoi" type="datetime-local" value={form.kickoffAt} onChange={e=>setForm({...form,kickoffAt:e.target.value})} required/>
+          <Field label="Stade" value={form.venue||''} onChange={e=>setForm({...form,venue:e.target.value})}/>
+          <label className="text-sm font-bold">Statut<select value={form.status} onChange={e=>setForm({...form,status:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 p-2.5"><option>Scheduled</option><option>Live</option><option>Finished</option><option>Postponed</option><option>Cancelled</option></select></label>
+          <label className="text-sm font-bold">Saison<select value={form.seasonId||''} onChange={e=>setForm({...form,seasonId:e.target.value})} className="mt-2 w-full rounded-xl border p-2.5">{refs.seasons?.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
+          <label className="text-sm font-bold">Compétition<select value={form.competitionId||''} onChange={e=>setForm({...form,competitionId:e.target.value})} className="mt-2 w-full rounded-xl border p-2.5">{refs.competitions?.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
+          <label className="text-sm font-bold">Équipe<select value={form.teamId||''} onChange={e=>setForm({...form,teamId:e.target.value})} className="mt-2 w-full rounded-xl border p-2.5">{refs.teams?.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
+          <div className="grid grid-cols-2 gap-3"><Field label="Score JSO" type="number" value={form.homeScore} onChange={e=>setForm({...form,homeScore:e.target.value})}/><Field label="Score adversaire" type="number" value={form.awayScore} onChange={e=>setForm({...form,awayScore:e.target.value})}/></div>
+          <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={form.isHome} onChange={e=>setForm({...form,isHome:e.target.checked})}/> JSO à domicile</label>
+          <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={form.isPublished} onChange={e=>setForm({...form,isPublished:e.target.checked})}/> Publié</label>
+          <button className="md:col-span-2 flex items-center justify-center gap-2 rounded-xl bg-jso-navy px-4 py-3 font-bold text-white"><Save size={16}/>Enregistrer le match</button>
+        </form>}
+        {tab==='lineup' && selected && <div className="mt-5">
+          <div className="grid gap-5 lg:grid-cols-2"><div><h3 className="font-black">Joueurs disponibles</h3><div className="mt-3 space-y-2 max-h-80 overflow-auto">{players.filter(p=>!lineup.some(x=>x.playerId===p.id)).map(p=><div key={p.id} className="flex items-center justify-between rounded-xl bg-slate-50 p-3"><span><b>#{p.shirtNumber??'—'} {p.firstName} {p.lastName}</b><small className="ml-2 text-slate-500">{p.position||''}</small></span><div className="flex gap-1"><button type="button" onClick={()=>addPlayer(p,'Starter')} className="rounded-lg bg-jso-navy px-2 py-1 text-xs font-bold text-white">Titulaire</button><button type="button" onClick={()=>addPlayer(p,'Substitute')} className="rounded-lg border px-2 py-1 text-xs font-bold">Banc</button></div></div>)}</div></div>
+          <div><h3 className="font-black">Composition</h3><div className="mt-3 space-y-2">{lineup.map((p,i)=><div key={p.playerId} className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-xl bg-slate-50 p-3"><span className="font-black text-jso-blue">#{p.shirtNumber??'—'}</span><div><b>{p.firstName} {p.lastName}</b><div className="flex gap-2 text-xs text-slate-500"><select value={p.role} onChange={e=>setLineup(x=>x.map(y=>y.playerId===p.playerId?{...y,role:e.target.value}:y))} className="rounded border p-1"><option>Starter</option><option>Substitute</option></select><input value={p.position||''} onChange={e=>setLineup(x=>x.map(y=>y.playerId===p.playerId?{...y,position:e.target.value}:y))} placeholder="Position" className="w-24 rounded border p-1"/></div></div><button type="button" onClick={()=>removePlayer(p.playerId)} className="text-red-600"><X size={16}/></button></div>)}</div></div></div>
+          <button onClick={saveLineup} className="mt-5 flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/>Enregistrer la composition</button>
+        </div>}
+        {tab==='events' && selected && <div className="mt-5">
+          <form onSubmit={addEvent} className="grid gap-3 sm:grid-cols-2"><Field label="Minute" type="number" min="0" max="200" value={eventForm.minute} onChange={e=>setEventForm({...eventForm,minute:e.target.value})}/><label className="text-sm font-bold">Type<select value={eventForm.type} onChange={e=>setEventForm({...eventForm,type:e.target.value})} className="mt-2 w-full rounded-xl border p-2.5"><option>Goal</option><option>YellowCard</option><option>RedCard</option><option>Substitution</option><option>VAR</option></select></label><Field label="Joueur" value={eventForm.playerName} onChange={e=>setEventForm({...eventForm,playerName:e.target.value})}/><Field label="Note" value={eventForm.notes} onChange={e=>setEventForm({...eventForm,notes:e.target.value})}/><button className="sm:col-span-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white">Ajouter l’événement</button></form>
+          <div className="mt-5 space-y-2">{events.map(e=><div key={e.id} className="flex justify-between rounded-xl bg-slate-50 p-3"><div><b>{e.minute}' · {e.type}</b><span className="ml-2 text-sm">{e.playerName||''}</span>{e.notes&&<p className="text-xs text-slate-500">{e.notes}</p>}</div><button onClick={()=>deleteEvent(e.id)} className="text-red-600"><X size={16}/></button></div>)}</div>
+        </div>}
+        {tab==='officials' && selected && <div className="mt-5">
+          <div className="flex gap-2"><Field label="Nome" value={officialForm.name} onChange={e=>setOfficialForm({...officialForm,name:e.target.value})}/><label className="min-w-40 text-sm font-bold">Ruolo<select value={officialForm.role} onChange={e=>setOfficialForm({...officialForm,role:e.target.value})} className="mt-2 w-full rounded-xl border p-2.5"><option>Referee</option><option>Assistant Referee</option><option>Fourth Official</option><option>VAR</option></select></label><button type="button" onClick={addOfficial} className="mt-6 rounded-xl bg-jso-navy px-4 py-2 font-bold text-white"><Plus size={16}/></button></div>
+          <div className="mt-4 space-y-2">{officials.map((o,i)=><div key={o.id||i} className="flex justify-between rounded-xl bg-slate-50 p-3"><span><b>{o.name}</b><small className="ml-2 text-slate-500">{o.role}</small></span><button onClick={()=>setOfficials(x=>x.filter((_,j)=>j!==i))} className="text-red-600"><X size={16}/></button></div>)}</div><button onClick={saveOfficials} className="mt-4 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/> Enregistrer</button>
+        </div>}
+        {tab==='stats' && selected && <div className="mt-5">
+          <div className="grid gap-2 sm:grid-cols-[1fr_120px_120px_auto] items-end"><Field label="Statistique" value={statForm.name} onChange={e=>setStatForm({...statForm,name:e.target.value})}/><Field label="JSO" type="number" value={statForm.homeValue} onChange={e=>setStatForm({...statForm,homeValue:e.target.value})}/><Field label="Adversaire" type="number" value={statForm.awayValue} onChange={e=>setStatForm({...statForm,awayValue:e.target.value})}/><button type="button" onClick={addStat} className="rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Plus size={16}/></button></div>
+          <div className="mt-4 space-y-2">{stats.map((s,i)=><div key={s.id||i} className="grid grid-cols-[1fr_100px_100px_auto] items-center rounded-xl bg-slate-50 p-3 text-sm"><input value={s.name} onChange={e=>setStats(x=>x.map((y,j)=>j===i?{...y,name:e.target.value}:y))} className="rounded border p-1 font-bold"/><input type="number" value={s.homeValue??''} onChange={e=>setStats(x=>x.map((y,j)=>j===i?{...y,homeValue:e.target.value}:y))} className="rounded border p-1 text-center"/><input type="number" value={s.awayValue??''} onChange={e=>setStats(x=>x.map((y,j)=>j===i?{...y,awayValue:e.target.value}:y))} className="rounded border p-1 text-center"/><button onClick={()=>setStats(x=>x.filter((_,j)=>j!==i))} className="text-red-600"><X size={16}/></button></div>)}</div><button onClick={saveStats} className="mt-4 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/> Enregistrer les statistiques</button>
+        </div>}
+        {!selected && tab!=='details' && <p className="mt-5 text-sm text-slate-500">Sélectionne un match pour gérer ses données.</p>}
+      </div>
+    </div>
   </div>
 }
 
