@@ -10,4 +10,8 @@ public sealed class MediaAsset
     public string? Caption { get; set; }
     public bool IsPublished { get; set; } = true;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public string? FileName { get; set; }
+    public string? ContentType { get; set; }
+    public long? FileSize { get; set; }
+    public string? StoragePath { get; set; }
 }
