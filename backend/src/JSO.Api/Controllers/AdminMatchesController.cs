@@ -55,6 +55,9 @@ public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) 
         match.HomeScore = request.HomeScore;
         match.AwayScore = request.AwayScore;
         match.IsPublished = request.IsPublished;
+        match.SeasonId = request.SeasonId;
+        match.CompetitionId = request.CompetitionId;
+        match.TeamId = request.TeamId;
         await db.SaveChangesAsync(ct);
         await audit.LogAsync("UPDATE", "Match", id.ToString(), User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(), ct: ct);
         return Ok(match);
