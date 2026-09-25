@@ -25,6 +25,8 @@ public sealed class NewsDetailsController(JsoDbContext db) : ControllerBase
             })
             .SingleOrDefaultAsync(ct);
 
-        return article is null ? NotFound() : Ok(article);
+        if (article is null) return NotFound();
+        var metadata = await db.ArticleMetadata.AsNoTracking().SingleOrDefaultAsync(x => x.ArticleId == article.Id, ct);
+        return Ok(new { article, metadata });
     }
 }
