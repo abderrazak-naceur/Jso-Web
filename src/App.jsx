@@ -29,6 +29,36 @@ const fallbackNews = [
   { category: 'FORMATION', title: 'Construire la relève d’Oudhref', text: 'Une attention particulière portée aux jeunes joueurs et à la formation.' },
 ]
 
+function pick(object, ...keys) {
+  for (const key of keys) {
+    if (object?.[key] !== undefined && object?.[key] !== null) return object[key]
+  }
+  return undefined
+}
+
+function normalizeMatch(match) {
+  return {
+    Id: pick(match, 'Id', 'id'),
+    OpponentName: pick(match, 'OpponentName', 'opponentName') || 'TBA',
+    KickoffAt: pick(match, 'KickoffAt', 'kickoffAt'),
+    Venue: pick(match, 'Venue', 'venue'),
+    IsHome: pick(match, 'IsHome', 'isHome'),
+    HomeScore: pick(match, 'HomeScore', 'homeScore'),
+    AwayScore: pick(match, 'AwayScore', 'awayScore'),
+    Status: pick(match, 'Status', 'status') || 'Scheduled',
+  }
+}
+
+function normalizePlayer(player) {
+  return {
+    Id: pick(player, 'Id', 'id'),
+    FirstName: pick(player, 'FirstName', 'firstName') || '',
+    LastName: pick(player, 'LastName', 'lastName') || '',
+    ShirtNumber: pick(player, 'ShirtNumber', 'shirtNumber'),
+    Position: pick(player, 'Position', 'position'),
+  }
+}
+
 function SectionTitle({ eyebrow, title, muted }) {
   return (
     <div>
@@ -54,24 +84,59 @@ function App() {
   const [content, setContent] = useState({})
   const [apiState, setApiState] = useState('loading')
 
+  const [media, setMedia] = useState([])
+
   useEffect(() => {
     const controller = new AbortController()
-    publicApi.getHome(controller.signal)
-      .then((home) => {
-        setClub(home.club)
+
+    Promise.allSettled([
+      publicApi.getHome(controller.signal),
+      publicApi.getMedia(controller.signal),
+      publicApi.getTeams(controller.signal),
+    ]).then(async ([homeResult, mediaResult, teamsResult]) => {
+      if (homeResult.status === 'fulfilled') {
+        const home = homeResult.value
+        setClub(home.club || null)
         setContent(home.content || {})
-        setMatches([...(home.nextMatch ? [home.nextMatch] : []), ...(home.recentMatches || [])])
-        setArticles((home.news || []).map((item) => ({ category: item.Status || 'CLUB', title: item.Title, text: item.Excerpt || '', slug: item.Slug })))
-        return publicApi.getTeams(controller.signal).then((teams) => {
-          const firstTeam = teams[0]
-          if (!firstTeam) return
-          return publicApi.getTeamPlayers(firstTeam.Id, controller.signal).then(setTeamPlayers)
-        })
-      })
-      .then(() => setApiState('ready'))
-      .catch((error) => {
-        if (error.name !== 'AbortError') setApiState('offline')
-      })
+        setMatches([
+          ...(home.nextMatch ? [normalizeMatch(home.nextMatch)] : []),
+          ...(home.recentMatches || []).map(normalizeMatch),
+        ])
+        setArticles((home.news || []).map((item) => ({
+          category: pick(item, 'Status', 'status') || 'CLUB',
+          title: pick(item, 'Title', 'title') || 'Actualité JSO',
+          text: pick(item, 'Excerpt', 'excerpt') || '',
+          slug: pick(item, 'Slug', 'slug'),
+        })))
+      }
+
+      if (mediaResult.status === 'fulfilled') {
+        setMedia(mediaResult.value || [])
+      }
+
+      if (teamsResult.status === 'fulfilled') {
+        const teams = teamsResult.value || []
+        const firstTeam = teams[0]
+        const teamId = pick(firstTeam, 'Id', 'id')
+        if (teamId) {
+          try {
+            const players = await publicApi.getTeamPlayers(teamId, controller.signal)
+            setTeamPlayers((players || []).map(normalizePlayer))
+          } catch (error) {
+            if (error.name !== 'AbortError') setTeamPlayers([])
+          }
+        }
+      }
+
+      if (homeResult.status === 'fulfilled' || mediaResult.status === 'fulfilled' || teamsResult.status === 'fulfilled') {
+        setApiState('ready')
+      } else {
+        setApiState('offline')
+      }
+    }).catch((error) => {
+      if (error.name !== 'AbortError') setApiState('offline')
+    })
+
     return () => controller.abort()
   }, [])
 
@@ -84,8 +149,16 @@ function App() {
         publicApi.getMatch(match.Id),
         publicApi.getMatchEvents(match.Id),
       ])
-      setSelectedMatch({ ...match, ...details })
-      setMatchEvents(events || [])
+      const normalizedDetails = normalizeMatch(details)
+      setSelectedMatch({ ...match, ...normalizedDetails })
+      setMatchEvents((events || []).map((event) => ({
+        ...event,
+        Id: pick(event, 'Id', 'id'),
+        Minute: pick(event, 'Minute', 'minute'),
+        Type: pick(event, 'Type', 'type'),
+        PlayerName: pick(event, 'PlayerName', 'playerName'),
+        Notes: pick(event, 'Notes', 'notes'),
+      })))
     } catch {
       setMatchEvents([])
     } finally {
@@ -140,7 +213,7 @@ function App() {
         <div>
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-jso-gold/40 bg-jso-gold/10 px-4 py-2 text-xs font-extrabold tracking-[0.16em] text-jso-navy"><span className="h-2 w-2 rounded-full bg-jso-gold" /> SAISON 2026 / 27</div>
           <h1 className="max-w-3xl text-5xl font-black leading-[0.94] tracking-[-0.06em] sm:text-7xl lg:text-8xl">{content.hero_title || 'Toujours plus haut.'}<br /><span className="text-jso-blue">{content.hero_highlight || 'Toujours JSO.'}</span></h1>
-          <p className="mt-7 max-w-xl text-lg leading-8 text-slate-600">{content.hero_description || club?.Description || 'La maison digitale de la Jeunesse Sportive de Oudhref. Une plateforme pour vivre le club, suivre les matchs et partager la passion d’une ville.'}</p>
+          <p className="mt-7 max-w-xl text-lg leading-8 text-slate-600">{content.hero_description || pick(club, 'Description', 'description') || 'La maison digitale de la Jeunesse Sportive de Oudhref. Une plateforme pour vivre le club, suivre les matchs et partager la passion d’une ville.'}</p>
           <div className="mt-9 flex flex-wrap gap-3">
             <button onClick={() => goTo('Matchs', 'matches')} className="rounded-full bg-jso-navy px-6 py-4 font-extrabold text-white transition hover:-translate-y-1 hover:bg-jso-blue">Découvrir le Match Center <ArrowUpRight className="ml-2 inline" size={18} /></button>
             <button onClick={() => setDemoOpen(true)} className="rounded-full border border-slate-300 bg-white px-6 py-4 font-extrabold text-jso-navy transition hover:border-jso-blue hover:text-jso-blue"><CirclePlay className="mr-2 inline" size={18} /> Découvrir JSO</button>
@@ -168,10 +241,10 @@ function App() {
         <div className="mb-5 flex items-center justify-between"><span className={`rounded-full px-3 py-1 text-xs font-extrabold ${apiState === 'ready' ? 'bg-emerald-100 text-emerald-700' : apiState === 'offline' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>{apiState === 'ready' ? 'API CONNESSA' : apiState === 'offline' ? 'MODALITÀ DEMO' : 'CONNESSIONE API...'}</span></div><div className="mt-8 grid gap-5 lg:grid-cols-[1.4fr_0.6fr]">
           <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50 sm:p-8">
             <div className="flex items-center justify-between text-xs font-extrabold text-slate-500"><span className="rounded-full bg-jso-gold/20 px-3 py-1 text-jso-navy">PROCHAIN MATCH</span><span>À VENIR</span></div>
-            <div className="grid items-center gap-5 py-10 sm:grid-cols-[1fr_auto_1fr]"><div className="text-center"><div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-jso-navy text-2xl font-black text-jso-gold">JSO</div><h3 className="mt-3 text-xl font-black">JSO Oudhref</h3><p className="text-sm text-slate-500">Domicile</p></div><div className="text-center"><div className="text-xs font-extrabold text-slate-400">DATE À CONFIRMER</div><div className="my-2 text-4xl font-black text-jso-navy">VS</div><div className="text-xs text-slate-500">Stade d’Oudhref</div></div><div className="text-center"><div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl border border-slate-200 bg-slate-50 text-xl font-black text-slate-400">TBA</div><h3 className="mt-3 text-xl font-black">Adversaire</h3><p className="text-sm text-slate-500">À confirmer</p></div></div>
+            <div className="grid items-center gap-5 py-10 sm:grid-cols-[1fr_auto_1fr]"><div className="text-center"><div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-jso-navy text-2xl font-black text-jso-gold">JSO</div><h3 className="mt-3 text-xl font-black">JSO Oudhref</h3><p className="text-sm text-slate-500">Domicile</p></div><div className="text-center"><div className="text-xs font-extrabold text-slate-400">{matches[0]?.KickoffAt ? new Date(matches[0].KickoffAt).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }) : 'DATE À CONFIRMER'}</div><div className="my-2 text-4xl font-black text-jso-navy">VS</div><div className="text-xs text-slate-500">{matches[0]?.Venue || 'Stade d’Oudhref'}</div></div><div className="text-center"><div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl border border-slate-200 bg-slate-50 text-xl font-black text-slate-400">{matches[0]?.OpponentName?.slice(0, 3).toUpperCase() || 'TBA'}</div><h3 className="mt-3 text-xl font-black">{matches[0]?.OpponentName || 'Adversaire'}</h3><p className="text-sm text-slate-500">{matches[0]?.IsHome ? 'Extérieur' : 'Domicile'}</p></div></div>
             <div className="flex flex-wrap gap-2 border-t border-slate-200 pt-5 text-sm text-slate-500"><span className="rounded-full bg-slate-100 px-3 py-2">Composition</span><span className="rounded-full bg-slate-100 px-3 py-2">Statistiques</span><span className="rounded-full bg-slate-100 px-3 py-2">Commentaires</span></div>
           </div>
-          <div className="rounded-[2rem] bg-jso-navy p-6 text-white shadow-xl shadow-blue-950/20"><div className="text-xs font-extrabold tracking-[0.2em] text-white/60">CLUB SNAPSHOT</div><div className="mt-6 space-y-5"><div className="flex items-center justify-between border-b border-white/15 pb-4"><span className="flex items-center gap-2 text-white/75"><Trophy size={18} /> Dernier résultat</span><strong>—</strong></div><div className="flex items-center justify-between border-b border-white/15 pb-4"><span className="flex items-center gap-2 text-white/75"><CalendarDays size={18} /> Calendrier</span><strong>À venir</strong></div><div className="flex items-center justify-between border-b border-white/15 pb-4"><span className="flex items-center gap-2 text-white/75"><Users size={18} /> Effectif</span><strong>JSO</strong></div><div className="flex items-center justify-between"><span className="flex items-center gap-2 text-white/75"><Shield size={18} /> Identité</span><strong className="text-jso-gold">Oudhref</strong></div></div></div>
+          <div className="rounded-[2rem] bg-jso-navy p-6 text-white shadow-xl shadow-blue-950/20"><div className="text-xs font-extrabold tracking-[0.2em] text-white/60">CLUB SNAPSHOT</div><div className="mt-6 space-y-5"><div className="flex items-center justify-between border-b border-white/15 pb-4"><span className="flex items-center gap-2 text-white/75"><Trophy size={18} /> Dernier résultat</span><strong>{matches.find((match) => match.HomeScore != null && match.AwayScore != null) ? `${matches.find((match) => match.HomeScore != null && match.AwayScore != null).HomeScore} - ${matches.find((match) => match.HomeScore != null && match.AwayScore != null).AwayScore}` : '—'}</strong></div><div className="flex items-center justify-between border-b border-white/15 pb-4"><span className="flex items-center gap-2 text-white/75"><CalendarDays size={18} /> Calendrier</span><strong>À venir</strong></div><div className="flex items-center justify-between border-b border-white/15 pb-4"><span className="flex items-center gap-2 text-white/75"><Users size={18} /> Effectif</span><strong>JSO</strong></div><div className="flex items-center justify-between"><span className="flex items-center gap-2 text-white/75"><Shield size={18} /> Identité</span><strong className="text-jso-gold">Oudhref</strong></div></div></div>
         </div>
       </section>
 
@@ -204,7 +277,7 @@ function App() {
 
       <section id="team" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow="04 / ÉQUIPE" title="Les visages" muted="de JSO." /><div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">{teamPlayers.length ? teamPlayers.map((player) => (<div key={player.Id} className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/40"><div className="grid h-28 place-items-center rounded-2xl bg-jso-navy text-4xl font-black text-jso-gold">{player.ShirtNumber || '—'}</div><h3 className="mt-4 font-black">{player.FirstName} {player.LastName}</h3><p className="mt-1 text-sm text-slate-500">{player.Position || 'Joueur'}</p></div>')) : (<div className="rounded-[2rem] bg-jso-navy p-6 text-white sm:col-span-2 lg:col-span-5"><Users size={28} className="text-jso-gold" /><h3 className="mt-12 text-2xl font-black">Équipe première</h3><p className="mt-2 text-white/65">Effectif, staff et profils des joueurs.</p></div>')}</div></section>
 
-      <section id="media" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow="05 / MEDIA HOUSE" title="Voir, vivre," muted="partager." /><div className="mt-8 grid gap-5 md:grid-cols-[1.3fr_0.7fr]"><div className="flex min-h-64 items-end rounded-[2rem] bg-gradient-to-br from-jso-navy to-jso-blue p-7 text-white shadow-xl"><div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">GALERIE JSO</p><h3 className="mt-3 text-3xl font-black">Les couleurs du club.</h3><p className="mt-2 max-w-md text-white/70">Photos, vidéos et moments forts de la communauté.</p></div></div><div className="rounded-[2rem] border border-slate-200 bg-white p-7"><p className="text-xs font-extrabold tracking-[0.2em] text-slate-400">À VENIR</p><h3 className="mt-8 text-3xl font-black">Le contenu du club, autrement.</h3><p className="mt-3 text-slate-500">Un espace média moderne pour chaque supporter.</p></div></div></section>
+      <section id="media" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow="05 / MEDIA HOUSE" title="Voir, vivre," muted="partager." /><div className="mt-8 grid gap-5 md:grid-cols-[1.3fr_0.7fr]">{media.length ? media.slice(0, 3).map((item) => { const url = pick(item, 'Url', 'url'); const thumb = pick(item, 'ThumbnailUrl', 'thumbnailUrl') || url; const title = pick(item, 'Title', 'title') || 'Media JSO'; const caption = pick(item, 'Caption', 'caption') || 'Moments forts de la communauté JSO.'; return <article key={pick(item, 'Id', 'id') || url} className="group overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-lg shadow-slate-200/40"><div className="h-64 overflow-hidden bg-slate-100">{url ? <img src={thumb} alt={title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" /> : <div className="grid h-full place-items-center bg-jso-navy text-4xl font-black text-jso-gold">JSO</div>}</div><div className="p-6"><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">{pick(item, 'Type', 'type') || 'MEDIA'}</p><h3 className="mt-2 text-xl font-black">{title}</h3><p className="mt-2 text-sm text-slate-500">{caption}</p></div></article> }) : <><div className="flex min-h-64 items-end rounded-[2rem] bg-gradient-to-br from-jso-navy to-jso-blue p-7 text-white shadow-xl"><div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">GALERIE JSO</p><h3 className="mt-3 text-3xl font-black">Les couleurs du club.</h3><p className="mt-2 max-w-md text-white/70">Photos, vidéos et moments forts de la communauté.</p></div></div><div className="rounded-[2rem] border border-slate-200 bg-white p-7"><p className="text-xs font-extrabold tracking-[0.2em] text-slate-400">À VENIR</p><h3 className="mt-8 text-3xl font-black">Le contenu du club, autrement.</h3><p className="mt-3 text-slate-500">Un espace média moderne pour chaque supporter.</p></div></>}</div></section>
 
       <section id="shop" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><div className="rounded-[2.5rem] bg-jso-gold p-8 sm:p-12"><div className="flex flex-col justify-between gap-8 md:flex-row md:items-end"><div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-navy/60">06 / BOUTIQUE</p><h2 className="mt-3 text-4xl font-black tracking-tight text-jso-navy sm:text-6xl">Porte les couleurs.<br />Vis l’identité.</h2></div><button onClick={() => setDemoOpen(true)} className="rounded-full bg-jso-navy px-6 py-4 font-extrabold text-white transition hover:bg-jso-blue"><ShoppingBag className="mr-2 inline" size={18} /> Boutique bientôt disponible</button></div></div></section>
 
