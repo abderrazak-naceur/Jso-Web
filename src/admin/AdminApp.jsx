@@ -202,6 +202,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'news' && <NewsModule onError={setError}/>}
         {section === 'security' && <SecurityModule onError={setError}/>}
         {section === 'media' && <MediaModule onError={setError}/>}
+        {section === 'content' && <ContentModule onError={setError}/>} 
       </section>
     </div>
   </main>
