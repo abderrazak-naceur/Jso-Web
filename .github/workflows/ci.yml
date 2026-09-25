@@ -32,3 +32,42 @@ jobs:
           dotnet-version: 10.0.x
       - run: dotnet restore backend/JSO.sln
       - run: dotnet build backend/JSO.sln --configuration Release --no-restore
+
+  postgres-ef:
+    name: PostgreSQL EF validation
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: JSO
+          POSTGRES_USER: jso
+          POSTGRES_PASSWORD: jso_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U jso -d JSO"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Install EF CLI
+        run: dotnet tool install --global dotnet-ef --version 10.0.*
+      - name: Restore
+        run: dotnet restore backend/JSO.sln
+      - name: Build
+        run: dotnet build backend/JSO.sln --configuration Release --no-restore
+      - name: Validate PostgreSQL migration creation
+        working-directory: backend
+        env:
+          Database__Provider: postgres
+          ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=JSO;Username=jso;Password=jso_ci_password
+          Jwt__Key: ci-only-jwt-secret-that-is-at-least-32-characters-long
+        run: |
+          dotnet ef migrations add CiPostgresValidation --project src/JSO.Infrastructure --startup-project src/JSO.Api --output-dir /tmp/JSOMigrations/Postgres
+          test -f /tmp/JSOMigrations/Postgres/*_CiPostgresValidation.cs
+          dotnet ef database update --project src/JSO.Infrastructure --startup-project src/JSO.Api
