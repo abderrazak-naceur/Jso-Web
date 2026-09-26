@@ -82,7 +82,10 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
     [Authorize(Roles = "Fan")]
     public async Task<IActionResult> Me(CancellationToken ct)
     {
-        var sub = User.FindFirst("sub")?.Value;
+        // The JWT carries the id in "sub", but ASP.NET remaps it to
+        // ClaimTypes.NameIdentifier, so read whichever is present.
+        var sub = User.FindFirst("sub")?.Value
+            ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(sub, out var id)) return Unauthorized();
 
         var fan = await db.FanUsers.AsNoTracking()
