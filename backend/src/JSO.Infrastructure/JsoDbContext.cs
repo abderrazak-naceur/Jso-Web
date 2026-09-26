@@ -25,6 +25,8 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<Volunteer> Volunteers => Set<Volunteer>();
  public DbSet<MatchAssignment> MatchAssignments => Set<MatchAssignment>();
  public DbSet<NewsletterSubscription> NewsletterSubscriptions => Set<NewsletterSubscription>();
+ public DbSet<ArchiveItem> ArchiveItems => Set<ArchiveItem>();
+ public DbSet<PlayerInjury> PlayerInjuries => Set<PlayerInjury>();
  protected override void OnModelCreating(ModelBuilder modelBuilder) {
   modelBuilder.Entity<Club>().HasIndex(x=>x.ShortName).IsUnique();
   modelBuilder.Entity<Season>().HasIndex(x=>x.Name).IsUnique();
@@ -55,6 +57,10 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<NewsletterSubscription>().HasIndex(x=>x.ConfirmToken).IsUnique();
   modelBuilder.Entity<NewsletterSubscription>().HasIndex(x=>x.UnsubscribeToken).IsUnique();
   modelBuilder.Entity<NewsletterSubscription>().Property(x=>x.Unsubscribed).HasDefaultValue(false);
+  modelBuilder.Entity<ArchiveItem>().HasIndex(x=>new{x.IsPublished,x.Year,x.DisplayOrder});
+  modelBuilder.Entity<ArchiveItem>().HasIndex(x=>x.Category);
+  modelBuilder.Entity<PlayerInjury>().HasIndex(x=>new{x.PlayerId,x.Status});
+  modelBuilder.Entity<PlayerInjury>().Property(x=>x.Status).HasDefaultValue("Active");
   modelBuilder.Entity<Club>().HasData(new Club { Id=Guid.Parse("8d8c1ef6-1c9d-4d1c-9a0f-8a5b6b5c1001"), Name="Jeunesse Sportive de Oudhref", ShortName="JSO", Country="Tunisie", City="Oudhref" });
  }
 }
