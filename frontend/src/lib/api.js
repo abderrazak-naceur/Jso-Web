@@ -25,3 +25,29 @@ export const publicApi = {
   getNewsArticle: (slug, signal) => request('/news/' + encodeURIComponent(slug), signal),
   getSponsors: (placement, signal) => request('/sponsors' + (placement ? '?placement=' + encodeURIComponent(placement) : ''), signal),
 }
+
+async function requestJson(path, method, body, token) {
+  const options = {
+    method,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: 'Bearer ' + token } : {}),
+    },
+  }
+  if (body) options.body = JSON.stringify(body)
+  const response = await fetch(API_BASE_URL + path, options)
+  if (!response.ok) {
+    let message = 'Request failed: ' + response.status
+    try { message = (await response.json()).message || message } catch { /* ignore */ }
+    throw new Error(message)
+  }
+  return response.status === 204 ? null : response.json()
+}
+
+// Fan (supporter) account API — separate from the admin token.
+export const accountApi = {
+  register: (data) => requestJson('/account/register', 'POST', data),
+  login: (data) => requestJson('/account/login', 'POST', data),
+  me: (token) => requestJson('/account/me', 'GET', null, token),
+}

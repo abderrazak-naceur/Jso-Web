@@ -19,6 +19,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
  public DbSet<SiteContent> SiteContents => Set<SiteContent>();
  public DbSet<Sponsor> Sponsors => Set<Sponsor>();
+ public DbSet<FanUser> FanUsers => Set<FanUser>();
  protected override void OnModelCreating(ModelBuilder modelBuilder) {
   modelBuilder.Entity<Club>().HasIndex(x=>x.ShortName).IsUnique();
   modelBuilder.Entity<Season>().HasIndex(x=>x.Name).IsUnique();
@@ -35,6 +36,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<MatchOfficial>().HasIndex(x=>x.MatchId);
   modelBuilder.Entity<MatchStat>().HasIndex(x=>new{x.MatchId,x.Name}).IsUnique();
   modelBuilder.Entity<Sponsor>().HasIndex(x=>new{x.Placement,x.IsActive,x.Priority});
+  modelBuilder.Entity<FanUser>().HasIndex(x=>x.Email).IsUnique();
   modelBuilder.Entity<Club>().HasData(new Club { Id=Guid.Parse("8d8c1ef6-1c9d-4d1c-9a0f-8a5b6b5c1001"), Name="Jeunesse Sportive de Oudhref", ShortName="JSO", Country="Tunisie", City="Oudhref" });
  }
 }
