@@ -37,6 +37,19 @@ L'obiettivo è creare un ecosistema unico per:
 - 🛍️ preparare una futura area shop
 - 📱 estendere successivamente l'esperienza a iOS e Android
 
+## 📍 Stato dell'attività — 26 settembre 2026
+
+**Fase attuale: preparazione dell'MVP web per la produzione.** Il sito e il backend sono nel repository; un deploy pubblico sul dominio reale non risulta ancora verificato.
+
+| Area | Raggiunto e verificato | Ancora da completare |
+|---|---|---|
+| Sito e admin | Logo JSO, interfaccia responsive e concept Flutter; frontend e pannello admin usano `/api`. Build e lint passano in CI. | Verificare URL API, CORS e HTTPS sul dominio reale; collaudare i flussi completi nel browser. |
+| Backend e dati | API .NET 10, migration PostgreSQL 17 applicata in CI, primo admin creato da credenziali d'ambiente e login verificato. | Ripetere avvio e migration sull'ambiente Oracle; configurare backup e provare il ripristino di database e media. |
+| Infrastruttura | Docker Compose production predisposto; build del backend ARM64 riuscita in CI. | Preparare VM Oracle, dominio, certificato HTTPS e monitoraggio; eseguire il deploy reale. |
+| App mobile | Due immagini concept nel README; Flutter è la scelta tecnica. | Creare l'app Android/iOS e collegarla alle API. |
+
+Verifiche: [CI frontend, backend e PostgreSQL](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/36237831204) · [build Docker ARM64](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/36237831200). La priorità operativa e i criteri di uscita sono nel [piano aggiornato](docs/ROADMAP.md).
+
 ## 🖼️ Platform Preview
 
 <div align="center">
@@ -126,7 +139,7 @@ Il sito usa il nuovo stemma JSO in `public/JSO-crest-regenerated.png`; gli asset
 - PostgreSQL 17 for Oracle ARM64 production
 - SQL Server supported for local development
 - EF Core provider abstraction
-- Initial PostgreSQL migration versioned through EF Core; database verification pending
+- Initial PostgreSQL migration versioned and applied to PostgreSQL 17 in CI; Oracle deployment verification pending
 
 ### Infrastructure
 
@@ -140,6 +153,8 @@ Il sito usa il nuovo stemma JSO in `public/JSO-crest-regenerated.png`; gli asset
 ---
 
 ## 🚀 Current Features
+
+Le caselle completate indicano funzioni presenti nel codice; la verifica end-to-end su dominio reale è ancora nella roadmap.
 
 ### Public Website
 
@@ -256,7 +271,7 @@ The frontend runs by default on:
 http://localhost:5173
 ```
 
-The frontend calls `/api` on the same origin. During local development, Vite proxies `/api`, `/uploads` and `/health` to `http://localhost:8080` (the Docker Compose API). Set `JSO_API_PROXY_TARGET` to change the local target. For separate static hosting, set `VITE_API_URL` to the public API base URL when building.
+The frontend calls `/api` on the same origin. During local development, Vite proxies `/api`, `/uploads` and `/health` to `http://localhost:8080` (the Docker Compose API). Set `JSO_API_PROXY_TARGET` to change the local target. The production Nginx proxy is configured in the repository, but its real-domain connection has not been tested. For separate static hosting, set `VITE_API_URL` to the public API base URL when building.
 
 ### Backend
 
@@ -526,9 +541,7 @@ The project follows a few core principles:
 
 ## 📌 Project Status
 
-**Active development**
-
-The core platform, authentication, administration, Match Center, News CMS and Media Library are implemented. The next major product block is the **Homepage Builder**, followed by Sponsors, Analytics, Community and production deployment.
+**Active development — production preparation.** The core platform, authentication, administration, Match Center, News CMS and Media Library are implemented in the repository. The immediate work is Oracle deployment, domain/HTTPS, backup and restore, and end-to-end validation. Homepage Builder, Sponsors, Analytics and Community follow in the product roadmap.
 
 ---
 
