@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
+import VolunteersModule from './Volunteers'
 
 async function api(path, options = {}) {
   const token = localStorage.getItem('jso_admin_token')
@@ -316,6 +317,7 @@ function AdminDashboard({ user, onLogout }) {
     ['sponsors', 'Sponsors', Handshake, ['SuperAdmin','ClubAdmin']],
     ['shop', 'Boutique', ShoppingBag, ['SuperAdmin','ClubAdmin','ShopManager']],
     ['analytics', 'Analytics joueurs', BarChart3, ['SuperAdmin','ClubAdmin','MatchManager']],
+    ['volunteers', 'Bénévoles', ClipboardList, ['ClubAdmin','MatchManager']],
     ['settings', 'Configuration', Server, ['SuperAdmin','ClubAdmin']],
   ]
   const role = user.role ?? user.Role
@@ -362,6 +364,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'sponsors' && <SponsorsModule onError={setError}/>}
         {section === 'shop' && <ShopModule onError={setError}/>}
         {section === 'analytics' && <AnalyticsModule onError={setError}/>}
+        {section === 'volunteers' && <VolunteersModule onError={setError}/>}
         {section === 'settings' && <SettingsModule/>}
       </section>
     </div>
