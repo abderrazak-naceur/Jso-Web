@@ -181,7 +181,7 @@ function App() {
       <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
           <button onClick={() => goTo('Accueil', 'home')} className="flex items-center gap-3 text-left">
-            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-jso-navy text-xl font-black text-jso-gold shadow-lg shadow-slate-300/40">JSO</span>
+            <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-2xl bg-jso-navy shadow-lg shadow-slate-300/40"><img src="/jso-club-mark.svg" alt="Logo JSO" className="h-full w-full object-contain p-1" /></span>
             <span className="hidden sm:block">
               <span className="block text-base font-black tracking-tight">Jeunesse Sportive</span>
               <span className="block text-[10px] font-bold tracking-[0.22em] text-slate-500">DE OUDHREF · TUNISIE</span>
@@ -231,9 +231,9 @@ function App() {
           <div className="absolute inset-5 overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-jso-navy via-[#12356b] to-jso-blue">
             <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.35)_1px,transparent_1px)] [background-size:32px_32px]" />
             <div className="absolute left-7 top-7 text-xs font-extrabold tracking-[0.24em] text-jso-gold">JSO / OUDHREF</div>
-            <div className="absolute inset-x-0 top-24 text-center text-[9rem] font-black leading-none text-white/10 sm:text-[13rem]">JSO</div>
+            <div className="absolute inset-x-0 top-16 flex justify-center opacity-15"><img src="/jso-club-mark.svg" alt="" aria-hidden="true" className="h-64 w-56 object-contain sm:h-80 sm:w-72" /></div>
             <div className="absolute bottom-0 left-1/2 h-[68%] w-[75%] -translate-x-1/2 rounded-t-full border border-white/20 bg-gradient-to-t from-white/15 to-transparent" />
-            <div className="absolute bottom-12 left-1/2 -translate-x-1/2 text-center text-white"><div className="text-7xl font-black tracking-[-0.08em] sm:text-8xl">JSO</div><div className="mt-2 text-xs font-extrabold tracking-[0.3em] text-jso-gold">JEUNESSE SPORTIVE</div><div className="text-xs font-extrabold tracking-[0.3em] text-white/70">DE OUDHREF</div></div>
+            <div className="absolute bottom-9 left-1/2 w-full -translate-x-1/2 text-center text-white"><img src="/jso-club-mark.svg" alt="Jeunesse Sportive de Oudhref" className="mx-auto h-44 w-36 object-contain drop-shadow-2xl sm:h-52 sm:w-44" /></div>
             <div className="absolute left-5 top-28 rounded-3xl border border-white/20 bg-white/15 p-4 text-white shadow-xl backdrop-blur-xl sm:left-8"><div className="text-[10px] font-extrabold tracking-widest text-white/70">NEXT MATCH</div><div className="mt-1 flex items-center gap-3"><strong className="text-2xl">JSO</strong><span className="text-xs text-jso-gold">VS</span><strong className="text-2xl">{matches[0]?.OpponentName || 'TBA'}</strong></div><div className="mt-2 text-xs text-white/70">{matches[0] ? new Date(matches[0].KickoffAt).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }) : 'Date à confirmer'}</div></div>
             <div className="absolute bottom-6 right-5 rounded-3xl border border-white/20 bg-white/15 p-4 text-white shadow-xl backdrop-blur-xl sm:right-8"><div className="text-xs font-extrabold text-jso-gold">DIGITAL CLUB</div><div className="mt-1 text-lg font-black">Built for the future.</div></div>
           </div>
@@ -306,7 +306,7 @@ function App() {
           </div>}
         </div>
       </div>}
-      <footer className="mt-12 bg-jso-navy px-5 py-10 text-white lg:px-8"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-5 sm:flex-row sm:items-center"><div><div className="text-xl font-black">JSO · Jeunesse Sportive de Oudhref</div><p className="mt-1 text-sm text-white/60">Plus qu’un club. Une identité.</p></div><p className="text-sm text-white/50">© 2026 JSO. Tous droits réservés.</p></div></footer>
+      <footer className="mt-12 bg-jso-navy px-5 py-10 text-white lg:px-8"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-5 sm:flex-row sm:items-center"><div><div className="flex items-center gap-3"><img src="/jso-club-mark.svg" alt="Logo JSO" className="h-12 w-10 object-contain" /><div className="text-xl font-black">JSO · Jeunesse Sportive de Oudhref</div></div><p className="mt-1 text-sm text-white/60">Plus qu’un club. Une identité.</p></div><p className="text-sm text-white/50">© 2026 JSO. Tous droits réservés.</p></div></footer>
 
       {demoOpen && <div className="fixed inset-0 z-[60] grid place-items-center bg-jso-navy/60 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Présentation JSO"><div className="w-full max-w-lg rounded-[2rem] bg-white p-8 shadow-2xl"><div className="flex items-start justify-between gap-5"><div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">JSO DIGITAL</p><h2 className="mt-3 text-3xl font-black">Bienvenue dans la nouvelle maison du club.</h2></div><button aria-label="Fermer" onClick={() => setDemoOpen(false)} className="rounded-full border border-slate-200 p-2"><X size={18} /></button></div><p className="mt-4 leading-7 text-slate-600">Cette interface est une première version visuelle. Les données réelles, les comptes administrateur, les résultats et la boutique seront connectés dans les prochaines étapes.</p><button onClick={() => setDemoOpen(false)} className="mt-7 rounded-full bg-jso-navy px-5 py-3 font-extrabold text-white">Continuer</button></div></div>}
     </main>
