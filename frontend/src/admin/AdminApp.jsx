@@ -319,7 +319,17 @@ function DashboardStats({ stats }) {
     ['News publiées', stats.news.published, Newspaper], ['Brouillons', stats.news.drafts, Newspaper],
     ['Équipes', stats.teams, Users], ['Joueurs actifs', stats.players, Users],
   ] : []
-  return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{cards.length ? cards.map(([label,value,Icon]) => <div key={label} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm"><Icon className="text-jso-blue" size={22}/><p className="mt-7 text-sm font-semibold text-slate-500">{label}</p><p className="mt-1 text-4xl font-black">{value}</p></div>) : <div className="rounded-[1.5rem] bg-white p-8 text-slate-500">Chargement du dashboard…</div>}</div>
+  const today = stats?.todayActivity
+  const todayFigures = today ? [
+    ['News publiées', today.newsPublished], ['Matchs du jour', today.matchesToday],
+    ['Médias ajoutés', today.mediaUploaded], ['Actions d’audit', today.auditActions],
+  ] : []
+  const recent = stats?.recentActivity ?? []
+  return <div className="space-y-6">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{cards.length ? cards.map(([label,value,Icon]) => <div key={label} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm"><Icon className="text-jso-blue" size={22}/><p className="mt-7 text-sm font-semibold text-slate-500">{label}</p><p className="mt-1 text-4xl font-black">{value}</p></div>) : <div className="rounded-[1.5rem] bg-white p-8 text-slate-500">Chargement du dashboard…</div>}</div>
+    {today && <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-black">Activité du jour</h2><div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{todayFigures.map(([label,value]) => <div key={label} className="rounded-xl bg-slate-50 p-3 text-sm"><p className="font-semibold text-slate-500">{label}</p><p className="mt-1 text-3xl font-black">{value ?? 0}</p></div>)}</div></div>}
+    {stats && <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-black">Activité récente</h2><div className="mt-4 space-y-2">{recent.length ? recent.map(a => <div key={a.id} className="rounded-xl bg-slate-50 p-3 text-sm"><div className="flex justify-between gap-3"><b>{a.action} · {a.entityType}</b><span className="text-xs text-slate-400">{new Date(a.createdAt).toLocaleString('fr-FR')}</span></div><p className="mt-1 text-xs text-slate-500">{a.userEmail || 'Système'}{a.entityId ? ' · ' + a.entityId : ''}</p></div>) : <p className="text-sm text-slate-500">Aucune activité récente.</p>}</div></div>}
+  </div>
 }
 
 function TeamsModule({ onError }) {
