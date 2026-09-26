@@ -45,10 +45,10 @@ L'obiettivo è creare un ecosistema unico per:
 |---|---|---|
 | Sito e admin | Logo JSO, interfaccia responsive e concept Flutter; frontend e pannello admin usano `/api`. Build e lint passano in CI. | Verificare URL API, CORS e HTTPS sul dominio reale; collaudare i flussi completi nel browser. |
 | Backend e dati | API .NET 10, migration PostgreSQL 17 applicata in CI, primo admin creato da credenziali d'ambiente e login verificato. La nuova CI verifica pubblicazione di notizie, upload e lettura media e rifiuto di un file camuffato da PNG. L'upload genera l'estensione dal tipo dichiarato. | Ripetere avvio e migration sull'ambiente Oracle; eseguire un backup reale e provare il ripristino di database e media. |
-| Infrastruttura | Docker Compose production predisposto con attesa di PostgreSQL pronto; Nginx accetta il limite upload dell'API. Build del backend ARM64 riuscita nella CI precedente. Script di backup e procedura di restore disponibili in [deploy/oracle](deploy/oracle/README.md). | Completare le nuove verifiche CI; preparare VM Oracle, dominio, certificato HTTPS, backup automatico con copia esterna e monitoraggio; eseguire il deploy reale. |
+| Infrastruttura | Docker Compose production predisposto con attesa di PostgreSQL pronto; Nginx accetta il limite upload dell'API. Build Docker di frontend e backend ARM64 e controllo Nginx riusciti in CI. Script di backup e procedura di restore disponibili in [deploy/oracle](deploy/oracle/README.md). | Preparare VM Oracle, dominio, certificato HTTPS, backup automatico con copia esterna e monitoraggio; eseguire il deploy reale. |
 | App mobile | Due immagini concept nel README; Flutter è la scelta tecnica. | Creare l'app Android/iOS e collegarla alle API. |
 
-Verifiche: [CI frontend, backend e PostgreSQL con flussi notizie/media](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/36238861281) · [build Docker ARM64 precedente](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/36237831200). Il nuovo job Docker del frontend è in correzione e va riverificato. La priorità operativa e i criteri di uscita sono nel [piano aggiornato](docs/ROADMAP.md).
+Verifiche: [CI frontend, backend e PostgreSQL con flussi notizie/media](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/36239006026) · [build Docker frontend/backend ARM64 e controllo Nginx](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/36239006058). La priorità operativa e i criteri di uscita sono nel [piano aggiornato](docs/ROADMAP.md).
 
 ## 🖼️ Platform Preview
 
