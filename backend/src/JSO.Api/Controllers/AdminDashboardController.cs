@@ -28,7 +28,24 @@ public sealed class AdminDashboardController(JsoDbContext db) : ControllerBase
                 drafts = await db.Articles.CountAsync(x => x.Status == "Draft", ct)
             },
             teams = await db.Teams.CountAsync(x => x.IsActive, ct),
-            players = await db.Players.CountAsync(x => x.IsActive, ct)
+            players = await db.Players.CountAsync(x => x.IsActive, ct),
+            // Sales analytics are pre-wired for the future Shop (Horizon 2).
+            // No Product/Order entities exist yet, so values stay zero and
+            // "enabled" is false until the shop domain and a payment provider
+            // are implemented. The dashboard renders a clear "not active" state.
+            sales = new
+            {
+                // Catalog is real; orders/revenue stay zero until checkout + a
+                // payment provider exist. "enabled" flags the shop as live once
+                // there is at least one active product to sell.
+                enabled = await db.Products.AnyAsync(x => x.IsActive, ct),
+                currency = "TND",
+                revenue = 0m,
+                orders = 0,
+                activeProducts = await db.Products.CountAsync(x => x.IsActive, ct),
+                productsSold = 0,
+                conversionRate = 0d
+            }
         };
 
         return Ok(result);
