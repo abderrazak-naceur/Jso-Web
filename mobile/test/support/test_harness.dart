@@ -9,6 +9,9 @@ import 'package:jso_mobile/data/models/home_data.dart';
 import 'package:jso_mobile/data/models/match.dart';
 import 'package:jso_mobile/data/models/match_event.dart';
 import 'package:jso_mobile/data/models/media_asset.dart';
+import 'package:jso_mobile/data/models/player.dart';
+import 'package:jso_mobile/data/models/sponsor.dart';
+import 'package:jso_mobile/data/models/team.dart';
 import 'package:jso_mobile/data/repositories/public_api_repository.dart';
 
 /// Pumps [child] inside a MaterialApp with the JSO theme and a Provider that
@@ -90,6 +93,60 @@ class Sample {
       thumbnailUrl: 'https://jso.example.tn/media/1-thumb.jpg',
       caption: 'Ambiance',
       createdAt: DateTime.utc(2026, 3, 1, 12),
+    );
+  }
+
+  static Team team({
+    String id = 't1',
+    String name = 'Séniors',
+    String category = 'Senior',
+    bool isActive = true,
+    int playersCount = 22,
+  }) {
+    return Team(
+      id: id,
+      name: name,
+      category: category,
+      isActive: isActive,
+      playersCount: playersCount,
+    );
+  }
+
+  static Player player({
+    String id = 'p1',
+    String teamId = 't1',
+    String firstName = 'Ali',
+    String lastName = 'Ben Salah',
+    int? shirtNumber = 10,
+    String? position = 'Milieu',
+    String? photoUrl,
+  }) {
+    return Player(
+      id: id,
+      teamId: teamId,
+      firstName: firstName,
+      lastName: lastName,
+      shirtNumber: shirtNumber,
+      position: position,
+      photoUrl: photoUrl,
+    );
+  }
+
+  static Sponsor sponsor({
+    String id = 'sp1',
+    String name = 'Ooredoo',
+    String? logoUrl = 'https://jso.example.tn/sponsors/ooredoo.png',
+    String? websiteUrl = 'https://sponsor.example.tn',
+    String tier = 'Platinum',
+    String placement = 'Footer',
+  }) {
+    return Sponsor(
+      id: id,
+      name: name,
+      logoUrl: logoUrl,
+      websiteUrl: websiteUrl,
+      tier: tier,
+      placement: placement,
     );
   }
 

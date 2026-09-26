@@ -9,7 +9,7 @@ content the web frontend consumes: club info, matches, news and media.
 
 ## What the app does
 
-Four public tabs behind a bottom-navigation shell (JSO navy bar, gold active
+Five public tabs behind a bottom-navigation shell (JSO navy bar, gold active
 state):
 
 - **Home** — club header/crest, next match, recent matches and a latest-news
@@ -21,6 +21,13 @@ state):
   `GET /api/news/{slug}` (news detail is keyed by **slug**, not id).
 - **Media** — a gallery grid from `GET /api/media`, using `thumbnailUrl` (with a
   fallback to `url`) and an Image/Video type badge.
+- **Club** — a small landing screen linking to two areas:
+  - **Teams & Roster** — the squads list from `GET /api/teams`; tapping a team
+    opens its roster (players with shirt number, position and photo) from
+    `GET /api/teams/{id}/players`.
+  - **Sponsors** — the partners list from `GET /api/sponsors`, showing each
+    sponsor's logo and tier; sponsors with a `websiteUrl` expose a **Visit
+    website** action that opens the link in the external browser.
 
 Every screen renders three explicit states:
 
@@ -69,6 +76,9 @@ lib/
     matches/  matches_screen.dart, match_detail_screen.dart
     news/     news_screen.dart, news_detail_screen.dart
     media/    media_screen.dart
+    teams/    teams_screen.dart, team_roster_screen.dart
+    sponsors/ sponsors_screen.dart
+    club/     club_screen.dart (landing for the Club tab)
   shared/
     format.dart              date / score / fixture formatting (intl)
     widgets/  loading_view, empty_view, error_view,
@@ -157,9 +167,30 @@ by slug; dates are ISO-8601 `DateTimeOffset`.
 | `getTeamPlayers(id)`            | `GET /api/teams/{id}/players`     |
 | `getSponsors({placement})`      | `GET /api/sponsors[?placement=]`  |
 
-The four screens use `getHome`, `getMatches`, `getMatch`, `getMatchEvents`,
-`getNews`, `getNewsArticle` and `getMedia`; the remaining repository methods are
-available for future screens.
+The screens use `getHome`, `getMatches`, `getMatch`, `getMatchEvents`,
+`getNews`, `getNewsArticle` and `getMedia`, plus `getTeams`, `getTeamPlayers`
+and `getSponsors` behind the **Club** tab.
+
+## Navigation: why a "Club" tab
+
+Adding Team/Roster and Sponsors as two more top-level tabs would push the fixed
+`BottomNavigationBar` to six items, which crowds the bar and hurts legibility on
+narrow phones (Flutter also recommends 3–5 destinations for a fixed bar). To
+keep the bar usable, both areas live behind a single fifth **Club** tab
+(`Icons.shield_outlined` / `Icons.shield`) whose landing screen
+(`lib/features/club/club_screen.dart`) shows two large cards — **Teams &
+Roster** and **Sponsors** — that each `Navigator.push` to the respective screen.
+Home / Matches / News / Media remain the first four tabs.
+
+## External links: url_launcher
+
+The **Sponsors** screen uses the [`url_launcher`](https://pub.dev/packages/url_launcher)
+package to open a sponsor's `websiteUrl` in the device's external browser
+(`launchUrl(uri, mode: LaunchMode.externalApplication)`). The URL is parsed
+defensively with `Uri.tryParse` and, if it is missing/unparseable or the launch
+fails, the screen surfaces a "Could not open link." `SnackBar` instead of
+crashing. The **Visit website** affordance is shown only for sponsors that have
+a non-empty `websiteUrl`.
 
 ## Brand assets
 
