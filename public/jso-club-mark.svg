@@ -1,18 +1,28 @@
-<svg width="640" height="640" viewBox="0 0 640 640" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="g" x1="80" y1="40" x2="570" y2="610" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#35D6FF"/>
-      <stop offset="0.5" stop-color="#155BFF"/>
-      <stop offset="1" stop-color="#F4C644"/>
-    </linearGradient>
-    <filter id="blur"><feGaussianBlur stdDeviation="22"/></filter>
-  </defs>
-  <circle cx="320" cy="320" r="240" fill="#0B1220" stroke="rgba(255,255,255,0.14)" stroke-width="3"/>
-  <circle cx="320" cy="320" r="210" fill="#101B2E"/>
-  <circle cx="320" cy="320" r="172" stroke="url(#g)" stroke-width="28" opacity="0.96"/>
-  <circle cx="320" cy="320" r="112" fill="url(#g)" opacity="0.16" filter="url(#blur)"/>
-  <path d="M320 152L370 232L463 250L396 317L410 412L320 370L230 412L244 317L177 250L270 232L320 152Z" fill="#F4C644" fill-opacity="0.95"/>
-  <path d="M320 188L350 245L413 257L368 301L377 362L320 335L263 362L272 301L227 257L290 245L320 188Z" fill="#07111F"/>
-  <text x="320" y="445" text-anchor="middle" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="800" letter-spacing="8">JSO</text>
-  <text x="320" y="483" text-anchor="middle" fill="#9EABBE" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" letter-spacing="6">OUDHREF</text>
+<svg width="640" height="760" viewBox="0 0 640 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="gold" x1="90" y1="40" x2="540" y2="720" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#FFE66B"/><stop offset=".45" stop-color="#F4C542"/><stop offset="1" stop-color="#D9A900"/>
+  </linearGradient>
+  <filter id="shadow" x="-30%" y="-20%" width="160%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#071A3A" flood-opacity=".25"/></filter>
+</defs>
+<path d="M320 24L566 112L548 382C532 575 436 687 320 732C204 687 108 575 92 382L74 112L320 24Z" fill="url(#gold)" stroke="#071A3A" stroke-width="18" filter="url(#shadow)"/>
+<path d="M320 76L514 146L498 374C484 532 410 624 320 666C230 624 156 532 142 374L126 146L320 76Z" fill="#071A3A"/>
+<path d="M320 103L486 163L472 365C459 505 396 584 320 621C244 584 181 505 168 365L154 163L320 103Z" fill="url(#gold)"/>
+<circle cx="320" cy="330" r="145" fill="#071A3A"/>
+<circle cx="320" cy="330" r="124" fill="#F4C542" stroke="#071A3A" stroke-width="7"/>
+<text x="320" y="178" text-anchor="middle" fill="#071A3A" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="800" letter-spacing="1.5">JEUNESSE SPORTIVE</text>
+<text x="320" y="205" text-anchor="middle" fill="#071A3A" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="800">OUDHREF</text>
+<g stroke="#071A3A" stroke-width="7">
+  <path d="M320 244L363 287L320 330L277 287L320 244Z" fill="#F4C542"/>
+  <path d="M320 330L363 373L320 416L277 373L320 330Z" fill="#F4C542"/>
+  <path d="M277 287L320 330L277 373L234 330L277 287Z" fill="#F4C542"/>
+  <path d="M363 287L406 330L363 373L320 330L363 287Z" fill="#F4C542"/>
+</g>
+<text x="258" y="340" text-anchor="middle" fill="#071A3A" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="900">J</text>
+<text x="382" y="340" text-anchor="middle" fill="#071A3A" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="900">O</text>
+<text x="320" y="407" text-anchor="middle" fill="#071A3A" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="900">S</text>
+<path d="M230 472H410L386 512H254L230 472Z" fill="#071A3A"/>
+<text x="320" y="500" text-anchor="middle" fill="#F4C542" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="900">1973</text>
+<text x="320" y="565" text-anchor="middle" fill="#071A3A" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="800" letter-spacing="2">JSO</text>
+<text x="320" y="592" text-anchor="middle" fill="#071A3A" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="2">OUDHREF · TUNISIE</text>
 </svg>
