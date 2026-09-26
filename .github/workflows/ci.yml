@@ -28,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: bash -n deploy/oracle/backup.sh deploy/oracle/deploy.sh
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
@@ -89,7 +90,35 @@ jobs:
           done
           curl -fsS http://127.0.0.1:5080/health >/dev/null || { cat /tmp/jso-api.log; exit 1; }
           curl -fsS http://127.0.0.1:5080/api/club >/dev/null
-          curl -fsS -X POST http://127.0.0.1:5080/api/auth/login \
+          login_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/auth/login \
             -H 'Content-Type: application/json' \
-            -d '{"email":"admin@jso.test","password":"ci-only-initial-admin-password"}' \
-            | jq -e '.accessToken != null'
+            -d '{"email":"admin@jso.test","password":"ci-only-initial-admin-password"}')
+          token=$(jq -r '.accessToken // empty' <<< "$login_response")
+          test -n "$token"
+
+          curl -fsS -X POST http://127.0.0.1:5080/api/admin/news \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d '{"title":"CI published news","slug":"ci-published-news","body":"Published by the CI smoke test.","status":"Published"}' \
+            | jq -e '.slug == "ci-published-news"'
+          curl -fsS http://127.0.0.1:5080/api/news/ci-published-news \
+            | jq -e '.article.slug == "ci-published-news"'
+
+          upload_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/media/upload \
+            -H "Authorization: Bearer $token" \
+            -F 'file=@../public/JSO-crest-regenerated.png;filename=ci-crest.html;type=image/png' \
+            -F 'title=CI crest')
+          media_url=$(jq -r '.url // empty' <<< "$upload_response")
+          test -n "$media_url"
+          [[ "$media_url" == *.png ]]
+          curl -fsS "http://127.0.0.1:5080$media_url" -o /tmp/jso-upload.png
+          test -s /tmp/jso-upload.png
+          curl -fsS http://127.0.0.1:5080/api/media \
+            | jq -e --arg url "$media_url" 'any(.[]; .url == $url)'
+
+          printf 'this is not an image' > /tmp/jso-invalid-image.txt
+          invalid_status=$(curl -sS -o /tmp/jso-invalid-response.json -w '%{http_code}' \
+            -X POST http://127.0.0.1:5080/api/admin/media/upload \
+            -H "Authorization: Bearer $token" \
+            -F 'file=@/tmp/jso-invalid-image.txt;filename=forged.png;type=image/png')
+          test "$invalid_status" = 400

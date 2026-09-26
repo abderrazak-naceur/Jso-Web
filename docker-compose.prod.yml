@@ -8,6 +8,12 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
     volumes:
       - jso-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
     networks:
       - jso-internal
 
@@ -30,7 +36,8 @@ services:
     expose:
       - "8080"
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     networks:
       - jso-internal
 

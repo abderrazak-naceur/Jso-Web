@@ -11,7 +11,14 @@ namespace JSO.Api.Controllers;
 [Authorize(Roles = "SuperAdmin,ClubAdmin,Editor")]
 public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment env) : ControllerBase
 {
-    private static readonly string[] AllowedImageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    private static readonly IReadOnlyDictionary<string, (string Extension, byte[] Signature)> AllowedImageTypes =
+        new Dictionary<string, (string, byte[])>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["image/jpeg"] = (".jpg", [0xFF, 0xD8, 0xFF]),
+            ["image/png"] = (".png", [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
+            ["image/webp"] = (".webp", [0x52, 0x49, 0x46, 0x46]),
+            ["image/gif"] = (".gif", [0x47, 0x49, 0x46, 0x38])
+        };
     private const long MaxUploadBytes = 10 * 1024 * 1024;
 
     [HttpGet]
@@ -19,16 +26,34 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         Ok(await db.MediaAssets.AsNoTracking().OrderByDescending(x => x.CreatedAt).Take(200).ToListAsync(ct));
 
     [HttpPost("upload")]
-    [RequestSizeLimit(MaxUploadBytes)]
+    [RequestSizeLimit(MaxUploadBytes + 1024 * 1024)]
     public async Task<IActionResult> Upload(IFormFile file, [FromForm] string? title, [FromForm] string? caption, CancellationToken ct)
     {
         if (file is null || file.Length == 0) return BadRequest(new { message = "File is required." });
         if (file.Length > MaxUploadBytes) return BadRequest(new { message = "Maximum file size is 10 MB." });
-        if (!AllowedImageTypes.Contains(file.ContentType.ToLowerInvariant())) return BadRequest(new { message = "Only JPEG, PNG, WebP and GIF images are supported." });
+        if (string.IsNullOrWhiteSpace(file.ContentType) || !AllowedImageTypes.TryGetValue(file.ContentType, out var imageType))
+            return BadRequest(new { message = "Only JPEG, PNG, WebP and GIF images are supported." });
 
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var signature = new byte[12];
+        await using (var input = file.OpenReadStream())
+        {
+            var bytesRead = 0;
+            while (bytesRead < signature.Length)
+            {
+                var count = await input.ReadAsync(signature.AsMemory(bytesRead), ct);
+                if (count == 0) break;
+                bytesRead += count;
+            }
+            if (!HasMatchingSignature(signature.AsSpan(0, bytesRead), file.ContentType, imageType.Signature))
+                return BadRequest(new { message = "The file content does not match its declared image type." });
+        }
+
+        var extension = imageType.Extension;
         var safeName = $"{Guid.NewGuid():N}{extension}";
-        var relative = Path.Combine("uploads", "media", DateTime.UtcNow.ToString("yyyy"), DateTime.UtcNow.ToString("MM"), safeName);
+        var uploadedAtUtc = DateTime.UtcNow;
+        var year = uploadedAtUtc.ToString("yyyy");
+        var month = uploadedAtUtc.ToString("MM");
+        var relative = Path.Combine("uploads", "media", year, month, safeName);
         var absolute = Path.Combine(env.ContentRootPath, relative);
         Directory.CreateDirectory(Path.GetDirectoryName(absolute)!);
         await using (var stream = System.IO.File.Create(absolute))
@@ -37,18 +62,31 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         var asset = new MediaAsset
         {
             Title = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(file.FileName) : title.Trim(),
-            Url = "/uploads/media/" + DateTime.UtcNow.ToString("yyyy") + "/" + DateTime.UtcNow.ToString("MM") + "/" + safeName,
+            Url = "/uploads/media/" + year + "/" + month + "/" + safeName,
             Type = "Image",
             Caption = caption?.Trim(),
             IsPublished = true,
             FileName = Path.GetFileName(file.FileName),
-            ContentType = file.ContentType,
+            ContentType = file.ContentType.ToLowerInvariant(),
             FileSize = file.Length,
             StoragePath = relative.Replace('\\', '/')
         };
         db.MediaAssets.Add(asset);
         await db.SaveChangesAsync(ct);
         return Created($"/api/admin/media/{asset.Id}", asset);
+    }
+
+    private static bool HasMatchingSignature(ReadOnlySpan<byte> content, string contentType, byte[] signature)
+    {
+        if (content.Length < signature.Length || !content.StartsWith(signature)) return false;
+        return contentType.ToLowerInvariant() switch
+        {
+            "image/jpeg" or "image/png" => true,
+            "image/gif" => content.Length >= 6 &&
+                           (content[..6].SequenceEqual("GIF87a"u8) || content[..6].SequenceEqual("GIF89a"u8)),
+            "image/webp" => content.Length >= 12 && content[8..12].SequenceEqual("WEBP"u8),
+            _ => false
+        };
     }
 
     [HttpPost]
