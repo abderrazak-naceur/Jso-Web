@@ -13,12 +13,16 @@ jobs:
   frontend:
     name: Frontend build
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: frontend/package-lock.json
       - run: npm install
       - run: npm run build
       - run: npm run lint
@@ -142,7 +146,7 @@ jobs:
 
           upload_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/media/upload \
             -H "Authorization: Bearer $token" \
-            -F 'file=@../public/JSO-crest-regenerated.png;filename=ci-crest.html;type=image/png' \
+            -F 'file=@../frontend/public/JSO-crest-regenerated.png;filename=ci-crest.html;type=image/png' \
             -F 'title=CI crest')
           media_url=$(jq -r '.url // empty' <<< "$upload_response")
           test -n "$media_url"

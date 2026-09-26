@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload } from 'lucide-react'
-import { API_BASE_URL } from '../lib/apiConfig'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server } from 'lucide-react'
+import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 
 async function api(path, options = {}) {
   const token = localStorage.getItem('jso_admin_token')
@@ -188,6 +188,64 @@ function EventsModule({ onError }) {
   return <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]"><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Matchs</h2><div className="mt-4 space-y-2">{matches.map(m=><button key={m.id} onClick={()=>loadEvents(m.id)} className={'w-full rounded-xl p-3 text-left '+(selected===m.id?'bg-jso-navy text-white':'bg-slate-50')}><b>JSO — {m.opponentName}</b><span className="block text-xs opacity-70">{new Date(m.kickoffAt).toLocaleString('fr-FR')}</span></button>)}</div></div><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Événements</h2>{selected?<><form onSubmit={add} className="mt-4 grid gap-3 sm:grid-cols-2"><Field label="Minute" type="number" min="0" max="200" value={form.minute} onChange={e=>setForm({...form,minute:e.target.value})} required/><label className="text-sm font-bold">Type<select value={form.type} onChange={e=>setForm({...form,type:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"><option>Goal</option><option>YellowCard</option><option>RedCard</option><option>Substitution</option><option>VAR</option><option>Other</option></select></label><Field label="Joueur" value={form.playerName} onChange={e=>setForm({...form,playerName:e.target.value})}/><Field label="Note" value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/><button className="sm:col-span-2 flex items-center justify-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Plus size={16}/>Ajouter l’événement</button></form><div className="mt-6 space-y-2">{events.map(ev=><div key={ev.id} className="flex items-center justify-between rounded-xl bg-slate-50 p-3"><div><b>{ev.minute}' · {ev.type}</b><span className="ml-2 text-sm text-slate-600">{ev.playerName||''}</span>{ev.notes&&<p className="text-xs text-slate-500">{ev.notes}</p>}</div><button onClick={()=>remove(ev.id)} className="text-red-600"><X size={16}/></button></div>)}{!events.length&&<p className="text-sm text-slate-500">Aucun événement enregistré.</p>}</div></>:<p className="mt-3 text-sm text-slate-500">Sélectionne un match.</p>}</div></div>
 }
 
+function SettingsModule() {
+  const [value, setValue] = useState(getConfiguredApiBaseUrl())
+  const [active, setActive] = useState(API_BASE_URL)
+  const [saved, setSaved] = useState(false)
+  const [test, setTest] = useState(null)
+  const [testing, setTesting] = useState(false)
+  const buildDefault = getDefaultApiBaseUrl()
+
+  function save(e) {
+    e.preventDefault()
+    const next = setApiBaseUrl(value)
+    setActive(next)
+    setValue(getConfiguredApiBaseUrl())
+    setSaved(true)
+    setTest(null)
+  }
+  function reset() {
+    const next = resetApiBaseUrl()
+    setActive(next)
+    setValue('')
+    setSaved(true)
+    setTest(null)
+  }
+  async function testConnection() {
+    setTesting(true); setTest(null)
+    const base = value.trim().replace(/\/$/, '') || buildDefault
+    // '/api' is same-origin and proxied; probe the sibling '/health' endpoint.
+    const healthUrl = base === '/api' ? '/health' : base.replace(/\/api$/, '') + '/health'
+    try {
+      const res = await fetch(healthUrl, { headers: { Accept: 'application/json' } })
+      setTest(res.ok ? { ok: true, text: 'Connexion réussie (HTTP ' + res.status + ')' } : { ok: false, text: 'Réponse HTTP ' + res.status })
+    } catch (err) {
+      setTest({ ok: false, text: 'Échec de connexion : ' + err.message })
+    } finally { setTesting(false) }
+  }
+
+  return <div className="max-w-2xl space-y-6">
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+      <h2 className="text-xl font-black">Configuration du backend</h2>
+      <p className="mt-2 text-sm text-slate-500">URL de base de l’API utilisée par le site et l’administration. Laissez vide pour utiliser la valeur par défaut (<code className="rounded bg-slate-100 px-1">{buildDefault}</code>).</p>
+      <form onSubmit={save} className="mt-5 space-y-4">
+        <Field label="URL de l’API" value={value} onChange={e => { setValue(e.target.value); setSaved(false) }} placeholder="ex. http://localhost:8080/api" />
+        <div className="flex flex-wrap items-center gap-3">
+          <button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/> Enregistrer</button>
+          <button type="button" onClick={testConnection} disabled={testing} className="rounded-xl border border-slate-200 px-4 py-2.5 font-bold text-slate-600 disabled:opacity-60">{testing ? 'Test…' : 'Tester la connexion'}</button>
+          <button type="button" onClick={reset} className="rounded-xl px-4 py-2.5 font-bold text-slate-500 hover:text-red-700">Réinitialiser</button>
+        </div>
+      </form>
+      {saved && <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">Enregistré. API active : <code>{active}</code></p>}
+      {test && <p className={'mt-3 rounded-xl p-3 text-sm font-semibold ' + (test.ok ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700')}>{test.text}</p>}
+      <div className="mt-6 border-t pt-4 text-xs text-slate-500">
+        <p>API active actuellement : <b className="text-slate-700">{active}</b></p>
+        <p className="mt-1">Ce réglage est enregistré dans ce navigateur. Rechargez la page après modification pour l’appliquer partout.</p>
+      </div>
+    </div>
+  </div>
+}
+
 function AdminDashboard({ user, onLogout }) {
   const [open, setOpen] = useState(false)
   const [section, setSection] = useState('dashboard')
@@ -204,6 +262,7 @@ function AdminDashboard({ user, onLogout }) {
     ['security', 'Sécurité', ShieldCheck, ['SuperAdmin']],
     ['media', 'Médias', Images, ['SuperAdmin','ClubAdmin','Editor']],
     ['content', 'Contenus', Pencil, ['SuperAdmin','ClubAdmin','Editor']],
+    ['settings', 'Configuration', Server, ['SuperAdmin','ClubAdmin']],
   ]
   const visibleItems = items.filter(([, , , roles]) => roles.includes(user.Role))
 
@@ -243,6 +302,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'security' && <SecurityModule onError={setError}/>}
         {section === 'media' && <MediaModule onError={setError}/>}
         {section === 'content' && <ContentModule onError={setError}/>}
+        {section === 'settings' && <SettingsModule/>}
       </section>
     </div>
   </main>

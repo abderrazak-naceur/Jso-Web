@@ -199,6 +199,7 @@ function App() {
 
           <div className="flex items-center gap-2">
             <button onClick={() => goTo('Matchs', 'matches')} className="hidden rounded-full bg-jso-gold px-5 py-3 text-sm font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-white sm:block">Match Center ↗</button>
+            <a href="/admin" className="hidden items-center gap-2 rounded-full border border-white/25 px-5 py-3 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-white/10 sm:inline-flex"><Shield size={16} /> Admin</a>
             <button aria-label="Ouvrir le menu" onClick={() => setMenuOpen((value) => !value)} className="rounded-full border border-white/20 p-3 lg:hidden">
               {menuOpen ? <X size={19} /> : <Menu size={19} />}
             </button>
@@ -210,6 +211,7 @@ function App() {
             {navigation.map(([label, id]) => (
               <button key={id} onClick={() => goTo(label, id)} className="block w-full py-3 text-left font-bold text-white/85">{label}</button>
             ))}
+            <a href="/admin" className="flex items-center gap-2 border-t border-white/10 py-3 font-bold text-jso-gold"><Shield size={16} /> Admin</a>
           </div>
         )}
       </header>

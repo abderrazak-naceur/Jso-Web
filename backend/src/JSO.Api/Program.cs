@@ -92,7 +92,10 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
-await app.Services.GetRequiredService<DatabaseInitializer>().InitializeAsync();
+await using (var startupScope = app.Services.CreateAsyncScope())
+{
+    await startupScope.ServiceProvider.GetRequiredService<DatabaseInitializer>().InitializeAsync();
+}
 
 app.UseForwardedHeaders();
 

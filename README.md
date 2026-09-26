@@ -43,10 +43,22 @@ L'obiettivo è creare un ecosistema unico per:
 
 | Area | Raggiunto e verificato | Ancora da completare |
 |---|---|---|
-| Sito e admin | Logo JSO, interfaccia responsive e concept Flutter; frontend e pannello admin usano `/api`. Build e lint passano in CI. | Verificare URL API, CORS e HTTPS sul dominio reale; collaudare i flussi completi nel browser. |
-| Backend e dati | API .NET 10, migration PostgreSQL 17 applicata in CI, primo admin creato da credenziali d'ambiente e login verificato. La nuova CI verifica pubblicazione di notizie, upload e lettura media e rifiuto di un file camuffato da PNG. L'upload genera l'estensione dal tipo dichiarato. | Ripetere avvio e migration sull'ambiente Oracle; eseguire un backup reale e provare il ripristino di database e media. |
-| Infrastruttura | Docker Compose production predisposto con attesa di PostgreSQL pronto; Nginx accetta il limite upload dell'API. Build Docker di frontend e backend ARM64 e controllo Nginx riusciti in CI. Script di backup e procedura di restore disponibili in [deploy/oracle](deploy/oracle/README.md). | Preparare VM Oracle, dominio, certificato HTTPS, backup automatico con copia esterna e monitoraggio; eseguire il deploy reale. |
+| Sito e admin | Logo JSO, interfaccia responsive e concept Flutter; frontend e pannello admin usano `/api`. Build (Vite) e lint (oxlint) passano in CI e in locale. Quando l'API risponde ma non ci sono articoli, il sito mostra uno stato vuoto/errore invece di notizie dimostrative. | Verificare URL API, CORS e HTTPS sul dominio reale; collaudare i flussi completi nel browser. |
+| Backend e dati | API .NET 10, migration PostgreSQL 17 applicata in CI, primo admin creato da credenziali d'ambiente e login verificato. La CI ora esegue il percorso critico stagione → competizione → squadra → partita → API pubblica → sito, verifica che le rotte admin rifiutino le chiamate anonime (401), verifica pubblicazione/lettura notizie, upload e lettura media, e il rifiuto di un file camuffato da PNG (400). Gli endpoint admin per creare stagioni e competizioni sono autorizzati e validati. | Ripetere avvio e migration sull'ambiente Oracle; eseguire un backup reale e provare il ripristino di database e media. |
+| Infrastruttura | Docker Compose production predisposto con attesa di PostgreSQL pronto; Nginx accetta il limite upload dell'API. Build Docker di frontend e backend ARM64 e controllo Nginx riusciti in CI. Script di backup, verifica, retention (dry-run di default) e procedura di restore disponibili in [deploy/oracle](deploy/oracle/README.md); tutti gli script superano il controllo di sintassi in CI. Script di collaudo `check-config.sh`, `check-local.sh` e `check-domain.sh` pronti. | Preparare VM Oracle, dominio, certificato HTTPS, backup automatico con copia esterna e monitoraggio; eseguire il deploy reale. |
 | App mobile | Due immagini concept nel README; Flutter è la scelta tecnica. | Creare l'app Android/iOS e collegarla alle API. |
+
+### Cosa manca per andare in produzione
+
+Il lavoro verificabile del [piano agenti](docs/AGENT_EXECUTION_PLAN.md) (A1–A5) è completato e integrato. Gli elementi rimasti richiedono la VM Oracle reale e vanno eseguiti in quest'ordine sull'ambiente reale:
+
+1. **VM e deploy** — provisioning della VM Oracle Ampere A1, `.env.prod` compilato, `deploy/oracle/deploy.sh` e controllo `/health`.
+2. **DNS e HTTPS** — record DNS del dominio JSO verso la VM, TLS via Cloudflare o reverse proxy, poi `deploy/oracle/check-domain.sh https://dominio-reale`.
+3. **Backup reale** — primo `deploy/oracle/backup.sh` con copia off-VM e pianificazione cron (backup giornaliero, verifica settimanale).
+4. **Prova di ripristino** — restore di database e media su uno stack di recovery separato; solo dopo il controllo umano si registra il marcatore `RESTORE_TESTED`, che abilita la retention `prune-backups.sh`.
+5. **Collaudo end-to-end** — flussi completi nel browser (login admin, upload, CORS) sul dominio reale e monitoraggio.
+
+> Nota ambiente locale: il backend non compila su questa macchina (SDK .NET 5 presente, progetto su `net10.0`); la build backend è coperta dalla CI con `dotnet 10.0.x`.
 
 Verifiche: [CI frontend, backend e PostgreSQL con flussi notizie/media](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/36239006026) · [build Docker frontend/backend ARM64 e controllo Nginx](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/36239006058). La priorità operativa e i criteri di uscita sono nel [piano aggiornato](docs/ROADMAP.md).
 
@@ -210,39 +222,44 @@ Le caselle completate indicano funzioni presenti nel codice; la verifica end-to-
 
 ## 📁 Project Structure
 
+Il repository è un **monorepo** con due applicazioni separate: `frontend/` (React/Vite) e `backend/` (ASP.NET Core, Clean Architecture a 4 livelli).
+
 ```text
 Jso-Web/
-├── backend/
+├── frontend/                 # SPA React (sito pubblico + admin)
 │   ├── src/
-│   │   ├── JSO.Domain/
-│   │   ├── JSO.Application/
-│   │   ├── JSO.Infrastructure/
-│   │   └── JSO.Api/
+│   │   ├── admin/
+│   │   │   └── AdminApp.jsx
+│   │   ├── lib/
+│   │   │   ├── api.js
+│   │   │   └── apiConfig.js
+│   │   ├── App.jsx
+│   │   └── index.css
+│   ├── public/
+│   │   └── ...               # asset statici, stemma JSO
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js
+│   └── _oxlintrc.json
+│
+├── backend/                  # API .NET 10 — Clean Architecture
+│   ├── src/
+│   │   ├── JSO.Domain/       # entità e regole di dominio
+│   │   ├── JSO.Application/  # contratti / logica applicativa
+│   │   ├── JSO.Infrastructure/ # EF Core, DB, sicurezza, servizi
+│   │   └── JSO.Api/          # controller REST (entry point HTTP)
 │   ├── Dockerfile
 │   └── JSO.sln
 │
-├── src/
-│   ├── admin/
-│   │   └── AdminApp.jsx
-│   ├── lib/
-│   │   └── api.js
-│   ├── App.jsx
-│   └── index.css
-│
-├── public/
-│   ├── jso-club-mark.svg
-│   ├── fan-platform-hero.svg
-│   ├── team-hero.svg
-│   └── ...
-│
-├── deploy/
+├── deploy/                   # infrastruttura condivisa
 │   ├── nginx/
 │   └── oracle/
 │
 ├── docs/
-├── docker-compose.yml
-├── docker-compose.prod.yml
-├── Dockerfile.frontend
+├── docker-compose.yml        # dev locale (SQL Server)
+├── docker-compose.postgres.yml  # PostgreSQL locale
+├── docker-compose.prod.yml   # stack production
+├── Dockerfile.frontend       # build frontend (context = root)
 └── README.md
 ```
 
@@ -261,6 +278,7 @@ Jso-Web/
 ### Frontend
 
 ```bash
+cd frontend
 npm install
 npm run dev
 ```
@@ -388,12 +406,14 @@ Il [piano operativo aggiornato](docs/ROADMAP.md) definisce priorità, dipendenze
 
 ### Phase 4 — Production
 
-- [ ] Production API URL and CORS verified on the real domain
 - [x] PostgreSQL 17 migration and admin bootstrap verified in CI
+- [x] Critical flow (match → API → public site) and admin permission checks verified in CI
+- [x] Backup, verify, retention and restore procedure scripted and syntax-checked in CI
+- [ ] Production API URL and CORS verified on the real domain
 - [ ] Oracle Cloud deployment
 - [ ] HTTPS
 - [ ] Domain
-- [ ] Backup automation and restore test
+- [ ] Backup automation with off-VM copy and a proven restore test
 - [ ] Monitoring
 - [ ] E2E testing
 

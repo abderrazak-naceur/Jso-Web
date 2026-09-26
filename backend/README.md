@@ -23,6 +23,29 @@ The provider is selected with `Database:Provider`:
     sqlserver
     postgres
 
+### Local development with PostgreSQL
+
+You can develop locally against PostgreSQL (the production provider) instead of
+SQL Server. Start a local PostgreSQL 17 with the provided compose file:
+
+    docker compose -f docker-compose.postgres.yml up -d
+
+Then run the API pointing at it. From the repository root (PowerShell):
+
+    $env:ASPNETCORE_ENVIRONMENT="Development"
+    $env:ASPNETCORE_URLS="http://localhost:8080"
+    $env:Jwt__Key="local-dev-jwt-secret-at-least-32-characters-long"
+    $env:ADMIN_BOOTSTRAP_EMAIL="admin@jso.tn"
+    $env:ADMIN_BOOTSTRAP_PASSWORD="LocalAdminPass123"
+    $env:Database__Provider="postgres"
+    $env:ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;Database=JSO;Username=jso;Password=jso_local_password"
+    dotnet run --project src/JSO.Api --no-launch-profile
+
+In Development the app uses `EnsureCreatedAsync` and seeds demo data, so the
+schema is created directly from the model (no migration step needed). The
+credentials above match the defaults in `docker-compose.postgres.yml`; override
+them with a `.env` file or environment variables if you change them.
+
 ## Database migrations
 
 Development bootstrap currently uses `EnsureCreatedAsync` so a fresh local database can start with demo data. Production startup now uses `Database.MigrateAsync()`.

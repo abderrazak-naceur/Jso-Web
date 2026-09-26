@@ -1,0 +1,31 @@
+# Local PostgreSQL for development.
+#
+# Runs only a PostgreSQL 17 instance on localhost:5432 so you can run the
+# backend from the .NET SDK against Postgres (matching the production provider).
+#
+# Usage:
+#   docker compose -f docker-compose.postgres.yml up -d
+#   # then run the API with Database__Provider=postgres (see README).
+#
+# Credentials default to dev-only values; override via a .env file or env vars.
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-JSO}
+      POSTGRES_USER: ${POSTGRES_USER:-jso}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jso_local_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - jso-postgres-dev-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+volumes:
+  jso-postgres-dev-data:
