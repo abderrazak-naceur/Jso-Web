@@ -35,6 +35,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<ArticleMetadata>().HasIndex(x=>x.ArticleId).IsUnique();
   modelBuilder.Entity<MatchLineup>().HasIndex(x=>new{x.MatchId,x.PlayerId}).IsUnique();
   modelBuilder.Entity<MatchOfficial>().HasIndex(x=>x.MatchId);
+  modelBuilder.Entity<MatchEvent>().HasIndex(x=>x.MatchId);
   modelBuilder.Entity<MatchStat>().HasIndex(x=>new{x.MatchId,x.Name}).IsUnique();
   modelBuilder.Entity<Sponsor>().HasIndex(x=>new{x.Placement,x.IsActive,x.Priority});
   modelBuilder.Entity<FanUser>().HasIndex(x=>x.Email).IsUnique();
