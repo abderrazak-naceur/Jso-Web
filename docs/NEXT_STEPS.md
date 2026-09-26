@@ -5,7 +5,7 @@
 ## Subito: preparare il rilascio web
 
 1. Verificare sul dominio reale URL API `/api`, proxy, CORS e HTTPS; il fallback `localhost` è già stato rimosso.
-2. Applicare la migration EF Core PostgreSQL iniziale a un database di test e verificare il bootstrap admin.
+2. Ripetere nell'ambiente Oracle reale la migration e il bootstrap admin già verificati in CI; provare backup e restore.
 3. Configurare volumi persistenti, backup di database e media, retention e prova di restore.
 4. Completare Oracle ARM64, segreti, HTTPS, dominio, health check e monitoraggio.
 5. Verificare i flussi admin → API → PostgreSQL → sito e aggiungere test automatici critici alla CI.

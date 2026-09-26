@@ -56,7 +56,7 @@ Firebase Data Connect offre PostgreSQL gestito tramite Cloud SQL, ma **non è un
 ## Passi prima di scegliere un deployment
 
 1. Verificare sul dominio reale l'URL API `/api`, il proxy e CORS; il fallback `localhost` del frontend è stato rimosso.
-2. Generare e verificare una migration EF Core PostgreSQL in repository, poi provare il ripristino da backup.
+2. Ripetere sull'ambiente Oracle la migration EF Core PostgreSQL già verificata in CI e provare il ripristino da backup.
 3. Misurare traffico previsto e dimensione delle immagini. Il sito contiene già asset grafici pesanti: per Firebase Hosting Spark, verificare il limite di trasferimento quotidiano.
 4. Se si sceglie Blaze per foto o funzioni, impostare budget e avvisi prima del lancio e testare il costo con traffico realistico.
 5. Fare una prova end-to-end del flusso admin → API → database → sito → app Flutter prima di cambiare architettura.

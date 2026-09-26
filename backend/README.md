@@ -27,7 +27,7 @@ The provider is selected with `Database:Provider`:
 
 Development bootstrap currently uses `EnsureCreatedAsync` so a fresh local database can start with demo data. Production startup now uses `Database.MigrateAsync()`.
 
-Use provider-specific migrations. The initial PostgreSQL migration was generated with the .NET 10 runtime; a live PostgreSQL test is still pending.
+Use provider-specific migrations. The initial PostgreSQL migration was generated with the .NET 10 runtime and applied to PostgreSQL 17 in CI; verification on the target Oracle environment is still pending.
 
 PostgreSQL example for a future schema change:
 
@@ -35,7 +35,7 @@ PostgreSQL example for a future schema change:
 
 The PostgreSQL snapshot is in the Infrastructure assembly. If SQL Server needs migrations in the future, configure a separate migrations assembly and snapshot for that provider; do not generate SQL Server migrations against the PostgreSQL snapshot.
 
-The initial PostgreSQL migration is checked in under `src/JSO.Infrastructure/Migrations/Postgres`. It has been generated and reviewed as SQL, but it still needs to be applied to a PostgreSQL test database. For migration commands, use `JSO.Infrastructure` as both project and startup project; it contains the design-time context factory.
+The initial PostgreSQL migration is checked in under `src/JSO.Infrastructure/Migrations/Postgres`. CI applies it to PostgreSQL 17 and smoke-tests the production API bootstrap. For migration commands, use `JSO.Infrastructure` as both project and startup project; it contains the design-time context factory.
 
 ## Production
 

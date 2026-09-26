@@ -374,7 +374,7 @@ Il [piano operativo aggiornato](docs/ROADMAP.md) definisce priorità, dipendenze
 ### Phase 4 — Production
 
 - [ ] Production API URL and CORS verified on the real domain
-- [ ] PostgreSQL production migration verification
+- [x] PostgreSQL 17 migration and admin bootstrap verified in CI
 - [ ] Oracle Cloud deployment
 - [ ] HTTPS
 - [ ] Domain
