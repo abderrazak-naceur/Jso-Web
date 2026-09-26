@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./public/JSO-crest-regenerated.png" alt="Stemma Jeunesse Sportive de Oudhref" width="180" />
+<img src="./frontend/public/JSO-crest-regenerated.png" alt="Stemma Jeunesse Sportive de Oudhref" width="180" />
 
 # JSO — Jeunesse Sportive de Oudhref
 
@@ -66,7 +66,7 @@ Verifiche: [CI frontend, backend e PostgreSQL con flussi notizie/media](https://
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/abderrazak-naceur/Jso-Web/main/public/jso-platform-overview.svg" alt="JSO Web, Mobile and Admin Platform" width="1100" />
+<img src="https://raw.githubusercontent.com/abderrazak-naceur/Jso-Web/main/frontend/public/jso-platform-overview.svg" alt="JSO Web, Mobile and Admin Platform" width="1100" />
 
 </div>
 
@@ -107,8 +107,8 @@ Production target
 
 <div align="center">
 
-<img src="./public/jso-flutter-home-concept.png" alt="Concept Flutter: schermata Home JSO con prossimo match e notizie" width="320" />
-<img src="./public/jso-flutter-match-concept.png" alt="Concept Flutter: schermata Match Center JSO con eventi e statistiche" width="320" />
+<img src="./frontend/public/jso-flutter-home-concept.png" alt="Concept Flutter: schermata Home JSO con prossimo match e notizie" width="320" />
+<img src="./frontend/public/jso-flutter-match-concept.png" alt="Concept Flutter: schermata Match Center JSO con eventi e statistiche" width="320" />
 
 <br />
 
@@ -118,7 +118,7 @@ Production target
 
 Queste immagini sono **concept visivi** della futura app Flutter per iOS e Android. Mostrano la direzione grafica; i contenuti e i risultati rappresentati sono illustrativi. L'app non è ancora pubblicata.
 
-Il sito usa il nuovo stemma JSO in `public/JSO-crest-regenerated.png`; gli asset visivi sono nel dossier `public/`.
+Il sito usa il nuovo stemma JSO in `frontend/public/JSO-crest-regenerated.png`; gli asset visivi sono nel dossier `frontend/public/`.
 
 ---
 
@@ -569,6 +569,6 @@ The project follows a few core principles:
 
 ### Toujours plus haut. Toujours JSO. 💙💛
 
-<img src="./public/JSO-crest-regenerated.png" alt="Jeunesse Sportive de Oudhref" width="70" />
+<img src="./frontend/public/JSO-crest-regenerated.png" alt="Jeunesse Sportive de Oudhref" width="70" />
 
 </div>
