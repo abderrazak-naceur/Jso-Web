@@ -41,7 +41,7 @@ L'obiettivo è creare un ecosistema unico per:
 
 <div align="center">
 
-<img src="./public/fan-platform-hero.svg" alt="JSO Fan Platform" width="900" />
+<img src="./public/jso-platform-overview.svg" alt="JSO Web, Mobile and Admin Platform" width="1100" />
 
 </div>
 
@@ -355,13 +355,77 @@ Detailed deployment documentation:
 - [ ] Monitoring
 - [ ] E2E testing
 
-### Phase 5 — Mobile
+## 📱 Mobile App — iOS & Android
 
-- [ ] React Native
-- [ ] Expo
+La piattaforma JSO è progettata fin dall'inizio per poter diventare anche una **app mobile ufficiale del club**.
+
+L'app mobile utilizzerà gli stessi servizi backend del sito web, evitando di duplicare la logica e mantenendo un'unica fonte dati.
+
+### Cosa farà l'app
+
+| Area | Funzionalità |
+|---|---|
+| 🏠 Home | Highlights, prossimo match e ultime notizie |
+| ⚽ Match Center | Calendario, risultati, eventi, formazione e statistiche |
+| 📰 News | Articoli e comunicazioni ufficiali |
+| 📸 Media | Foto e video del club |
+| 👥 Squadra | Giocatori, staff e profili |
+| 🤝 Community | Interazioni e contenuti dei tifosi |
+| 🛍️ Shop | Accesso alla futura boutique ufficiale |
+| 🔔 Notifications | Notifiche per partite, risultati e news |
+| 🌐 Account | Profilo e preferenze del tifoso |
+
+### Come funzionerà
+
+```text
+             JSO MOBILE APP
+             React Native + Expo
+                    │
+                    │ HTTPS / JSON
+                    ▼
+             ASP.NET Core .NET 10
+                    │
+          ┌─────────┼─────────┐
+          ▼         ▼         ▼
+       Matches     News      Media
+          │         │         │
+          └─────────┼─────────┘
+                    ▼
+              PostgreSQL
+```
+
+Il principio è **"build once, use everywhere"**: sito web, pannello admin e app mobile condividono API, autenticazione, dati e regole applicative.
+
+### 📲 Roadmap Mobile
+
+- [ ] React Native + Expo
+- [ ] Design system mobile JSO
+- [ ] Login / profilo
+- [ ] Home mobile
+- [ ] Match Center mobile
+- [ ] News & Media
+- [ ] Push notifications
+- [ ] Community
+- [ ] Shop
+- [ ] Build Android
+- [ ] Build iOS
+- [ ] Pubblicazione Google Play
+- [ ] Pubblicazione App Store
+
+> **Stato attuale:** l'app mobile è nella roadmap. Il backend è già strutturato per essere consumato da un client mobile tramite API REST; non viene presentata come app già pubblicata.
+
+---
+
+### Phase 5 — Mobile App
+
+- [ ] React Native + Expo
+- [ ] Mobile design system
 - [ ] Android app
 - [ ] iOS app
 - [ ] Push notifications
+- [ ] Community mobile
+- [ ] Shop mobile
+- [ ] App Store / Google Play release
 
 ---
 
