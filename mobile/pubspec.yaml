@@ -48,6 +48,9 @@ dependencies:
   # Renders the bundled JSO crest (SVG copied from frontend/public).
   flutter_svg: ^2.0.10
 
+  # Opens sponsor websites in an external browser from the Sponsors screen.
+  url_launcher: ^6.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
