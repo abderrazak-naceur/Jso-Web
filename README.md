@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/abderrazak-naceur/Jso-Web/main/public/jso-club-mark.svg" alt="JSO" width="120" />
+<img src="./public/JSO-official-crest.jpg" alt="JSO" width="120" />
 
 # JSO — Jeunesse Sportive de Oudhref
 
@@ -536,6 +536,6 @@ The core platform, authentication, administration, Match Center, News CMS and Me
 
 ### Toujours plus haut. Toujours JSO. 💙💛
 
-<img src="https://raw.githubusercontent.com/abderrazak-naceur/Jso-Web/main/public/jso-club-mark.svg" alt="Jeunesse Sportive de Oudhref" width="70" />
+<img src="./public/JSO-official-crest.jpg" alt="Jeunesse Sportive de Oudhref" width="70" />
 
 </div>
