@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="620" viewBox="0 0 900 620">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071A3A"/><stop offset="1" stop-color="#1769E0"/></linearGradient></defs>
+<rect width="900" height="620" rx="32" fill="#F6F8FC"/>
+<text x="55" y="62" font-family="Arial,sans-serif" font-size="28" font-weight="800" fill="#071A3A">JSO Mobile</text>
+<text x="55" y="94" font-family="Arial,sans-serif" font-size="16" fill="#53647D">Flutter + Dart · iOS &amp; Android</text>
+<g transform="translate(80 130)">
+<rect width="250" height="430" rx="36" fill="#111827"/>
+<rect x="12" y="12" width="226" height="406" rx="28" fill="#fff"/>
+<rect x="82" y="21" width="86" height="8" rx="4" fill="#111827"/>
+<rect x="28" y="55" width="194" height="92" rx="18" fill="url(#g)"/>
+<circle cx="64" cy="101" r="25" fill="#F4C542"/>
+<text x="105" y="97" fill="#fff" font-family="Arial,sans-serif" font-size="21" font-weight="800">JSO</text>
+<text x="105" y="119" fill="#DCE8FF" font-family="Arial,sans-serif" font-size="10">Jeunesse Sportive</text>
+<text x="28" y="181" fill="#071A3A" font-family="Arial,sans-serif" font-size="18" font-weight="800">Prochain match</text>
+<rect x="28" y="198" width="194" height="67" rx="14" fill="#EEF4FF"/>
+<text x="43" y="224" fill="#071A3A" font-family="Arial,sans-serif" font-size="13" font-weight="800">JSO</text>
+<text x="181" y="224" text-anchor="end" fill="#071A3A" font-family="Arial,sans-serif" font-size="13" font-weight="800">ADVERSAIRE</text>
+<text x="125" y="250" text-anchor="middle" fill="#1769E0" font-family="Arial,sans-serif" font-size="16" font-weight="800">20:30</text>
+<text x="28" y="300" fill="#071A3A" font-family="Arial,sans-serif" font-size="18" font-weight="800">Dernières news</text>
+<rect x="28" y="315" width="194" height="42" rx="10" fill="#F6F8FC"/>
+<rect x="28" y="365" width="194" height="42" rx="10" fill="#F6F8FC"/>
+</g>
+<g transform="translate(420 150)">
+<text x="0" y="0" font-family="Arial,sans-serif" font-size="22" font-weight="800" fill="#071A3A">Une seule plateforme</text>
+<text x="0" y="36" font-family="Arial,sans-serif" font-size="15" fill="#53647D">L'app mobile consomme les mêmes API que le site.</text>
+<g font-family="Arial,sans-serif" font-size="16" fill="#071A3A">
+<text x="0" y="100">⚽  Match Center</text><text x="0" y="145">📰  News &amp; communications</text><text x="0" y="190">📸  Photos &amp; Media</text><text x="0" y="235">👥  Team &amp; Players</text><text x="0" y="280">🔔  Push notifications</text><text x="0" y="325">🤝  Community</text><text x="0" y="370">🛍️  Shop</text>
+</g>
+<rect x="0" y="405" width="350" height="58" rx="16" fill="#071A3A"/>
+<text x="175" y="441" text-anchor="middle" fill="#F4C542" font-family="Arial,sans-serif" font-size="16" font-weight="800">FLUTTER + DART</text>
+</g></svg>
