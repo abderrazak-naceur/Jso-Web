@@ -2,6 +2,7 @@ import 'package:jso_mobile/core/api/api_client.dart';
 import 'package:jso_mobile/core/api/api_exception.dart';
 import 'package:jso_mobile/data/models/article.dart';
 import 'package:jso_mobile/data/models/home_data.dart';
+import 'package:jso_mobile/data/models/live_blog_entry.dart';
 import 'package:jso_mobile/data/models/match.dart';
 import 'package:jso_mobile/data/models/match_event.dart';
 import 'package:jso_mobile/data/models/media_asset.dart';
@@ -22,6 +23,7 @@ class FakeRepository extends PublicApiRepository {
     this.matches,
     this.match,
     this.matchEvents,
+    this.liveBlog,
     this.news,
     this.newsArticle,
     this.media,
@@ -29,6 +31,7 @@ class FakeRepository extends PublicApiRepository {
     this.players,
     this.sponsors,
     this.error,
+    this.liveBlogError,
     this.delay,
   }) : super(ApiClient());
 
@@ -36,6 +39,7 @@ class FakeRepository extends PublicApiRepository {
   final List<Match>? matches;
   final Match? match;
   final List<MatchEvent>? matchEvents;
+  final List<LiveBlogEntry>? liveBlog;
   final List<Article>? news;
   final ArticleDetail? newsArticle;
   final List<MediaAsset>? media;
@@ -45,6 +49,10 @@ class FakeRepository extends PublicApiRepository {
 
   /// When set, every method throws this instead of returning a value.
   final ApiException? error;
+
+  /// When set, only [getMatchLiveBlog] throws this. Lets a test exercise the
+  /// live blog ERROR branch while the match/timeline load succeeds.
+  final ApiException? liveBlogError;
 
   /// Optional artificial latency so tests can assert the LOADING state.
   final Duration? delay;
@@ -71,6 +79,20 @@ class FakeRepository extends PublicApiRepository {
   @override
   Future<List<MatchEvent>> getMatchEvents(String id) =>
       _resolve(() => matchEvents ?? const []);
+
+  @override
+  Future<List<LiveBlogEntry>> getMatchLiveBlog(String id) async {
+    if (delay != null) {
+      await Future<void>.delayed(delay!);
+    }
+    if (liveBlogError != null) {
+      throw liveBlogError!;
+    }
+    if (error != null) {
+      throw error!;
+    }
+    return liveBlog ?? const [];
+  }
 
   @override
   Future<List<Article>> getNews() => _resolve(() => news ?? const []);
