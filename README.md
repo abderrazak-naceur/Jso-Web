@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./public/jso-club-mark.svg" alt="JSO" width="120" />
+<img src="https://raw.githubusercontent.com/abderrazak-naceur/Jso-Web/main/public/jso-club-mark.svg" alt="JSO" width="120" />
 
 # JSO — Jeunesse Sportive de Oudhref
 
@@ -41,7 +41,7 @@ L'obiettivo è creare un ecosistema unico per:
 
 <div align="center">
 
-<img src="./public/jso-platform-overview.svg" alt="JSO Web, Mobile and Admin Platform" width="1100" />
+<img src="https://raw.githubusercontent.com/abderrazak-naceur/Jso-Web/main/public/jso-platform-overview.svg" alt="JSO Web, Mobile and Admin Platform" width="1100" />
 
 </div>
 
@@ -75,6 +75,22 @@ Production target
               ├── Nginx
               └── Persistent media volume
 ```
+
+---
+
+## 🖼️ Visuals
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/abderrazak-naceur/Jso-Web/main/public/jso-mobile-preview.svg" alt="JSO Flutter Mobile App Preview" width="850" />
+
+<br />
+
+**Website + Admin + Flutter Mobile App + API + Database**
+
+</div>
+
+> Le logo JSO utilisé dans le projet est le crest digital JSO. Le dossier `public/` contient les assets visuels utilisés par le site et la future application mobile.
 
 ---
 
@@ -520,6 +536,6 @@ The core platform, authentication, administration, Match Center, News CMS and Me
 
 ### Toujours plus haut. Toujours JSO. 💙💛
 
-<img src="./public/jso-club-mark.svg" alt="Jeunesse Sportive de Oudhref" width="70" />
+<img src="https://raw.githubusercontent.com/abderrazak-naceur/Jso-Web/main/public/jso-club-mark.svg" alt="Jeunesse Sportive de Oudhref" width="70" />
 
 </div>
