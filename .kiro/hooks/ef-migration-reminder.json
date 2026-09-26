@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "EF migration reminder",
+      "trigger": "PostFileSave",
+      "description": "Quando cambiano le entità di dominio o il DbContext, ricorda di generare la migration Postgres e di allineare DbSet e snapshot.",
+      "matcher": "backend[\\\\/]src[\\\\/]JSO\\.(Domain|Infrastructure)[\\\\/].*(Entities|DbContext|\\.cs)$",
+      "action": {
+        "type": "agent",
+        "prompt": "Un file di dominio o infrastruttura è stato modificato. Se hai aggiunto o cambiato un'entità EF Core, verifica questi punti prima di considerare finito il lavoro: (1) esiste un `DbSet<>` corrispondente in `JsoDbContext`; (2) è stata generata una nuova migration PostgreSQL in `backend/src/JSO.Infrastructure/Migrations/Postgres` con `dotnet ef migrations add <Nome> --project src/JSO.Infrastructure --startup-project src/JSO.Infrastructure --output-dir Migrations/Postgres`; (3) lo snapshot `JsoDbContextModelSnapshot.cs` include la nuova tabella. In produzione lo schema è applicato con `MigrateAsync()`, quindi senza migration la tabella non verrà creata e la CI (PostgreSQL EF validation) fallirà."
+      }
+    }
+  ]
+}

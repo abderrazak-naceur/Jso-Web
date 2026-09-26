@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 
 async function api(path, options = {}) {
@@ -58,6 +58,7 @@ const emptyNews = { title: '', slug: '', excerpt: '', body: '', status: 'Draft',
 const emptySponsor = { name: '', logoUrl: '', websiteUrl: '', tier: 'Partner', placement: 'Footer', startDate: '', endDate: '', isActive: true, priority: 0 }
 const SPONSOR_TIERS = ['Title', 'Gold', 'Silver', 'Partner']
 const SPONSOR_PLACEMENTS = ['Home', 'Footer', 'Matchday']
+const emptyProduct = { name: '', slug: '', description: '', price: '', currency: 'TND', imageUrl: '', category: '', stock: 0, isActive: true }
 
 function Field({ label, ...props }) {
   return <label className="block text-sm font-bold">{label}<input {...props} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-jso-blue" /></label>
@@ -181,14 +182,60 @@ function MediaModule({ onError }) {
   </div>
 }
 
+const emptyEvent = { minute: 0, type: 'Goal', playerName: '', secondaryPlayerName: '', team: '', notes: '' }
+const EVENT_TEAM_LABELS = { Home: 'Domicile', Away: 'Extérieur' }
+
 function EventsModule({ onError }) {
-  const [matches,setMatches]=useState([]); const [selected,setSelected]=useState(''); const [events,setEvents]=useState([]); const [form,setForm]=useState({minute:0,type:'Goal',playerName:'',notes:''})
+  const [matches,setMatches]=useState([]); const [selected,setSelected]=useState(''); const [events,setEvents]=useState([]); const [form,setForm]=useState(emptyEvent); const [editingId,setEditingId]=useState(null)
   async function load(){try{const data=await api('/admin/matches');setMatches(data);if(!selected&&data[0])loadEvents(data[0].id)}catch(e){onError(e.message)}}
-  async function loadEvents(id){try{setSelected(id);setEvents(await api('/admin/matches/'+id+'/events'))}catch(e){onError(e.message)}}
+  async function loadEvents(id){try{setSelected(id);setEditingId(null);setForm(emptyEvent);setEvents(await api('/admin/matches/'+id+'/events'))}catch(e){onError(e.message)}}
   useEffect(()=>{load()},[])
-  async function add(e){e.preventDefault();try{await api('/admin/matches/'+selected+'/events',{method:'POST',body:JSON.stringify({...form,minute:Number(form.minute)})});setForm({minute:0,type:'Goal',playerName:'',notes:''});await loadEvents(selected)}catch(e){onError(e.message)}}
-  async function remove(id){try{await api('/admin/matches/'+selected+'/events/'+id,{method:'DELETE'});await loadEvents(selected)}catch(e){onError(e.message)}}
-  return <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]"><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Matchs</h2><div className="mt-4 space-y-2">{matches.map(m=><button key={m.id} onClick={()=>loadEvents(m.id)} className={'w-full rounded-xl p-3 text-left '+(selected===m.id?'bg-jso-navy text-white':'bg-slate-50')}><b>JSO — {m.opponentName}</b><span className="block text-xs opacity-70">{new Date(m.kickoffAt).toLocaleString('fr-FR')}</span></button>)}</div></div><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Événements</h2>{selected?<><form onSubmit={add} className="mt-4 grid gap-3 sm:grid-cols-2"><Field label="Minute" type="number" min="0" max="200" value={form.minute} onChange={e=>setForm({...form,minute:e.target.value})} required/><label className="text-sm font-bold">Type<select value={form.type} onChange={e=>setForm({...form,type:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"><option>Goal</option><option>YellowCard</option><option>RedCard</option><option>Substitution</option><option>VAR</option><option>Other</option></select></label><Field label="Joueur" value={form.playerName} onChange={e=>setForm({...form,playerName:e.target.value})}/><Field label="Note" value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/><button className="sm:col-span-2 flex items-center justify-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Plus size={16}/>Ajouter l’événement</button></form><div className="mt-6 space-y-2">{events.map(ev=><div key={ev.id} className="flex items-center justify-between rounded-xl bg-slate-50 p-3"><div><b>{ev.minute}' · {ev.type}</b><span className="ml-2 text-sm text-slate-600">{ev.playerName||''}</span>{ev.notes&&<p className="text-xs text-slate-500">{ev.notes}</p>}</div><button onClick={()=>remove(ev.id)} className="text-red-600"><X size={16}/></button></div>)}{!events.length&&<p className="text-sm text-slate-500">Aucun événement enregistré.</p>}</div></>:<p className="mt-3 text-sm text-slate-500">Sélectionne un match.</p>}</div></div>
+  function edit(ev){setEditingId(ev.id);setForm({minute:ev.minute??0,type:ev.type||'Goal',playerName:ev.playerName||'',secondaryPlayerName:ev.secondaryPlayerName||'',team:ev.team||'',notes:ev.notes||''})}
+  function cancelEdit(){setEditingId(null);setForm(emptyEvent)}
+  async function save(e){e.preventDefault();try{const body={...form,minute:Number(form.minute),secondaryPlayerName:form.secondaryPlayerName||null,team:form.team||null};if(editingId)await api('/admin/matches/'+selected+'/events/'+editingId,{method:'PUT',body:JSON.stringify(body)});else await api('/admin/matches/'+selected+'/events',{method:'POST',body:JSON.stringify(body)});setForm(emptyEvent);setEditingId(null);await loadEvents(selected)}catch(e){onError(e.message)}}
+  async function remove(id){try{await api('/admin/matches/'+selected+'/events/'+id,{method:'DELETE'});if(editingId===id)cancelEdit();await loadEvents(selected)}catch(e){onError(e.message)}}
+  const showSecondary=form.type==='Goal'||form.type==='Substitution'
+  return <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]"><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Matchs</h2><div className="mt-4 space-y-2">{matches.map(m=><button key={m.id} onClick={()=>loadEvents(m.id)} className={'w-full rounded-xl p-3 text-left '+(selected===m.id?'bg-jso-navy text-white':'bg-slate-50')}><b>JSO — {m.opponentName}</b><span className="block text-xs opacity-70">{new Date(m.kickoffAt).toLocaleString('fr-FR')}</span></button>)}</div></div><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Événements</h2>{selected?<><form onSubmit={save} className="mt-4 grid gap-3 sm:grid-cols-2"><Field label="Minute" type="number" min="0" max="200" value={form.minute} onChange={e=>setForm({...form,minute:e.target.value})} required/><label className="text-sm font-bold">Type<select value={form.type} onChange={e=>setForm({...form,type:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"><option>Goal</option><option>YellowCard</option><option>RedCard</option><option>Substitution</option><option>VAR</option><option>Other</option></select></label><Field label="Joueur" value={form.playerName} onChange={e=>setForm({...form,playerName:e.target.value})}/><Field label={form.type==='Substitution'?'Joueur entrant':'Passeur'} value={form.secondaryPlayerName} onChange={e=>setForm({...form,secondaryPlayerName:e.target.value})} placeholder={showSecondary?'':'Optionnel'}/><label className="text-sm font-bold">Camp<select value={form.team} onChange={e=>setForm({...form,team:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"><option value="">Aucun</option><option value="Home">Domicile</option><option value="Away">Extérieur</option></select></label><Field label="Note" value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/><div className="sm:col-span-2 flex gap-2"><button className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white">{editingId?<><Save size={16}/>Mettre à jour</>:<><Plus size={16}/>Ajouter l’événement</>}</button>{editingId&&<button type="button" onClick={cancelEdit} className="rounded-xl px-4 py-2.5 font-bold text-slate-500 hover:bg-slate-100">Annuler</button>}</div></form><div className="mt-6 space-y-2">{events.map(ev=><div key={ev.id} className="flex items-center justify-between rounded-xl bg-slate-50 p-3"><div><b>{ev.minute}' · {ev.type}</b>{ev.team&&<span className="ml-2 rounded-full bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-600">{EVENT_TEAM_LABELS[ev.team]||ev.team}</span>}<span className="ml-2 text-sm text-slate-600">{ev.playerName||''}</span>{ev.secondaryPlayerName&&<span className="ml-1 text-sm text-slate-500">({ev.type==='Substitution'?'entrant : ':'passe : '}{ev.secondaryPlayerName})</span>}{ev.notes&&<p className="text-xs text-slate-500">{ev.notes}</p>}</div><div className="flex gap-2"><button onClick={()=>edit(ev)} className="text-jso-blue"><Pencil size={16}/></button><button onClick={()=>remove(ev.id)} className="text-red-600"><X size={16}/></button></div></div>)}{!events.length&&<p className="text-sm text-slate-500">Aucun événement enregistré.</p>}</div></>:<p className="mt-3 text-sm text-slate-500">Sélectionne un match.</p>}</div></div>
+}
+
+function FormationsModule({ onError }) {
+  const [matches,setMatches]=useState([]); const [selected,setSelected]=useState(''); const [roster,setRoster]=useState([]); const [rows,setRows]=useState({}); const [loading,setLoading]=useState(false); const [saving,setSaving]=useState(false); const [saved,setSaved]=useState(false)
+  async function load(){try{const data=await api('/admin/matches');setMatches(data);if(!selected&&data[0])selectMatch(data[0].id)}catch(e){onError(e.message)}}
+  useEffect(()=>{load()},[])
+  async function selectMatch(id){
+    setSelected(id);setSaved(false);setLoading(true)
+    try{
+      const match=matches.find(m=>m.id===id)||await api('/admin/matches/'+id)
+      const [lineup,players]=await Promise.all([api('/admin/matches/'+id+'/lineup'),match.teamId?api('/admin/teams/'+match.teamId+'/players'):Promise.resolve([])])
+      setRoster(players)
+      const next={}
+      ;(lineup||[]).forEach(l=>{next[l.playerId]={included:true,role:l.role||'Starter',position:l.position||'',positionOrder:l.positionOrder??'',isCaptain:Boolean(l.isCaptain)}})
+      setRows(next)
+    }catch(e){onError(e.message)}finally{setLoading(false)}
+  }
+  function toggle(playerId){setSaved(false);setRows(prev=>{const next={...prev};if(next[playerId])delete next[playerId];else next[playerId]={included:true,role:'Starter',position:'',positionOrder:'',isCaptain:false};return next})}
+  function update(playerId,patch){setSaved(false);setRows(prev=>({...prev,[playerId]:{...prev[playerId],...patch}}))}
+  function setCaptain(playerId){setSaved(false);setRows(prev=>{const next={};Object.keys(prev).forEach(pid=>{next[pid]={...prev[pid],isCaptain:pid===playerId}});return next})}
+  async function save(){
+    if(!selected)return
+    setSaving(true);setSaved(false)
+    try{
+      const items=Object.entries(rows).filter(([,r])=>r.included).map(([playerId,r])=>({playerId,role:r.role,positionOrder:r.positionOrder===''?null:Number(r.positionOrder),position:r.position||null,isCaptain:Boolean(r.isCaptain)}))
+      await api('/admin/matches/'+selected+'/lineup',{method:'PUT',body:JSON.stringify({items})})
+      setSaved(true)
+      await selectMatch(selected)
+    }catch(e){onError(e.message)}finally{setSaving(false)}
+  }
+  const includedCount=Object.values(rows).filter(r=>r.included).length
+  return <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Matchs</h2><div className="mt-4 space-y-2">{matches.map(m=><button key={m.id} onClick={()=>selectMatch(m.id)} className={'w-full rounded-xl p-3 text-left '+(selected===m.id?'bg-jso-navy text-white':'bg-slate-50')}><b>JSO — {m.opponentName}</b><span className="block text-xs opacity-70">{new Date(m.kickoffAt).toLocaleString('fr-FR')}</span></button>)}{!matches.length&&<p className="text-sm text-slate-500">Aucun match disponible.</p>}</div></div>
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><div className="flex items-center justify-between"><h2 className="text-xl font-black">Formation</h2>{selected&&<button onClick={save} disabled={saving} className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white disabled:opacity-50"><Save size={16}/>{saving?'Enregistrement…':'Enregistrer'}</button>}</div>
+      {!selected?<p className="mt-3 text-sm text-slate-500">Sélectionne un match.</p>
+        :loading?<p className="mt-4 text-sm text-slate-400">Chargement…</p>
+        :!roster.length?<p className="mt-4 text-sm text-slate-500">Aucun joueur disponible pour l’équipe de ce match. Ajoute des joueurs à l’équipe pour composer la formation.</p>
+        :<><p className="mt-3 text-xs text-slate-500">{includedCount} joueur(s) sélectionné(s).</p>{saved&&<p className="mt-2 rounded-xl bg-emerald-50 p-2 text-xs font-bold text-emerald-700">Formation enregistrée.</p>}<div className="mt-4 space-y-2">{roster.map(p=>{const row=rows[p.id];const included=Boolean(row?.included);return <div key={p.id} className={'rounded-xl border p-3 '+(included?'border-jso-blue bg-slate-50':'border-slate-200')}><div className="flex items-center justify-between gap-3"><label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={included} onChange={()=>toggle(p.id)}/>{p.shirtNumber?'#'+p.shirtNumber+' ':''}{p.firstName} {p.lastName}</label>{included&&<label className="flex items-center gap-2 text-xs font-bold text-slate-600"><input type="checkbox" checked={Boolean(row.isCaptain)} onChange={()=>row.isCaptain?update(p.id,{isCaptain:false}):setCaptain(p.id)}/>Capitaine</label>}</div>{included&&<div className="mt-3 grid gap-2 sm:grid-cols-3"><label className="text-xs font-bold">Rôle<select value={row.role} onChange={e=>update(p.id,{role:e.target.value})} className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"><option value="Starter">Titulaire</option><option value="Substitute">Remplaçant</option></select></label><label className="text-xs font-bold">Position<input value={row.position} onChange={e=>update(p.id,{position:e.target.value})} className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"/></label><label className="text-xs font-bold">Ordre<input type="number" min="0" value={row.positionOrder} onChange={e=>update(p.id,{positionOrder:e.target.value})} className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"/></label></div>}</div>})}</div></>}
+    </div>
+  </div>
 }
 
 function SettingsModule() {
@@ -260,15 +307,20 @@ function AdminDashboard({ user, onLogout }) {
     ['club', 'Club Settings', ShieldCheck, ['SuperAdmin','ClubAdmin']],
     ['matches', 'Match Center', Trophy, ['SuperAdmin','ClubAdmin','MatchManager']],
     ['events', 'Événements', Trophy, ['SuperAdmin','ClubAdmin','MatchManager']],
+    ['formations', 'Formations', Users, ['SuperAdmin','ClubAdmin','MatchManager']],
     ['teams', 'Équipes & joueurs', Users, ['SuperAdmin','ClubAdmin']],
     ['news', 'News CMS', Newspaper, ['SuperAdmin','ClubAdmin','Editor']],
     ['security', 'Sécurité', ShieldCheck, ['SuperAdmin']],
     ['media', 'Médias', Images, ['SuperAdmin','ClubAdmin','Editor']],
     ['content', 'Contenus', Pencil, ['SuperAdmin','ClubAdmin','Editor']],
     ['sponsors', 'Sponsors', Handshake, ['SuperAdmin','ClubAdmin']],
+    ['shop', 'Boutique', ShoppingBag, ['SuperAdmin','ClubAdmin','ShopManager']],
+    ['analytics', 'Analytics joueurs', BarChart3, ['SuperAdmin','ClubAdmin','MatchManager']],
     ['settings', 'Configuration', Server, ['SuperAdmin','ClubAdmin']],
   ]
-  const visibleItems = items.filter(([, , , roles]) => roles.includes(user.Role))
+  const role = user.role ?? user.Role
+  const displayName = user.displayName ?? user.DisplayName
+  const visibleItems = items.filter(([, , , roles]) => roles.includes(role))
 
   async function loadDashboard() {
     try { setStats(await api('/admin/dashboard')); setError('') } catch (e) { setError(e.message) }
@@ -284,16 +336,16 @@ function AdminDashboard({ user, onLogout }) {
   }
 
   return <main className="min-h-screen bg-jso-paper text-jso-ink">
-    <aside className={'fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-slate-200 bg-white p-6 transition-transform ' + (open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0')}>
-      <div className="flex items-center justify-between"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-jso-navy font-black text-jso-gold">JSO</span><div><p className="font-black">JSO Admin</p><p className="text-xs text-slate-400">{user.Role}</p></div></div><button className="lg:hidden" onClick={() => setOpen(false)}><X /></button></div>
-      <nav className="mt-10 flex-1 space-y-2">{visibleItems.map(([id,label,Icon]) => <button key={id} onClick={() => navigate(id)} className={'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold ' + (section === id ? 'bg-jso-navy text-white' : 'text-slate-600 hover:bg-slate-100')}><Icon size={18}/>{label}</button>)}</nav>
-      <button onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 hover:bg-red-50 hover:text-red-700"><LogOut size={18}/>Déconnexion</button>
+    <aside className={'fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-slate-200 bg-white transition-transform ' + (open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0')}>
+      <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-jso-navy font-black text-jso-gold">JSO</span><div><p className="font-black">JSO Admin</p><p className="text-xs text-slate-400">{role}</p></div></div><button className="lg:hidden" onClick={() => setOpen(false)}><X /></button></div>
+      <nav className="jso-scroll flex-1 space-y-1 overflow-y-auto overscroll-contain px-4 py-4">{visibleItems.map(([id,label,Icon]) => <button key={id} onClick={() => navigate(id)} className={'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold transition-colors ' + (section === id ? 'bg-jso-navy text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100')}><Icon size={18}/>{label}</button>)}</nav>
+      <div className="border-t border-slate-100 px-4 py-4"><button onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 transition-colors hover:bg-red-50 hover:text-red-700"><LogOut size={18}/>Déconnexion</button></div>
     </aside>
     <div className="lg:pl-72">
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-5 py-4 backdrop-blur-xl lg:px-8">
         <button className="lg:hidden" onClick={() => setOpen(true)}><Menu /></button>
-        <div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-blue">COMMAND CENTER</p><h1 className="text-2xl font-black">{section === 'dashboard' ? 'Bonjour, ' + user.DisplayName : visibleItems.find(x => x[0] === section)?.[1]}</h1></div>
-        <span className="hidden rounded-full bg-jso-gold/20 px-3 py-2 text-xs font-extrabold text-jso-navy sm:block">{user.Role}</span>
+        <div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-blue">COMMAND CENTER</p><h1 className="text-2xl font-black">{section === 'dashboard' ? 'Bonjour, ' + displayName : visibleItems.find(x => x[0] === section)?.[1]}</h1></div>
+        <span className="hidden rounded-full bg-jso-gold/20 px-3 py-2 text-xs font-extrabold text-jso-navy sm:block">{role}</span>
       </header>
       <section className="mx-auto max-w-7xl p-5 lg:p-8">
         {error && <div className="mb-6 rounded-2xl bg-red-50 p-4 font-semibold text-red-700">{error}</div>}
@@ -302,11 +354,14 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'teams' && <TeamsModule onError={setError}/>}
         {section === 'matches' && <MatchesModule onError={setError}/>}
         {section === 'events' && <EventsModule onError={setError}/>}
+        {section === 'formations' && <FormationsModule onError={setError}/>}
         {section === 'news' && <NewsModule onError={setError}/>}
         {section === 'security' && <SecurityModule onError={setError}/>}
         {section === 'media' && <MediaModule onError={setError}/>}
         {section === 'content' && <ContentModule onError={setError}/>}
         {section === 'sponsors' && <SponsorsModule onError={setError}/>}
+        {section === 'shop' && <ShopModule onError={setError}/>}
+        {section === 'analytics' && <AnalyticsModule onError={setError}/>}
         {section === 'settings' && <SettingsModule/>}
       </section>
     </div>
@@ -314,12 +369,48 @@ function AdminDashboard({ user, onLogout }) {
 }
 
 function DashboardStats({ stats }) {
-  const cards = stats ? [
+  if (!stats) return <div className="rounded-[1.5rem] bg-white p-8 text-slate-500">Chargement du dashboard…</div>
+
+  const cards = [
     ['Parties à venir', stats.matches.upcoming, Trophy], ['Résultats', stats.matches.finished, Trophy],
     ['News publiées', stats.news.published, Newspaper], ['Brouillons', stats.news.drafts, Newspaper],
     ['Équipes', stats.teams, Users], ['Joueurs actifs', stats.players, Users],
+  ]
+  const today = stats.todayActivity
+  const todayFigures = today ? [
+    ['News publiées', today.newsPublished], ['Matchs du jour', today.matchesToday],
+    ['Médias ajoutés', today.mediaUploaded], ['Actions d’audit', today.auditActions],
   ] : []
-  return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{cards.length ? cards.map(([label,value,Icon]) => <div key={label} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm"><Icon className="text-jso-blue" size={22}/><p className="mt-7 text-sm font-semibold text-slate-500">{label}</p><p className="mt-1 text-4xl font-black">{value}</p></div>) : <div className="rounded-[1.5rem] bg-white p-8 text-slate-500">Chargement du dashboard…</div>}</div>
+  const recent = stats.recentActivity ?? []
+  const sales = stats.sales || { enabled: false, currency: 'TND', revenue: 0, orders: 0, activeProducts: 0, productsSold: 0, conversionRate: 0 }
+  const money = (n) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: sales.currency || 'TND', maximumFractionDigits: 0 }).format(n || 0)
+  const salesCards = [
+    ['Produits au catalogue', sales.activeProducts ?? 0, Package],
+    ['Chiffre d’affaires', money(sales.revenue), TrendingUp],
+    ['Commandes', sales.orders ?? 0, ShoppingBag],
+    ['Taux de conversion', ((sales.conversionRate ?? 0) * 100).toFixed(1) + ' %', BarChart3],
+  ]
+
+  return <div className="space-y-8">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {cards.map(([label,value,Icon]) => <div key={label} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm"><Icon className="text-jso-blue" size={22}/><p className="mt-7 text-sm font-semibold text-slate-500">{label}</p><p className="mt-1 text-4xl font-black">{value}</p></div>)}
+    </div>
+
+    {today && <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-black">Activité du jour</h2><div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{todayFigures.map(([label,value]) => <div key={label} className="rounded-xl bg-slate-50 p-3 text-sm"><p className="font-semibold text-slate-500">{label}</p><p className="mt-1 text-3xl font-black">{value ?? 0}</p></div>)}</div></div>}
+
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-black">Activité récente</h2><div className="mt-4 space-y-2">{recent.length ? recent.map(a => <div key={a.id} className="rounded-xl bg-slate-50 p-3 text-sm"><div className="flex justify-between gap-3"><b>{a.action} · {a.entityType}</b><span className="text-xs text-slate-400">{new Date(a.createdAt).toLocaleString('fr-FR')}</span></div><p className="mt-1 text-xs text-slate-500">{a.userEmail || 'Système'}{a.entityId ? ' · ' + a.entityId : ''}</p></div>) : <p className="text-sm text-slate-500">Aucune activité récente.</p>}</div></div>
+
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2"><ShoppingBag className="text-jso-blue" size={20}/><h2 className="text-lg font-black">Ventes &amp; Boutique</h2></div>
+        <span className={'rounded-full px-3 py-1 text-xs font-extrabold ' + (sales.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500')}>{sales.enabled ? 'BOUTIQUE ACTIVE' : 'BOUTIQUE NON ACTIVE'}</span>
+      </div>
+      <div className="relative grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {salesCards.map(([label,value,Icon]) => <div key={label} className={'rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm ' + (sales.enabled ? '' : 'opacity-60')}><Icon className="text-jso-blue" size={22}/><p className="mt-7 text-sm font-semibold text-slate-500">{label}</p><p className="mt-1 text-3xl font-black">{value}</p></div>)}
+      </div>
+      <p className="mt-3 text-sm text-slate-500">{sales.enabled ? 'Catalogue actif. Le chiffre d’affaires et les commandes se rempliront une fois le paiement en ligne activé.' : 'Aucun produit actif. Ajoutez des produits dans la section Boutique pour démarrer le catalogue.'}</p>
+    </div>
+  </div>
 }
 
 function TeamsModule({ onError }) {
@@ -376,6 +467,87 @@ function NewsModule({ onError }) {
   return <div className="grid gap-6 xl:grid-cols-[1fr_1.2fr]">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><div className="flex items-center justify-between"><h2 className="text-xl font-black">News CMS</h2><button onClick={()=>{setEditing(null);setForm(emptyNews)}} className="rounded-xl bg-jso-navy p-2 text-white"><Plus size={18}/></button></div><div className="mt-5 space-y-2">{items.map(n=><div key={n.id} className="rounded-xl bg-slate-50 p-4"><div className="flex justify-between gap-3"><div><b>{n.title}</b><p className="text-xs text-slate-500">{n.status} · {n.slug}</p></div><div className="flex gap-2"><button onClick={()=>edit(n)} className="text-jso-blue"><Pencil size={16}/></button>{n.status!=='Published'&&<button onClick={()=>publish(n.id)} className="text-emerald-600"><Eye size={16}/></button>}</div></div></div>)}</div></div>
     <form onSubmit={save} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 space-y-3"><h2 className="text-xl font-black">{editing?'Modifier l’article':'Nouvel article'}</h2><Field label="Titre" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required/><Field label="Slug" value={form.slug} onChange={e=>setForm({...form,slug:e.target.value})} required/><Field label="Extrait" value={form.excerpt} onChange={e=>setForm({...form,excerpt:e.target.value})}/><label className="block text-sm font-bold">Contenu<textarea value={form.body} onChange={e=>setForm({...form,body:e.target.value})} rows="9" className="mt-2 w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-jso-blue"/></label><Field label="Cover URL" value={form.coverImageUrl} onChange={e=>setForm({...form,coverImageUrl:e.target.value})}/><button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/>Enregistrer</button></form>
+  </div>
+}
+
+function ShopModule({ onError }) {
+  const [products, setProducts] = useState([])
+  const [form, setForm] = useState(emptyProduct)
+  const [editing, setEditing] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  async function load() {
+    setLoading(true)
+    try { setProducts(await api('/admin/shop/products')); onError('') }
+    catch (e) { onError(e.message) }
+    finally { setLoading(false) }
+  }
+  useEffect(() => { load() }, [])
+
+  function slugify(s) { return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') }
+  function edit(p) {
+    setEditing(p.id)
+    setForm({ name: p.name || '', slug: p.slug || '', description: p.description || '', price: p.price ?? '', currency: p.currency || 'TND', imageUrl: p.imageUrl || '', category: p.category || '', stock: p.stock ?? 0, isActive: p.isActive })
+  }
+  function reset() { setForm(emptyProduct); setEditing(null) }
+
+  async function save(e) {
+    e.preventDefault()
+    try {
+      const body = {
+        name: form.name.trim(),
+        slug: (form.slug.trim() || slugify(form.name)),
+        description: form.description.trim() || null,
+        price: Number(form.price) || 0,
+        currency: (form.currency || 'TND').trim().toUpperCase(),
+        imageUrl: form.imageUrl.trim() || null,
+        category: form.category.trim() || null,
+        stock: Number(form.stock) || 0,
+        isActive: form.isActive,
+      }
+      if (editing) await api('/admin/shop/products/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await api('/admin/shop/products', { method: 'POST', body: JSON.stringify(body) })
+      reset()
+      await load()
+    } catch (e) { onError(e.message) }
+  }
+
+  async function remove(id) {
+    if (!confirm('Supprimer ce produit ?')) return
+    try { await api('/admin/shop/products/' + id, { method: 'DELETE' }); await load() }
+    catch (e) { onError(e.message) }
+  }
+
+  const money = (n, c) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: c || 'TND' }).format(n || 0)
+
+  return <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+      <h2 className="text-xl font-black">Boutique — Produits</h2>
+      <div className="mt-5 overflow-x-auto">
+        {loading ? <p className="text-sm text-slate-400">Chargement…</p>
+          : products.length === 0 ? <p className="text-sm text-slate-400">Aucun produit. Créez le premier avec le formulaire.</p>
+          : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Produit</th><th className="p-2">Prix</th><th className="p-2">Stock</th><th className="p-2">Actif</th><th className="p-2"></th></tr></thead><tbody>{products.map(p => <tr key={p.id} className="border-b last:border-0"><td className="p-2"><b>{p.name}</b><div className="text-xs text-slate-400">{p.category || '—'}</div></td><td className="p-2 whitespace-nowrap">{money(p.price, p.currency)}</td><td className="p-2">{p.stock}</td><td className="p-2">{p.isActive ? 'Oui' : 'Non'}</td><td className="p-2 whitespace-nowrap"><button onClick={() => edit(p)} className="mr-2 text-jso-blue"><Pencil size={16}/></button><button onClick={() => remove(p.id)} className="text-red-600"><X size={16}/></button></td></tr>)}</tbody></table>}
+      </div>
+    </div>
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+      <h2 className="text-xl font-black">{editing ? 'Modifier le produit' : 'Nouveau produit'}</h2>
+      <form onSubmit={save} className="mt-5 space-y-3">
+        <Field label="Nom" value={form.name} onChange={e => setForm({ ...form, name: e.target.value, slug: editing ? form.slug : slugify(e.target.value) })} required/>
+        <Field label="Slug" value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} required/>
+        <label className="block text-sm font-bold">Description<textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows="3" className="mt-2 w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-jso-blue"/></label>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Prix" type="number" step="0.01" min="0" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required/>
+          <Field label="Devise" value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })}/>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Stock" type="number" min="0" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })}/>
+          <Field label="Catégorie" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}/>
+        </div>
+        <Field label="Image URL" value={form.imageUrl} onChange={e => setForm({ ...form, imageUrl: e.target.value })}/>
+        <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={form.isActive} onChange={e => setForm({ ...form, isActive: e.target.checked })}/> Actif (visible dans la boutique)</label>
+        <div className="flex gap-2 pt-2"><button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/> {editing ? 'Mettre à jour' : 'Créer'}</button>{editing && <button type="button" onClick={reset} className="rounded-xl px-4 py-2.5 font-bold text-slate-500 hover:bg-slate-100">Annuler</button>}</div>
+      </form>
+    </div>
   </div>
 }
 
@@ -454,6 +626,42 @@ function SponsorsModule({ onError }) {
         <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={form.isActive} onChange={e => setForm({ ...form, isActive: e.target.checked })}/> Actif</label>
         <div className="flex gap-2 pt-2"><button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/> {editing ? 'Mettre à jour' : 'Créer'}</button>{editing && <button type="button" onClick={reset} className="rounded-xl px-4 py-2.5 font-bold text-slate-500 hover:bg-slate-100">Annuler</button>}</div>
       </form>
+    </div>
+  </div>
+}
+
+
+function AnalyticsModule({ onError }) {
+  const [teams, setTeams] = useState([])
+  const [teamId, setTeamId] = useState('')
+  const [rows, setRows] = useState([])
+  const [loading, setLoading] = useState(false)
+
+  async function loadTeams() {
+    try { const data = await api('/admin/teams'); setTeams(data); if (data[0]) select(data[0].id) }
+    catch (e) { onError(e.message) }
+  }
+  async function select(id) {
+    setTeamId(id)
+    setLoading(true)
+    try { const data = await api('/admin/teams/' + id + '/analytics'); setRows(data.players || []); onError('') }
+    catch (e) { onError(e.message) }
+    finally { setLoading(false) }
+  }
+  useEffect(() => { loadTeams() }, [])
+
+  return <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <h2 className="text-xl font-black">Analytics joueurs</h2>
+      <select value={teamId} onChange={e => select(e.target.value)} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none focus:border-jso-blue">
+        {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+      </select>
+    </div>
+    <p className="mt-2 text-xs text-slate-400">Statistiche derivate da presenze (compositions) ed eventi partita.</p>
+    <div className="mt-5 overflow-x-auto">
+      {loading ? <p className="text-sm text-slate-400">Chargement…</p>
+        : rows.length === 0 ? <p className="text-sm text-slate-400">Aucune donnée de match pour cette équipe.</p>
+        : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">#</th><th className="p-2">Joueur</th><th className="p-2">Présences</th><th className="p-2">Buts</th><th className="p-2">🟨</th><th className="p-2">🟥</th></tr></thead><tbody>{rows.map(r => <tr key={r.id} className="border-b last:border-0"><td className="p-2 font-black">{r.shirtNumber ?? '—'}</td><td className="p-2 font-bold">{r.name}</td><td className="p-2">{r.appearances}</td><td className="p-2 font-bold text-jso-blue">{r.goals}</td><td className="p-2">{r.yellowCards}</td><td className="p-2">{r.redCards}</td></tr>)}</tbody></table>}
     </div>
   </div>
 }

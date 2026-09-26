@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Build backend on save",
+      "trigger": "PostFileSave",
+      "description": "Ricompila l'API backend quando salvi un file C#, per intercettare subito errori di compilazione (es. DbSet mancante).",
+      "matcher": "backend[\\\\/].*\\.cs$",
+      "action": {
+        "type": "command",
+        "command": "dotnet build backend/src/JSO.Api/JSO.Api.csproj -c Debug --nologo -clp:ErrorsOnly",
+        "timeout": 180
+      }
+    }
+  ]
+}

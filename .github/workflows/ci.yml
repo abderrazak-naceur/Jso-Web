@@ -181,3 +181,28 @@ jobs:
           # ...and does NOT return it for a different placement.
           curl -fsS 'http://127.0.0.1:5080/api/sponsors?placement=Home' \
             | jq -e --arg id "$sponsor_id" 'all(.[]; .id != $id)'
+
+          # Fan account: register -> login -> me, and a Fan token must NOT reach admin routes.
+          fan_email="ci-fan-$RANDOM@jso.test"
+          fan_pass="ci-fan-secret-$RANDOM$RANDOM"
+          fan_reg=$(curl -fsS -X POST http://127.0.0.1:5080/api/account/register \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg e "$fan_email" --arg p "$fan_pass" '{email:$e,displayName:"CI Fan",password:$p}')")
+          fan_token=$(jq -r '.accessToken // empty' <<< "$fan_reg")
+          test -n "$fan_token"
+
+          fan_login=$(curl -fsS -X POST http://127.0.0.1:5080/api/account/login \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg e "$fan_email" --arg p "$fan_pass" '{email:$e,password:$p}')")
+          fan_token=$(jq -r '.accessToken // empty' <<< "$fan_login")
+          test -n "$fan_token"
+
+          curl -fsS http://127.0.0.1:5080/api/account/me \
+            -H "Authorization: Bearer $fan_token" \
+            | jq -e --arg e "$fan_email" '.email == $e'
+
+          # Anti-escalation: a Fan token is rejected (401/403) on an admin route.
+          fan_admin_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            -H "Authorization: Bearer $fan_token" \
+            http://127.0.0.1:5080/api/admin/sponsors)
+          test "$fan_admin_status" = 401 -o "$fan_admin_status" = 403

@@ -36,6 +36,8 @@ Gestisce prodotti, categorie, prezzi, disponibilità e ordini quando la parte e-
 
 ## 3. Dashboard Admin
 
+> La dashboard (`GET /api/admin/dashboard`) espone ora, sotto le KPI card, i blocchi **« Activité du jour »** (news pubblicate, match del giorno, media caricati, azioni di audit) e **« Activité récente »**. Il feed « Activité récente » è una proiezione sintetica e sicura degli eventi di audit (solo `id, action, entityType, entityId, userEmail, createdAt`, senza `IpAddress` né `Details`) visibile a tutti i ruoli della dashboard, mentre l'audit log completo resta riservato al SuperAdmin tramite `/api/admin/audit`.
+
 La dashboard iniziale deve mostrare:
 
 - Partite di oggi / prossime partite.

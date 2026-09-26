@@ -58,9 +58,43 @@ Il lavoro verificabile del [piano agenti](docs/AGENT_EXECUTION_PLAN.md) (A1–A5
 4. **Prova di ripristino** — restore di database e media su uno stack di recovery separato; solo dopo il controllo umano si registra il marcatore `RESTORE_TESTED`, che abilita la retention `prune-backups.sh`.
 5. **Collaudo end-to-end** — flussi completi nel browser (login admin, upload, CORS) sul dominio reale e monitoraggio.
 
-> Nota ambiente locale: il backend non compila su questa macchina (SDK .NET 5 presente, progetto su `net10.0`); la build backend è coperta dalla CI con `dotnet 10.0.x`.
-
 Verifiche: [CI frontend, backend e PostgreSQL con flussi notizie/media](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/36239006026) · [build Docker frontend/backend ARM64 e controllo Nginx](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/36239006058). La priorità operativa e i criteri di uscita sono nel [piano aggiornato](docs/ROADMAP.md).
+
+## 🧭 Cosa manca da sviluppare
+
+Questa sezione riflette lo **stato reale del codice** (non solo i piani), aggiornata al 26 settembre 2026. Legenda: ✅ fatto · 🟡 parziale · ⛔ da fare.
+
+### Riepilogo per feature
+
+| Feature | Backend (API) | Frontend (UI) | Stato | Cosa manca |
+|---|---|---|---|---|
+| Sito pubblico + Match Center + News + Media + Squadra | ✅ | ✅ | ✅ | Collaudo dati reali end-to-end sul dominio |
+| Admin: club, squadra/giocatori, partite, eventi, news, media, contenuti, sicurezza/audit | ✅ | ✅ | ✅ | — |
+| Admin: stagioni e competizioni (CRUD) | ✅ | 🟡 | 🟡 | Modulo UI dedicato (oggi gestite via API/CI) |
+| Sponsor (gestione + vetrina pubblica) | ✅ | ✅ | ✅ | Report esposizione (impression/clic) |
+| Analytics giocatore/squadra (derivate da eventi/formazioni) | ✅ | ✅ | ✅ | `PlayerMatchStat` dedicato (minuti, assist, rating) |
+| Account tifosi (registrazione/login/profilo) | ✅ | ✅ | 🟡 | Sessione cookie HttpOnly, verifica email, reset password |
+| Partita online a pagamento (paywall + YouTube) | ⛔ | ⛔ | ⛔ | Provider pagamenti, `MatchAccessProduct/Purchase`, webhook firmato, endpoint `watch`, player |
+| Finanze del club (entrate/uscite, "soldi persi") | ⛔ | ⛔ | ⛔ | Intera area (vedi piano dedicato) |
+| Homepage Builder + Menu/Footer editabili | ⛔ | ⛔ | ⛔ | Intera area |
+| Shop / Merchandising | ⛔ | 🟡 | ⛔ | Dominio Product/Order, pagamenti, catalogo. Card vendite già predisposte nella dashboard (stato "boutique non attiva") |
+| Biglietteria & eventi | ⛔ | ⛔ | ⛔ | Intera area |
+| Membership / abbonamenti tifosi | ⛔ | ⛔ | ⛔ | Intera area |
+| Community & moderazione | ⛔ | ⛔ | ⛔ | Intera area |
+| Notifiche & messaging (push/email) | ⛔ | ⛔ | ⛔ | Provider (FCM/email) + preferenze |
+| App mobile Flutter (iOS/Android) | ⛔ | ⛔ | ⛔ | Intero progetto app |
+| Deploy produzione (VM Oracle, DNS/HTTPS, backup provato) | 🟡 | — | 🟡 | Vedi "Cosa manca per andare in produzione" sopra |
+
+### Prossimi passi consigliati (in ordine)
+
+1. **Andare in produzione** (Orizzonte 0): deploy VM Oracle, DNS/HTTPS, backup reale + prova di restore, collaudo browser. È il prerequisito di tutto il resto.
+2. **Completare gli account tifosi** (🟡→✅): passare alla sessione cookie HttpOnly, aggiungere verifica email e reset password.
+3. **Partita online a pagamento**: paywall con provider di pagamento + YouTube unlisted dietro accesso pagato — richiede prima la scelta del gateway. Dettagli in [FAN_ACCOUNTS_PLAN](docs/FAN_ACCOUNTS_PLAN.md).
+4. **Homepage Builder / Menu-Footer**: il club compone la home senza toccare il codice.
+5. **Finanze del club** e **estensione gestione squadra** — vedi [ADMIN_SQUAD_FINANCE_ANALYTICS_PLAN](docs/ADMIN_SQUAD_FINANCE_ANALYTICS_PLAN.md).
+6. **Shop, biglietteria, membership, notifiche, community** e **app Flutter** — Orizzonti 2–3 della [visione 2030](docs/PLATFORM_VISION_2030.md).
+
+Piani di dettaglio: [visione pluriennale 2030](docs/PLATFORM_VISION_2030.md) · [account tifosi + streaming a pagamento](docs/FAN_ACCOUNTS_PLAN.md) · [squadra/finanze/analytics](docs/ADMIN_SQUAD_FINANCE_ANALYTICS_PLAN.md) · [roadmap operativa](docs/ROADMAP.md).
 
 ## 🖼️ Platform Preview
 
@@ -397,9 +431,12 @@ Il [piano operativo aggiornato](docs/ROADMAP.md) definisce priorità, dipendenze
 
 ### Phase 3 — Experience
 
+- [x] Sponsors (gestione admin + vetrina pubblica)
+- [x] Player/team analytics (derivate da eventi e formazioni)
+- [x] Comptes supporters — base (registrazione/login/profilo)
+- [ ] Partita online a pagamento (paywall + YouTube)
 - [ ] Homepage Builder
-- [ ] Sponsors
-- [ ] Advanced analytics
+- [ ] Advanced analytics (`PlayerMatchStat` dedicato)
 - [ ] Community
 - [ ] Moderation
 - [ ] Shop
@@ -561,7 +598,7 @@ The project follows a few core principles:
 
 ## 📌 Project Status
 
-**Active development — production preparation.** The core platform, authentication, administration, Match Center, News CMS and Media Library are implemented in the repository. The immediate work is Oracle deployment, domain/HTTPS, backup and restore, and end-to-end validation. Homepage Builder, Sponsors, Analytics and Community follow in the product roadmap.
+**Active development — production preparation.** The core platform, authentication, administration, Match Center, News CMS, Media Library, Sponsors, player/team analytics and a first supporter-account layer are implemented in the repository. The immediate work is Oracle deployment, domain/HTTPS, backup and restore, and end-to-end validation. The next product features are the paid match streaming (paywall + YouTube), Homepage Builder, club finances, then Shop, ticketing, membership, community and the Flutter app — see [docs/PLATFORM_VISION_2030.md](docs/PLATFORM_VISION_2030.md). A full up-to-date "what's left" breakdown is in the [🧭 Cosa manca da sviluppare](#-cosa-manca-da-sviluppare) section above.
 
 ---
 

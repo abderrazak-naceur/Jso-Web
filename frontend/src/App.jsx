@@ -3,15 +3,18 @@ import {
   ArrowUpRight,
   CalendarDays,
   ChevronRight,
+  LogIn,
+  LogOut,
   Menu,
   Shield,
   ShoppingBag,
   Smartphone,
   Trophy,
+  UserCircle,
   Users,
   X,
 } from 'lucide-react'
-import { publicApi } from './lib/api'
+import { publicApi, accountApi } from './lib/api'
 import { API_BASE_URL } from './lib/apiConfig'
 
 const navigation = [
@@ -65,6 +68,91 @@ function SectionTitle({ eyebrow, title, muted }) {
     </div>
   )
 }
+
+const FAN_TOKEN_KEY = 'jso_fan_token'
+const FAN_USER_KEY = 'jso_fan_user'
+
+function FanAuth() {
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(FAN_USER_KEY) || 'null') } catch { return null }
+  })
+  const [open, setOpen] = useState(false)
+  const [mode, setMode] = useState('login')
+  const [form, setForm] = useState({ email: '', displayName: '', password: '' })
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  function persist(result) {
+    localStorage.setItem(FAN_TOKEN_KEY, result.accessToken)
+    localStorage.setItem(FAN_USER_KEY, JSON.stringify(result.user))
+    setUser(result.user)
+    setOpen(false)
+    setForm({ email: '', displayName: '', password: '' })
+    setError('')
+  }
+
+  function logout() {
+    localStorage.removeItem(FAN_TOKEN_KEY)
+    localStorage.removeItem(FAN_USER_KEY)
+    setUser(null)
+  }
+
+  async function submit(event) {
+    event.preventDefault()
+    setBusy(true)
+    setError('')
+    try {
+      const result = mode === 'register'
+        ? await accountApi.register({ email: form.email, displayName: form.displayName, password: form.password })
+        : await accountApi.login({ email: form.email, password: form.password })
+      persist(result)
+    } catch (e) {
+      setError(e.message || 'Une erreur est survenue.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (user) {
+    return (
+      <div className="hidden items-center gap-2 sm:flex">
+        <span className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 text-sm font-bold text-white"><UserCircle size={16} /> {user.displayName}</span>
+        <button onClick={logout} className="rounded-full border border-white/25 p-2.5 text-white transition hover:bg-white/10" aria-label="Se déconnecter" title="Se déconnecter"><LogOut size={16} /></button>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <button onClick={() => { setOpen(true); setError('') }} className="hidden items-center gap-2 rounded-full border border-white/25 px-5 py-3 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-white/10 sm:inline-flex"><LogIn size={16} /> S’inscrire / Se connecter</button>
+      {open && (
+        <div className="fixed inset-0 z-[80] grid place-items-center bg-jso-navy/60 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Compte supporter">
+          <div className="w-full max-w-md rounded-[2rem] bg-white p-8 text-jso-ink shadow-2xl">
+            <div className="flex items-start justify-between gap-5">
+              <div>
+                <p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">ESPACE SUPPORTER</p>
+                <h2 className="mt-2 text-3xl font-black">{mode === 'register' ? 'Créer un compte' : 'Se connecter'}</h2>
+              </div>
+              <button aria-label="Fermer" onClick={() => setOpen(false)} className="rounded-full border border-slate-200 p-2"><X size={18} /></button>
+            </div>
+            <form onSubmit={submit} className="mt-6 space-y-3">
+              <label className="block text-sm font-bold">Email<input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></label>
+              {mode === 'register' && <label className="block text-sm font-bold">Nom affiché<input required value={form.displayName} onChange={e => setForm({ ...form, displayName: e.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></label>}
+              <label className="block text-sm font-bold">Mot de passe{mode === 'register' && <span className="ml-1 font-normal text-slate-400">(au moins 12 caractères)</span>}<input type="password" required minLength={mode === 'register' ? 12 : undefined} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></label>
+              {error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p>}
+              <button disabled={busy} className="w-full rounded-xl bg-jso-navy px-4 py-3 font-extrabold text-white hover:bg-jso-blue disabled:opacity-60">{busy ? '…' : mode === 'register' ? 'Créer mon compte' : 'Se connecter'}</button>
+            </form>
+            <p className="mt-4 text-center text-sm text-slate-500">
+              {mode === 'register' ? 'Déjà un compte ?' : 'Pas encore de compte ?'}
+              <button onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setError('') }} className="ml-2 font-bold text-jso-blue">{mode === 'register' ? 'Se connecter' : 'S’inscrire'}</button>
+            </p>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -208,6 +296,7 @@ function App() {
 
           <div className="flex items-center gap-2">
             <button onClick={() => goTo('Matchs', 'matches')} className="hidden rounded-full bg-jso-gold px-5 py-3 text-sm font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-white sm:block">Match Center ↗</button>
+            <FanAuth />
             <a href="/admin" className="hidden items-center gap-2 rounded-full border border-white/25 px-5 py-3 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-white/10 sm:inline-flex"><Shield size={16} /> Admin</a>
             <button aria-label="Ouvrir le menu" onClick={() => setMenuOpen((value) => !value)} className="rounded-full border border-white/20 p-3 lg:hidden">
               {menuOpen ? <X size={19} /> : <Menu size={19} />}
