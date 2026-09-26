@@ -184,15 +184,16 @@ jobs:
 
           # Fan account: register -> login -> me, and a Fan token must NOT reach admin routes.
           fan_email="ci-fan-$RANDOM@jso.test"
+          fan_pass="ci-fan-secret-$RANDOM$RANDOM"
           fan_reg=$(curl -fsS -X POST http://127.0.0.1:5080/api/account/register \
             -H 'Content-Type: application/json' \
-            -d "$(jq -nc --arg e "$fan_email" '{email:$e,displayName:"CI Fan",password:"ci-fan-password-123"}')")
+            -d "$(jq -nc --arg e "$fan_email" --arg p "$fan_pass" '{email:$e,displayName:"CI Fan",password:$p}')")
           fan_token=$(jq -r '.accessToken // empty' <<< "$fan_reg")
           test -n "$fan_token"
 
           fan_login=$(curl -fsS -X POST http://127.0.0.1:5080/api/account/login \
             -H 'Content-Type: application/json' \
-            -d "$(jq -nc --arg e "$fan_email" '{email:$e,password:"ci-fan-password-123"}')")
+            -d "$(jq -nc --arg e "$fan_email" --arg p "$fan_pass" '{email:$e,password:$p}')")
           fan_token=$(jq -r '.accessToken // empty' <<< "$fan_login")
           test -n "$fan_token"
 
