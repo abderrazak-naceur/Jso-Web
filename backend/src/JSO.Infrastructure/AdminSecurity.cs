@@ -57,4 +57,34 @@ public sealed class JwtTokenService(IConfiguration configuration)
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+    public string CreateForFan(FanUser user)
+    {
+        var secret = configuration["Jwt:Key"];
+        if (string.IsNullOrWhiteSpace(secret) || secret.Length < 32)
+            throw new InvalidOperationException("Jwt:Key must contain at least 32 characters.");
+
+        // Fan tokens carry ONLY the "Fan" role and never any admin role, so a fan
+        // token can never satisfy an admin [Authorize(Roles = ...)] policy.
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.DisplayName),
+            new Claim(ClaimTypes.Role, "Fan")
+        };
+
+        var credentials = new SigningCredentials(
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
+            SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: configuration["Jwt:Issuer"] ?? "JSO",
+            audience: configuration["Jwt:Audience"] ?? "JSO.Admin",
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(8),
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
 }
