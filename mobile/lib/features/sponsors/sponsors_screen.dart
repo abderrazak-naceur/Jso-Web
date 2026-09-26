@@ -37,7 +37,14 @@ class _SponsorsScreenState extends State<SponsorsScreen> {
     final uri = raw.isEmpty ? null : Uri.tryParse(raw);
     var opened = false;
     if (uri != null) {
-      opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      // launchUrl can either return false or throw a PlatformException on
+      // failure; treat a thrown exception as the same failure path so the
+      // user always sees the "Could not open link." SnackBar.
+      try {
+        opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        opened = false;
+      }
     }
     if (!opened && mounted) {
       ScaffoldMessenger.of(context)
