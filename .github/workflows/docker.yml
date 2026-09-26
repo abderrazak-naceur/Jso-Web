@@ -41,9 +41,12 @@ jobs:
           context: .
           file: ./Dockerfile.frontend
           push: false
+          load: true
           tags: jso-web:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Validate Nginx configuration
+        run: docker run --rm --add-host api:127.0.0.1 jso-web:ci nginx -t
 
   backend-docker:
     name: Backend Docker build
