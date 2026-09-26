@@ -51,6 +51,11 @@ dependencies:
   # Opens sponsor websites in an external browser from the Sponsors screen.
   url_launcher: ^6.3.0
 
+  # Stores the fan JWT in the platform keystore (Android) / Keychain (iOS)
+  # rather than plain SharedPreferences, so the token is never persisted in
+  # clear text. Used by SecureTokenStore in lib/data/auth/token_store.dart.
+  flutter_secure_storage: ^9.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

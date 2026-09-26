@@ -34,16 +34,21 @@ class ApiClient {
   /// Returns the decoded value, which is a `Map<String, dynamic>` or a
   /// `List<dynamic>` depending on the endpoint. Throws a subclass of
   /// [ApiException] on failure.
+  ///
+  /// Pass [bearerToken] to authenticate the request (e.g. `/account/me`); when
+  /// null (the default) no `Authorization` header is sent, so existing public
+  /// calls remain anonymous exactly as before.
   Future<dynamic> getJson(
     String path, {
     Map<String, String>? queryParameters,
+    String? bearerToken,
   }) async {
     final uri = _buildUri(path, queryParameters);
 
     http.Response response;
     try {
       response = await _http
-          .get(uri, headers: const {'Accept': 'application/json'})
+          .get(uri, headers: _headers(bearerToken: bearerToken))
           .timeout(timeout);
     } on TimeoutException {
       throw const ApiTimeoutException();
@@ -55,6 +60,50 @@ class ApiClient {
 
     return _handleResponse(response);
   }
+
+  /// POSTs a JSON-encoded [body] to [path] and decodes the JSON response.
+  ///
+  /// Sends `Content-Type` + `Accept: application/json`, applies the same
+  /// [timeout], and optionally adds `Authorization: Bearer <bearerToken>` when
+  /// [bearerToken] is non-null. Extra [headers] are merged (and can override
+  /// the defaults). Reuses the same [ApiException] mapping as [getJson].
+  Future<dynamic> postJson(
+    String path, {
+    Object? body,
+    Map<String, String>? headers,
+    String? bearerToken,
+  }) async {
+    final uri = _buildUri(path, null);
+    final requestHeaders = <String, String>{
+      'Content-Type': 'application/json',
+      ..._headers(bearerToken: bearerToken),
+      ...?headers,
+    };
+
+    http.Response response;
+    try {
+      response = await _http
+          .post(
+            uri,
+            headers: requestHeaders,
+            body: body == null ? null : jsonEncode(body),
+          )
+          .timeout(timeout);
+    } on TimeoutException {
+      throw const ApiTimeoutException();
+    } on SocketException catch (e) {
+      throw NetworkException('Network error: ${e.message}');
+    } on http.ClientException catch (e) {
+      throw NetworkException('Network error: ${e.message}');
+    }
+
+    return _handleResponse(response);
+  }
+
+  Map<String, String> _headers({String? bearerToken}) => {
+    'Accept': 'application/json',
+    if (bearerToken != null) 'Authorization': 'Bearer $bearerToken',
+  };
 
   dynamic _handleResponse(http.Response response) {
     final status = response.statusCode;
