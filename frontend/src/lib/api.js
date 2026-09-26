@@ -23,4 +23,5 @@ export const publicApi = {
   getMatchOfficials: (id, signal) => request('/matches/' + id + '/officials', signal),
   getMatchStats: (id, signal) => request('/matches/' + id + '/stats', signal),
   getNewsArticle: (slug, signal) => request('/news/' + encodeURIComponent(slug), signal),
+  getSponsors: (placement, signal) => request('/sponsors' + (placement ? '?placement=' + encodeURIComponent(placement) : ''), signal),
 }
