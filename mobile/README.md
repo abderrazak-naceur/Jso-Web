@@ -71,6 +71,8 @@ lib/
     models/   club, match, match_event, article, media_asset,
               sponsor, team, player, home_data, json_utils
     repositories/  public_api_repository.dart  (methods -> real /api routes)
+  data/
+    auth/     token_store.dart (secure JWT storage interface + impl)
   features/
     home/     home_screen.dart
     matches/  matches_screen.dart, match_detail_screen.dart
@@ -79,6 +81,8 @@ lib/
     teams/    teams_screen.dart, team_roster_screen.dart
     sponsors/ sponsors_screen.dart
     club/     club_screen.dart (landing for the Club tab)
+    auth/     auth_controller.dart (session state), login_screen.dart,
+              register_screen.dart, profile_screen.dart
   shared/
     format.dart              date / score / fixture formatting (intl)
     widgets/  loading_view, empty_view, error_view,
@@ -140,18 +144,79 @@ flutter build ios  --dart-define=JSO_API_BASE_URL=https://jso.example.tn/api   #
 
 ## State management: Provider
 
-The app uses **Provider** to expose a single `PublicApiRepository` to the widget
-tree. It was chosen over Riverpod/Bloc because the surface is small and mostly
-read-only (fetch-and-render): each screen owns a `Future` and drives its own
-loading/error/empty state with a `FutureBuilder`, so a lightweight dependency
-injector is all that is needed. This keeps the codebase approachable and avoids
-extra boilerplate, while still making the repository easy to swap for a fake in
-tests (see `test/support/fake_repository.dart`).
+The app uses **Provider** to expose its dependencies to the widget tree via a
+`MultiProvider` in `app.dart`: a single `PublicApiRepository` (plain `Provider`)
+plus the fan `AuthController` (a `ChangeNotifierProvider`, since session state
+changes over time). Provider was chosen over Riverpod/Bloc because the surface
+is small and mostly read-only (fetch-and-render): each public screen owns a
+`Future` and drives its own loading/error/empty state with a `FutureBuilder`,
+while the account screens `watch` the `AuthController`. This keeps the codebase
+approachable and avoids extra boilerplate, while still making the repository and
+auth layer easy to swap for fakes in tests (see `test/support/fake_repository.dart`
+and `test/support/fake_auth.dart`).
+
+## Fan accounts (login, registration, profile)
+
+Supporters can create an account, sign in and view their profile. This is the
+one authenticated area of the app; every other screen stays anonymous.
+
+- **Endpoints** (`backend/src/JSO.Api/Controllers/AccountController.cs`):
+
+  | Method call (AuthRepository) | Route                       | Auth               |
+  | ---------------------------- | --------------------------- | ------------------ |
+  | `register(...)`              | `POST /api/account/register` | none (returns JWT) |
+  | `login(...)`                 | `POST /api/account/login`    | none (returns JWT) |
+  | `getMe(token)`               | `GET /api/account/me`        | `Bearer <jwt>`     |
+
+- **Response shape.** `register` (201) and `login` (200) return
+  `{accessToken: <jwt>, user: {id, email, displayName}}`. `GET /account/me`
+  returns `{id, email, displayName, emailVerified}`. The token field is
+  **`accessToken`**.
+
+- **Bearer only on `/me`.** The `Authorization: Bearer <jwt>` header is attached
+  **only** to `GET /account/me` (and any future fan-only endpoint). All public
+  calls (home, matches, news, media, club) keep going out anonymously exactly as
+  before, so the five public tabs work with or without an account.
+
+- **Token storage — `flutter_secure_storage`.** The JWT is persisted through the
+  `TokenStore` interface (`lib/data/auth/token_store.dart`). The production
+  implementation, `SecureTokenStore`, uses
+  [`flutter_secure_storage`](https://pub.dev/packages/flutter_secure_storage),
+  which keeps the token in the **Android Keystore / iOS Keychain** rather than
+  plain `SharedPreferences`/`NSUserDefaults`. Rationale: a JWT is a bearer
+  credential, so it must not sit in clear text on disk. The token is **never
+  logged** and is **cleared on logout** (and whenever a stored token is rejected
+  by `/me`). Tests never touch the platform channel: they inject an in-memory
+  `TokenStore` fake (`test/support/fake_auth.dart`).
+
+- **Session restore.** At startup `main.dart` calls
+  `AuthController.restoreSession()`: if a token is stored it is validated via
+  `GET /account/me` and the user is signed in; on any failure (or no token) the
+  token is cleared and the app falls back to the **anonymous** state. The
+  controller exposes an `AuthStatus.unknown` state while this resolves so the
+  profile shows a spinner instead of flashing the login form.
+
+- **Navigation entry point (why no sixth tab).** The account is reached from a
+  person icon in the top-right of the shell (`lib/app.dart`), which
+  `Navigator.push`es the `ProfileScreen`. It is deliberately **not** a sixth
+  bottom tab: the fixed `BottomNavigationBar` already holds the five public
+  destinations (Home / Matches / News / Media / Club) and Flutter recommends
+  3–5 items for a fixed bar. The profile screen branches on the auth state —
+  authenticated fans see their profile plus **Se déconnecter**, anonymous
+  visitors see a **Se connecter / Créer un compte** call to action.
+
+- **UI copy is in French**, consistent with the JSO design system
+  (`jso_theme.dart`): gold `ElevatedButton`s on dark navy surfaces. Forms
+  validate locally (email format, required fields, password ≥ 12 characters to
+  mirror the backend rule) and surface server errors as French text — e.g. a 401
+  shows *« Identifiants invalides. »* and a 409 shows
+  *« Un compte existe déjà avec cet email. »*.
 
 ## Endpoints consumed
 
-All are public (no auth header). IDs are GUID strings; article detail is keyed
-by slug; dates are ISO-8601 `DateTimeOffset`.
+Public endpoints require no auth header. IDs are GUID strings; article detail is
+keyed by slug; dates are ISO-8601 `DateTimeOffset`. The `/api/account/*`
+endpoints above are the exception (register/login return a JWT; `/me` needs it).
 
 | Method call                     | Route                             |
 | ------------------------------- | --------------------------------- |
@@ -230,5 +295,6 @@ Intentionally **not** included in this iteration:
 - **Push notifications (Firebase Cloud Messaging / FCM).** No Firebase,
   Crashlytics or Firestore code is wired in. Planned for a later iteration (see
   `docs/ROADMAP.md`).
-- **Fan/user login.** The backend only exposes admin-only auth; there is no
-  public fan account system, so the app consumes public endpoints anonymously.
+
+Fan accounts (login, registration and profile against `/api/account/*`) are
+**now implemented** — see the *Fan accounts* section above.
