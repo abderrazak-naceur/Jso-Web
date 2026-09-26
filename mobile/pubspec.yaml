@@ -48,9 +48,17 @@ dependencies:
   # Renders the bundled JSO crest (SVG copied from frontend/public).
   flutter_svg: ^2.0.10
 
+  # Opens sponsor websites in an external browser from the Sponsors screen.
+  url_launcher: ^6.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  # Directly referenced in tests to install a fake url_launcher platform
+  # (FakeUrlLauncher) so sponsor-link failures are exercised deterministically
+  # without real platform channels.
+  url_launcher_platform_interface: ^2.3.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

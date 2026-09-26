@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'core/config/jso_theme.dart';
 import 'data/repositories/public_api_repository.dart';
+import 'features/club/club_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/matches/matches_screen.dart';
 import 'features/media/media_screen.dart';
@@ -29,7 +30,7 @@ class JsoApp extends StatelessWidget {
   }
 }
 
-/// Bottom-navigation shell with the four public tabs.
+/// Bottom-navigation shell with the five public tabs.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -45,6 +46,7 @@ class _HomeShellState extends State<HomeShell> {
     MatchesScreen(),
     NewsScreen(),
     MediaScreen(),
+    ClubScreen(),
   ];
 
   @override
@@ -78,6 +80,11 @@ class _HomeShellState extends State<HomeShell> {
             icon: Icon(Icons.photo_library_outlined),
             activeIcon: Icon(Icons.photo_library),
             label: 'Media',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shield_outlined),
+            activeIcon: Icon(Icons.shield),
+            label: 'Club',
           ),
         ],
       ),

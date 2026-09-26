@@ -5,6 +5,9 @@ import 'package:jso_mobile/data/models/home_data.dart';
 import 'package:jso_mobile/data/models/match.dart';
 import 'package:jso_mobile/data/models/match_event.dart';
 import 'package:jso_mobile/data/models/media_asset.dart';
+import 'package:jso_mobile/data/models/player.dart';
+import 'package:jso_mobile/data/models/sponsor.dart';
+import 'package:jso_mobile/data/models/team.dart';
 import 'package:jso_mobile/data/repositories/public_api_repository.dart';
 
 /// A test double for [PublicApiRepository] that never touches the network.
@@ -22,6 +25,9 @@ class FakeRepository extends PublicApiRepository {
     this.news,
     this.newsArticle,
     this.media,
+    this.teams,
+    this.players,
+    this.sponsors,
     this.error,
     this.delay,
   }) : super(ApiClient());
@@ -33,6 +39,9 @@ class FakeRepository extends PublicApiRepository {
   final List<Article>? news;
   final ArticleDetail? newsArticle;
   final List<MediaAsset>? media;
+  final List<Team>? teams;
+  final List<Player>? players;
+  final List<Sponsor>? sponsors;
 
   /// When set, every method throws this instead of returning a value.
   final ApiException? error;
@@ -72,4 +81,15 @@ class FakeRepository extends PublicApiRepository {
 
   @override
   Future<List<MediaAsset>> getMedia() => _resolve(() => media ?? const []);
+
+  @override
+  Future<List<Team>> getTeams() => _resolve(() => teams ?? const []);
+
+  @override
+  Future<List<Player>> getTeamPlayers(String id) =>
+      _resolve(() => players ?? const []);
+
+  @override
+  Future<List<Sponsor>> getSponsors({String? placement}) =>
+      _resolve(() => sponsors ?? const []);
 }

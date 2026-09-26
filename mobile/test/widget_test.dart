@@ -6,7 +6,7 @@ import 'support/fake_repository.dart';
 import 'support/test_harness.dart';
 
 void main() {
-  testWidgets('JsoApp renders the bottom-navigation shell with four tabs', (
+  testWidgets('JsoApp renders the bottom-navigation shell with five tabs', (
     WidgetTester tester,
   ) async {
     // Use a fake repository so the Home tab does not hit the network.
@@ -20,5 +20,6 @@ void main() {
     expect(find.text('Matches'), findsOneWidget);
     expect(find.text('News'), findsOneWidget);
     expect(find.text('Media'), findsOneWidget);
+    expect(find.text('Club'), findsOneWidget);
   });
 }
