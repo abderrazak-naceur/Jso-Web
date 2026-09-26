@@ -55,4 +55,4 @@ The mobile application should use the same visual system as the website:
 - same typography hierarchy
 - same Match Center, News, Media and Team concepts
 
-The mobile app is planned with React Native + Expo and will consume the existing .NET 10 REST API.
+The mobile app is planned with **Flutter + Dart** and will consume the existing .NET 10 REST API.
