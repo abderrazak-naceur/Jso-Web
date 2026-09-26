@@ -30,6 +30,8 @@ public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) 
     {
         if (string.IsNullOrWhiteSpace(request.OpponentName)) return BadRequest(new { message = "Opponent is required." });
         if (!await db.Teams.AnyAsync(x => x.Id == request.TeamId, ct)) return BadRequest(new { message = "Team not found." });
+        if (!await db.Seasons.AnyAsync(x => x.Id == request.SeasonId, ct)) return BadRequest(new { message = "Season not found." });
+        if (!await db.Competitions.AnyAsync(x => x.Id == request.CompetitionId, ct)) return BadRequest(new { message = "Competition not found." });
 
         var match = new Match
         {
@@ -56,6 +58,10 @@ public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) 
     {
         var match = await db.Matches.FindAsync([id], ct);
         if (match is null) return NotFound();
+        if (string.IsNullOrWhiteSpace(request.OpponentName)) return BadRequest(new { message = "Opponent is required." });
+        if (!await db.Teams.AnyAsync(x => x.Id == request.TeamId, ct)) return BadRequest(new { message = "Team not found." });
+        if (!await db.Seasons.AnyAsync(x => x.Id == request.SeasonId, ct)) return BadRequest(new { message = "Season not found." });
+        if (!await db.Competitions.AnyAsync(x => x.Id == request.CompetitionId, ct)) return BadRequest(new { message = "Competition not found." });
 
         match.OpponentName = request.OpponentName.Trim();
         match.KickoffAt = request.KickoffAt;

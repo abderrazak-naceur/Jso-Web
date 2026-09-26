@@ -53,13 +53,64 @@ a PostgreSQL custom format dump, a gzip tar archive of `/app/uploads`, a metadat
 running `database` container and media from the running `api` container. It does
 not stop services or overwrite existing backup files. A directory containing
 `INCOMPLETE` is not a usable backup. Keep backup storage access restricted because
-it contains database records and uploaded files. Copy backups off the VM, define
-a retention policy, schedule the script (for example with cron), and periodically
-check the checksums:
+it contains database records and uploaded files. Copy backups off the VM.
+
+#### Schedule and verify
+
+Install a daily backup and weekly verification in the VM's crontab, replacing the
+repository and backup paths if needed. The commands assume cron runs as the same
+restricted OS account that can access Docker and the backup disk:
+
+```cron
+15 2 * * * /path/to/Jso-Web/deploy/oracle/backup.sh /mnt/jso-backups >> /mnt/jso-backups/backup.log 2>&1
+30 3 * * 0 /path/to/Jso-Web/deploy/oracle/verify-backups.sh /mnt/jso-backups >> /mnt/jso-backups/verify.log 2>&1
+```
+
+Make both scripts executable, and create the private backup directory and log
+files as that same account before enabling cron:
 
 ```bash
-cd /mnt/jso-backups/jso-YYYYMMDDTHHMMSSZ
-sha256sum --check SHA256SUMS
+install -d -m 700 /mnt/jso-backups
+touch /mnt/jso-backups/backup.log /mnt/jso-backups/verify.log
+chmod 600 /mnt/jso-backups/backup.log /mnt/jso-backups/verify.log
+chmod +x /path/to/Jso-Web/deploy/oracle/{backup,verify-backups,prune-backups}.sh
+```
+
+The verifier needs `sha256sum`, `tar`, and
+the PostgreSQL client command `pg_restore` installed on the VM; Docker and Compose
+alone do not provide the host command used by this check. The retention script
+uses GNU `date` and `find` (standard on supported Oracle Linux deployments).
+
+Verification checks checksums, PostgreSQL dump readability (`pg_restore --list`),
+and the media tar archive. It creates a `VERIFIED` marker, which means integrity
+and readability checks passed; it does **not** prove a restore works. Run the
+recovery procedure below on a separate recovery stack. Only after checking health,
+representative database records, and uploaded files, record that human-confirmed
+result in the backup directory:
+
+```bash
+date -u +%Y-%m-%dT%H:%M:%SZ > /mnt/jso-backups/jso-YYYYMMDDTHHMMSSZ/RESTORE_TESTED
+```
+
+The `prune-backups.sh` retention tool defaults to a dry run. It considers only
+complete backups with both `VERIFIED` and `RESTORE_TESTED`, rechecks checksums, keeps
+the newest seven eligible copies, and requires a backup to be at least 30 days old
+before considering deletion. Review its output first; apply only when the list is
+expected:
+
+```bash
+deploy/oracle/prune-backups.sh /mnt/jso-backups --keep 7 --min-age-days 30
+deploy/oracle/prune-backups.sh /mnt/jso-backups --keep 7 --min-age-days 30 --apply
+```
+
+Schedule the dry run monthly if useful; do not put `--apply` in cron until restore
+tests are being recorded and the dry-run list has been reviewed. Unverified or
+unproven backups are never eligible for deletion. Keep at least one off-VM copy.
+
+To manually verify all backups at any time:
+
+```bash
+deploy/oracle/verify-backups.sh /mnt/jso-backups
 ```
 
 Restore into a **separate, empty recovery stack with its own database and uploads

@@ -19,9 +19,10 @@ PostgreSQL non richiede una licenza a pagamento. L'obiettivo di costo infrastrut
 - [x] Sito pubblico React responsive e identità JSO; logo e concept Flutter nel README.
 - [x] API .NET, modello EF Core, provider SQL Server/PostgreSQL configurabili e Docker Compose production.
 - [x] Login admin JWT e ruoli, dashboard, gestione iniziale di squadra/giocatori, partite, news e upload media.
-- [x] Workflow CI e verifiche di build/lint presenti.
-- [x] Migration EF Core PostgreSQL iniziale versionata, applicata e verificata su PostgreSQL 17 in CI, con smoke test dell'API e login admin.
+- [x] Workflow CI con build/lint frontend, build backend, controlli Docker frontend/ARM64 e configurazione Nginx verificati.
+- [x] Migration EF Core PostgreSQL iniziale versionata, applicata e verificata su PostgreSQL 17 in CI, con login admin e smoke test di notizie e media.
 - [x] URL API predefinito del frontend impostato su `/api`, con proxy locale Vite e proxy Nginx nel compose production.
+- [x] Script di backup PostgreSQL/media e procedura di recovery predisposti; non ancora eseguiti su dati reali.
 - [ ] URL API, CORS e HTTPS verificati sul dominio reale.
 - [ ] Ambiente Oracle reale, HTTPS, backup e restore verificati.
 - [ ] App Flutter implementata; le immagini attuali sono concept visivi.
@@ -32,11 +33,11 @@ Le caselle completate attestano la presenza delle funzioni nel codice, non un co
 
 Lavorare in quest'ordine, perché i passaggi successivi dipendono dai precedenti:
 
-1. **Configurazione API e frontend:** eliminare il fallback `localhost` nella build production; configurare `VITE_API_URL`, CORS e proxy per il dominio reale. Verificare richieste pubbliche e login admin da un browser esterno durante il collaudo.
+1. **Configurazione API e frontend:** routing relativo `/api`, proxy Vite/Nginx e CORS configurati nel codice. Verificare richieste pubbliche e login admin dal browser sul dominio reale durante il collaudo.
 2. **Schema PostgreSQL:** la migration iniziale e il bootstrap admin passano in CI. Prima del go-live verificare applicazione, backup e restore sull'ambiente Oracle scelto. Non riutilizzare una migration SQL Server senza controllo.
-3. **Dati persistenti:** configurare volumi per database e upload, backup automatico con retention e copia esterna; completare almeno un restore documentato.
-4. **Sicurezza e deploy:** predisporre VM ARM64, segreti fuori dal repository, porte minime, HTTPS e dominio; verificare health check e accessi admin. Controllare disponibilità e limiti Always Free prima del go-live.
-5. **Percorso end-to-end e CI:** testare admin → API → PostgreSQL → sito per partita, articolo e immagine; aggiungere test automatici sui flussi critici e rendere la pipeline verde.
+3. **Dati persistenti:** i volumi e lo script di backup sono predisposti; automatizzare backup, retention e copia esterna, poi completare almeno un restore documentato.
+4. **Sicurezza e deploy:** la build ARM64 e il controllo Nginx passano in CI. Predisporre VM, segreti fuori dal repository, porte minime, HTTPS e dominio; verificare health check e accessi admin. Controllare disponibilità e limiti Always Free prima del go-live.
+5. **Percorso end-to-end e CI:** notizie e media sono verificati contro PostgreSQL in CI. Estendere il test alle partite e collaudare admin → API → PostgreSQL → sito nel browser reale.
 
 **Criterio di uscita:** sito e admin usabili sul dominio reale con PostgreSQL, dati persistenti, HTTPS, backup ripristinabile e flussi critici verificati. Senza questo criterio, lo stato resta pre-produzione.
 

@@ -24,12 +24,6 @@ const navigation = [
   ['Boutique', 'shop'],
 ]
 
-const fallbackNews = [
-  { category: 'CLUB', title: 'Une nouvelle identité digitale pour JSO', text: 'Le club entre dans une nouvelle ère avec une expérience moderne et pensée pour toute sa communauté.' },
-  { category: 'MATCH', title: 'Tout suivre au même endroit', text: 'Calendrier, résultats, compositions et informations de match réunis dans un seul espace.' },
-  { category: 'FORMATION', title: 'Construire la relève d’Oudhref', text: 'Une attention particulière portée aux jeunes joueurs et à la formation.' },
-]
-
 function pick(object, ...keys) {
   for (const key of keys) {
     if (object?.[key] !== undefined && object?.[key] !== null) return object[key]
@@ -81,6 +75,7 @@ function App() {
   const [club, setClub] = useState(null)
   const [matches, setMatches] = useState([])
   const [articles, setArticles] = useState([])
+  const [newsState, setNewsState] = useState('loading')
   const [teamPlayers, setTeamPlayers] = useState([])
   const [content, setContent] = useState({})
   const [apiState, setApiState] = useState('loading')
@@ -103,12 +98,16 @@ function App() {
           ...(home.nextMatch ? [normalizeMatch(home.nextMatch)] : []),
           ...(home.recentMatches || []).map(normalizeMatch),
         ])
-        setArticles((home.news || []).map((item) => ({
+        const news = (home.news || []).map((item) => ({
           category: pick(item, 'Status', 'status') || 'CLUB',
           title: pick(item, 'Title', 'title') || 'Actualité JSO',
           text: pick(item, 'Excerpt', 'excerpt') || '',
           slug: pick(item, 'Slug', 'slug'),
-        })))
+        }))
+        setArticles(news)
+        setNewsState('ready')
+      } else {
+        setNewsState('offline')
       }
 
       if (mediaResult.status === 'fulfilled') {
@@ -272,7 +271,7 @@ function App() {
 
       <section id="club" className="mx-auto max-w-7xl px-5 py-20 lg:px-8"><div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end"><SectionTitle eyebrow={content.club_eyebrow || '02 / LE CLUB'} title={content.club_title || 'Une histoire.'} muted={content.club_muted || 'Une ville. Une passion.'} /><p className="max-w-xl text-lg leading-8 text-slate-600">JSO est plus qu’un nom sur un maillot. C’est une identité collective, un lien entre les générations et une ambition pour l’avenir du football à Oudhref.</p></div><div className="mt-10 grid gap-4 sm:grid-cols-3">{[['Identité forte','Un langage visuel premium et une présence digitale cohérente.'],['Communauté','Supporters, joueurs, familles et passionnés réunis.'],['Nouvelle génération','Une plateforme rapide, responsive et pensée pour le futur.']].map(([title, text], index) => <div key={title} className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40"><div className="text-2xl font-black text-jso-blue">0{index + 1}</div><h3 className="mt-8 text-xl font-black">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-500">{text}</p></div>)}</div></section>
 
-      <section id="news" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow={content.news_eyebrow || '03 / NEWSROOM'} title={content.news_title || 'Le club'} muted={content.news_muted || 'en mouvement.'} /><div className="mt-10 grid gap-5 md:grid-cols-3">{(articles.length ? articles : fallbackNews).map((item) => <article key={item.title} className="group rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40 transition hover:-translate-y-1 hover:shadow-xl"><span className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">{item.category}</span><h3 className="mt-8 text-2xl font-black tracking-tight">{item.title}</h3><p className="mt-3 leading-7 text-slate-500">{item.text}</p><button onClick={() => setDemoOpen(true)} className="mt-8 font-extrabold text-jso-blue">Lire la suite <ChevronRight className="inline" size={17} /></button></article>)}</div></section>
+      <section id="news" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow={content.news_eyebrow || '03 / NEWSROOM'} title={content.news_title || 'Le club'} muted={content.news_muted || 'en mouvement.'} /><div className="mt-10">{newsState === 'loading' ? <div role="status" className="rounded-[2rem] border border-slate-200 bg-white p-8 text-slate-500">Chargement des actualités…</div> : newsState === 'offline' ? <div role="alert" className="rounded-[2rem] border border-amber-200 bg-amber-50 p-8 text-amber-900">Les actualités ne sont pas disponibles pour le moment. Réessayez plus tard.</div> : articles.length === 0 ? <div className="rounded-[2rem] border border-slate-200 bg-white p-8 text-slate-500">Aucune actualité publiée pour le moment.</div> : <div className="grid gap-5 md:grid-cols-3">{articles.map((item) => <article key={item.slug || item.title} className="group rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40 transition hover:-translate-y-1 hover:shadow-xl"><span className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">{item.category}</span><h3 className="mt-8 text-2xl font-black tracking-tight">{item.title}</h3><p className="mt-3 leading-7 text-slate-500">{item.text}</p><button onClick={() => setDemoOpen(true)} className="mt-8 font-extrabold text-jso-blue">Lire la suite <ChevronRight className="inline" size={17} /></button></article>)}</div>}</div></section>
 
       <section id="team" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow="04 / ÉQUIPE" title="Les visages" muted="de JSO." /><div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">{teamPlayers.length ? teamPlayers.map((player) => (<div key={player.Id} className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/40"><div className="grid h-28 place-items-center rounded-2xl bg-jso-navy text-4xl font-black text-jso-gold">{player.ShirtNumber || '—'}</div><h3 className="mt-4 font-black">{player.FirstName} {player.LastName}</h3><p className="mt-1 text-sm text-slate-500">{player.Position || 'Joueur'}</p></div>)) : (<div className="rounded-[2rem] bg-jso-navy p-6 text-white sm:col-span-2 lg:col-span-5"><Users size={28} className="text-jso-gold" /><h3 className="mt-12 text-2xl font-black">Équipe première</h3><p className="mt-2 text-white/65">Effectif, staff et profils des joueurs.</p></div>)}</div></section>
 

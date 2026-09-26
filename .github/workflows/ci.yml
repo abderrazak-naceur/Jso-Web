@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: bash -n deploy/oracle/backup.sh deploy/oracle/deploy.sh
+      - run: for script in deploy/oracle/*.sh; do bash -n "$script"; done
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
@@ -95,6 +95,42 @@ jobs:
             -d '{"email":"admin@jso.test","password":"ci-only-initial-admin-password"}')
           token=$(jq -r '.accessToken // empty' <<< "$login_response")
           test -n "$token"
+
+          # Admin routes must reject anonymous callers before any data is changed.
+          admin_unauth_status=$(curl -sS -o /tmp/jso-admin-unauth.json -w '%{http_code}' \
+            http://127.0.0.1:5080/api/admin/matches)
+          test "$admin_unauth_status" = 401
+
+          season_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/seasons \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d '{"name":"CI smoke season","isActive":true}')
+          season_id=$(jq -r '.id // empty' <<< "$season_response")
+          test -n "$season_id"
+
+          competition_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/competitions \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d '{"name":"CI smoke competition","country":"CI"}')
+          competition_id=$(jq -r '.id // empty' <<< "$competition_response")
+          test -n "$competition_id"
+
+          team_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/teams \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d '{"name":"CI smoke team","category":"Senior","isActive":true}')
+          team_id=$(jq -r '.id // empty' <<< "$team_response")
+          test -n "$season_id" && test -n "$competition_id" && test -n "$team_id"
+
+          match_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/matches \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg seasonId "$season_id" --arg competitionId "$competition_id" --arg teamId "$team_id" \
+              '{seasonId:$seasonId,competitionId:$competitionId,teamId:$teamId,opponentName:"CI smoke opponent",kickoffAt:"2030-06-01T15:00:00Z",venue:"CI stadium",isHome:true,homeScore:null,awayScore:null,status:"Scheduled",isPublished:true}')")
+          match_id=$(jq -r '.id // empty' <<< "$match_response")
+          test -n "$match_id"
+          curl -fsS http://127.0.0.1:5080/api/matches \
+            | jq -e --arg id "$match_id" 'any(.[]; .id == $id and .opponentName == "CI smoke opponent" and .isPublished == true)'
 
           curl -fsS -X POST http://127.0.0.1:5080/api/admin/news \
             -H "Authorization: Bearer $token" \
