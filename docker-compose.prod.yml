@@ -20,6 +20,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       Jwt__Key: ${JWT_SECRET:?Set JWT_SECRET}
+      ADMIN_BOOTSTRAP_EMAIL: ${ADMIN_BOOTSTRAP_EMAIL:-}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-}
       Database__Provider: postgres
       ConnectionStrings__DefaultConnection: Host=database;Port=5432;Database=JSO;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       Cors__AllowedOrigins__0: ${PUBLIC_ORIGIN:?Set PUBLIC_ORIGIN}

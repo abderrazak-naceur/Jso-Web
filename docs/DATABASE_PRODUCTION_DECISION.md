@@ -25,8 +25,8 @@ Le migration production devono essere generate per il provider PostgreSQL. Non b
 
 Prima del go-live:
 
-1. generare una migration PostgreSQL;
-2. verificare lo schema generato;
+1. usare la migration PostgreSQL iniziale versionata in `backend/src/JSO.Infrastructure/Migrations/Postgres`;
+2. verificare lo schema generato (script SQL già prodotto per revisione);
 3. eseguire `database update` contro un database PostgreSQL di test;
 4. verificare seed, health check e API;
 5. eseguire backup e restore test.
@@ -35,4 +35,4 @@ Prima del go-live:
 
 La scelta non modifica il dominio applicativo: EF Core mantiene l'accesso al database dietro `JsoDbContext`. SQL Server resta disponibile per sviluppo, mentre Oracle production usa PostgreSQL.
 
-Stato: provider configurabile implementato; migration PostgreSQL e deploy reale ancora da eseguire e verificare.
+Stato: provider configurabile e migration PostgreSQL iniziale implementati; applicazione della migration a PostgreSQL e deploy reale ancora da eseguire e verificare.

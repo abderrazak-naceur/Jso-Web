@@ -20,8 +20,10 @@ PostgreSQL non richiede una licenza a pagamento. L'obiettivo di costo infrastrut
 - [x] API .NET, modello EF Core, provider SQL Server/PostgreSQL configurabili e Docker Compose production.
 - [x] Login admin JWT e ruoli, dashboard, gestione iniziale di squadra/giocatori, partite, news e upload media.
 - [x] Workflow CI e verifiche di build/lint presenti.
-- [ ] Migration EF Core PostgreSQL versionata e provata su database di test.
-- [ ] URL API del frontend corretto per il deploy; oggi il fallback è `http://localhost:5080/api`.
+- [x] Migration EF Core PostgreSQL iniziale generata, versionata e convertita in SQL per revisione.
+- [ ] Migration applicata e verificata su un database PostgreSQL di test.
+- [x] URL API predefinito del frontend impostato su `/api`, con proxy locale Vite e proxy Nginx nel compose production.
+- [ ] URL API, CORS e HTTPS verificati sul dominio reale.
 - [ ] Ambiente Oracle reale, HTTPS, backup e restore verificati.
 - [ ] App Flutter implementata; le immagini attuali sono concept visivi.
 
@@ -32,7 +34,7 @@ Le caselle completate attestano la presenza delle funzioni nel codice, non un co
 Lavorare in quest'ordine, perché i passaggi successivi dipendono dai precedenti:
 
 1. **Configurazione API e frontend:** eliminare il fallback `localhost` nella build production; configurare `VITE_API_URL`, CORS e proxy per il dominio reale. Verificare richieste pubbliche e login admin da un browser esterno durante il collaudo.
-2. **Schema PostgreSQL:** generare migration per il provider PostgreSQL, revisionarla, applicarla a un database di prova e verificare seed, lettura e scrittura. Non riutilizzare una migration SQL Server senza controllo.
+2. **Schema PostgreSQL:** applicare la migration iniziale già generata a un database di prova e verificare seed, bootstrap admin, lettura e scrittura. Non riutilizzare una migration SQL Server senza controllo.
 3. **Dati persistenti:** configurare volumi per database e upload, backup automatico con retention e copia esterna; completare almeno un restore documentato.
 4. **Sicurezza e deploy:** predisporre VM ARM64, segreti fuori dal repository, porte minime, HTTPS e dominio; verificare health check e accessi admin. Controllare disponibilità e limiti Always Free prima del go-live.
 5. **Percorso end-to-end e CI:** testare admin → API → PostgreSQL → sito per partita, articolo e immagine; aggiungere test automatici sui flussi critici e rendere la pipeline verde.

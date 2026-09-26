@@ -17,7 +17,7 @@ PostgreSQL è la scelta dati di produzione. SQL Server resta disponibile nello s
 1. Creare la VM A1 e verificare quota, disponibilità e compatibilità ARM64 delle immagini.
 2. Proteggere SSH e aprire solo le porte necessarie per HTTP/HTTPS. Non esporre PostgreSQL.
 3. Installare Docker Engine e Compose plugin.
-4. Creare `.env.prod` da `.env.prod.example` fuori dal controllo versione; impostare `JWT_SECRET`, `PUBLIC_ORIGIN`, `POSTGRES_USER` e `POSTGRES_PASSWORD`.
+4. Creare `.env.prod` da `.env.prod.example` fuori dal controllo versione; impostare `JWT_SECRET`, `PUBLIC_ORIGIN`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `ADMIN_BOOTSTRAP_EMAIL` e `ADMIN_BOOTSTRAP_PASSWORD`. Al primo avvio la password admin deve avere almeno 12 caratteri; il bootstrap non modifica gli utenti già presenti. Dopo il primo accesso, rimuovere la password di bootstrap dall'ambiente e ricreare il container API.
 5. Configurare DNS, certificato TLS e proxy; verificare che la build frontend usi l'URL API pubblico e che CORS consenta l'origine reale.
 
 La procedura dei comandi è in [deploy/oracle/README.md](../deploy/oracle/README.md). La configurazione attuale espone HTTP su porta 80: HTTPS e la connessione dal browser al dominio reale sono criteri di go-live, non risultati già verificati.
@@ -28,7 +28,7 @@ L'API in Production esegue `MigrateAsync` all'avvio. Prima di usarla su dati rea
 
 1. Generare e versionare una migration EF Core per PostgreSQL.
 2. Revisionare lo schema e applicare la migration a un database PostgreSQL di prova.
-3. Verificare seed, health check, login admin e lettura/scrittura dei contenuti.
+3. Verificare il seed del club, il bootstrap dell'admin, health check, login e lettura/scrittura dei contenuti.
 4. Configurare backup automatico di database e media, retention e copia esterna.
 5. Eseguire un restore di prova e documentare il tempo necessario.
 

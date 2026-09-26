@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload } from 'lucide-react'
-
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5080/api').replace(/\/$/, '')
+import { API_BASE_URL } from '../lib/apiConfig'
 
 async function api(path, options = {}) {
   const token = localStorage.getItem('jso_admin_token')

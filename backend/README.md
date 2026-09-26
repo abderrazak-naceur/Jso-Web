@@ -27,20 +27,16 @@ The provider is selected with `Database:Provider`:
 
 Development bootstrap currently uses `EnsureCreatedAsync` so a fresh local database can start with demo data. Production startup now uses `Database.MigrateAsync()`.
 
-Generate provider-specific migrations only after the target .NET 10 SDK is available and the provider can be executed locally or in CI.
+Use provider-specific migrations. The initial PostgreSQL migration was generated with the .NET 10 runtime; a live PostgreSQL test is still pending.
 
-SQL Server example:
+PostgreSQL example for a future schema change:
 
-    dotnet ef migrations add InitialSqlServer --project src/JSO.Infrastructure --startup-project src/JSO.Api --output-dir Migrations/SqlServer
+    dotnet ef migrations add NextPostgresChange --project src/JSO.Infrastructure --startup-project src/JSO.Infrastructure --output-dir Migrations/Postgres
 
-PostgreSQL example:
+The PostgreSQL snapshot is in the Infrastructure assembly. If SQL Server needs migrations in the future, configure a separate migrations assembly and snapshot for that provider; do not generate SQL Server migrations against the PostgreSQL snapshot.
 
-    dotnet ef migrations add InitialPostgres --project src/JSO.Infrastructure --startup-project src/JSO.Api --output-dir Migrations/Postgres
-
-SQL Server and PostgreSQL migrations must not be assumed interchangeable.
-
-The repository currently has no generated EF migration checked in; this is intentional until the migration can be generated and verified with the target .NET 10 SDK.
+The initial PostgreSQL migration is checked in under `src/JSO.Infrastructure/Migrations/Postgres`. It has been generated and reviewed as SQL, but it still needs to be applied to a PostgreSQL test database. For migration commands, use `JSO.Infrastructure` as both project and startup project; it contains the design-time context factory.
 
 ## Production
 
-Production credentials must be supplied through environment variables or a secret manager. Do not expose the database port publicly. Configure CORS with the real frontend origin and terminate HTTPS at the reverse proxy.
+Production credentials must be supplied through environment variables or a secret manager. The first production start requires `ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` (at least 12 characters) to create the initial administrator; later starts do not reset an existing user. Remove the bootstrap password from the environment and recreate the API container after confirming the first login. Do not expose the database port publicly. Configure CORS with the real frontend origin and terminate HTTPS at the reverse proxy.

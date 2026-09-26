@@ -126,7 +126,7 @@ Il sito usa il nuovo stemma JSO in `public/JSO-crest-regenerated.png`; gli asset
 - PostgreSQL 17 for Oracle ARM64 production
 - SQL Server supported for local development
 - EF Core provider abstraction
-- Production migrations planned through EF Core
+- Initial PostgreSQL migration versioned through EF Core; database verification pending
 
 ### Infrastructure
 
@@ -256,19 +256,21 @@ The frontend runs by default on:
 http://localhost:5173
 ```
 
+The frontend calls `/api` on the same origin. During local development, Vite proxies `/api`, `/uploads` and `/health` to `http://localhost:8080` (the Docker Compose API). Set `JSO_API_PROXY_TARGET` to change the local target. For separate static hosting, set `VITE_API_URL` to the public API base URL when building.
+
 ### Backend
 
 ```bash
 cd backend
 dotnet restore
 dotnet build JSO.sln
-dotnet run --project src/JSO.Api
+dotnet run --project src/JSO.Api --urls http://localhost:8080
 ```
 
 API development URL:
 
 ```text
-http://localhost:5080
+http://localhost:8080
 ```
 
 Swagger is available in Development.
@@ -286,6 +288,8 @@ For production:
 ```bash
 cp .env.prod.example .env.prod
 ```
+
+The production Docker frontend build uses `/api` by default, which Nginx proxies to the API container. The Docker build context excludes local `.env` files so development API URLs cannot be embedded in the production bundle.
 
 Never commit real passwords, JWT secrets or production credentials.
 

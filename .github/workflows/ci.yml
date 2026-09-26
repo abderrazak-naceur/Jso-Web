@@ -21,6 +21,7 @@ jobs:
           cache: npm
       - run: npm install
       - run: npm run build
+      - run: npm run lint
 
   backend:
     name: Backend build
@@ -30,8 +31,8 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - run: dotnet restore backend/JSO.sln
-      - run: dotnet build backend/JSO.sln --configuration Release --no-restore
+      - run: dotnet restore backend/src/JSO.Api/JSO.Api.csproj
+      - run: dotnet build backend/src/JSO.Api/JSO.Api.csproj --configuration Release --no-restore
 
   postgres-ef:
     name: PostgreSQL EF validation
@@ -58,21 +59,37 @@ jobs:
       - name: Install EF CLI
         run: dotnet tool install --global dotnet-ef --version 10.0.*
       - name: Restore
-        run: dotnet restore backend/JSO.sln
+        run: dotnet restore backend/src/JSO.Api/JSO.Api.csproj
       - name: Build
-        run: dotnet build backend/JSO.sln --configuration Release --no-restore
-      - name: Validate PostgreSQL migration creation
+        run: dotnet build backend/src/JSO.Api/JSO.Api.csproj --configuration Release --no-restore
+      - name: Apply checked-in PostgreSQL migration
         working-directory: backend
         env:
           Database__Provider: postgres
           ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=JSO;Username=jso;Password=jso_ci_password
+        run: dotnet ef database update --project src/JSO.Infrastructure --startup-project src/JSO.Infrastructure --configuration Release --no-build
+      - name: Smoke test API and production admin bootstrap
+        working-directory: backend
+        env:
+          ASPNETCORE_ENVIRONMENT: Production
+          ASPNETCORE_URLS: http://127.0.0.1:5080
+          Database__Provider: postgres
+          ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=JSO;Username=jso;Password=jso_ci_password
+          Cors__AllowedOrigins__0: http://localhost:5173
           Jwt__Key: ci-only-jwt-secret-that-is-at-least-32-characters-long
+          ADMIN_BOOTSTRAP_EMAIL: admin@jso.test
+          ADMIN_BOOTSTRAP_PASSWORD: ci-only-initial-admin-password
         run: |
-          dotnet ef migrations add CiPostgresValidation --project src/JSO.Infrastructure --startup-project src/JSO.Api --output-dir /tmp/JSOMigrations/Postgres
-          test -f /tmp/JSOMigrations/Postgres/*_CiPostgresValidation.cs
-          dotnet ef database update --project src/JSO.Infrastructure --startup-project src/JSO.Api
-      - name: Upload generated PostgreSQL migration
-        uses: actions/upload-artifact@v4
-        with:
-          name: jso-postgres-migration
-          path: /tmp/JSOMigrations/Postgres/*
+          dotnet run --project src/JSO.Api --configuration Release --no-build --no-launch-profile > /tmp/jso-api.log 2>&1 &
+          api_pid=$!
+          trap 'kill "$api_pid" || true' EXIT
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:5080/health >/dev/null; then break; fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:5080/health >/dev/null || { cat /tmp/jso-api.log; exit 1; }
+          curl -fsS http://127.0.0.1:5080/api/club >/dev/null
+          curl -fsS -X POST http://127.0.0.1:5080/api/auth/login \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"admin@jso.test","password":"ci-only-initial-admin-password"}' \
+            | jq -e '.accessToken != null'
