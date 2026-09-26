@@ -326,6 +326,7 @@ Detailed deployment documentation:
 - `docs/DEPLOY_ORACLE_CLOUD.md`
 - `docs/HOSTING_ORACLE_CLOUD_ANALYSIS.md`
 - `docs/DATABASE_PRODUCTION_DECISION.md`
+- `docs/FIREBASE_VS_POSTGRESQL_ANALYSIS.md` — rivalutazione dei costi e delle alternative Firebase
 - `deploy/oracle/README.md`
 
 > Production deployment is prepared in the repository but should be considered **not live until the Oracle environment, domain and HTTPS configuration have been verified**.
@@ -333,6 +334,8 @@ Detailed deployment documentation:
 ---
 
 ## 🗺️ Roadmap
+
+Il [piano operativo aggiornato](docs/ROADMAP.md) definisce priorità, dipendenze e criteri di uscita. Per l'MVP: API .NET e PostgreSQL su Oracle Always Free, Flutter come client futuro; Firebase è opzionale per Hosting, notifiche e diagnostica.
 
 ### Phase 1 — Foundation
 
@@ -366,11 +369,12 @@ Detailed deployment documentation:
 
 ### Phase 4 — Production
 
+- [ ] Production API URL and CORS verified on the real domain
 - [ ] PostgreSQL production migration verification
 - [ ] Oracle Cloud deployment
 - [ ] HTTPS
 - [ ] Domain
-- [ ] Backup automation
+- [ ] Backup automation and restore test
 - [ ] Monitoring
 - [ ] E2E testing
 
@@ -425,6 +429,7 @@ Il principio è **"build once, use everywhere"**: sito web, pannello admin e app
 - [ ] Match Center mobile
 - [ ] News & Media
 - [ ] Push notifications
+- [ ] Evaluate Firebase Cloud Messaging and Crashlytics
 - [ ] Community
 - [ ] Shop
 - [ ] Build Android
@@ -433,19 +438,6 @@ Il principio è **"build once, use everywhere"**: sito web, pannello admin e app
 - [ ] Pubblicazione App Store
 
 > **Stato attuale:** l'app mobile è nella roadmap. Il backend è già strutturato per essere consumato da un client mobile tramite API REST; non viene presentata come app già pubblicata.
-
----
-
-### Phase 5 — Mobile App
-
-- [ ] Flutter + Dart
-- [ ] Mobile design system
-- [ ] Android app
-- [ ] iOS app
-- [ ] Push notifications
-- [ ] Community mobile
-- [ ] Shop mobile
-- [ ] App Store / Google Play release
 
 ---
 
@@ -502,6 +494,8 @@ The administration layer is designed around role-based access:
 |---|---|
 | `docs/ROADMAP.md` | Product and development roadmap |
 | `docs/NEXT_STEPS.md` | Development sequence |
+| `docs/MOBILE_ANALYSIS.md` | Flutter app prerequisites and scope |
+| `docs/FIREBASE_VS_POSTGRESQL_ANALYSIS.md` | Firebase and PostgreSQL cost analysis |
 | `docs/DEPLOY_ORACLE_CLOUD.md` | Oracle deployment plan |
 | `docs/HOSTING_ORACLE_CLOUD_ANALYSIS.md` | Hosting analysis |
 | `docs/DATABASE_PRODUCTION_DECISION.md` | PostgreSQL production decision |

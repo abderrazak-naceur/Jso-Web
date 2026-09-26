@@ -1,417 +1,80 @@
-## Implementation Status — 2026-09-24\n\n### Admin MVP connected\n- Admin login uses JWT authentication and role-based navigation.\n- Dashboard consumes `/api/admin/dashboard`.\n- Teams and players CRUD are connected to the back office.\n- Match Center supports match creation/editing and reference data (season, competition, team).\n- News CMS supports create/edit/publish workflows.\n- Backend match reference endpoint added at `GET /api/admin/matches/references`.\n- Admin UI is responsive and hides modules the current role cannot access.\n\n### Next implementation block\n- Add audit log persistence and admin security/session management.\n- Add media management and homepage/content configuration.\n- Add richer Match Center event management.\n- Add automated API/frontend tests and CI verification.\n\n# JSO Web — Product Planning & Roadmap
-
-## 1. Vision
-
-Creare la piattaforma digitale ufficiale della **Jeunesse Sportive de Oudhref**: un sito moderno, veloce e responsive che riunisce identità del club, squadra, partite, notizie, media, community, boutique e un back office completo per la gestione autonoma dei contenuti.
-
-Il progetto sarà sviluppato in modo incrementale: prima l’esperienza pubblica e il design system, poi il backend, il pannello amministrativo e infine le funzionalità avanzate.
+# JSO Web — piano aggiornato
 
-## 2. Scope della piattaforma
+**Aggiornato:** 26 settembre 2026
+**Stato:** sviluppo; il deployment production e l'app mobile non sono ancora completati.
 
-### Area pubblica
+## Decisione architetturale per l'MVP
 
-- Homepage istituzionale e sportiva.
-- Presentazione del club, storia, valori e infrastrutture.
-- Prima squadra, staff, giocatori e profili individuali.
-- Calendario partite e Match Center.
-- Risultati, classifiche, statistiche e dettagli delle partite.
-- Newsroom con articoli, categorie e tag.
-- Media House con foto, video, highlights e gallerie.
-- Community dei tifosi.
-- Boutique del club.
-- Sponsor e partner.
-- Contatti, social links, privacy e cookie policy.
+- **Sito e admin:** React/Vite.
+- **API e regole applicative:** ASP.NET Core .NET 10, condivisa con la futura app Flutter.
+- **Dati di produzione:** PostgreSQL 17 tramite EF Core su Oracle Cloud Always Free; SQL Server resta un'opzione per lo sviluppo locale.
+- **Media caricati dall'admin:** volume persistente sulla VM, con backup e prova di ripristino.
+- **Mobile:** Flutter/Dart, inizialmente collegato alle API esistenti.
+- **Firebase:** opzionale per Hosting del frontend, Cloud Messaging e Crashlytics. Non è prevista una migrazione a Firestore nell'MVP.
 
-### Area amministrativa
-
-- Login sicuro e gestione delle sessioni.
-- Dashboard con riepilogo operativo.
-- Gestione utenti amministrativi e ruoli.
-- Gestione contenuti del sito senza nuovo deploy.
-- Gestione squadra, giocatori e staff.
-- Gestione partite, risultati, competizioni e calendario.
-- Gestione news, categorie, tag e bozze.
-- Gestione immagini, video e gallerie.
-- Configurazione homepage, menu e footer.
-- Gestione community e moderazione.
-- Gestione sponsor, boutique e richieste commerciali.
-- Analytics, audit log e stato delle integrazioni.
-
-## 3. Fasi di sviluppo
-
-## Phase 0 — Foundation & Architecture
-
-- Definizione requisiti funzionali e non funzionali.
-- Definizione architettura frontend/backend.
-- Configurazione repository, ambienti e convenzioni.
-- Design tokens JSO: navy, blue, gold, typography, spacing, radius, shadows.
-- Definizione modello dati e contratti API.
-- Configurazione CI, lint, test e build.
-
-**Exit criteria:** architettura documentata, repository organizzato e pipeline di base funzionante.
-
-## Phase 1 — Public Visual Experience
-
-- Homepage moderna con hero, CTA e Match Center preview.
-- Header desktop/mobile e navigazione responsive.
-- Sezioni Club, Matchday, Newsroom, Team, Media House e Boutique.
-- Componenti riutilizzabili: buttons, cards, badges, modals, sections.
-- Stati responsive, loading, empty state ed error state.
-- Supporto accessibilità di base e SEO tecnico.
-
-**Stato attuale:** prima implementazione visuale presente nel frontend React.
-
-**Exit criteria:** sito pubblico coerente con il concept JSO, responsive e navigabile.
-
-## Phase 2 — Backend & Data Core
-
-- API ASP.NET Core.
-- SQL Server e migrations.
-- Entity: Club, Season, Competition, Team, Player, StaffMember, Match, MatchEvent.
-- Entity editoriali: Article, Category, Tag, MediaAsset, Gallery.
-- Entity community: User, Post, Comment, Reaction, Report, Notification.
-- Entity amministrative: AdminUser, Role, Permission, AuditLog, FeatureFlag.
-- DTO, validation, pagination, filtering e sorting.
-- Error handling standardizzato e logging.
-
-**Exit criteria:** dati persistenti e API documentate disponibili per frontend e admin.
-
-## Phase 3 — Match Center
-
-- Lista partite con filtri per stagione, competizione e stato.
-- Dettaglio partita.
-- Calendario e risultati.
-- Formazioni e convocati.
-- Eventi: gol, ammonizioni, sostituzioni e note.
-- Classifiche e contesto della competizione.
-- Stato live e aggiornamenti periodici.
-- Adapter per provider sportivi esterni.
-- Modalità manuale/fallback per inserimento da admin.
-
-**Exit criteria:** una partita può essere creata, modificata, pubblicata e consultata end-to-end.
-
-## Phase 4 — News & Media House
-
-- Elenco articoli e pagina dettaglio.
-- Editor con stato bozza, revisione, pubblicazione e archiviazione.
-- Categorie, tag, slug e SEO metadata.
-- Upload e gestione immagini.
-- Video, highlights e gallerie.
-- Archivio storico.
-- Contenuti correlati e contenuti in evidenza.
-
-**Exit criteria:** il club può pubblicare autonomamente news e contenuti multimediali.
-
-## Phase 5 — Admin Foundation
-
-### 5.1 Autenticazione
-
-- Login email/password.
-- Password hashata e policy di sicurezza.
-- Refresh token o sessione server-side.
-- Logout e revoca sessioni.
-- Recupero password.
-- Protezione da brute force e rate limiting.
-- 2FA come evoluzione successiva.
-
-### 5.2 Ruoli e permessi
-
-Ruoli iniziali:
-
-- **Super Admin:** accesso completo e gestione ruoli.
-- **Club Admin:** gestione generale del sito e delle operazioni del club.
-- **Sport Editor:** squadra, giocatori, staff, partite e risultati.
-- **Content Editor:** news, media, homepage e pagine informative.
-- **Moderator:** community, segnalazioni e utenti.
-- **Analyst:** sola lettura di analytics e report.
-
-Permessi principali:
-
-- `dashboard.read`
-- `users.read`, `users.manage`
-- `roles.read`, `roles.manage`
-- `club.read`, `club.manage`
-- `team.read`, `team.manage`
-- `matches.read`, `matches.manage`
-- `content.read`, `content.create`, `content.update`, `content.publish`, `content.delete`
-- `media.read`, `media.manage`
-- `community.read`, `community.moderate`
-- `analytics.read`
-- `settings.manage`
-- `audit.read`
-
-### 5.3 Admin shell
-
-- Sidebar responsive.
-- Header con profilo, notifiche e ambiente corrente.
-- Breadcrumbs.
-- Tabelle con ricerca, filtri, paginazione e ordinamento.
-- Form riutilizzabili.
-- Toast e conferme per operazioni distruttive.
-- Empty, loading, error e permission states.
-- Layout coerente con il design system JSO.
-
-**Exit criteria:** ogni amministratore vede esclusivamente le sezioni autorizzate dal proprio ruolo.
-
-## Phase 6 — Admin Modules
+PostgreSQL non richiede una licenza a pagamento. L'obiettivo di costo infrastrutturale è €0/mese **solo se** risorse Oracle/Firebase e traffico restano nelle quote gratuite; disponibilità della VM, dominio e operatività vanno verificati. Le motivazioni e le fonti sono in [Firebase vs PostgreSQL](FIREBASE_VS_POSTGRESQL_ANALYSIS.md). Questa decisione non implica che il deployment sia già stato eseguito.
 
-### Dashboard
-
-- KPI: prossime partite, risultati recenti, articoli pubblicati, media, utenti e segnalazioni.
-- Attività recenti.
-- Contenuti in bozza.
-- Stato integrazioni e notifiche operative.
-
-### Club Settings
-
-- Nome, logo, colori e informazioni ufficiali.
-- Stadio e contatti.
-- Social links.
-- Sponsor e partner.
-- Stagione attiva.
+## Stato verificato nel repository
 
-### Team & Player Management
-
-- CRUD squadre e categorie.
-- CRUD giocatori.
-- Numero maglia, ruolo, foto e biografia.
-- Staff tecnico e dirigenza.
-- Stato attivo/inattivo.
-- Import/export CSV in una fase successiva.
+- [x] Sito pubblico React responsive e identità JSO; logo e concept Flutter nel README.
+- [x] API .NET, modello EF Core, provider SQL Server/PostgreSQL configurabili e Docker Compose production.
+- [x] Login admin JWT e ruoli, dashboard, gestione iniziale di squadra/giocatori, partite, news e upload media.
+- [x] Workflow CI e verifiche di build/lint presenti.
+- [ ] Migration EF Core PostgreSQL versionata e provata su database di test.
+- [ ] URL API del frontend corretto per il deploy; oggi il fallback è `http://localhost:5080/api`.
+- [ ] Ambiente Oracle reale, HTTPS, backup e restore verificati.
+- [ ] App Flutter implementata; le immagini attuali sono concept visivi.
 
-### Match Management
-
-- Creazione e modifica partite.
-- Avversario, data, ora, stadio e competizione.
-- Risultato e stato partita.
-- Convocati, formazione ed eventi.
-- Pubblicazione manuale o sincronizzazione provider.
-- Storico modifiche.
-
-### News CMS
-
-- Editor articolo.
-- Bozza, revisione, pubblicazione e archiviazione.
-- Immagine principale.
-- Categorie, tag e SEO.
-- Programmazione pubblicazione.
-- Anteprima pubblica.
-
-### Media Library
-
-- Upload immagini e video.
-- Cartelle e gallerie.
-- Metadati, alt text e copyright.
-- Ricerca e filtri.
-- Eliminazione protetta e controllo utilizzi.
-
-### Homepage Builder
-
-- Gestione hero e CTA.
-- Sezioni attive/disattive.
-- News in evidenza.
-- Match in evidenza.
-- Banner sponsor.
-- Ordinamento delle sezioni.
-
-### Menu & Footer
-
-- Menu principale.
-- Link esterni e social.
-- Footer columns.
-- Link legali.
-- Visibilità per ambiente.
-
-### Community Moderation
-
-- Coda segnalazioni.
-- Approva, nascondi o elimina contenuti.
-- Sospendi o riattiva utenti.
-- Storico moderazione.
-- Regole e motivazioni obbligatorie per azioni sensibili.
-
-### Analytics & Audit
-
-- Visite e pagine più consultate.
-- Engagement su news e partite.
-- Crescita community.
-- Audit log immutabile per azioni amministrative.
-- Filtri per utente, modulo, azione e intervallo temporale.
-
-**Exit criteria:** il club può gestire contenuti, dati sportivi e community senza modificare il codice.
-
-## Phase 7 — Community & Fan Experience
-
-- Registrazione e login tifosi.
-- Profilo pubblico.
-- Feed, post, commenti e reazioni.
-- Notifiche.
-- Segnalazioni.
-- Moderazione e blocco utenti.
-- Preferenze privacy.
-
-**Exit criteria:** community utilizzabile con strumenti di sicurezza e moderazione.
-
-## Phase 8 — Commercial & Growth
-
-- Boutique con catalogo prodotti.
-- Carrello e checkout.
-- Gestione ordini dal back office.
-- Membership e contenuti premium.
-- Ticketing.
-- Sponsor placement e campagne.
-- Newsletter.
-- Advanced live match experience.
-
-**Exit criteria:** piattaforma pronta per servizi commerciali e crescita del club.
-
-## 4. Architettura prevista
-
-### Frontend
-
-- React + Vite.
-- Tailwind CSS.
-- React Router per le rotte pubbliche e amministrative.
-- TanStack Query per cache, fetch e sincronizzazione dati.
-- React Hook Form + Zod per form e validazione.
-- Libreria componenti interna JSO.
-
-### Backend
-
-- ASP.NET Core Web API su .NET 10.
-- Architettura modulare con separazione API, Application, Domain e Infrastructure.
-- Entity Framework Core.
-- SQL Server.
-- ASP.NET Core Identity o soluzione equivalente per autenticazione e ruoli.
-- OpenAPI/Swagger.
-- Background jobs per sincronizzazioni e notifiche.
+Le caselle completate attestano la presenza delle funzioni nel codice, non un collaudo end-to-end o il go-live.
 
-### Infrastructure
+## Priorità 0 — Rendere pubblicabile lo stack esistente
 
-- Docker e Docker Compose per sviluppo locale.
-- CI/CD.
-- Logging centralizzato.
-- Health checks.
-- Gestione segreti tramite variabili d’ambiente e secret store.
-- Backup database e policy di retention.
+Lavorare in quest'ordine, perché i passaggi successivi dipendono dai precedenti:
 
-## 5. API principali previste
+1. **Configurazione API e frontend:** eliminare il fallback `localhost` nella build production; configurare `VITE_API_URL`, CORS e proxy per il dominio reale. Verificare richieste pubbliche e login admin da un browser esterno durante il collaudo.
+2. **Schema PostgreSQL:** generare migration per il provider PostgreSQL, revisionarla, applicarla a un database di prova e verificare seed, lettura e scrittura. Non riutilizzare una migration SQL Server senza controllo.
+3. **Dati persistenti:** configurare volumi per database e upload, backup automatico con retention e copia esterna; completare almeno un restore documentato.
+4. **Sicurezza e deploy:** predisporre VM ARM64, segreti fuori dal repository, porte minime, HTTPS e dominio; verificare health check e accessi admin. Controllare disponibilità e limiti Always Free prima del go-live.
+5. **Percorso end-to-end e CI:** testare admin → API → PostgreSQL → sito per partita, articolo e immagine; aggiungere test automatici sui flussi critici e rendere la pipeline verde.
 
-- `POST /api/auth/login`
-- `POST /api/auth/refresh`
-- `POST /api/auth/logout`
-- `GET /api/club`
-- `PUT /api/admin/club`
-- `GET /api/teams`
-- `POST /api/admin/teams`
-- `GET /api/players`
-- `POST /api/admin/players`
-- `GET /api/matches`
-- `POST /api/admin/matches`
-- `GET /api/news`
-- `POST /api/admin/news`
-- `POST /api/admin/media`
-- `GET /api/admin/dashboard`
-- `GET /api/admin/audit-logs`
-- `GET /api/admin/analytics`
+**Criterio di uscita:** sito e admin usabili sul dominio reale con PostgreSQL, dati persistenti, HTTPS, backup ripristinabile e flussi critici verificati. Senza questo criterio, lo stato resta pre-produzione.
 
-Gli endpoint sono indicativi e saranno raffinati durante la progettazione dei contratti API.
+## Priorità 1 — Completare il prodotto web
 
-## 6. Milestone operative
+- [ ] Collegare e rifinire tutti i contenuti pubblici ai dati reali: homepage, match center, notizie, squadra e media; gestire loading, assenza dati ed errori.
+- [ ] Completare gli editor admin: configurazione homepage, sponsor, menu/footer, partite con eventi e formazioni, articoli e libreria media.
+- [ ] Rivedere sessioni e permessi admin, tracciamento audit e gestione degli errori su flussi reali.
+- [ ] Verificare accessibilità, prestazioni e SEO sulle pagine pubbliche.
 
-### Milestone A — Visual MVP
+**Criterio di uscita:** il club pubblica contenuti e aggiorna i dati sportivi senza modificare il codice, e il sito riflette le modifiche.
 
-- Homepage pubblica.
-- Design system.
-- Navigazione responsive.
-- Sezioni principali con dati demo.
+## Priorità 2 — App Flutter
 
-### Milestone B — Backend Core
+La realizzazione mobile inizia dopo la stabilizzazione dei contratti API, degli URL media e dell'ambiente HTTPS. I concept nel README sono riferimenti grafici, non schermate dell'app funzionante.
 
-- API .NET 10.
-- SQL Server.
-- Modello dati.
-- Autenticazione di base.
+1. Creare il progetto Flutter e il design system JSO; configurare ambienti e client API.
+2. Implementare Home, Match Center, notizie, squadra e media con stati di caricamento/errore.
+3. Integrare login e profilo quando i flussi account sono pronti; proteggere i token sul dispositivo.
+4. Valutare Firebase Cloud Messaging per le notifiche e Crashlytics per la diagnostica, senza spostare il database.
+5. Testare su dispositivi Android e iOS; preparare build e pubblicazione sugli store.
 
-### Milestone C — Admin MVP
+**Criterio di uscita:** app installabile su entrambi i sistemi, collegata agli stessi dati del sito, con flussi principali verificati su dispositivi reali.
 
-- Login admin.
-- RBAC.
-- Dashboard.
-- CRUD squadra, giocatori, partite e news.
-- Media library iniziale.
+## Priorità 3 — Funzioni successive
 
-### Milestone D — Public Data Integration
+- Community e moderazione, dopo regole di accesso, privacy e strumenti operativi.
+- Boutique, pagamenti, sponsor e analytics avanzati, dopo definizione dei requisiti commerciali.
+- Live data/provider esterni, dopo affidabilità del Match Center manuale.
 
-- Collegamento frontend alle API.
-- Match Center reale.
-- News CMS pubblico.
-- Team e media dinamici.
+## Opzioni Firebase e punti decisionali
 
-### Milestone E — Community & Growth
+- **Firebase Hosting:** fare una prova solo se offre un vantaggio operativo sul sito statico; misurare peso degli asset e traffico rispetto alla quota Spark. L'API .NET resta ospitata separatamente.
+- **Firebase Cloud Messaging/Crashlytics:** introdurre con l'app Flutter se servono notifiche e diagnostica.
+- **Firestore, Firebase Auth o Cloud Storage:** aprire una nuova decisione tecnica solo con un requisito concreto, una stima dei costi e un piano di migrazione. Cloud Storage richiede Blaze; il progetto non assume che l'intero stack Firebase sia sempre gratuito.
 
-- Community.
-- Moderazione.
-- Analytics.
-- Boutique, sponsor e ticketing.
+## Documenti collegati
 
-## 7. Definition of Done
-
-Una funzionalità è considerata completata quando:
-
-- È implementata frontend e/o backend secondo lo scope.
-- Ha validazione e gestione degli errori.
-- È responsive e accessibile.
-- Ha loading, empty e error state.
-- È protetta da autenticazione/autorizzazione quando necessario.
-- Ha test adeguati.
-- È documentata.
-- È verificata tramite build e controllo manuale.
-- Non espone segreti o dati sensibili.
-
-## 8. Release strategy
-
-### Alpha
-
-Esperienza visuale JSO con dati statici o simulati.
-
-### Beta
-
-Backend reale, SQL Server, squadra, partite, newsroom e Admin MVP.
-
-### Public MVP
-
-Match Center integrato, CMS completo, media library, community iniziale, moderazione e hardening di produzione.
-
-### Growth
-
-Boutique, membership, ticketing, sponsor, analytics avanzati e funzionalità live.
-
-
-## 9. Implementation Status — 2026-09-18
-
-### Phase 0 — Foundation & Architecture
-
-**Status: in progress.** Planning and architecture documentation are present. Backend solution foundation and local Docker orchestration have now been added.
-
-### Phase 1 — Public Visual Experience
-
-**Status: implemented as visual MVP.** React/Vite/Tailwind public experience exists with responsive navigation and the main JSO sections.
-
-### Phase 2 — Backend & Data Core
-
-**Status: in progress.** Added ASP.NET Core .NET 10 solution with Domain, Application, Infrastructure and API projects; EF Core SQL Server integration; initial core entities; public read API endpoints; Swagger; health check; Dockerfile and local SQL Server/API Compose setup.
-
-Remaining Phase 2 work: EF Core migrations, full domain model, DTO/application services, validation, pagination/filtering/sorting, standardized errors, logging, tests and authentication foundation.
-
-### Next execution order
-
-1. Complete EF Core migrations and database initialization.
-2. Add automated backend tests.
-3. Implement authentication and RBAC.
-4. Build Admin shell and Dashboard.
-5. Add Team/Player CRUD.
-6. Add Match Management and Match Center.
-7. Add News CMS and connect public React data.
-8. Add Media Library abstraction.
-9. Add CI/CD and production hardening.
+- [Analisi Firebase vs PostgreSQL](FIREBASE_VS_POSTGRESQL_ANALYSIS.md)
+- [Decisione database production](DATABASE_PRODUCTION_DECISION.md)
+- [Piano deploy Oracle](DEPLOY_ORACLE_CLOUD.md)
+- [Analisi mobile](MOBILE_ANALYSIS.md)

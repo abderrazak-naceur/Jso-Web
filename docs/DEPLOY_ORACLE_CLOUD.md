@@ -1,154 +1,47 @@
-# JSO — Deploy Oracle Cloud Always Free
+# JSO — piano deploy Oracle Cloud Always Free
 
-## Obiettivo
+**Aggiornato:** 26 settembre 2026. Preparazione documentata; deploy reale non ancora verificato.
 
-Deploy JSO con target infrastruttura a costo zero, usando Oracle Cloud Always Free dove possibile.
+## Architettura scelta
 
-> Punto da verificare prima del go-live: compatibilita ARM64 della piattaforma database scelta.
+- VM Oracle Ampere A1 ARM64 entro i limiti Always Free, se disponibile nella regione.
+- Docker Compose production: frontend React/Vite servito da Nginx, API ASP.NET Core .NET 10 e PostgreSQL 17.
+- Database e API nella rete Docker privata; PostgreSQL senza porte pubbliche.
+- Volumi persistenti per dati PostgreSQL e media caricati.
+- Dominio e HTTPS tramite reverse proxy/TLS da configurare e verificare.
 
-## Architettura
+PostgreSQL è la scelta dati di produzione. SQL Server resta disponibile nello sviluppo locale. Firebase Hosting, Cloud Messaging e Crashlytics sono opzioni separate descritte nel [confronto dei costi](FIREBASE_VS_POSTGRESQL_ANALYSIS.md).
 
-- React/Vite: static hosting gratuito.
-- ASP.NET Core .NET 10: Docker.
-- Oracle Ampere A1: VM Always Free.
-- Database: SQL Server solo se compatibile con la piattaforma scelta; in alternativa valutare PostgreSQL mantenendo EF Core.
-- Cloudflare: DNS e HTTPS.
+## Preparazione
 
-## VM Oracle
+1. Creare la VM A1 e verificare quota, disponibilità e compatibilità ARM64 delle immagini.
+2. Proteggere SSH e aprire solo le porte necessarie per HTTP/HTTPS. Non esporre PostgreSQL.
+3. Installare Docker Engine e Compose plugin.
+4. Creare `.env.prod` da `.env.prod.example` fuori dal controllo versione; impostare `JWT_SECRET`, `PUBLIC_ORIGIN`, `POSTGRES_USER` e `POSTGRES_PASSWORD`.
+5. Configurare DNS, certificato TLS e proxy; verificare che la build frontend usi l'URL API pubblico e che CORS consenta l'origine reale.
 
-Creare una VM Ampere A1 nella home region con le risorse Always Free disponibili.
+La procedura dei comandi è in [deploy/oracle/README.md](../deploy/oracle/README.md). La configurazione attuale espone HTTP su porta 80: HTTPS e la connessione dal browser al dominio reale sono criteri di go-live, non risultati già verificati.
 
-Aprire solo le porte necessarie:
+## Database e dati
 
-- TCP 22 per SSH, preferibilmente limitato al proprio IP.
-- TCP 80 per HTTP.
-- TCP 443 per HTTPS.
+L'API in Production esegue `MigrateAsync` all'avvio. Prima di usarla su dati reali occorre:
 
-Non esporre la porta 1433 del database a Internet.
+1. Generare e versionare una migration EF Core per PostgreSQL.
+2. Revisionare lo schema e applicare la migration a un database PostgreSQL di prova.
+3. Verificare seed, health check, login admin e lettura/scrittura dei contenuti.
+4. Configurare backup automatico di database e media, retention e copia esterna.
+5. Eseguire un restore di prova e documentare il tempo necessario.
 
-## Docker
+Senza una migration PostgreSQL verificata, il compose non va considerato pronto per il go-live.
 
-Su una distribuzione Linux supportata:
+## Verifiche prima del go-live
 
-```bash
-sudo apt update
-sudo apt install -y docker.io docker-compose-plugin
-sudo systemctl enable --now docker
-sudo usermod -aG docker $USER
-```
+- [ ] VM e immagini ARM64 disponibili.
+- [ ] Segreti e SSH protetti; database non esposto.
+- [ ] Migration PostgreSQL applicata e controllata.
+- [ ] URL API frontend, CORS e HTTPS verificati dal dominio reale.
+- [ ] Backup di PostgreSQL e media eseguito; restore provato.
+- [ ] `/health`, login admin, partite, notizie e upload verificati end-to-end.
+- [ ] Workflow CI verdi e monitoraggio operativo attivo.
 
-Riconnettersi dopo l'aggiunta al gruppo Docker.
-
-## Repository
-
-```bash
-git clone https://github.com/abderrazak-naceur/Jso-Web.git
-cd Jso-Web
-```
-
-Creare `.env` partendo da `.env.example` e impostare almeno:
-
-```env
-MSSQL_SA_PASSWORD=<password-forte>
-JWT_SECRET=<segreto-random-di-almeno-32-caratteri>
-ADMIN_BOOTSTRAP_EMAIL=admin@jso.tn
-ADMIN_BOOTSTRAP_PASSWORD=<password-admin-forte>
-```
-
-Non committare `.env`.
-
-## ARM64
-
-Prima del deployment definitivo:
-
-```bash
-docker buildx inspect --bootstrap
-docker build --platform linux/arm64 -t jso-api ./backend
-```
-
-Il backend .NET deve essere disponibile per ARM64.
-
-### Database
-
-Il database e il principale punto di compatibilita. Non assumere che il container SQL Server attuale sia eseguibile sulla VM Ampere ARM64.
-
-Se SQL Server non e utilizzabile su A1:
-
-1. valutare una VM x86/AMD disponibile;
-2. oppure usare un database compatibile ARM64;
-3. mantenere EF Core per ridurre l'impatto della scelta.
-
-## Production
-
-La configurazione Docker attuale e orientata allo sviluppo locale. Prima del go-live bisogna separare development e production, usare secrets fuori dal repository, impostare l'ambiente Production, configurare HTTPS e mantenere il database su rete privata.
-
-Architettura target:
-
-```text
-Internet
-   |
-Cloudflare
-   |
-HTTPS :443
-   |
-Reverse proxy
-   |
-ASP.NET Core :8080
-   |
-Database privato
-```
-
-## Database e migrations
-
-Per production bisogna usare EF migrations e non `EnsureCreatedAsync`.
-
-Comandi previsti:
-
-```bash
-dotnet ef migrations add InitialCreate --project src/JSO.Infrastructure --startup-project src/JSO.Api --output-dir Migrations
-dotnet ef database update --project src/JSO.Infrastructure --startup-project src/JSO.Api
-```
-
-La migration non e ancora presente nel repository e non deve essere considerata verificata finche non viene generata e controllata.
-
-## Backup
-
-Prevedere almeno:
-
-- backup database giornaliero;
-- copia dei media importanti;
-- retention;
-- test periodico del restore;
-- copia esterna dei dati critici.
-
-## Health check
-
-L'API espone `GET /health` per il monitoraggio.
-
-## Checklist go-live
-
-- [ ] VM Always Free creata.
-- [ ] SSH protetto.
-- [ ] Docker installato.
-- [ ] ARM64 verificato.
-- [ ] Database scelto e verificato.
-- [ ] EF migrations generate e controllate.
-- [ ] Backup configurato.
-- [ ] HTTPS configurato.
-- [ ] Secrets fuori dal repository.
-- [ ] CORS configurato con il dominio reale.
-- [ ] Admin bootstrap password gestita.
-- [ ] `/health` verificato.
-- [ ] GitHub CI verde.
-- [ ] Frontend collegato all'API production.
-- [ ] Login admin verificato.
-- [ ] Match Center verificato.
-- [ ] News CMS verificato.
-- [ ] Media verificato.
-- [ ] Eventi partita verificati.
-
-## Stato
-
-Preparazione deployment — non ancora go-live.
-
-Docker mantiene la portabilita del backend: la scelta Oracle puo essere cambiata senza riscrivere l'applicazione.
+La sequenza generale e i criteri di uscita sono nel [piano aggiornato](ROADMAP.md).

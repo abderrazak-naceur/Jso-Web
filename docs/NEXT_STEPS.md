@@ -1,40 +1,20 @@
-# JSO — Technical & Functional Next Steps
+# JSO — prossimi passi operativi
 
-## Immediate
-1. Create ASP.NET Core .NET 10 solution.
-2. Define Domain/Application/Infrastructure/API projects.
-3. Define SQL Server model and EF Core migrations.
-4. Define OpenAPI contracts.
-5. Implement authentication and RBAC.
-6. Build Admin MVP.
-7. Connect public React UI to real APIs.
+**Aggiornato:** 26 settembre 2026. Il [piano completo](ROADMAP.md) è la fonte per priorità e criteri di uscita.
 
-## After core
-8. Match Center real data/manual fallback.
-9. News CMS.
-10. Media library/storage.
-11. Security hardening and CI scanning.
-12. Docker Compose and deployment pipeline.
-13. Backup/restore and monitoring.
-14. React Native/Expo mobile apps.
+## Subito: preparare il rilascio web
 
-## Functional validation
-For each feature:
-- user story;
-- acceptance criteria;
-- authorization;
-- validation;
-- error/loading/empty states;
-- audit requirements;
-- responsive behavior;
-- tests.
+1. Configurare URL API production e CORS per il dominio reale; eliminare il fallback `localhost` dalla build pubblicata.
+2. Generare e revisionare la migration EF Core PostgreSQL; provarla su un database di test.
+3. Configurare volumi persistenti, backup di database e media, retention e prova di restore.
+4. Completare Oracle ARM64, segreti, HTTPS, dominio, health check e monitoraggio.
+5. Verificare i flussi admin → API → PostgreSQL → sito e aggiungere test automatici critici alla CI.
 
-## Do not implement automatically during analysis
-- No code refactoring solely from this report.
-- No infrastructure changes.
-- No production deployment.
-- No credential creation.
-- No provider/API purchase.
+## Dopo: prodotto e mobile
 
-## Definition of progress
-A phase is complete only when its implementation exists in the repository and passes build/tests/manual validation, not merely because it is described in documentation.
+6. Completare l'integrazione dei dati pubblici e gli editor del pannello admin.
+7. Stabilizzare i contratti API e gli URL media per Flutter.
+8. Realizzare l'app Flutter per Android/iOS; valutare Firebase Cloud Messaging e Crashlytics solo per funzioni mobile utili.
+9. Aggiungere community, moderazione e commercio dopo aver definito requisiti, privacy e operatività.
+
+PostgreSQL è la scelta dati dell'MVP; Firebase Hosting resta opzionale e Firestore non è pianificato. Vedi [analisi costi e alternative](FIREBASE_VS_POSTGRESQL_ANALYSIS.md).
