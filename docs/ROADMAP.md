@@ -19,6 +19,8 @@ PostgreSQL non richiede una licenza a pagamento. L'obiettivo di costo infrastrut
 - [x] Sito pubblico React responsive e identità JSO; logo e concept Flutter nel README.
 - [x] API .NET, modello EF Core, provider SQL Server/PostgreSQL configurabili e Docker Compose production.
 - [x] Login admin JWT e ruoli, dashboard, gestione iniziale di squadra/giocatori, partite, news e upload media.
+- [x] Gestione admin di stagioni e competizioni con CRUD completo (create/list/update/delete, autorizzato, validato, con audit; il delete è rifiutato se referenziate da una partita).
+- [x] Sito pubblico senza contenuti demo: notizie con stati caricamento/errore/vuoto e link reale all'articolo via slug; badge di stato API in francese.
 - [x] Workflow CI con build/lint frontend, build backend, controlli Docker frontend/ARM64 e configurazione Nginx verificati.
 - [x] Migration EF Core PostgreSQL iniziale versionata, applicata e verificata su PostgreSQL 17 in CI, con login admin e smoke test di notizie e media.
 - [x] URL API predefinito del frontend impostato su `/api`, con proxy locale Vite e proxy Nginx nel compose production.
