@@ -16,7 +16,7 @@ public sealed class PublicMatchDetailsController(JsoDbContext db) : ControllerBa
             .Where(x => x.MatchId == id)
             .Join(db.Players.AsNoTracking(), x => x.PlayerId, p => p.Id, (x,p) => new
             {
-                x.Id, x.PlayerId, p.FirstName, p.LastName, p.ShirtNumber, p.Position, x.Role, x.PositionOrder, x.Position, x.IsCaptain, x.IsSubstitute
+                x.Id, x.PlayerId, p.FirstName, p.LastName, p.ShirtNumber, PlayerPosition = p.Position, x.Role, x.PositionOrder, x.Position, x.IsCaptain, x.IsSubstitute
             })
             .OrderBy(x => x.IsSubstitute).ThenBy(x => x.PositionOrder).ThenBy(x => x.LastName)
             .ToListAsync(ct));

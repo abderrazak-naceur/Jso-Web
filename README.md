@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./public/JSO-official-crest.png" alt="JSO" width="120" />
+<img src="./public/JSO-crest-regenerated.png" alt="Stemma Jeunesse Sportive de Oudhref" width="180" />
 
 # JSO — Jeunesse Sportive de Oudhref
 
@@ -78,19 +78,22 @@ Production target
 
 ---
 
-## 🖼️ Visuals
+## 📱 Anteprima app mobile Flutter
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/abderrazak-naceur/Jso-Web/main/public/jso-mobile-preview.svg" alt="JSO Flutter Mobile App Preview" width="850" />
+<img src="./public/jso-flutter-home-concept.png" alt="Concept Flutter: schermata Home JSO con prossimo match e notizie" width="320" />
+<img src="./public/jso-flutter-match-concept.png" alt="Concept Flutter: schermata Match Center JSO con eventi e statistiche" width="320" />
 
 <br />
 
-**Website + Admin + Flutter Mobile App + API + Database**
+**Home · Match Center**
 
 </div>
 
-> Le logo JSO utilisé dans le projet est le crest digital JSO. Le dossier `public/` contient les assets visuels utilisés par le site et la future application mobile.
+Queste immagini sono **concept visivi** della futura app Flutter per iOS e Android. Mostrano la direzione grafica; i contenuti e i risultati rappresentati sono illustrativi. L'app non è ancora pubblicata.
+
+Il sito usa il nuovo stemma JSO in `public/JSO-crest-regenerated.png`; gli asset visivi sono nel dossier `public/`.
 
 ---
 
@@ -417,7 +420,6 @@ Il principio è **"build once, use everywhere"**: sito web, pannello admin e app
 - [ ] Flutter
 - [ ] Dart
 - [ ] Design system mobile JSO
-- [ ] Design system mobile JSO
 - [ ] Login / profilo
 - [ ] Home mobile
 - [ ] Match Center mobile
@@ -536,6 +538,6 @@ The core platform, authentication, administration, Match Center, News CMS and Me
 
 ### Toujours plus haut. Toujours JSO. 💙💛
 
-<img src="./public/JSO-official-crest.png" alt="Jeunesse Sportive de Oudhref" width="70" />
+<img src="./public/JSO-crest-regenerated.png" alt="Jeunesse Sportive de Oudhref" width="70" />
 
 </div>

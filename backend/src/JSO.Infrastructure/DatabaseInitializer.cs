@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -7,13 +8,14 @@ namespace JSO.Infrastructure;
 public sealed class DatabaseInitializer(
     JsoDbContext db,
     IHostEnvironment environment,
+    IConfiguration configuration,
     ILogger<DatabaseInitializer> logger)
 {
     public async Task InitializeAsync(CancellationToken ct = default)
     {
         if (environment.IsDevelopment())
         {
-            await DevelopmentDataSeeder.SeedAsync(db, logger, environment.Configuration, ct);
+            await DevelopmentDataSeeder.SeedAsync(db, logger, configuration, ct);
             return;
         }
 

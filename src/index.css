@@ -5,7 +5,7 @@
   --color-jso-ink: #0b1730;
   --color-jso-navy: #071a3a;
   --color-jso-blue: #1769e0;
-  --color-jso-gold: #f4c542;
+  --color-jso-gold: #ffd700;
 }
 
 :root {
@@ -36,4 +36,19 @@ button:focus-visible,
 a:focus-visible {
   outline: 3px solid #1769e0;
   outline-offset: 3px;
+}
+
+section[id] {
+  scroll-margin-top: 80px;
+}
+
+.jso-hero {
+  background-image: url('/jso-stadium-hero.png');
+  background-position: center;
+  background-size: cover;
+}
+
+::selection {
+  color: #071a3a;
+  background: #ffd700;
 }
