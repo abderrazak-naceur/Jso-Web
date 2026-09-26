@@ -53,3 +53,10 @@ export const accountApi = {
   login: (data) => requestJson('/account/login', 'POST', data),
   me: (token) => requestJson('/account/me', 'GET', null, token),
 }
+
+// Public newsletter API (double opt-in). /subscribe returns a generic message and never
+// reveals whether the email already exists. Confirmation/unsubscribe happen via emailed
+// token links (email delivery is a backend TODO).
+export const newsletterApi = {
+  subscribe: (email) => requestJson('/newsletter/subscribe', 'POST', { email }),
+}

@@ -14,7 +14,7 @@ import {
   Users,
   X,
 } from 'lucide-react'
-import { publicApi, accountApi } from './lib/api'
+import { publicApi, accountApi, newsletterApi } from './lib/api'
 import { API_BASE_URL } from './lib/apiConfig'
 
 const navigation = [
@@ -27,6 +27,54 @@ const navigation = [
   ['App mobile', 'mobile'],
   ['Boutique', 'shop'],
 ]
+
+// Compact public newsletter signup (idea A4). Double opt-in: the API only sends a generic
+// confirmation message and never reveals whether the address already exists, so the UI shows
+// the same success text in every case.
+function NewsletterSignup() {
+  const [email, setEmail] = useState('')
+  const [status, setStatus] = useState('idle') // idle | loading | done | error
+  const [message, setMessage] = useState('')
+
+  async function submit(event) {
+    event.preventDefault()
+    if (status === 'loading') return
+    setStatus('loading')
+    try {
+      const result = await newsletterApi.subscribe(email.trim())
+      setMessage(result?.message || 'Vérifiez votre boîte mail pour confirmer votre inscription.')
+      setStatus('done')
+      setEmail('')
+    } catch {
+      setMessage('Inscription impossible pour le moment. Réessayez plus tard.')
+      setStatus('error')
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="w-full sm:w-auto">
+      <p className="text-sm font-black">Newsletter du club</p>
+      <p className="mt-1 text-xs text-white/50">Résultats, prochains matchs et actualités. Double confirmation, désinscription à tout moment.</p>
+      {status === 'done'
+        ? <p className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-sm text-white/80">{message}</p>
+        : <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="votre@email.com"
+              aria-label="Adresse e-mail"
+              className="rounded-xl px-3 py-2.5 text-sm text-jso-ink outline-none sm:w-64"
+            />
+            <button type="submit" disabled={status === 'loading'} className="rounded-xl bg-jso-gold px-4 py-2.5 text-sm font-extrabold text-jso-navy disabled:opacity-60">
+              {status === 'loading' ? 'Envoi…' : "S'inscrire"}
+            </button>
+          </div>}
+      {status === 'error' && <p className="mt-2 text-xs text-red-300">{message}</p>}
+    </form>
+  )
+}
 
 function pick(object, ...keys) {
   for (const key of keys) {
@@ -430,7 +478,7 @@ function App() {
         </div>
       </section>}
 
-      <footer className="bg-jso-navy px-5 py-10 text-white lg:px-8"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-5 sm:flex-row sm:items-center"><div><div className="flex items-center gap-3"><img src="/JSO-crest-regenerated.png" alt="Stemma JSO" className="h-12 w-10 object-contain" /><div className="text-xl font-black">JSO · Jeunesse Sportive de Oudhref</div></div><p className="mt-1 text-sm text-white/60">Plus qu’un club. Une identité.</p></div><p className="text-sm text-white/50">© 2026 JSO. Tous droits réservés.</p></div></footer>
+      <footer className="bg-jso-navy px-5 py-10 text-white lg:px-8"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 lg:flex-row lg:items-center"><div><div className="flex items-center gap-3"><img src="/JSO-crest-regenerated.png" alt="Stemma JSO" className="h-12 w-10 object-contain" /><div className="text-xl font-black">JSO · Jeunesse Sportive de Oudhref</div></div><p className="mt-1 text-sm text-white/60">Plus qu’un club. Une identité.</p></div><NewsletterSignup /><p className="text-sm text-white/50">© 2026 JSO. Tous droits réservés.</p></div></footer>
 
       {demoOpen && <div className="fixed inset-0 z-[60] grid place-items-center bg-jso-navy/60 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Présentation JSO"><div className="w-full max-w-lg rounded-[2rem] bg-white p-8 shadow-2xl"><div className="flex items-start justify-between gap-5"><div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">JSO DIGITAL</p><h2 className="mt-3 text-3xl font-black">Bienvenue dans la nouvelle maison du club.</h2></div><button aria-label="Fermer" onClick={() => setDemoOpen(false)} className="rounded-full border border-slate-200 p-2"><X size={18} /></button></div><p className="mt-4 leading-7 text-slate-600">Cette interface est une première version visuelle. Les données réelles, les comptes administrateur, les résultats et la boutique seront connectés dans les prochaines étapes.</p><button onClick={() => setDemoOpen(false)} className="mt-7 rounded-full bg-jso-navy px-5 py-3 font-extrabold text-white">Continuer</button></div></div>}
     </main>

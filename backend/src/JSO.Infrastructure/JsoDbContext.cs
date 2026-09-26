@@ -24,6 +24,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<Product> Products => Set<Product>();
  public DbSet<Volunteer> Volunteers => Set<Volunteer>();
  public DbSet<MatchAssignment> MatchAssignments => Set<MatchAssignment>();
+ public DbSet<NewsletterSubscription> NewsletterSubscriptions => Set<NewsletterSubscription>();
  protected override void OnModelCreating(ModelBuilder modelBuilder) {
   modelBuilder.Entity<Club>().HasIndex(x=>x.ShortName).IsUnique();
   modelBuilder.Entity<Season>().HasIndex(x=>x.Name).IsUnique();
@@ -50,6 +51,10 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<MatchAssignment>().HasIndex(x=>x.MatchId);
   modelBuilder.Entity<MatchAssignment>().HasIndex(x=>new{x.MatchId,x.VolunteerId,x.Task}).IsUnique();
   modelBuilder.Entity<MatchAssignment>().Property(x=>x.Status).HasDefaultValue("Proposed");
+  modelBuilder.Entity<NewsletterSubscription>().HasIndex(x=>x.Email).IsUnique();
+  modelBuilder.Entity<NewsletterSubscription>().HasIndex(x=>x.ConfirmToken).IsUnique();
+  modelBuilder.Entity<NewsletterSubscription>().HasIndex(x=>x.UnsubscribeToken).IsUnique();
+  modelBuilder.Entity<NewsletterSubscription>().Property(x=>x.Unsubscribed).HasDefaultValue(false);
   modelBuilder.Entity<Club>().HasData(new Club { Id=Guid.Parse("8d8c1ef6-1c9d-4d1c-9a0f-8a5b6b5c1001"), Name="Jeunesse Sportive de Oudhref", ShortName="JSO", Country="Tunisie", City="Oudhref" });
  }
 }
