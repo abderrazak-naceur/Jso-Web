@@ -39,7 +39,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if grep -RInE 'password[[:space:]]*[:=][[:space:]]*["'"'][^<>{}[:space:]]{12,}["'"']|JWT_SECRET[[:space:]]*=[[:space:]]*[^<>{}[:space:]]{12,}' . --exclude-dir=.git --exclude='*.md' --exclude='*.example' 2>/dev/null; then
+          if grep -RInE "password[[:space:]]*[:=][[:space:]]*['\"][^<>{}[:space:]]{12,}['\"]|JWT_SECRET[[:space:]]*=[[:space:]]*[^<>{}[:space:]]{12,}" . --exclude-dir=.git --exclude='*.md' --exclude='*.example' 2>/dev/null; then
             echo 'Potential hard-coded secret found.'
             exit 1
           fi
