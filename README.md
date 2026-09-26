@@ -379,7 +379,7 @@ L'app mobile utilizzerà gli stessi servizi backend del sito web, evitando di du
 
 ```text
              JSO MOBILE APP
-             React Native + Expo
+             Flutter + Dart
                     │
                     │ HTTPS / JSON
                     ▼
@@ -398,7 +398,9 @@ Il principio è **"build once, use everywhere"**: sito web, pannello admin e app
 
 ### 📲 Roadmap Mobile
 
-- [ ] React Native + Expo
+- [ ] Flutter
+- [ ] Dart
+- [ ] Design system mobile JSO
 - [ ] Design system mobile JSO
 - [ ] Login / profilo
 - [ ] Home mobile
@@ -418,7 +420,7 @@ Il principio è **"build once, use everywhere"**: sito web, pannello admin e app
 
 ### Phase 5 — Mobile App
 
-- [ ] React Native + Expo
+- [ ] Flutter + Dart
 - [ ] Mobile design system
 - [ ] Android app
 - [ ] iOS app
