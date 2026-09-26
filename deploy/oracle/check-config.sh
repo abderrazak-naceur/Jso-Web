@@ -10,8 +10,13 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 command -v docker >/dev/null 2>&1 || fail "Docker is required for Compose validation."
 
 value() {
-  local key="$1"
-  sed -n "s/^${key}=//p" "$ENV_FILE" | tail -n 1
+  local key="$1" v
+  v="$(sed -n "s/^${key}=//p" "$ENV_FILE" | tail -n 1)"
+  v="${v%$'\r'}"                       # strip trailing CR from CRLF-authored files
+  if [[ ${#v} -ge 2 && ( ( ${v:0:1} == '"' && ${v: -1} == '"' ) || ( ${v:0:1} == "'" && ${v: -1} == "'" ) ) ]]; then
+    v="${v:1:${#v}-2}"                 # strip matching surrounding quotes
+  fi
+  printf '%s' "$v"
 }
 for key in JWT_SECRET PUBLIC_ORIGIN POSTGRES_USER POSTGRES_PASSWORD; do
   v="$(value "$key")"
