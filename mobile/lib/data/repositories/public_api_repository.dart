@@ -2,6 +2,7 @@ import '../../core/api/api_client.dart';
 import '../models/article.dart';
 import '../models/club.dart';
 import '../models/home_data.dart';
+import '../models/live_blog_entry.dart';
 import '../models/match.dart';
 import '../models/match_event.dart';
 import '../models/media_asset.dart';
@@ -47,6 +48,16 @@ class PublicApiRepository {
   Future<List<MatchEvent>> getMatchEvents(String id) async {
     final json = await _client.getJson('/matches/$id/events');
     return _mapList(json, MatchEvent.fromJson);
+  }
+
+  /// `GET /api/matches/{id}/liveblog`
+  ///
+  /// Read-only live blog feed for a published match, ordered server-side with
+  /// pinned entries first then most recent by `createdAt`. Intended for light
+  /// polling by clients.
+  Future<List<LiveBlogEntry>> getMatchLiveBlog(String id) async {
+    final json = await _client.getJson('/matches/$id/liveblog');
+    return _mapList(json, LiveBlogEntry.fromJson);
   }
 
   /// `GET /api/news`

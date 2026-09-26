@@ -6,6 +6,7 @@ import 'package:jso_mobile/core/config/jso_theme.dart';
 import 'package:jso_mobile/data/models/article.dart';
 import 'package:jso_mobile/data/models/club.dart';
 import 'package:jso_mobile/data/models/home_data.dart';
+import 'package:jso_mobile/data/models/live_blog_entry.dart';
 import 'package:jso_mobile/data/models/match.dart';
 import 'package:jso_mobile/data/models/match_event.dart';
 import 'package:jso_mobile/data/models/media_asset.dart';
@@ -81,6 +82,25 @@ class Sample {
       minute: minute,
       type: type,
       playerName: 'Ali Ben Salah',
+    );
+  }
+
+  static LiveBlogEntry liveBlogEntry({
+    String id = 'lb1',
+    int? minute = 12,
+    String kind = 'Text',
+    String body = 'Coup d\'envoi donné.',
+    bool isPinned = false,
+    DateTime? createdAt,
+  }) {
+    return LiveBlogEntry(
+      id: id,
+      matchId: '8f2c5f3a-1c2d-4b0e-9c11-1a2b3c4d5e6f',
+      minute: minute,
+      kind: kind,
+      body: body,
+      createdAt: createdAt ?? DateTime.utc(2026, 3, 15, 18, 42),
+      isPinned: isPinned,
     );
   }
 

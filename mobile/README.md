@@ -15,8 +15,12 @@ state):
 - **Home** — club header/crest, next match, recent matches and a latest-news
   preview, from `GET /api/home`.
 - **Matches (Match Center)** — fixtures/results list from `GET /api/matches`;
-  tapping a match opens a detail view (score, status, venue and an event
-  timeline) from `GET /api/matches/{id}` and `GET /api/matches/{id}/events`.
+  tapping a match opens a detail view with two tabs:
+  - **Timeline** — score, status, venue and the event timeline from
+    `GET /api/matches/{id}` and `GET /api/matches/{id}/events`.
+  - **Live** — the match **live blog** feed from
+    `GET /api/matches/{id}/liveblog`, polled lightly while the tab is open
+    (see [Live blog polling](#live-blog-polling)).
 - **News** — article list from `GET /api/news`; tapping opens the article from
   `GET /api/news/{slug}` (news detail is keyed by **slug**, not id).
 - **Media** — a gallery grid from `GET /api/media`, using `thumbnailUrl` (with a
@@ -68,8 +72,8 @@ lib/
     config/   api_config.dart (base URL), jso_theme.dart (JSO design system)
     api/      api_client.dart (http wrapper, 15s timeout), api_exception.dart
   data/
-    models/   club, match, match_event, article, media_asset,
-              sponsor, team, player, home_data, json_utils
+    models/   club, match, match_event, live_blog_entry, article,
+              media_asset, sponsor, team, player, home_data, json_utils
     repositories/  public_api_repository.dart  (methods -> real /api routes)
   features/
     home/     home_screen.dart
@@ -89,6 +93,7 @@ assets/
   jso-club-mark.svg          bundled copy of frontend/public/jso-club-mark.svg
 test/
   models_parsing_test.dart   JSON parsing for the real DTO shapes
+  match_liveblog_test.dart   Live blog tab LOADING / EMPTY / ERROR / populated
   *_screen_test.dart         screen LOADING / EMPTY / ERROR / populated states
   support/                   fake repository + pump harness (no network)
 ```
@@ -160,6 +165,7 @@ by slug; dates are ISO-8601 `DateTimeOffset`.
 | `getMatches()`                  | `GET /api/matches`                |
 | `getMatch(id)`                  | `GET /api/matches/{id}`           |
 | `getMatchEvents(id)`            | `GET /api/matches/{id}/events`    |
+| `getMatchLiveBlog(id)`          | `GET /api/matches/{id}/liveblog`  |
 | `getNews()`                     | `GET /api/news`                   |
 | `getNewsArticle(slug)`          | `GET /api/news/{slug}`            |
 | `getMedia()`                    | `GET /api/media`                  |
@@ -168,8 +174,38 @@ by slug; dates are ISO-8601 `DateTimeOffset`.
 | `getSponsors({placement})`      | `GET /api/sponsors[?placement=]`  |
 
 The screens use `getHome`, `getMatches`, `getMatch`, `getMatchEvents`,
-`getNews`, `getNewsArticle` and `getMedia`, plus `getTeams`, `getTeamPlayers`
-and `getSponsors` behind the **Club** tab.
+`getMatchLiveBlog`, `getNews`, `getNewsArticle` and `getMedia`, plus `getTeams`,
+`getTeamPlayers` and `getSponsors` behind the **Club** tab.
+
+## Live blog polling
+
+The match detail **Live** tab renders the public, read-only live blog for a
+match: `GET /api/matches/{id}/liveblog`. The endpoint returns a JSON array
+already ordered server-side (**pinned entries first**, then most recent by
+`createdAt`) of `{ id, matchId, minute?, kind, body, createdAt, isPinned }`
+items, where `kind` is one of `Text` / `Goal` / `Card` / `Substitution`. The
+match must be published, otherwise the API returns `404`.
+
+The `LiveBlogEntry` model parses this defensively: `minute` is nullable and an
+unknown `kind` is tolerated (it falls back to a neutral "Update" style) so new
+server kinds never break the feed. Each entry shows a kind icon/badge, the
+minute (when present) and the body; **pinned** entries are highlighted with a
+gold-bordered card and a pin icon, keeping the server ordering.
+
+Because the endpoint is designed for lightweight polling, the tab refreshes the
+feed on a timer while it is mounted:
+
+- A `Timer.periodic` is created in `initState` with a **25-second** interval and
+  is **cancelled in `dispose`** (the timer field is nulled), so there is no
+  leak when the user leaves the screen.
+- An `_isFetching` guard prevents **overlapping** calls: a poll is skipped if a
+  request (initial load, manual refresh or a previous poll) is still in flight.
+- The **initial load** drives the `LoadingView` / `EmptyView` / `ErrorView`
+  states. Background polls update the list silently and keep the last good data
+  on a transient failure, so a brief network blip does not blank the feed.
+- Users can also refresh manually via **pull-to-refresh** (`RefreshIndicator`)
+  or the **Actualiser** button; both reuse the same initial-load path and
+  surface errors.
 
 ## Navigation: why a "Club" tab
 

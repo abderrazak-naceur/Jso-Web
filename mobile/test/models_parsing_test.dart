@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jso_mobile/data/models/article.dart';
 import 'package:jso_mobile/data/models/home_data.dart';
+import 'package:jso_mobile/data/models/live_blog_entry.dart';
 import 'package:jso_mobile/data/models/match.dart';
 import 'package:jso_mobile/data/models/media_asset.dart';
 import 'package:jso_mobile/data/models/sponsor.dart';
@@ -161,6 +162,52 @@ void main() {
       expect(home.recentMatches, isEmpty);
       expect(home.news, isEmpty);
       expect(home.content, isEmpty);
+    });
+  });
+
+  group('LiveBlogEntry.fromJson', () {
+    test('parses a full liveblog item (GET /api/matches/{id}/liveblog)', () {
+      final json = jsonDecode('''
+      {
+        "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        "matchId": "8f2c5f3a-1c2d-4b0e-9c11-1a2b3c4d5e6f",
+        "minute": 23,
+        "kind": "Goal",
+        "body": "BUUUT pour la JSO !",
+        "createdAt": "2026-03-15T18:53:00+01:00",
+        "isPinned": true
+      }
+      ''') as Map<String, dynamic>;
+
+      final entry = LiveBlogEntry.fromJson(json);
+
+      expect(entry.id, 'cccccccc-cccc-cccc-cccc-cccccccccccc');
+      expect(entry.matchId, '8f2c5f3a-1c2d-4b0e-9c11-1a2b3c4d5e6f');
+      expect(entry.minute, 23);
+      expect(entry.kind, 'Goal');
+      expect(entry.body, 'BUUUT pour la JSO !');
+      expect(entry.isPinned, isTrue);
+      expect(entry.createdAt.toUtc(), DateTime.utc(2026, 3, 15, 17, 53));
+    });
+
+    test('tolerates null minute and unknown kind', () {
+      final json = jsonDecode('''
+      {
+        "id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+        "matchId": "8f2c5f3a-1c2d-4b0e-9c11-1a2b3c4d5e6f",
+        "minute": null,
+        "kind": "SomethingNew",
+        "body": "Ambiance de folie au stade.",
+        "createdAt": "2026-03-15T18:10:00+01:00",
+        "isPinned": false
+      }
+      ''') as Map<String, dynamic>;
+
+      final entry = LiveBlogEntry.fromJson(json);
+
+      expect(entry.minute, isNull);
+      expect(entry.kind, 'SomethingNew');
+      expect(entry.isPinned, isFalse);
     });
   });
 
