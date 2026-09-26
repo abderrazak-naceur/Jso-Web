@@ -162,3 +162,22 @@ jobs:
             -H "Authorization: Bearer $token" \
             -F 'file=@/tmp/jso-invalid-image.txt;filename=forged.png;type=image/png')
           test "$invalid_status" = 400
+
+          # Sponsors: anonymous admin call rejected, then create + public visibility by placement.
+          sponsor_unauth_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            -X POST http://127.0.0.1:5080/api/admin/sponsors)
+          test "$sponsor_unauth_status" = 401
+
+          sponsor_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/sponsors \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d '{"name":"CI smoke sponsor","tier":"Partner","placement":"Footer","isActive":true,"priority":10,"startDate":"2020-01-01T00:00:00Z","endDate":"2035-01-01T00:00:00Z"}')
+          sponsor_id=$(jq -r '.id // empty' <<< "$sponsor_response")
+          test -n "$sponsor_id"
+
+          # Public endpoint returns it for its placement...
+          curl -fsS 'http://127.0.0.1:5080/api/sponsors?placement=Footer' \
+            | jq -e --arg id "$sponsor_id" 'any(.[]; .id == $id and .name == "CI smoke sponsor")'
+          # ...and does NOT return it for a different placement.
+          curl -fsS 'http://127.0.0.1:5080/api/sponsors?placement=Home' \
+            | jq -e --arg id "$sponsor_id" 'all(.[]; .id != $id)'
