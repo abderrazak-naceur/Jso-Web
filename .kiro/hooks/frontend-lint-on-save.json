@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Lint frontend on save",
+      "trigger": "PostFileSave",
+      "description": "Esegue oxlint sul frontend quando salvi un file JS/JSX, per intercettare subito errori di lint.",
+      "matcher": "frontend[\\\\/].*\\.(jsx?|tsx?)$",
+      "action": {
+        "type": "command",
+        "command": "cd frontend && npm run lint",
+        "timeout": 120
+      }
+    }
+  ]
+}

@@ -24,6 +24,8 @@ export const publicApi = {
   getMatchStats: (id, signal) => request('/matches/' + id + '/stats', signal),
   getNewsArticle: (slug, signal) => request('/news/' + encodeURIComponent(slug), signal),
   getSponsors: (placement, signal) => request('/sponsors' + (placement ? '?placement=' + encodeURIComponent(placement) : ''), signal),
+  getProducts: (category, signal) => request('/shop/products' + (category ? '?category=' + encodeURIComponent(category) : ''), signal),
+  getProduct: (slug, signal) => request('/shop/products/' + encodeURIComponent(slug), signal),
 }
 
 async function requestJson(path, method, body, token) {

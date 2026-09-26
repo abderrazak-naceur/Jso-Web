@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Pre-commit verification",
+      "trigger": "UserPromptSubmit",
+      "description": "Prima di committare, ricorda di eseguire le stesse verifiche della CI (build backend, build+lint frontend) per non rompere main.",
+      "action": {
+        "type": "agent",
+        "prompt": "Se questa richiesta comporta un commit o un push, prima di procedere esegui le stesse verifiche della CI e correggi eventuali errori: (1) `dotnet build backend/src/JSO.Api/JSO.Api.csproj -c Release`; (2) `cd frontend; npm run build; npm run lint`; (3) se hai toccato entità/DbContext, assicurati che la migration Postgres e lo snapshot siano allineati. Non committare se una di queste verifiche fallisce."
+      }
+    }
+  ]
+}

@@ -77,7 +77,7 @@ Questa sezione riflette lo **stato reale del codice** (non solo i piani), aggior
 | Partita online a pagamento (paywall + YouTube) | ⛔ | ⛔ | ⛔ | Provider pagamenti, `MatchAccessProduct/Purchase`, webhook firmato, endpoint `watch`, player |
 | Finanze del club (entrate/uscite, "soldi persi") | ⛔ | ⛔ | ⛔ | Intera area (vedi piano dedicato) |
 | Homepage Builder + Menu/Footer editabili | ⛔ | ⛔ | ⛔ | Intera area |
-| Shop / Merchandising | ⛔ | ⛔ | ⛔ | Intera area + pagamenti |
+| Shop / Merchandising | ⛔ | 🟡 | ⛔ | Dominio Product/Order, pagamenti, catalogo. Card vendite già predisposte nella dashboard (stato "boutique non attiva") |
 | Biglietteria & eventi | ⛔ | ⛔ | ⛔ | Intera area |
 | Membership / abbonamenti tifosi | ⛔ | ⛔ | ⛔ | Intera area |
 | Community & moderazione | ⛔ | ⛔ | ⛔ | Intera area |
