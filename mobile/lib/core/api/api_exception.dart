@@ -41,3 +41,19 @@ class ApiTimeoutException extends ApiException {
 class ApiParseException extends ApiException {
   const ApiParseException([super.message = 'Failed to parse response']);
 }
+
+/// Authentication failed (HTTP 401): wrong email/password or expired token.
+class InvalidCredentialsException extends ApiException {
+  const InvalidCredentialsException([super.message = 'Invalid credentials.']);
+}
+
+/// Registration conflicted with an existing account (HTTP 409).
+class EmailAlreadyExistsException extends ApiException {
+  const EmailAlreadyExistsException([super.message = 'Email already in use.']);
+}
+
+/// A request failed validation (HTTP 400) — carries the backend `{message}`
+/// so the UI can surface the server-provided text (e.g. password too short).
+class ValidationException extends ApiException {
+  const ValidationException([super.message = 'Validation failed.']);
+}
