@@ -24,6 +24,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<Product> Products => Set<Product>();
  public DbSet<Volunteer> Volunteers => Set<Volunteer>();
  public DbSet<MatchAssignment> MatchAssignments => Set<MatchAssignment>();
+ public DbSet<NewsletterSubscription> NewsletterSubscriptions => Set<NewsletterSubscription>();
  public DbSet<ArchiveItem> ArchiveItems => Set<ArchiveItem>();
  public DbSet<PlayerInjury> PlayerInjuries => Set<PlayerInjury>();
  protected override void OnModelCreating(ModelBuilder modelBuilder) {
@@ -52,6 +53,10 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<MatchAssignment>().HasIndex(x=>x.MatchId);
   modelBuilder.Entity<MatchAssignment>().HasIndex(x=>new{x.MatchId,x.VolunteerId,x.Task}).IsUnique();
   modelBuilder.Entity<MatchAssignment>().Property(x=>x.Status).HasDefaultValue("Proposed");
+  modelBuilder.Entity<NewsletterSubscription>().HasIndex(x=>x.Email).IsUnique();
+  modelBuilder.Entity<NewsletterSubscription>().HasIndex(x=>x.ConfirmToken).IsUnique();
+  modelBuilder.Entity<NewsletterSubscription>().HasIndex(x=>x.UnsubscribeToken).IsUnique();
+  modelBuilder.Entity<NewsletterSubscription>().Property(x=>x.Unsubscribed).HasDefaultValue(false);
   modelBuilder.Entity<ArchiveItem>().HasIndex(x=>new{x.IsPublished,x.Year,x.DisplayOrder});
   modelBuilder.Entity<ArchiveItem>().HasIndex(x=>x.Category);
   modelBuilder.Entity<PlayerInjury>().HasIndex(x=>new{x.PlayerId,x.Status});

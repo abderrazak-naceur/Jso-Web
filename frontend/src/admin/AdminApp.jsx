@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Landmark, HeartPulse } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
+import NewsletterModule from './Newsletter'
 import ArchiveModule from './Archive'
 import InjuriesModule from './Injuries'
 
@@ -320,6 +321,7 @@ function AdminDashboard({ user, onLogout }) {
     ['shop', 'Boutique', ShoppingBag, ['SuperAdmin','ClubAdmin','ShopManager']],
     ['analytics', 'Analytics joueurs', BarChart3, ['SuperAdmin','ClubAdmin','MatchManager']],
     ['volunteers', 'Bénévoles', ClipboardList, ['ClubAdmin','MatchManager']],
+    ['newsletter', 'Newsletter', Mail, ['Editor','CommunityManager']],
     ['archive', 'Musée · Archives', Landmark, ['SuperAdmin','ClubAdmin','Editor']],
     ['injuries', 'Infirmerie', HeartPulse, ['ClubAdmin','MatchManager']],
     ['settings', 'Configuration', Server, ['SuperAdmin','ClubAdmin']],
@@ -369,6 +371,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'shop' && <ShopModule onError={setError}/>}
         {section === 'analytics' && <AnalyticsModule onError={setError}/>}
         {section === 'volunteers' && <VolunteersModule onError={setError}/>}
+        {section === 'newsletter' && <NewsletterModule onError={setError}/>}
         {section === 'archive' && <ArchiveModule onError={setError}/>}
         {section === 'injuries' && <InjuriesModule onError={setError}/>}
         {section === 'settings' && <SettingsModule/>}
