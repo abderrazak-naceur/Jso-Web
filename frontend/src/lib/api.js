@@ -22,6 +22,7 @@ export const publicApi = {
   getMatchLineup: (id, signal) => request('/matches/' + id + '/lineup', signal),
   getMatchOfficials: (id, signal) => request('/matches/' + id + '/officials', signal),
   getMatchStats: (id, signal) => request('/matches/' + id + '/stats', signal),
+  getMatchLiveBlog: (id, signal) => request('/matches/' + id + '/liveblog', signal),
   getNewsArticle: (slug, signal) => request('/news/' + encodeURIComponent(slug), signal),
   getSponsors: (placement, signal) => request('/sponsors' + (placement ? '?placement=' + encodeURIComponent(placement) : ''), signal),
   getProducts: (category, signal) => request('/shop/products' + (category ? '?category=' + encodeURIComponent(category) : ''), signal),
