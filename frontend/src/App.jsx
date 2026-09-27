@@ -165,6 +165,7 @@ function FanAuth() {
       <AccountSettingsModal
         open={settingsOpen}
         user={user}
+        token={token}
         onClose={() => setSettingsOpen(false)}
         onOpenProfile={() => { setSettingsOpen(false); setProfileOpen(true) }}
         onOpenChangePassword={() => { setSettingsOpen(false); setPasswordOpen(true) }}
