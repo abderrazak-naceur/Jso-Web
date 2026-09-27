@@ -28,6 +28,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<ArchiveItem> ArchiveItems => Set<ArchiveItem>();
  public DbSet<PlayerInjury> PlayerInjuries => Set<PlayerInjury>();
  public DbSet<SupporterBrick> SupporterBricks => Set<SupporterBrick>();
+ public DbSet<ClassifiedAd> ClassifiedAds => Set<ClassifiedAd>();
  public DbSet<MatchdayChecklistTemplateItem> MatchdayChecklistTemplateItems => Set<MatchdayChecklistTemplateItem>();
  public DbSet<MatchdayChecklistItem> MatchdayChecklistItems => Set<MatchdayChecklistItem>();
  public DbSet<Facility> Facilities => Set<Facility>();
@@ -73,6 +74,11 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<SupporterBrick>().HasIndex(x=>new{x.Status,x.CreatedAt});
   modelBuilder.Entity<SupporterBrick>().Property(x=>x.Status).HasDefaultValue("Pending");
   modelBuilder.Entity<SupporterBrick>().Property(x=>x.Amount).HasPrecision(14,2);
+  modelBuilder.Entity<ClassifiedAd>().HasIndex(x=>new{x.Status,x.CreatedAt});
+  modelBuilder.Entity<ClassifiedAd>().HasIndex(x=>x.Category);
+  modelBuilder.Entity<ClassifiedAd>().Property(x=>x.Status).HasDefaultValue("Pending");
+  modelBuilder.Entity<ClassifiedAd>().Property(x=>x.ShowContact).HasDefaultValue(false);
+  modelBuilder.Entity<ClassifiedAd>().Property(x=>x.Price).HasPrecision(14,2);
   modelBuilder.Entity<MatchdayChecklistTemplateItem>().HasIndex(x=>new{x.IsActive,x.DisplayOrder});
   modelBuilder.Entity<MatchdayChecklistItem>().HasIndex(x=>x.MatchId);
   modelBuilder.Entity<MatchdayChecklistItem>().HasIndex(x=>new{x.MatchId,x.Label}).IsUnique();
