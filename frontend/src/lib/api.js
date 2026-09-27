@@ -52,6 +52,8 @@ export const accountApi = {
   register: (data) => requestJson('/account/register', 'POST', data),
   login: (data) => requestJson('/account/login', 'POST', data),
   me: (token) => requestJson('/account/me', 'GET', null, token),
+  updateProfile: (data, token) => requestJson('/account/me', 'PUT', data, token),
+  changePassword: (data, token) => requestJson('/account/change-password', 'POST', data, token),
 }
 
 // Public newsletter API (double opt-in). /subscribe returns a generic message and never

@@ -170,6 +170,38 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
             MemberSince = fan.CreatedAt
         });
     }
+
+    // Change password for the signed-in fan: verify the current password, then
+    // set a new one (same >= 12 chars rule as registration). The fan can only
+    // change their OWN password (identity read from the JWT).
+    [HttpPost("change-password")]
+    [Authorize(Roles = "Fan")]
+    [EnableRateLimiting("auth-login")]
+    public async Task<IActionResult> ChangePassword(FanChangePasswordRequest request, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
+            return BadRequest(new { message = "Current and new passwords are required." });
+        if (request.NewPassword.Length < 12)
+            return BadRequest(new { message = "New password must contain at least 12 characters." });
+
+        var sub = User.FindFirst("sub")?.Value
+            ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(sub, out var id)) return Unauthorized();
+
+        var fan = await db.FanUsers.SingleOrDefaultAsync(x => x.Id == id && x.IsActive, ct);
+        if (fan is null) return NotFound();
+
+        if (!PasswordHasher.Verify(request.CurrentPassword, fan.PasswordHash))
+            return BadRequest(new { message = "The current password is incorrect." });
+
+        fan.PasswordHash = PasswordHasher.Hash(request.NewPassword);
+        await db.SaveChangesAsync(ct);
+
+        await audit.LogAsync("CHANGE_PASSWORD", "FanUser", fan.Id.ToString(), fan.Id.ToString(), fan.Email,
+            HttpContext.Connection.RemoteIpAddress?.ToString(), ct: ct);
+
+        return Ok(new { message = "Password updated." });
+    }
 }
 
 // Retrocompatible profile update payload (idea A3): all fields optional so
@@ -180,3 +212,5 @@ public sealed record FanProfileUpdateRequest(
     string? DisplayName = null,
     DateOnly? BirthDate = null,
     bool? AnniversaryOptIn = null);
+
+public sealed record FanChangePasswordRequest(string CurrentPassword, string NewPassword);

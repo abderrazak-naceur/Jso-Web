@@ -149,9 +149,34 @@ class _AccountButton extends StatelessWidget {
             child: IconButton(
               tooltip: 'Mon compte',
               onPressed: shell?._openAccount,
-              icon: Icon(
-                authenticated ? Icons.account_circle : Icons.person_outline,
-                color: authenticated ? JsoColors.gold : JsoColors.white,
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    authenticated
+                        ? Icons.account_circle
+                        : Icons.account_circle_outlined,
+                    color: authenticated ? JsoColors.gold : JsoColors.white,
+                  ),
+                  // Small gold dot badge signalling an active session.
+                  if (authenticated)
+                    Positioned(
+                      top: -1,
+                      right: -1,
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: JsoColors.gold,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: JsoColors.navy2,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
