@@ -83,6 +83,78 @@ public sealed class AdminSponsorsController(JsoDbContext db, AuditService audit)
         return NoContent();
     }
 
+    // Generate (or regenerate) the sponsor's ActivationSlug for idea B5. The slug
+    // is a short, URL-safe, non-guessable token embedded in the physical QR code.
+    // Uniqueness is enforced by a filtered unique index; on the astronomically
+    // rare collision we retry. The write is audited (no PII beyond the actor).
+    [HttpPost("{id:guid}/activation-slug")]
+    public async Task<IActionResult> GenerateActivationSlug(Guid id, CancellationToken ct)
+    {
+        var sponsor = await db.Sponsors.FindAsync([id], ct);
+        if (sponsor is null) return NotFound();
+
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            var candidate = NewSlug();
+            var taken = await db.Sponsors.AsNoTracking()
+                .AnyAsync(x => x.ActivationSlug == candidate && x.Id != id, ct);
+            if (taken) continue;
+
+            sponsor.ActivationSlug = candidate;
+            await db.SaveChangesAsync(ct);
+            await audit.LogAsync("GENERATE_ACTIVATION_SLUG", "Sponsor", sponsor.Id.ToString(),
+                User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value,
+                HttpContext.Connection.RemoteIpAddress?.ToString(), new { sponsor.ActivationSlug }, ct);
+            return Ok(new { sponsor.Id, sponsor.ActivationSlug });
+        }
+
+        return Conflict(new { message = "Could not generate a unique activation slug, please retry." });
+    }
+
+    // Anonymous, aggregated activation report for idea B5. Returns the total
+    // scan count, a per-day breakdown and a per-channel breakdown. No individual
+    // scan rows or personal data are exposed because none are stored.
+    [HttpGet("{id:guid}/activations")]
+    public async Task<IActionResult> GetActivations(Guid id, CancellationToken ct)
+    {
+        var sponsor = await db.Sponsors.AsNoTracking()
+            .Where(x => x.Id == id)
+            .Select(x => new { x.Id, x.Name, x.ActivationSlug })
+            .FirstOrDefaultAsync(ct);
+        if (sponsor is null) return NotFound();
+
+        var scans = db.SponsorActivations.AsNoTracking().Where(x => x.SponsorId == id);
+
+        var total = await scans.CountAsync(ct);
+
+        var byDay = await scans
+            .GroupBy(x => x.ScannedAt.Date)
+            .Select(g => new { Date = g.Key, Count = g.Count() })
+            .OrderBy(x => x.Date)
+            .ToListAsync(ct);
+
+        var byChannel = await scans
+            .GroupBy(x => x.Channel)
+            .Select(g => new { Channel = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToListAsync(ct);
+
+        return Ok(new
+        {
+            sponsor.Id,
+            sponsor.Name,
+            sponsor.ActivationSlug,
+            total,
+            byDay = byDay.Select(x => new { date = x.Date.ToString("yyyy-MM-dd"), count = x.Count }),
+            byChannel = byChannel.Select(x => new { channel = x.Channel ?? "Inconnu", count = x.Count })
+        });
+    }
+
+    // URL-safe, non-guessable slug (~12 base64url chars) for the physical QR code.
+    private static string NewSlug() =>
+        Convert.ToBase64String(Guid.NewGuid().ToByteArray()[..9])
+            .Replace('+', '-').Replace('/', '_').TrimEnd('=');
+
     private static string? Validate(SponsorRequest r)
     {
         if (string.IsNullOrWhiteSpace(r.Name)) return "Name is required.";
