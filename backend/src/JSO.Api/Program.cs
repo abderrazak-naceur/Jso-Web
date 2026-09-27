@@ -1,3 +1,4 @@
+using JSO.Api;
 using JSO.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
@@ -123,6 +124,10 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.UseExceptionHandler();
+// Aggregate-only API usage metrics (idea E16). Placed right after the
+// exception handler so it observes the final status code of every request
+// (including auth failures) while never storing any personal data.
+app.UseMiddleware<ApiUsageMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors("Frontend");

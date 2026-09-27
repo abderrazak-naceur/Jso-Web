@@ -3,6 +3,7 @@ using System;
 using JSO.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace JSO.Infrastructure.Migrations.Postgres
 {
     [DbContext(typeof(JsoDbContext))]
-    partial class JsoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260927083814_AddApiUsageDaily")]
+    partial class AddApiUsageDaily
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,36 +24,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("JSO.Domain.AccountDeletionRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("CompletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("FanUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("RequestedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("Pending");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RequestedAt");
-
-                    b.HasIndex("FanUserId", "Status");
-
-                    b.ToTable("AccountDeletionRequests");
-                });
 
             modelBuilder.Entity("JSO.Domain.AdminUser", b =>
                 {
@@ -406,39 +379,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.ToTable("Competitions");
                 });
 
-            modelBuilder.Entity("JSO.Domain.DataExportRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("CompletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("FanUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("FileRef")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("RequestedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("Pending");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RequestedAt");
-
-                    b.HasIndex("FanUserId", "Status");
-
-                    b.ToTable("DataExportRequests");
-                });
-
             modelBuilder.Entity("JSO.Domain.Facility", b =>
                 {
                     b.Property<Guid>("Id")
@@ -505,14 +445,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("AnniversaryOptIn")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<DateOnly?>("BirthDate")
-                        .HasColumnType("date");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -538,8 +470,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AnniversaryOptIn");
 
                     b.HasIndex("Email")
                         .IsUnique();

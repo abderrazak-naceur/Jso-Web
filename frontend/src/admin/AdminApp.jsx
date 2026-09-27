@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, PartyPopper } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
@@ -13,6 +13,8 @@ import FacilitiesModule from './Facilities'
 import ScoutingModule from './Scouting'
 import FeatureFlagsModule from './FeatureFlags'
 import AnniversariesModule from './Anniversaries'
+import ApiUsageModule from './ApiUsage'
+import GdprModule from './Gdpr'
 
 async function api(path, options = {}) {
   const token = localStorage.getItem('jso_admin_token')
@@ -340,6 +342,8 @@ function AdminDashboard({ user, onLogout }) {
     ['facilities', 'Installations', CalendarRange, ['ClubAdmin','MatchManager']],
     ['scouting', 'Scouting', ScanSearch, ['ClubAdmin','MatchManager']],
     ['featureflags', 'Feature flags', Flag, ['SuperAdmin','ClubAdmin']],
+    ['apiusage', 'Utilisation API', Gauge, ['SuperAdmin','ClubAdmin']],
+    ['gdpr', 'RGPD', ShieldAlert, ['SuperAdmin','ClubAdmin']],
     ['settings', 'Configuration', Server, ['SuperAdmin','ClubAdmin']],
   ]
   const role = user.role ?? user.Role
@@ -398,6 +402,8 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'facilities' && <FacilitiesModule onError={setError}/>}
         {section === 'scouting' && <ScoutingModule onError={setError}/>}
         {section === 'featureflags' && <FeatureFlagsModule onError={setError}/>}
+        {section === 'apiusage' && <ApiUsageModule onError={setError}/>}
+        {section === 'gdpr' && <GdprModule onError={setError}/>}
         {section === 'settings' && <SettingsModule/>}
       </section>
     </div>
