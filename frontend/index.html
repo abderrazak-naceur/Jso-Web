@@ -10,6 +10,20 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Apply saved accessibility preferences (idea G21) before React hydrates
+      // to avoid a flash of the default (non-accessible) appearance.
+      (function () {
+        try {
+          var prefs = JSON.parse(localStorage.getItem('jso_a11y_prefs') || 'null') || {};
+          var root = document.documentElement;
+          if (prefs.highContrast === true) root.classList.add('jso-high-contrast');
+          if (prefs.reduceMotion === true) root.classList.add('jso-reduce-motion');
+          var sizes = ['normal', 'large', 'xlarge'];
+          root.setAttribute('data-jso-text-size', sizes.indexOf(prefs.textSize) >= 0 ? prefs.textSize : 'normal');
+        } catch (e) { /* storage unavailable: fall back to defaults */ }
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

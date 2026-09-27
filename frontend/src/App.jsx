@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { publicApi, accountApi, newsletterApi } from './lib/api'
 import { API_BASE_URL } from './lib/apiConfig'
+import AccessibilityPanel from './AccessibilityPanel'
 
 const navigation = [
   ['Accueil', 'home'],
@@ -323,7 +324,8 @@ function App() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-jso-paper text-jso-ink">
+    <main id="main-content" tabIndex={-1} className="min-h-screen overflow-hidden bg-jso-paper text-jso-ink">
+      <a href="#main-content" className="jso-skip-link">Aller au contenu principal</a>
       <header className="sticky top-0 z-50 border-b border-white/10 bg-jso-navy/95 text-white backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
           <button onClick={() => goTo('Accueil', 'home')} className="flex items-center gap-3 text-left">
@@ -479,6 +481,8 @@ function App() {
       </section>}
 
       <footer className="bg-jso-navy px-5 py-10 text-white lg:px-8"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 lg:flex-row lg:items-center"><div><div className="flex items-center gap-3"><img src="/JSO-crest-regenerated.png" alt="Stemma JSO" className="h-12 w-10 object-contain" /><div className="text-xl font-black">JSO · Jeunesse Sportive de Oudhref</div></div><p className="mt-1 text-sm text-white/60">Plus qu’un club. Une identité.</p></div><NewsletterSignup /><p className="text-sm text-white/50">© 2026 JSO. Tous droits réservés.</p></div></footer>
+
+      <AccessibilityPanel />
 
       {demoOpen && <div className="fixed inset-0 z-[60] grid place-items-center bg-jso-navy/60 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Présentation JSO"><div className="w-full max-w-lg rounded-[2rem] bg-white p-8 shadow-2xl"><div className="flex items-start justify-between gap-5"><div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">JSO DIGITAL</p><h2 className="mt-3 text-3xl font-black">Bienvenue dans la nouvelle maison du club.</h2></div><button aria-label="Fermer" onClick={() => setDemoOpen(false)} className="rounded-full border border-slate-200 p-2"><X size={18} /></button></div><p className="mt-4 leading-7 text-slate-600">Cette interface est une première version visuelle. Les données réelles, les comptes administrateur, les résultats et la boutique seront connectés dans les prochaines étapes.</p><button onClick={() => setDemoOpen(false)} className="mt-7 rounded-full bg-jso-navy px-5 py-3 font-extrabold text-white">Continuer</button></div></div>}
     </main>
