@@ -73,6 +73,48 @@ jobs:
           Database__Provider: postgres
           ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=JSO;Username=jso;Password=jso_ci_password
         run: dotnet ef database update --project src/JSO.Infrastructure --startup-project src/JSO.Infrastructure --configuration Release --no-build
+      - name: Validate applied schema
+        env:
+          PGHOST: localhost
+          PGPORT: "5432"
+          PGDATABASE: JSO
+          PGUSER: jso
+          PGPASSWORD: jso_ci_password
+        run: |
+          set -euo pipefail
+
+          # Number of checked-in PostgreSQL migrations that should have been applied.
+          expected_migrations=$(ls backend/src/JSO.Infrastructure/Migrations/Postgres/*.cs \
+            | grep -v -E 'Designer\.cs$|ModelSnapshot\.cs$' | wc -l | tr -d ' ')
+          echo "Expected migrations: $expected_migrations"
+
+          applied_migrations=$(psql -tA -c \
+            'SELECT COUNT(*) FROM "__EFMigrationsHistory";')
+          echo "Applied migrations:  $applied_migrations"
+          test "$applied_migrations" = "$expected_migrations"
+
+          # Every checked-in migration id must be present in the history table.
+          for f in backend/src/JSO.Infrastructure/Migrations/Postgres/*.cs; do
+            case "$f" in
+              *Designer.cs|*ModelSnapshot.cs) continue ;;
+            esac
+            id=$(basename "$f" .cs)
+            psql -tA -c "SELECT 1 FROM \"__EFMigrationsHistory\" WHERE \"MigrationId\" = '$id';" \
+              | grep -q 1 || { echo "Missing migration in history: $id"; exit 1; }
+          done
+
+          # Key tables that must exist after the full migration set is applied.
+          for table in AdminUsers Clubs Seasons Competitions Teams Players Matches \
+            MatchEvents MatchLineups Sponsors FanUsers Products LiveBlogEntries \
+            Volunteers MatchAssignments PlayerInjuries ArchiveItems \
+            NewsletterSubscriptions MatchdayChecklistItems MatchdayChecklistTemplateItems \
+            SupporterBricks ScoutingNotes Facilities FacilityBookings MaintenanceLogs \
+            ClassifiedAds; do
+            psql -tA -c "SELECT to_regclass('public.\"$table\"');" \
+              | grep -q "$table" || { echo "Missing expected table: $table"; exit 1; }
+          done
+
+          echo "Schema validation passed: $applied_migrations migrations applied, all key tables present."
       - name: Smoke test API and production admin bootstrap
         working-directory: backend
         env:
