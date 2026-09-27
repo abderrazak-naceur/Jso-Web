@@ -43,6 +43,9 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<DataExportRequest> DataExportRequests => Set<DataExportRequest>();
  public DbSet<AccountDeletionRequest> AccountDeletionRequests => Set<AccountDeletionRequest>();
  public DbSet<CommunityProgram> CommunityPrograms => Set<CommunityProgram>();
+ public DbSet<ClubDocument> ClubDocuments => Set<ClubDocument>();
+ public DbSet<FaqEntry> FaqEntries => Set<FaqEntry>();
+ public DbSet<ClubEvent> ClubEvents => Set<ClubEvent>();
  protected override void OnModelCreating(ModelBuilder modelBuilder) {
   modelBuilder.Entity<Club>().HasIndex(x=>x.ShortName).IsUnique();
   modelBuilder.Entity<Season>().HasIndex(x=>x.Name).IsUnique();
@@ -120,6 +123,10 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<AccountDeletionRequest>().Property(x=>x.Status).HasDefaultValue("Pending");
   modelBuilder.Entity<CommunityProgram>().HasIndex(x=>new{x.IsPublished,x.StartDate});
   modelBuilder.Entity<CommunityProgram>().Property(x=>x.IsPublished).HasDefaultValue(false);
+  modelBuilder.Entity<ClubDocument>().HasIndex(x=>new{x.IsPublished,x.Category,x.CreatedAt});
+  modelBuilder.Entity<FaqEntry>().HasIndex(x=>new{x.IsPublished,x.SortOrder});
+  modelBuilder.Entity<ClubEvent>().HasIndex(x=>x.Slug).IsUnique();
+  modelBuilder.Entity<ClubEvent>().HasIndex(x=>new{x.IsPublished,x.StartAt});
   modelBuilder.Entity<Club>().HasData(new Club { Id=Guid.Parse("8d8c1ef6-1c9d-4d1c-9a0f-8a5b6b5c1001"), Name="Jeunesse Sportive de Oudhref", ShortName="JSO", Country="Tunisie", City="Oudhref" });
  }
 }

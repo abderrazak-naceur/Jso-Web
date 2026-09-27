@@ -3,6 +3,7 @@ using System;
 using JSO.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace JSO.Infrastructure.Migrations.Postgres
 {
     [DbContext(typeof(JsoDbContext))]
-    partial class JsoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260927104633_AddClubContentFeatures")]
+    partial class AddClubContentFeatures
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1158,92 +1161,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .IsUnique();
 
                     b.ToTable("NewsletterSubscriptions");
-                });
-
-            modelBuilder.Entity("JSO.Domain.Order", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("CustomerEmail")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CustomerName")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("FanUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("PaidAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ProviderRef")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("Total")
-                        .HasPrecision(14, 2)
-                        .HasColumnType("numeric(14,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProviderRef")
-                        .IsUnique()
-                        .HasFilter("\"ProviderRef\" IS NOT NULL");
-
-                    b.HasIndex("Status");
-
-                    b.HasIndex("FanUserId", "CreatedAt");
-
-                    b.ToTable("Orders");
-                });
-
-            modelBuilder.Entity("JSO.Domain.OrderItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("LineTotal")
-                        .HasPrecision(14, 2)
-                        .HasColumnType("numeric(14,2)");
-
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ProductName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasPrecision(14, 2)
-                        .HasColumnType("numeric(14,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderId");
-
-                    b.ToTable("OrderItems");
                 });
 
             modelBuilder.Entity("JSO.Domain.Player", b =>
