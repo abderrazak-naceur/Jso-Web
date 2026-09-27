@@ -25,6 +25,8 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<Product> Products => Set<Product>();
  public DbSet<Order> Orders => Set<Order>();
  public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+ public DbSet<TicketType> TicketTypes => Set<TicketType>();
+ public DbSet<TicketOrder> TicketOrders => Set<TicketOrder>();
  public DbSet<Volunteer> Volunteers => Set<Volunteer>();
  public DbSet<MatchAssignment> MatchAssignments => Set<MatchAssignment>();
  public DbSet<NewsletterSubscription> NewsletterSubscriptions => Set<NewsletterSubscription>();
@@ -80,6 +82,12 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<Order>().Property(x=>x.Total).HasPrecision(14,2);
   modelBuilder.Entity<OrderItem>().HasIndex(x=>x.OrderId);
   modelBuilder.Entity<OrderItem>().Property(x=>x.UnitPrice).HasPrecision(14,2);
+  modelBuilder.Entity<TicketType>().HasIndex(x=>new{x.MatchId,x.IsActive});
+  modelBuilder.Entity<TicketType>().Property(x=>x.Price).HasPrecision(14,2);
+  modelBuilder.Entity<TicketOrder>().HasIndex(x=>new{x.FanUserId,x.CreatedAt});
+  modelBuilder.Entity<TicketOrder>().HasIndex(x=>new{x.MatchId,x.Status});
+  modelBuilder.Entity<TicketOrder>().Property(x=>x.UnitPrice).HasPrecision(14,2);
+  modelBuilder.Entity<TicketOrder>().Property(x=>x.Total).HasPrecision(14,2);
   modelBuilder.Entity<OrderItem>().Property(x=>x.LineTotal).HasPrecision(14,2);
   modelBuilder.Entity<Volunteer>().HasIndex(x=>new{x.IsActive,x.Role});
   modelBuilder.Entity<MatchAssignment>().HasIndex(x=>x.MatchId);
