@@ -1,629 +1,150 @@
-import { useEffect, useState } from 'react'
-import {
-  ArrowUpRight,
-  CalendarDays,
-  ChevronRight,
-  Download,
-  FileText,
-  LogIn,
-  Menu,
-  Shield,
-  ShoppingBag,
-  Smartphone,
-  Trophy,
-  Users,
-  X,
-} from 'lucide-react'
-import { publicApi, newsletterApi } from './lib/api'
-import { API_BASE_URL } from './lib/apiConfig'
+import { useState } from 'react'
 import AccessibilityPanel from './AccessibilityPanel'
-import { useFanSession } from './features/account/useFanSession'
-import UserMenu from './features/account/UserMenu'
-import AuthModal from './features/account/AuthModal'
-import ProfileModal from './features/account/ProfileModal'
 import AccountSettingsModal from './features/account/AccountSettingsModal'
+import AuthModal from './features/account/AuthModal'
 import ChangePasswordModal from './features/account/ChangePasswordModal'
-import { useCart } from './features/shop/useCart'
+import ProfileModal from './features/account/ProfileModal'
+import { useFanSession } from './features/account/useFanSession'
+import {
+  AgendaSection,
+  ArchiveSection,
+  ClubSection,
+  CommunitySection,
+  InfoSection,
+  MediaSection,
+  MobileSection,
+  ShopSection,
+  SponsorsSection,
+  TeamSection,
+} from './features/home/HomeContentSections'
+import HeroSection from './features/home/HeroSection'
+import MatchdaySection from './features/home/MatchdaySection'
+import NewsSection from './features/home/NewsSection'
+import { useHomeData } from './features/home/useHomeData'
+import MatchCenterModal from './features/matches/MatchCenterModal'
+import ArticleModal from './features/news/ArticleModal'
 import CartDrawer from './features/shop/CartDrawer'
+import { useCart } from './features/shop/useCart'
+import SiteFooter from './features/site/SiteFooter'
+import SiteHeader from './features/site/SiteHeader'
+import { visibleSections } from './features/site/navigation'
+import { useActiveSection } from './features/site/useActiveSection'
 
-const navigation = [
-  ['Accueil', 'home'],
-  ['Le Club', 'club'],
-  ['Équipe', 'team'],
-  ['Matchs', 'matches'],
-  ['Actualités', 'news'],
-  ['Médias', 'media'],
-  ['Agenda', 'events'],
-  ['App mobile', 'mobile'],
-  ['Boutique', 'shop'],
-  ['FAQ', 'faq'],
-]
+function App() {
+  const data = useHomeData()
+  const cart = useCart()
+  const fan = useFanSession()
 
-// Compact public newsletter signup (idea A4). Double opt-in: the API only sends a generic
-// confirmation message and never reveals whether the address already exists, so the UI shows
-// the same success text in every case.
-function NewsletterSignup() {
-  const [email, setEmail] = useState('')
-  const [status, setStatus] = useState('idle') // idle | loading | done | error
-  const [message, setMessage] = useState('')
-
-  async function submit(event) {
-    event.preventDefault()
-    if (status === 'loading') return
-    setStatus('loading')
-    try {
-      const result = await newsletterApi.subscribe(email.trim())
-      setMessage(result?.message || 'Vérifiez votre boîte mail pour confirmer votre inscription.')
-      setStatus('done')
-      setEmail('')
-    } catch {
-      setMessage('Inscription impossible pour le moment. Réessayez plus tard.')
-      setStatus('error')
-    }
-  }
-
-  return (
-    <form onSubmit={submit} className="w-full sm:w-auto">
-      <p className="text-sm font-black">Newsletter du club</p>
-      <p className="mt-1 text-xs text-white/50">Résultats, prochains matchs et actualités. Double confirmation, désinscription à tout moment.</p>
-      {status === 'done'
-        ? <p className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-sm text-white/80">{message}</p>
-        : <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="votre@email.com"
-              aria-label="Adresse e-mail"
-              className="rounded-xl px-3 py-2.5 text-sm text-jso-ink outline-none sm:w-64"
-            />
-            <button type="submit" disabled={status === 'loading'} className="rounded-xl bg-jso-gold px-4 py-2.5 text-sm font-extrabold text-jso-navy disabled:opacity-60">
-              {status === 'loading' ? 'Envoi…' : "S'inscrire"}
-            </button>
-          </div>}
-      {status === 'error' && <p className="mt-2 text-xs text-red-300">{message}</p>}
-    </form>
-  )
-}
-
-function pick(object, ...keys) {
-  for (const key of keys) {
-    if (object?.[key] !== undefined && object?.[key] !== null) return object[key]
-  }
-  return undefined
-}
-
-function normalizeMatch(match) {
-  return {
-    Id: pick(match, 'Id', 'id'),
-    OpponentName: pick(match, 'OpponentName', 'opponentName') || 'TBA',
-    KickoffAt: pick(match, 'KickoffAt', 'kickoffAt'),
-    Venue: pick(match, 'Venue', 'venue'),
-    IsHome: pick(match, 'IsHome', 'isHome'),
-    HomeScore: pick(match, 'HomeScore', 'homeScore'),
-    AwayScore: pick(match, 'AwayScore', 'awayScore'),
-    Status: pick(match, 'Status', 'status') || 'Scheduled',
-  }
-}
-
-function normalizePlayer(player) {
-  return {
-    Id: pick(player, 'Id', 'id'),
-    FirstName: pick(player, 'FirstName', 'firstName') || '',
-    LastName: pick(player, 'LastName', 'lastName') || '',
-    ShirtNumber: pick(player, 'ShirtNumber', 'shirtNumber'),
-    Position: pick(player, 'Position', 'position'),
-  }
-}
-
-function SectionTitle({ eyebrow, title, muted }) {
-  return (
-    <div>
-      <p className="text-xs font-extrabold tracking-[0.24em] text-jso-blue">{eyebrow}</p>
-      <h2 className="mt-3 text-4xl font-black tracking-tight text-jso-ink sm:text-6xl">
-        {title} <span className="text-slate-400">{muted}</span>
-      </h2>
-    </div>
-  )
-}
-
-function FanAuth() {
-  const { user, token, signIn, signOut, updateUser } = useFanSession()
+  const [selectedMatch, setSelectedMatch] = useState(null)
+  const [selectedArticle, setSelectedArticle] = useState(null)
+  const [cartOpen, setCartOpen] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
   const [authMode, setAuthMode] = useState('login')
   const [profileOpen, setProfileOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [passwordOpen, setPasswordOpen] = useState(false)
 
-  function openAuth(mode) { setAuthMode(mode); setAuthOpen(true) }
+  // Data-driven sections disappear from both the page and the navigation when
+  // empty. Core sections remain visible with an explicit loading/empty state.
+  const sections = visibleSections({
+    community: data.community.length > 0,
+    archive: data.archive.length > 0,
+    sponsors: data.sponsors.length > 0,
+  })
+  const sectionById = Object.fromEntries(sections.map((section) => [section.id, section]))
+  const activeSection = useActiveSection(['home', ...sections.map((section) => section.id)]) || 'home'
 
-  return (
-    <>
-      {user ? (
-        <div className="hidden sm:block">
-          <UserMenu
-            user={user}
-            onOpenProfile={() => setProfileOpen(true)}
-            onOpenSettings={() => setSettingsOpen(true)}
-            onLogout={signOut}
-          />
-        </div>
-      ) : (
-        <button onClick={() => openAuth('login')} className="hidden items-center gap-2 rounded-full border border-white/25 px-5 py-3 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-white/10 sm:inline-flex"><LogIn size={16} /> S’inscrire / Se connecter</button>
-      )}
-
-      <AuthModal
-        open={authOpen}
-        initialMode={authMode}
-        onClose={() => setAuthOpen(false)}
-        onAuthenticated={(result) => { signIn(result); setAuthOpen(false) }}
-      />
-      <ProfileModal
-        open={profileOpen}
-        token={token}
-        user={user}
-        onClose={() => setProfileOpen(false)}
-        onUpdated={(updated) => { updateUser(updated); setProfileOpen(false) }}
-      />
-      <AccountSettingsModal
-        open={settingsOpen}
-        user={user}
-        token={token}
-        onClose={() => setSettingsOpen(false)}
-        onOpenProfile={() => { setSettingsOpen(false); setProfileOpen(true) }}
-        onOpenChangePassword={() => { setSettingsOpen(false); setPasswordOpen(true) }}
-      />
-      <ChangePasswordModal
-        open={passwordOpen}
-        token={token}
-        onClose={() => setPasswordOpen(false)}
-      />
-    </>
-  )
-}
-
-
-function App() {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [active, setActive] = useState('Accueil')
-  const [demoOpen, setDemoOpen] = useState(false)
-  const [selectedMatch, setSelectedMatch] = useState(null)
-  const [matchEvents, setMatchEvents] = useState([])
-  const [matchLoading, setMatchLoading] = useState(false)
-  const [club, setClub] = useState(null)
-  const [matches, setMatches] = useState([])
-  const [articles, setArticles] = useState([])
-  const [newsState, setNewsState] = useState('loading')
-  const [teamPlayers, setTeamPlayers] = useState([])
-  const [content, setContent] = useState({})
-  const [apiState, setApiState] = useState('loading')
-
-  const [media, setMedia] = useState([])
-  const [sponsors, setSponsors] = useState([])
-  const [products, setProducts] = useState([])
-  const [events, setEvents] = useState([])
-  const [documents, setDocuments] = useState([])
-  const [faq, setFaq] = useState([])
-  const [archive, setArchive] = useState([])
-  const [community, setCommunity] = useState([])
-  const [cartOpen, setCartOpen] = useState(false)
-  const [demoLoginHint, setDemoLoginHint] = useState(false)
-  const cart = useCart()
-
-  useEffect(() => {
-    const controller = new AbortController()
-    publicApi.getProducts(undefined, controller.signal)
-      .then((list) => setProducts(list || []))
-      .catch((error) => { if (error.name !== 'AbortError') setProducts([]) })
-    publicApi.getEvents(controller.signal)
-      .then((list) => setEvents(list || []))
-      .catch((error) => { if (error.name !== 'AbortError') setEvents([]) })
-    publicApi.getDocuments(undefined, controller.signal)
-      .then((list) => setDocuments(list || []))
-      .catch((error) => { if (error.name !== 'AbortError') setDocuments([]) })
-    publicApi.getFaq(undefined, controller.signal)
-      .then((list) => setFaq(list || []))
-      .catch((error) => { if (error.name !== 'AbortError') setFaq([]) })
-    publicApi.getArchive(controller.signal)
-      .then((list) => setArchive(list || []))
-      .catch((error) => { if (error.name !== 'AbortError') setArchive([]) })
-    publicApi.getCommunityPrograms(controller.signal)
-      .then((list) => setCommunity(list || []))
-      .catch((error) => { if (error.name !== 'AbortError') setCommunity([]) })
-    return () => controller.abort()
-  }, [])
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    Promise.allSettled([
-      publicApi.getHome(controller.signal),
-      publicApi.getMedia(controller.signal),
-      publicApi.getTeams(controller.signal),
-    ]).then(async ([homeResult, mediaResult, teamsResult]) => {
-      if (homeResult.status === 'fulfilled') {
-        const home = homeResult.value
-        setClub(home.club || null)
-        setContent(home.content || {})
-        setMatches([
-          ...(home.nextMatch ? [normalizeMatch(home.nextMatch)] : []),
-          ...(home.recentMatches || []).map(normalizeMatch),
-        ])
-        const news = (home.news || []).map((item) => ({
-          category: pick(item, 'Status', 'status') || 'CLUB',
-          title: pick(item, 'Title', 'title') || 'Actualité JSO',
-          text: pick(item, 'Excerpt', 'excerpt') || '',
-          slug: pick(item, 'Slug', 'slug'),
-        }))
-        setArticles(news)
-        setNewsState('ready')
-      } else {
-        setNewsState('offline')
-      }
-
-      if (mediaResult.status === 'fulfilled') {
-        setMedia(mediaResult.value || [])
-      }
-
-      if (teamsResult.status === 'fulfilled') {
-        const teams = teamsResult.value || []
-        const firstTeam = teams[0]
-        const teamId = pick(firstTeam, 'Id', 'id')
-        if (teamId) {
-          try {
-            const players = await publicApi.getTeamPlayers(teamId, controller.signal)
-            setTeamPlayers((players || []).map(normalizePlayer))
-          } catch (error) {
-            if (error.name !== 'AbortError') setTeamPlayers([])
-          }
-        }
-      }
-
-      if (homeResult.status === 'fulfilled' || mediaResult.status === 'fulfilled' || teamsResult.status === 'fulfilled') {
-        setApiState('ready')
-      } else {
-        setApiState('offline')
-      }
-    }).catch((error) => {
-      if (error.name !== 'AbortError') setApiState('offline')
-    })
-
-    return () => controller.abort()
-  }, [])
-
-  useEffect(() => {
-    const controller = new AbortController()
-    publicApi.getSponsors('Footer', controller.signal)
-      .then((list) => setSponsors(list || []))
-      .catch((error) => { if (error.name !== 'AbortError') setSponsors([]) })
-    return () => controller.abort()
-  }, [])
-
-  async function openMatch(match) {
-    setSelectedMatch(match)
-    setMatchEvents([])
-    setMatchLoading(true)
-    try {
-      const [details, events, lineup, officials, stats, liveblog] = await Promise.all([
-        publicApi.getMatch(match.Id),
-        publicApi.getMatchEvents(match.Id),
-        publicApi.getMatchLineup(match.Id),
-        publicApi.getMatchOfficials(match.Id),
-        publicApi.getMatchStats(match.Id),
-        publicApi.getMatchLiveBlog(match.Id).catch(() => []),
-      ])
-      const normalizedDetails = normalizeMatch(details)
-      setSelectedMatch({ ...match, ...normalizedDetails, lineup: lineup || [], officials: officials || [], stats: stats || [], liveblog: liveblog || [] })
-      setMatchEvents((events || []).map((event) => ({
-        ...event,
-        Id: pick(event, 'Id', 'id'),
-        Minute: pick(event, 'Minute', 'minute'),
-        Type: pick(event, 'Type', 'type'),
-        PlayerName: pick(event, 'PlayerName', 'playerName'),
-        Notes: pick(event, 'Notes', 'notes'),
-      })))
-    } catch {
-      setSelectedMatch(match)
-      setMatchEvents([])
-    } finally {
-      setMatchLoading(false)
-    }
-  }
-
-  const goTo = (label, id) => {
-    setActive(label)
-    setMenuOpen(false)
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+  function openAuth(mode) {
+    setAuthMode(mode)
+    setAuthOpen(true)
   }
 
   return (
-    <main id="main-content" tabIndex={-1} className="min-h-screen overflow-hidden bg-jso-paper text-jso-ink">
+    <div className="min-h-screen bg-jso-paper text-jso-ink">
       <a href="#main-content" className="jso-skip-link">Aller au contenu principal</a>
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-jso-navy/95 text-white backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
-          <button onClick={() => goTo('Accueil', 'home')} className="flex items-center gap-3 text-left">
-            <span className="grid h-12 w-12 place-items-center"><img src="/JSO-crest-regenerated.png" alt="Stemma JSO" className="h-12 w-12 object-contain" /></span>
-            <span className="hidden sm:block">
-              <span className="block text-base font-black tracking-tight">Jeunesse Sportive</span>
-              <span className="block text-[10px] font-bold tracking-[0.22em] text-white/55">DE OUDHREF · TUNISIE</span>
-            </span>
-          </button>
 
-          <nav className="hidden items-center gap-6 lg:flex" aria-label="Navigation principale">
-            {navigation.map(([label, id]) => (
-              <button key={id} onClick={() => goTo(label, id)} className={`text-sm font-bold transition ${active === label ? 'text-jso-gold' : 'text-white/70 hover:text-white'}`}>
-                {label}
-              </button>
-            ))}
-          </nav>
+      <SiteHeader
+        sections={sections}
+        activeId={activeSection}
+        cartCount={cart.count}
+        onOpenCart={() => setCartOpen(true)}
+        user={fan.user}
+        onLogin={() => openAuth('login')}
+        onRegister={() => openAuth('register')}
+        onOpenProfile={() => setProfileOpen(true)}
+        onOpenSettings={() => setSettingsOpen(true)}
+        onLogout={fan.signOut}
+      />
 
-          <div className="flex items-center gap-2">
-            <button onClick={() => goTo('Matchs', 'matches')} className="hidden rounded-full bg-jso-gold px-5 py-3 text-sm font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-white sm:block">Match Center ↗</button>
-            <button onClick={() => setCartOpen(true)} className="relative rounded-full border border-white/25 p-3 text-white transition hover:bg-white/10" aria-label="Ouvrir le panier">
-              <ShoppingBag size={18} />
-              {cart.count > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-jso-gold px-1 text-[11px] font-black text-jso-navy">{cart.count}</span>}
-            </button>
-            <FanAuth />
-            <a href="/admin" className="hidden items-center gap-2 rounded-full border border-white/25 px-5 py-3 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-white/10 sm:inline-flex"><Shield size={16} /> Admin</a>
-            <button aria-label="Ouvrir le menu" onClick={() => setMenuOpen((value) => !value)} className="rounded-full border border-white/20 p-3 lg:hidden">
-              {menuOpen ? <X size={19} /> : <Menu size={19} />}
-            </button>
-          </div>
-        </div>
+      <main id="main-content" tabIndex={-1}>
+        <HeroSection content={data.content} club={data.club} nextMatch={data.nextMatch} onOpenMatch={setSelectedMatch} />
+        <MatchdaySection section={sectionById.matches} status={data.status} nextMatch={data.nextMatch} recentMatches={data.recentMatches} onOpenMatch={setSelectedMatch} />
+        <NewsSection section={sectionById.news} status={data.status} articles={data.news} content={data.content} onOpenArticle={setSelectedArticle} />
+        <TeamSection section={sectionById.team} players={data.players} />
+        <ClubSection section={sectionById.club} club={data.club} content={data.content} />
+        <ShopSection section={sectionById.shop} products={data.products} cart={cart} onOpenCart={() => setCartOpen(true)} />
+        <MediaSection section={sectionById.media} media={data.media} />
+        <AgendaSection section={sectionById.events} events={data.events} />
+        {sectionById.community && <CommunitySection section={sectionById.community} programs={data.community} />}
+        {sectionById.archive && <ArchiveSection section={sectionById.archive} archive={data.archive} />}
+        <MobileSection section={sectionById.mobile} />
+        {sectionById.sponsors && <SponsorsSection section={sectionById.sponsors} sponsors={data.sponsors} />}
+        <InfoSection section={sectionById.infos} club={data.club} documents={data.documents} faq={data.faq} />
+      </main>
 
-        {menuOpen && (
-          <div className="border-t border-white/10 bg-jso-navy px-5 py-3 lg:hidden">
-            {navigation.map(([label, id]) => (
-              <button key={id} onClick={() => goTo(label, id)} className="block w-full py-3 text-left font-bold text-white/85">{label}</button>
-            ))}
-            <a href="/admin" className="flex items-center gap-2 border-t border-white/10 py-3 font-bold text-jso-gold"><Shield size={16} /> Admin</a>
-          </div>
-        )}
-      </header>
+      <SiteFooter sections={sections} />
 
-      <section id="home" className="jso-hero relative isolate overflow-hidden bg-jso-navy text-white">
-        <div className="absolute inset-0 bg-gradient-to-r from-jso-navy via-jso-navy/90 to-jso-navy/20" aria-hidden="true" />
-        <div className="relative mx-auto grid min-h-[650px] max-w-7xl items-center gap-10 px-5 py-16 lg:grid-cols-[1fr_0.8fr] lg:px-8 lg:py-24">
-          <div className="max-w-2xl">
-            <div className="mb-7 inline-flex items-center gap-3 border-l-4 border-jso-gold bg-white/10 px-4 py-2 text-xs font-extrabold tracking-[0.18em] text-jso-gold">JEUNESSE SPORTIVE DE OUDHREF</div>
-            <h1 className="text-5xl font-black leading-[0.95] tracking-[-0.055em] sm:text-7xl xl:text-8xl">{content.hero_title || 'Une ville.'}<br /><span className="text-jso-gold">{content.hero_highlight || 'Une passion.'}</span></h1>
-            <p className="mt-7 max-w-xl text-lg leading-8 text-white/75">{content.hero_description || pick(club, 'Description', 'description') || 'La maison digitale de la Jeunesse Sportive de Oudhref. Tous les matchs, les actualités et les émotions du club au même endroit.'}</p>
-            <div className="mt-9 flex flex-wrap gap-3">
-              <button onClick={() => goTo('Matchs', 'matches')} className="rounded-full bg-jso-gold px-6 py-4 font-extrabold text-jso-navy transition hover:-translate-y-1 hover:bg-white">Voir les matchs <ArrowUpRight className="ml-2 inline" size={18} /></button>
-              <button onClick={() => goTo('App mobile', 'mobile')} className="rounded-full border border-white/35 bg-white/10 px-6 py-4 font-extrabold text-white transition hover:bg-white/20"><Smartphone className="mr-2 inline" size={18} /> Découvrir l’app</button>
-            </div>
-            <div className="mt-12 flex flex-wrap gap-x-8 gap-y-3 border-t border-white/20 pt-6 text-sm text-white/65"><span><strong className="text-white">{pick(club, 'City', 'city') || 'Oudhref'}</strong> · Tunisie</span><span><strong className="text-white">{apiState === 'ready' ? matches.length : '—'}</strong> matchs publiés</span><span><strong className="text-white">1973</strong> · Notre histoire</span></div>
-          </div>
-          <div className="relative mx-auto flex w-full max-w-sm flex-col items-center lg:max-w-md">
-            <div className="absolute inset-8 rounded-full bg-jso-gold/20 blur-3xl" aria-hidden="true" />
-            <img src="/JSO-crest-regenerated.png" alt="Stemma della Jeunesse Sportive de Oudhref" className="relative max-h-[380px] w-auto max-w-full object-contain drop-shadow-[0_24px_38px_rgba(0,0,0,0.7)] sm:max-h-[460px]" />
-            <div className="relative mt-5 rounded-full border border-white/20 bg-jso-navy/80 px-5 py-3 text-center text-xs font-extrabold tracking-[0.2em] text-jso-gold backdrop-blur-md">FIERTÉ · PASSION · OUDHREF</div>
-          </div>
-        </div>
-      </section>
-
-      <section id="matches" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
-        <SectionTitle eyebrow="01 / MATCHDAY" title="Le match," muted="en direct." />
-        <div className="mb-5 flex items-center justify-between"><span className={`rounded-full px-3 py-1 text-xs font-extrabold ${apiState === 'ready' ? 'bg-emerald-100 text-emerald-700' : apiState === 'offline' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>{apiState === 'ready' ? 'API CONNECTÉE' : apiState === 'offline' ? 'API INDISPONIBLE' : 'CONNEXION À L’API…'}</span></div><div className="mt-8 grid gap-5 lg:grid-cols-[1.4fr_0.6fr]">
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50 sm:p-8">
-            <div className="flex items-center justify-between text-xs font-extrabold text-slate-500"><span className="rounded-full bg-jso-gold/20 px-3 py-1 text-jso-navy">PROCHAIN MATCH</span><span>À VENIR</span></div>
-            <div className="grid items-center gap-5 py-10 sm:grid-cols-[1fr_auto_1fr]"><div className="text-center"><img src="/JSO-crest-regenerated.png" alt="Stemma JSO" className="mx-auto h-24 w-20 object-contain" /><h3 className="mt-3 text-xl font-black">JSO Oudhref</h3><p className="text-sm text-slate-500">Domicile</p></div><div className="text-center"><div className="text-xs font-extrabold text-slate-400">{matches[0]?.KickoffAt ? new Date(matches[0].KickoffAt).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }) : 'DATE À CONFIRMER'}</div><div className="my-2 text-4xl font-black text-jso-navy">VS</div><div className="text-xs text-slate-500">{matches[0]?.Venue || 'Stade d’Oudhref'}</div></div><div className="text-center"><div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl border border-slate-200 bg-slate-50 text-xl font-black text-slate-400">{matches[0]?.OpponentName?.slice(0, 3).toUpperCase() || 'TBA'}</div><h3 className="mt-3 text-xl font-black">{matches[0]?.OpponentName || 'Adversaire'}</h3><p className="text-sm text-slate-500">{matches[0]?.IsHome ? 'Extérieur' : 'Domicile'}</p></div></div>
-            <div className="flex flex-wrap gap-2 border-t border-slate-200 pt-5 text-sm text-slate-500"><span className="rounded-full bg-slate-100 px-3 py-2">Composition</span><span className="rounded-full bg-slate-100 px-3 py-2">Statistiques</span><span className="rounded-full bg-slate-100 px-3 py-2">Commentaires</span></div>
-          </div>
-          <div className="rounded-[2rem] bg-jso-navy p-6 text-white shadow-xl shadow-blue-950/20"><div className="text-xs font-extrabold tracking-[0.2em] text-white/60">CLUB SNAPSHOT</div><div className="mt-6 space-y-5"><div className="flex items-center justify-between border-b border-white/15 pb-4"><span className="flex items-center gap-2 text-white/75"><Trophy size={18} /> Dernier résultat</span><strong>{matches.find((match) => match.HomeScore != null && match.AwayScore != null) ? `${matches.find((match) => match.HomeScore != null && match.AwayScore != null).HomeScore} - ${matches.find((match) => match.HomeScore != null && match.AwayScore != null).AwayScore}` : '—'}</strong></div><div className="flex items-center justify-between border-b border-white/15 pb-4"><span className="flex items-center gap-2 text-white/75"><CalendarDays size={18} /> Calendrier</span><strong>À venir</strong></div><div className="flex items-center justify-between border-b border-white/15 pb-4"><span className="flex items-center gap-2 text-white/75"><Users size={18} /> Effectif</span><strong>JSO</strong></div><div className="flex items-center justify-between"><span className="flex items-center gap-2 text-white/75"><Shield size={18} /> Identité</span><strong className="text-jso-gold">Oudhref</strong></div></div></div>
-        </div>
-      </section>
-
-      <section id="match-highlight" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
-        <SectionTitle eyebrow="01 / MATCH CENTER" title="Calendrier." muted="Résultats." />
-        <div className="mt-8 grid gap-4">
-          {matches.length ? matches.map((match) => (
-            <article key={match.Id} className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40">
-              <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                <span>{match.Status || 'Scheduled'}</span>
-                <span>{new Date(match.KickoffAt).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}</span>
-              </div>
-              <div className="mt-5 grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
-                <div><p className="text-xs font-bold text-slate-400">JSO</p><h3 className="text-2xl font-black">JSO Oudhref</h3></div>
-                <div className="text-center text-3xl font-black text-jso-blue">{match.HomeScore != null && match.AwayScore != null ? match.HomeScore + ' - ' + match.AwayScore : 'VS'}</div>
-                <div className="sm:text-right"><p className="text-xs font-bold text-slate-400">ADVERSAIRE</p><h3 className="text-2xl font-black">{match.OpponentName}</h3></div>
-              </div>
-              <div className="mt-5 flex flex-wrap gap-2 text-sm text-slate-500">
-                {match.Venue && <span className="rounded-full bg-slate-100 px-3 py-2">{match.Venue}</span>}
-                <span className="rounded-full bg-slate-100 px-3 py-2">{match.IsHome ? 'Domicile' : 'Extérieur'}</span>
-              </div>              <button onClick={() => openMatch(match)} className="mt-5 rounded-full bg-jso-navy px-5 py-3 text-sm font-extrabold text-white hover:bg-jso-blue">Voir le détail <ChevronRight className="ml-1 inline" size={16}/></button>
-            </article>
-          )) : <div className="rounded-[2rem] bg-white p-8 text-slate-500">Aucun match publié.</div>}
-        </div>
-      </section>
-
-      <section id="club" className="mx-auto max-w-7xl px-5 py-20 lg:px-8"><div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end"><SectionTitle eyebrow={content.club_eyebrow || '02 / LE CLUB'} title={content.club_title || 'Une histoire.'} muted={content.club_muted || 'Une ville. Une passion.'} /><p className="max-w-xl text-lg leading-8 text-slate-600">JSO est plus qu’un nom sur un maillot. C’est une identité collective, un lien entre les générations et une ambition pour l’avenir du football à Oudhref.</p></div><div className="mt-10 grid gap-4 sm:grid-cols-3">{[['Identité forte','Un langage visuel premium et une présence digitale cohérente.'],['Communauté','Supporters, joueurs, familles et passionnés réunis.'],['Nouvelle génération','Une plateforme rapide, responsive et pensée pour le futur.']].map(([title, text], index) => <div key={title} className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40"><div className="text-2xl font-black text-jso-blue">0{index + 1}</div><h3 className="mt-8 text-xl font-black">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-500">{text}</p></div>)}</div></section>
-
-      <section id="news" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow={content.news_eyebrow || '03 / NEWSROOM'} title={content.news_title || 'Le club'} muted={content.news_muted || 'en mouvement.'} /><div className="mt-10">{newsState === 'loading' ? <div role="status" className="rounded-[2rem] border border-slate-200 bg-white p-8 text-slate-500">Chargement des actualités…</div> : newsState === 'offline' ? <div role="alert" className="rounded-[2rem] border border-amber-200 bg-amber-50 p-8 text-amber-900">Les actualités ne sont pas disponibles pour le moment. Réessayez plus tard.</div> : articles.length === 0 ? <div className="rounded-[2rem] border border-slate-200 bg-white p-8 text-slate-500">Aucune actualité publiée pour le moment.</div> : <div className="grid gap-5 md:grid-cols-3">{articles.map((item) => <article key={item.slug || item.title} className="group rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40 transition hover:-translate-y-1 hover:shadow-xl"><span className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">{item.category}</span><h3 className="mt-8 text-2xl font-black tracking-tight">{item.title}</h3><p className="mt-3 leading-7 text-slate-500">{item.text}</p>{item.slug ? <a href={`${API_BASE_URL}/news/${encodeURIComponent(item.slug)}`} className="mt-8 inline-block font-extrabold text-jso-blue">Lire la suite <ChevronRight className="inline" size={17} /></a> : null}</article>)}</div>}</div></section>
-
-      <section id="team" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow="04 / ÉQUIPE" title="Les visages" muted="de JSO." /><div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">{teamPlayers.length ? teamPlayers.map((player) => (<div key={player.Id} className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/40"><div className="grid h-28 place-items-center rounded-2xl bg-jso-navy text-4xl font-black text-jso-gold">{player.ShirtNumber || '—'}</div><h3 className="mt-4 font-black">{player.FirstName} {player.LastName}</h3><p className="mt-1 text-sm text-slate-500">{player.Position || 'Joueur'}</p></div>)) : (<div className="rounded-[2rem] bg-jso-navy p-6 text-white sm:col-span-2 lg:col-span-5"><Users size={28} className="text-jso-gold" /><h3 className="mt-12 text-2xl font-black">Équipe première</h3><p className="mt-2 text-white/65">Effectif, staff et profils des joueurs.</p></div>)}</div></section>
-
-      <section id="media" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><SectionTitle eyebrow="05 / MEDIA HOUSE" title="Voir, vivre," muted="partager." /><div className="mt-8 grid gap-5 md:grid-cols-[1.3fr_0.7fr]">{media.length ? media.slice(0, 3).map((item) => { const url = pick(item, 'Url', 'url'); const thumb = pick(item, 'ThumbnailUrl', 'thumbnailUrl') || url; const title = pick(item, 'Title', 'title') || 'Media JSO'; const caption = pick(item, 'Caption', 'caption') || 'Moments forts de la communauté JSO.'; return <article key={pick(item, 'Id', 'id') || url} className="group overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-lg shadow-slate-200/40"><div className="h-64 overflow-hidden bg-slate-100">{url ? <img src={thumb} alt={title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" /> : <div className="grid h-full place-items-center bg-jso-navy text-4xl font-black text-jso-gold">JSO</div>}</div><div className="p-6"><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">{pick(item, 'Type', 'type') || 'MEDIA'}</p><h3 className="mt-2 text-xl font-black">{title}</h3><p className="mt-2 text-sm text-slate-500">{caption}</p></div></article> }) : <><div className="flex min-h-64 items-end rounded-[2rem] bg-gradient-to-br from-jso-navy to-jso-blue p-7 text-white shadow-xl"><div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">GALERIE JSO</p><h3 className="mt-3 text-3xl font-black">Les couleurs du club.</h3><p className="mt-2 max-w-md text-white/70">Photos, vidéos et moments forts de la communauté.</p></div></div><div className="rounded-[2rem] border border-slate-200 bg-white p-7"><p className="text-xs font-extrabold tracking-[0.2em] text-slate-400">À VENIR</p><h3 className="mt-8 text-3xl font-black">Le contenu du club, autrement.</h3><p className="mt-3 text-slate-500">Un espace média moderne pour chaque supporter.</p></div></>}</div></section>
-
-      <section id="mobile" className="bg-jso-navy px-5 py-20 text-white lg:px-8">
-        <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.65fr_1.35fr]">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-jso-gold/40 px-4 py-2 text-xs font-extrabold tracking-[0.2em] text-jso-gold"><Smartphone size={14} /> CONCEPT FLUTTER</div>
-            <h2 className="mt-6 text-4xl font-black leading-tight tracking-tight sm:text-6xl">JSO dans<br /><span className="text-jso-gold">ta poche.</span></h2>
-            <p className="mt-6 max-w-lg text-lg leading-8 text-white/70">L’app mobile est en préparation. Elle réunira le Match Center, les actualités et les moments du club dans une expérience pensée pour iOS et Android.</p>
-            <p className="mt-6 text-sm font-semibold text-white/45">Aperçus visuels du concept · Flutter + Dart</p>
-          </div>
-          <div className="grid grid-cols-2 items-end gap-3 sm:gap-6">
-            <img src="/jso-flutter-home-concept.png" alt="Concept de l’écran d’accueil de la future app JSO" loading="lazy" className="w-full rounded-[1.5rem] shadow-2xl shadow-black/35" />
-            <img src="/jso-flutter-match-concept.png" alt="Concept du Match Center de la future app JSO" loading="lazy" className="w-full rounded-[1.5rem] shadow-2xl shadow-black/35" />
-          </div>
-        </div>
-      </section>
-
-      <section id="shop" className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
-        <div className="rounded-[2.5rem] bg-jso-gold p-8 sm:p-12">
-          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <div>
-              <p className="text-xs font-extrabold tracking-[0.2em] text-jso-navy/60">07 / BOUTIQUE</p>
-              <h2 className="mt-3 text-4xl font-black tracking-tight text-jso-navy sm:text-6xl">Porte les couleurs.<br />Vis l’identité.</h2>
-            </div>
-            {products.length > 0 && <button onClick={() => setCartOpen(true)} className="rounded-full bg-jso-navy px-6 py-4 font-extrabold text-white transition hover:bg-jso-blue"><ShoppingBag className="mr-2 inline" size={18} /> Voir le panier ({cart.count})</button>}
-          </div>
-          {products.length === 0 ? (
-            <p className="mt-8 rounded-2xl bg-white/40 p-5 font-semibold text-jso-navy/80">La boutique arrive bientôt. Les produits officiels seront disponibles ici.</p>
-          ) : (
-            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {products.map((p) => (
-                <div key={p.id} className="flex flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-lg">
-                  <div className="aspect-[4/3] w-full bg-slate-100">
-                    {p.imageUrl ? <img src={p.imageUrl} alt={p.name} loading="lazy" className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-slate-300"><ShoppingBag size={40} /></div>}
-                  </div>
-                  <div className="flex flex-1 flex-col p-5">
-                    <h3 className="text-lg font-black text-jso-ink">{p.name}</h3>
-                    {p.category && <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{p.category}</p>}
-                    {p.description && <p className="mt-2 line-clamp-2 text-sm text-slate-500">{p.description}</p>}
-                    <div className="mt-4 flex items-center justify-between gap-3">
-                      <span className="text-xl font-black text-jso-navy">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: p.currency || 'TND' }).format(p.price || 0)}</span>
-                      {p.inStock
-                        ? <button onClick={() => { cart.add(p); setCartOpen(true) }} className="rounded-full bg-jso-navy px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-jso-blue">Ajouter au panier</button>
-                        : <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-bold text-slate-400">Épuisé</span>}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {selectedMatch && <div className="fixed inset-0 z-[70] overflow-y-auto bg-jso-navy/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-        <div className="mx-auto mt-10 max-w-3xl rounded-[2rem] bg-white p-6 shadow-2xl sm:p-8">
-          <div className="flex items-start justify-between gap-5">
-            <div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">MATCH CENTER</p><h2 className="mt-2 text-3xl font-black">JSO Oudhref <span className="text-slate-400">vs</span> {selectedMatch.OpponentName}</h2></div>
-            <button onClick={() => setSelectedMatch(null)} className="rounded-full border border-slate-200 p-2"><X size={18}/></button>
-          </div>
-          <div className="mt-6 rounded-2xl bg-jso-navy p-6 text-center text-white">
-            <p className="text-sm text-white/60">{new Date(selectedMatch.KickoffAt).toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' })}</p>
-            <div className="my-4 text-5xl font-black">{selectedMatch.HomeScore != null && selectedMatch.AwayScore != null ? selectedMatch.HomeScore + ' - ' + selectedMatch.AwayScore : 'VS'}</div>
-            <p className="text-sm text-white/70">{selectedMatch.Venue || 'Lieu à confirmer'} · {selectedMatch.IsHome ? 'Domicile' : 'Extérieur'}</p>
-          </div>
-          {matchLoading ? <p className="mt-6 text-sm text-slate-500">Chargement du Match Center…</p> : <div className="mt-7 space-y-7">
-            {selectedMatch.liveblog?.length ? <section><h3 className="flex items-center gap-2 text-xl font-black"><span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />Live</h3><div className="mt-4 space-y-2">{selectedMatch.liveblog.map(entry => <div key={entry.id} className={'rounded-xl p-4 ' + (entry.isPinned ? 'border border-jso-gold bg-jso-gold/10' : 'bg-slate-50')}><div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-jso-blue">{entry.minute != null && <span>{entry.minute}'</span>}<span className="rounded-full bg-jso-navy px-2 py-0.5 text-white">{entry.kind}</span>{entry.isPinned && <span className="text-jso-gold">★ Épinglé</span>}</div><p className="mt-2 text-sm text-jso-ink">{entry.body}</p></div>)}</div></section> : null}
-            <section><h3 className="text-xl font-black">Événements</h3>{matchEvents.length ? <div className="mt-4 space-y-2">{matchEvents.map(event => <div key={event.Id} className="flex gap-4 rounded-xl bg-slate-50 p-4"><span className="font-black text-jso-blue">{event.Minute}'</span><div><b>{event.Type}</b>{event.PlayerName && <p className="text-sm text-slate-500">{event.PlayerName}</p>}{event.Notes && <p className="text-sm text-slate-500">{event.Notes}</p>}</div></div>)}</div> : <p className="mt-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Nessun evento registrato.</p>}</section>
-            <section><h3 className="text-xl font-black">Composition</h3>{selectedMatch.lineup?.length ? <div className="mt-4 grid gap-2 sm:grid-cols-2">{selectedMatch.lineup.map(p => <div key={p.id} className="flex items-center justify-between rounded-xl border border-slate-200 p-3"><div><b>#{p.shirtNumber ?? '—'} {p.firstName} {p.lastName}</b><p className="text-xs text-slate-500">{p.position || 'Joueur'} · {p.role === 'Substitute' ? 'Banc' : 'Titulaire'}{p.isCaptain ? ' · Capitaine' : ''}</p></div></div>)}</div> : <p className="mt-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Composition non publiée.</p>}</section>
-            <div className="grid gap-6 md:grid-cols-2">
-              <section><h3 className="text-xl font-black">Officiels</h3>{selectedMatch.officials?.length ? <div className="mt-4 space-y-2">{selectedMatch.officials.map(o=><div key={o.id} className="rounded-xl bg-slate-50 p-3"><b>{o.name}</b><span className="ml-2 text-xs text-slate-500">{o.role}</span></div>)}</div> : <p className="mt-3 text-sm text-slate-500">Non renseignés.</p>}</section>
-              <section><h3 className="text-xl font-black">Statistiques</h3>{selectedMatch.stats?.length ? <div className="mt-4 space-y-2">{selectedMatch.stats.map(s=><div key={s.id} className="grid grid-cols-[1fr_auto_20px_auto] items-center rounded-xl bg-slate-50 p-3 text-sm"><span>{s.name}</span><b>{s.homeValue ?? '—'}</b><span className="text-slate-400">-</span><b>{s.awayValue ?? '—'}</b></div>)}</div> : <p className="mt-3 text-sm text-slate-500">Statistiques non renseignées.</p>}</section>
-            </div>
-          </div>}
-        </div>
-      </div>}
-      {sponsors.length > 0 && <section id="sponsors" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
-        <SectionTitle eyebrow="08 / PARTENAIRES" title="Ils soutiennent" muted="le club." />
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-6">
-          {sponsors.map((s) => {
-            const inner = s.logoUrl
-              ? <img src={s.logoUrl} alt={s.name} loading="lazy" className="h-16 w-auto object-contain" />
-              : <span className="text-lg font-black text-jso-navy">{s.name}</span>
-            return s.websiteUrl
-              ? <a key={s.id} href={s.websiteUrl} target="_blank" rel="noopener noreferrer" title={s.name} className="grid h-24 w-40 place-items-center rounded-2xl border border-slate-200 bg-white p-4 transition hover:shadow-lg">{inner}</a>
-              : <div key={s.id} title={s.name} className="grid h-24 w-40 place-items-center rounded-2xl border border-slate-200 bg-white p-4">{inner}</div>
-          })}
-        </div>
-      </section>}
-
-      {events.length > 0 && <section id="events" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
-        <SectionTitle eyebrow="09 / AGENDA" title="Les événements" muted="du club." />
-        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {events.map((e) => (
-            <article key={e.id} className="flex flex-col rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40">
-              <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-jso-blue">
-                <CalendarDays size={15} />{new Date(e.startAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-              </div>
-              <h3 className="mt-3 text-xl font-black">{e.title}</h3>
-              {e.location && <p className="mt-1 text-sm font-semibold text-slate-500">{e.location}</p>}
-              {e.description && <p className="mt-2 line-clamp-3 text-sm text-slate-500">{e.description}</p>}
-              <p className="mt-4 text-xs text-slate-400">{new Date(e.startAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}{e.endAt ? ' → ' + new Date(e.endAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''}</p>
-            </article>
-          ))}
-        </div>
-      </section>}
-
-      {documents.length > 0 && <section id="documents" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
-        <SectionTitle eyebrow="10 / DOCUMENTS" title="Documents" muted="officiels." />
-        <div className="mt-8 grid gap-3 md:grid-cols-2">
-          {documents.map((d) => (
-            <a key={d.id} href={d.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition hover:shadow-lg">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-jso-navy text-jso-gold"><FileText size={22} /></span>
-              <div className="min-w-0 flex-1"><p className="truncate font-black">{d.title}</p>{d.category && <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{d.category}</p>}</div>
-              <Download size={18} className="shrink-0 text-jso-blue" />
-            </a>
-          ))}
-        </div>
-      </section>}
-
-      {faq.length > 0 && <section id="faq" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
-        <SectionTitle eyebrow="11 / FAQ" title="Questions" muted="fréquentes." />
-        <div className="mt-8 space-y-3">
-          {faq.map((f) => (
-            <details key={f.id} className="group rounded-2xl border border-slate-200 bg-white p-5 [&_summary::-webkit-details-marker]:hidden">
-              <summary className="flex cursor-pointer items-center justify-between gap-4 font-black text-jso-ink">
-                {f.question}
-                <ChevronRight size={18} className="shrink-0 text-jso-blue transition group-open:rotate-90" />
-              </summary>
-              <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600">{f.answer}</p>
-            </details>
-          ))}
-        </div>
-      </section>}
-
-      {community.length > 0 && <section id="community" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
-        <SectionTitle eyebrow="12 / COMMUNAUTÉ" title="Programmes" muted="communautaires." />
-        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {community.map((c) => (
-            <article key={c.id} className="flex flex-col rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40">
-              <h3 className="text-xl font-black">{c.title}</h3>
-              {c.partnerName && <p className="mt-1 text-sm font-bold text-jso-blue">{c.partnerName}</p>}
-              {c.description && <p className="mt-2 line-clamp-3 text-sm text-slate-500">{c.description}</p>}
-              {c.startDate && <p className="mt-4 text-xs font-semibold text-slate-400">{new Date(c.startDate).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}{c.endDate ? ' → ' + new Date(c.endDate).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : ''}</p>}
-            </article>
-          ))}
-        </div>
-      </section>}
-
-      {archive.length > 0 && <section id="archive" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
-        <SectionTitle eyebrow="13 / MUSÉE" title="L’histoire" muted="du club." />
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {archive.map((a) => (
-            <article key={a.id} className="flex flex-col overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-lg shadow-slate-200/40">
-              {a.mediaUrl && <div className="aspect-[4/3] w-full bg-slate-100"><img src={a.mediaUrl} alt={a.title} loading="lazy" className="h-full w-full object-cover" /></div>}
-              <div className="flex flex-1 flex-col p-5">
-                <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-jso-gold">{a.year && <span className="rounded-full bg-jso-navy px-2.5 py-1 text-jso-gold">{a.year}</span>}{a.category && <span className="text-slate-400">{a.category}</span>}</div>
-                <h3 className="mt-3 text-lg font-black">{a.title}</h3>
-                {a.body && <p className="mt-2 line-clamp-3 text-sm text-slate-500">{a.body}</p>}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>}
-
-      <footer className="bg-jso-navy px-5 py-10 text-white lg:px-8"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 lg:flex-row lg:items-center"><div><div className="flex items-center gap-3"><img src="/JSO-crest-regenerated.png" alt="Stemma JSO" className="h-12 w-10 object-contain" /><div className="text-xl font-black">JSO · Jeunesse Sportive de Oudhref</div></div><p className="mt-1 text-sm text-white/60">Plus qu’un club. Une identité.</p></div><NewsletterSignup /><p className="text-sm text-white/50">© 2026 JSO. Tous droits réservés.</p></div></footer>
+      {selectedMatch && <MatchCenterModal match={selectedMatch} onClose={() => setSelectedMatch(null)} />}
+      {selectedArticle && <ArticleModal initialArticle={selectedArticle} onClose={() => setSelectedArticle(null)} />}
 
       <CartDrawer
         open={cartOpen}
         cart={cart}
-        token={(() => { try { return localStorage.getItem('jso_fan_token') } catch { return null } })()}
+        token={fan.token}
         onClose={() => setCartOpen(false)}
-        onRequireLogin={() => { setCartOpen(false); setDemoLoginHint(true) }}
+        onRequireLogin={() => {
+          setCartOpen(false)
+          openAuth('login')
+        }}
       />
 
-      {demoLoginHint && <div className="fixed inset-0 z-[85] grid place-items-center bg-jso-navy/60 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Connexion requise"><div className="w-full max-w-sm rounded-[2rem] bg-white p-8 text-center shadow-2xl"><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">ESPACE SUPPORTER</p><h2 className="mt-2 text-2xl font-black">Connexion requise</h2><p className="mt-3 text-sm text-slate-500">Pour passer commande, connectez-vous ou créez un compte supporter via le bouton « S’inscrire / Se connecter » en haut de la page.</p><button onClick={() => setDemoLoginHint(false)} className="mt-6 rounded-full bg-jso-navy px-6 py-3 font-extrabold text-white hover:bg-jso-blue">Compris</button></div></div>}
-
+      <AuthModal
+        key={`${authMode}-${authOpen}`}
+        open={authOpen}
+        initialMode={authMode}
+        onClose={() => setAuthOpen(false)}
+        onAuthenticated={(result) => {
+          fan.signIn(result)
+          setAuthOpen(false)
+        }}
+      />
+      <ProfileModal
+        open={profileOpen}
+        token={fan.token}
+        user={fan.user}
+        onClose={() => setProfileOpen(false)}
+        onUpdated={(updated) => {
+          fan.updateUser(updated)
+          setProfileOpen(false)
+        }}
+      />
+      <AccountSettingsModal
+        open={settingsOpen}
+        user={fan.user}
+        token={fan.token}
+        onClose={() => setSettingsOpen(false)}
+        onOpenProfile={() => {
+          setSettingsOpen(false)
+          setProfileOpen(true)
+        }}
+        onOpenChangePassword={() => {
+          setSettingsOpen(false)
+          setPasswordOpen(true)
+        }}
+      />
+      <ChangePasswordModal open={passwordOpen} token={fan.token} onClose={() => setPasswordOpen(false)} />
       <AccessibilityPanel />
-
-      {demoOpen && <div className="fixed inset-0 z-[60] grid place-items-center bg-jso-navy/60 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Présentation JSO"><div className="w-full max-w-lg rounded-[2rem] bg-white p-8 shadow-2xl"><div className="flex items-start justify-between gap-5"><div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">JSO DIGITAL</p><h2 className="mt-3 text-3xl font-black">Bienvenue dans la nouvelle maison du club.</h2></div><button aria-label="Fermer" onClick={() => setDemoOpen(false)} className="rounded-full border border-slate-200 p-2"><X size={18} /></button></div><p className="mt-4 leading-7 text-slate-600">Cette interface est une première version visuelle. Les données réelles, les comptes administrateur, les résultats et la boutique seront connectés dans les prochaines étapes.</p><button onClick={() => setDemoOpen(false)} className="mt-7 rounded-full bg-jso-navy px-5 py-3 font-extrabold text-white">Continuer</button></div></div>}
-    </main>
+    </div>
   )
 }
 
