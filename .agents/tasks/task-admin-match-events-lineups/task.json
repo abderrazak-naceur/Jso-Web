@@ -1,0 +1,14 @@
+{
+  "task_id": "task-admin-match-events-lineups",
+  "task_description": "Complete/extend the admin management of match EVENTS and FORMATIONS (lineups) for the JSO platform. Backend: extend the MatchEvent entity (nullable SecondaryPlayerName + Team columns), add an UPDATE endpoint for events, add a versioned PostgreSQL migration, keep lineup GET/PUT and audit on all writes, preserve public read contracts. Frontend admin (AdminApp.jsx): add edit + new fields to the events editor and add a formations (lineup) editor, in French, with loading/empty/error states. Admin routes stay under [Authorize(Roles=\"SuperAdmin,ClubAdmin,MatchManager\")]. Branch: feat/admin-match-events-lineups.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "Backend: /root/.dotnet10/dotnet build backend/src/JSO.Api/JSO.Api.csproj -c Release => Build succeeded, 0 Warning(s), 0 Error(s) (TreatWarningsAsErrors on). Frontend: npm run build => built OK (vite 6.4.1); npm run lint (oxlint) => 0 warnings, 0 errors. No unit test projects exist in this repo; 'tests' maps to the lint gate. test_quality: the new PUT events endpoint, TryNormalizeTeam validation, and the ExtendMatchEvent migration (+snapshot) are substantive and exercised by the compile gate; the frontend editors are wired to the real admin endpoints. Docker build skipped (not required for this backend/frontend change; no image change)."
+  }
+}

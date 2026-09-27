@@ -3,6 +3,7 @@ using System;
 using JSO.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace JSO.Infrastructure.Migrations.Postgres
 {
     [DbContext(typeof(JsoDbContext))]
-    partial class JsoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260926235821_AddMatchdayChecklist")]
+    partial class AddMatchdayChecklist
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -116,20 +119,11 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.Property<string>("CoverImageUrl")
                         .HasColumnType("text");
 
-                    b.Property<string>("EditorialStatus")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("Draft");
-
                     b.Property<string>("Excerpt")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("PublishedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("ScheduledAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Slug")
@@ -148,8 +142,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
 
                     b.HasIndex("Slug")
                         .IsUnique();
-
-                    b.HasIndex("EditorialStatus", "ScheduledAt");
 
                     b.ToTable("Articles");
                 });
