@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, CalendarClock, ListChecks } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
 import ArchiveModule from './Archive'
 import InjuriesModule from './Injuries'
+import SupportersModule from './Supporters'
 import EditorialCalendarModule from './EditorialCalendar'
 import ChecklistModule from './Checklist'
 
@@ -327,6 +328,7 @@ function AdminDashboard({ user, onLogout }) {
     ['newsletter', 'Newsletter', Mail, ['Editor','CommunityManager']],
     ['archive', 'Musée · Archives', Landmark, ['SuperAdmin','ClubAdmin','Editor']],
     ['injuries', 'Infirmerie', HeartPulse, ['ClubAdmin','MatchManager']],
+    ['supporters', 'Mur des supporters', BrickWall, ['ClubAdmin','CommunityManager']],
     ['checklist', 'Check-list match', ListChecks, ['ClubAdmin','MatchManager']],
     ['settings', 'Configuration', Server, ['SuperAdmin','ClubAdmin']],
   ]
@@ -378,6 +380,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'newsletter' && <NewsletterModule onError={setError}/>}
         {section === 'archive' && <ArchiveModule onError={setError}/>}
         {section === 'injuries' && <InjuriesModule onError={setError}/>}
+        {section === 'supporters' && <SupportersModule onError={setError}/>}
         {section === 'editorial' && <EditorialCalendarModule onError={setError}/>}
         {section === 'checklist' && <ChecklistModule onError={setError}/>}
         {section === 'settings' && <SettingsModule/>}

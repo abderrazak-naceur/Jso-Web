@@ -27,6 +27,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<NewsletterSubscription> NewsletterSubscriptions => Set<NewsletterSubscription>();
  public DbSet<ArchiveItem> ArchiveItems => Set<ArchiveItem>();
  public DbSet<PlayerInjury> PlayerInjuries => Set<PlayerInjury>();
+ public DbSet<SupporterBrick> SupporterBricks => Set<SupporterBrick>();
  public DbSet<MatchdayChecklistTemplateItem> MatchdayChecklistTemplateItems => Set<MatchdayChecklistTemplateItem>();
  public DbSet<MatchdayChecklistItem> MatchdayChecklistItems => Set<MatchdayChecklistItem>();
  protected override void OnModelCreating(ModelBuilder modelBuilder) {
@@ -65,6 +66,9 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<ArchiveItem>().HasIndex(x=>x.Category);
   modelBuilder.Entity<PlayerInjury>().HasIndex(x=>new{x.PlayerId,x.Status});
   modelBuilder.Entity<PlayerInjury>().Property(x=>x.Status).HasDefaultValue("Active");
+  modelBuilder.Entity<SupporterBrick>().HasIndex(x=>new{x.Status,x.CreatedAt});
+  modelBuilder.Entity<SupporterBrick>().Property(x=>x.Status).HasDefaultValue("Pending");
+  modelBuilder.Entity<SupporterBrick>().Property(x=>x.Amount).HasPrecision(14,2);
   modelBuilder.Entity<MatchdayChecklistTemplateItem>().HasIndex(x=>new{x.IsActive,x.DisplayOrder});
   modelBuilder.Entity<MatchdayChecklistItem>().HasIndex(x=>x.MatchId);
   modelBuilder.Entity<MatchdayChecklistItem>().HasIndex(x=>new{x.MatchId,x.Label}).IsUnique();
