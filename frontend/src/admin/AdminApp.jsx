@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, PartyPopper } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
@@ -12,6 +12,7 @@ import ClassifiedsModule from './Classifieds'
 import FacilitiesModule from './Facilities'
 import ScoutingModule from './Scouting'
 import FeatureFlagsModule from './FeatureFlags'
+import AnniversariesModule from './Anniversaries'
 
 async function api(path, options = {}) {
   const token = localStorage.getItem('jso_admin_token')
@@ -333,6 +334,7 @@ function AdminDashboard({ user, onLogout }) {
     ['archive', 'Musée · Archives', Landmark, ['SuperAdmin','ClubAdmin','Editor']],
     ['injuries', 'Infirmerie', HeartPulse, ['ClubAdmin','MatchManager']],
     ['supporters', 'Mur des supporters', BrickWall, ['ClubAdmin','CommunityManager']],
+    ['anniversaries', 'Anniversaires', PartyPopper, ['ClubAdmin','CommunityManager']],
     ['checklist', 'Check-list match', ListChecks, ['ClubAdmin','MatchManager']],
     ['classifieds', 'Petites annonces', Megaphone, ['ClubAdmin','CommunityManager']],
     ['facilities', 'Installations', CalendarRange, ['ClubAdmin','MatchManager']],
@@ -389,6 +391,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'archive' && <ArchiveModule onError={setError}/>}
         {section === 'injuries' && <InjuriesModule onError={setError}/>}
         {section === 'supporters' && <SupportersModule onError={setError}/>}
+        {section === 'anniversaries' && <AnniversariesModule onError={setError}/>}
         {section === 'editorial' && <EditorialCalendarModule onError={setError}/>}
         {section === 'checklist' && <ChecklistModule onError={setError}/>}
         {section === 'classifieds' && <ClassifiedsModule onError={setError}/>}
