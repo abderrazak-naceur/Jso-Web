@@ -77,7 +77,7 @@ function App() {
       />
 
       <main id="main-content" tabIndex={-1}>
-        <HeroSection content={data.content} club={data.club} nextMatch={data.nextMatch} onOpenMatch={setSelectedMatch} />
+        <HeroSection content={data.content} club={data.club} />
         <MatchdaySection section={sectionById.matches} status={data.status} nextMatch={data.nextMatch} recentMatches={data.recentMatches} onOpenMatch={setSelectedMatch} />
         <NewsSection section={sectionById.news} status={data.status} articles={data.news} content={data.content} onOpenArticle={setSelectedArticle} />
         <TeamSection section={sectionById.team} players={data.players} />
