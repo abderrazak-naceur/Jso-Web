@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Establish a green baseline and add the url_launcher dependency. Confirm the existing Flutter app builds, analyzes, tests, and formats cleanly on branch feat/flutter-team-sponsor-screens before adding new features. Add url_launcher to pubspec.yaml so the Sponsors screen can open external websites.",
+  "status": "completed",
+  "steps": [
+    "From /projects/sandbox/Jso-Web/mobile run: export PATH=\"$PATH:/opt/flutter/bin\"; flutter pub get.",
+    "Run flutter analyze, flutter test, and dart format --output=none --set-exit-if-changed lib test to confirm the existing baseline is green. Record results in findings.",
+    "Add `url_launcher: ^6.3.0` to the dependencies section of mobile/pubspec.yaml (after the flutter_svg entry), with a short comment explaining it is used to open sponsor websites externally. Use a version that resolves cleanly with flutter pub get.",
+    "Run flutter pub get again to resolve url_launcher and update pubspec.lock.",
+    "Re-run flutter analyze to confirm no new issues after adding the dependency."
+  ],
+  "acceptance_criteria": [
+    "flutter pub get succeeds and url_launcher appears in pubspec.yaml dependencies and pubspec.lock.",
+    "flutter analyze reports no issues.",
+    "flutter test passes all existing tests.",
+    "dart format --output=none --set-exit-if-changed lib test exits 0."
+  ],
+  "verification": [
+    "export PATH=\"$PATH:/opt/flutter/bin\"; cd mobile; flutter pub get",
+    "cd mobile; flutter analyze",
+    "cd mobile; flutter test",
+    "cd mobile; dart format --output=none --set-exit-if-changed lib test"
+  ],
+  "blocked_reason": null,
+  "findings": "BRANCH NOTE: The workspace was checked out on feat/admin-match-events-lineups at start (NOT feat/flutter-team-sponsor-screens as the briefing stated), and the on-disk mobile/ dir was incomplete (only build artifacts/IDE files, no lib/pubspec/test - those files are tracked only on feat/flutter-team-sponsor-screens). Ran `git checkout feat/flutter-team-sponsor-screens` which succeeded cleanly and restored the full mobile app. Now on the correct branch. Pre-existing uncommitted backend/ changes (JsoDbContext.cs, migrations, LiveBlog controllers) and untracked .agents/ carried over from the prior branch; they are outside this feature's scope and were left untouched (not staged). FEAT-002 should verify it starts on feat/flutter-team-sponsor-screens.\n\nBASELINE (before change): flutter pub get => Got dependencies (exit 0). flutter analyze => 'No issues found! (ran in 2.6s)'. flutter test => 'All tests passed!' (43 tests; harmless 'unhandled element <filter/>' SVG rendering warnings printed but no failures). dart format --output=none --set-exit-if-changed lib test => 'Formatted 38 files (0 changed)', exit 0.\n\nCHANGE: Added `url_launcher: ^6.3.0` to mobile/pubspec.yaml dependencies after flutter_svg with comment '# Opens sponsor websites in an external browser from the Sponsors screen.'\n\nPOST-CHANGE: flutter pub get => resolved url_launcher 6.3.2 plus platform packages, 'Changed 10 dependencies!' (exit 0); url_launcher present in pubspec.lock (line 288). flutter analyze => 'No issues found! (ran in 3.4s)'. flutter test => 'All tests passed!' (43 tests). dart format check => exit 0. Committed as cae01b1 'chore: add url_launcher dependency for sponsor website links' (only mobile/pubspec.yaml and mobile/pubspec.lock staged)."
+}

@@ -1,0 +1,33 @@
+{
+  "project_type": "Monorepo: ASP.NET Core .NET 10 backend (Clean Architecture 4 layers) + React 18/Vite 6 SPA frontend (public site + admin back office in a single AdminApp.jsx)",
+  "language": "C# (backend), JavaScript/JSX (frontend)",
+  "build_system": "backend: dotnet (net10.0). System SDK is .NET 8/9; a .NET 10 SDK is at /root/.dotnet10/dotnet (version 10.0.401) and MUST be used for backend build. TreatWarningsAsErrors is enabled (see backend/Directory.Build.props). frontend: npm + Vite 6, lint via oxlint.",
+  "test_framework": "No unit test projects found in backend/src; verification is via compile (build). Frontend has no test runner beyond lint; verification is npm run build + npm run lint (oxlint).",
+  "build_command": "backend: /root/.dotnet10/dotnet build backend/src/JSO.Api/JSO.Api.csproj -c Release   |   frontend: (cd frontend && npm run build)",
+  "test_command": "frontend lint: (cd frontend && npm run lint). No backend test suite exists; build success with 0 warnings/0 errors is the backend gate.",
+  "verification_instructions": "1) From repo root: /root/.dotnet10/dotnet build backend/src/JSO.Api/JSO.Api.csproj -c Release  -> expect 0 warnings, 0 errors (TreatWarningsAsErrors is on). 2) If a migration is added: verify it compiles as part of the build and that JsoDbContextModelSnapshot.cs is regenerated/consistent; a live DB is NOT required. 3) cd frontend && npm ci (or npm install) && npm run build && npm run lint -> expect 0 errors/0 warnings.",
+  "snapshot_or_generated_files": "EF Core migrations under backend/src/JSO.Infrastructure/Migrations/Postgres/ with JsoDbContextModelSnapshot.cs. New migrations are generated with: Database__Provider=postgres /root/.dotnet10/dotnet ef migrations add <Name> --project backend/src/JSO.Infrastructure --startup-project backend/src/JSO.Api --context JsoDbContext -o Migrations/Postgres (install dotnet-ef if needed: /root/.dotnet10/dotnet tool install --global dotnet-ef --version 10.* , or hand-author the migration + update the snapshot to match the existing AddSponsor style). Only a Postgres migration folder exists; there is no SQL Server migrations set.",
+  "setup_instructions": "backend: /root/.dotnet10/dotnet restore backend/JSO.sln (or per-project). frontend: cd frontend && npm install (Node 22 available).",
+  "environment_constraints": "net10.0 requires /root/.dotnet10/dotnet (system dotnet is older and will fail). TreatWarningsAsErrors=true so any warning breaks the build. No live PostgreSQL needed for compile-time verification. Network mode assumed COMMON_DEPENDENCIES/OPEN for npm install and dotnet restore; if dotnet-ef tool cannot be installed, hand-author the migration and snapshot edits to match the existing AddSponsor migration format exactly.",
+  "contribution_requirements": "Admin routes must be server-side authorized with RBAC; writes must be audited via AuditService; no secrets in code; UI must have loading/empty/error states; server-side validation; migrations versioned with nullable/default columns to avoid schema breaks; API-first stable contract (consumable by Flutter). Admin UI language is FRENCH.",
+  "key_patterns": "Admin match controllers: AdminMatchesController ([Authorize(Roles=\"SuperAdmin,ClubAdmin,MatchManager\")], route api/admin/matches) already has events GET/POST/DELETE; AdminMatchDetailsController (route api/admin/matches/{matchId:guid}) has lineup GET/PUT, officials GET/PUT, stats GET/PUT. AuditService.LogAsync(action, entityType, entityId, userId, userEmail, ip, details?, ct) is called on writes using User.FindFirst(\"sub\")/(\"email\") and HttpContext.Connection.RemoteIpAddress. Public read controllers: MatchDetailsController (GET /api/matches/{id}/events) and PublicMatchDetailsController (GET /api/matches/{id}/lineup|officials|stats) return only for IsPublished matches. Entities are terse one-line classes in JSO.Domain/Entities.cs; MatchLineup/MatchOfficial/MatchStat in JSO.Domain/MatchLineup.cs. DbContext JsoDbContext.cs registers DbSets + OnModelCreating indexes. Frontend AdminApp.jsx: single file; api(path, options) helper (line ~5) adds bearer token; Field component (line ~62) for inputs; EventsModule (line ~184) is the current events editor (Goal/YellowCard/RedCard/Substitution/VAR/Other, minute/playerName/notes, POST+DELETE only, no edit); MatchesModule (line ~349) is match CRUD; nav sections at ~259-262 (matches, events). There is NO lineup/formation editor in the admin UI yet. All admin UI text is French. Tailwind classes: rounded-[1.5rem] border border-slate-200 bg-white p-6, bg-jso-navy, text-jso-blue, etc.",
+  "relevant_files": [
+    "backend/src/JSO.Domain/Entities.cs",
+    "backend/src/JSO.Domain/MatchLineup.cs",
+    "backend/src/JSO.Api/Controllers/AdminMatchesController.cs",
+    "backend/src/JSO.Api/Controllers/AdminMatchDetailsController.cs",
+    "backend/src/JSO.Api/Controllers/MatchDetailsController.cs",
+    "backend/src/JSO.Api/Controllers/PublicMatchDetailsController.cs",
+    "backend/src/JSO.Api/Controllers/AdminTeamsController.cs",
+    "backend/src/JSO.Infrastructure/JsoDbContext.cs",
+    "backend/src/JSO.Infrastructure/AuditService.cs",
+    "backend/src/JSO.Infrastructure/JsoDbContextFactory.cs",
+    "backend/src/JSO.Infrastructure/Migrations/Postgres/20260926144855_AddSponsor.cs",
+    "backend/src/JSO.Infrastructure/Migrations/Postgres/JsoDbContextModelSnapshot.cs",
+    "backend/Directory.Build.props",
+    "frontend/src/admin/AdminApp.jsx",
+    "frontend/src/lib/api.js",
+    "docs/ADMIN_PANEL.md"
+  ],
+  "directory_structure": "backend/src/{JSO.Domain,JSO.Application,JSO.Infrastructure,JSO.Api}. Controllers in JSO.Api/Controllers. EF migrations in JSO.Infrastructure/Migrations/Postgres. frontend/src/admin/AdminApp.jsx is the whole admin SPA; frontend/src/lib/api.js is the public read client; frontend/src/lib/apiConfig.js holds API base URL. Branch: feat/admin-match-events-lineups (created from main)."
+}

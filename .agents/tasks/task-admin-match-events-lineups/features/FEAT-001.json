@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Establish a green baseline for backend and frontend so later changes can be verified. Confirm the .NET 10 SDK builds the API and that the frontend builds and lints cleanly BEFORE making any changes. This isolates pre-existing issues from ones introduced by this task.",
+  "status": "completed",
+  "steps": [
+    "From repo root run the backend build with the .NET 10 SDK: /root/.dotnet10/dotnet build backend/src/JSO.Api/JSO.Api.csproj -c Release . Record whether it produces 0 warnings/0 errors (TreatWarningsAsErrors is enabled in backend/Directory.Build.props).",
+    "If restore is needed first, run /root/.dotnet10/dotnet restore backend/JSO.sln .",
+    "Install frontend deps: cd frontend && npm install (Node 22 is available).",
+    "Run frontend build: cd frontend && npm run build . Record result.",
+    "Run frontend lint: cd frontend && npm run lint (oxlint). Record result.",
+    "Write the baseline results (commands + pass/fail + any warnings) into this feature's findings field. Do NOT modify any source code in this feature."
+  ],
+  "acceptance_criteria": [
+    "Backend build command has been run with /root/.dotnet10/dotnet and its exact result is recorded in findings.",
+    "Frontend npm run build and npm run lint have been run and their results recorded in findings.",
+    "No source files were modified during this feature."
+  ],
+  "verification": [
+    "/root/.dotnet10/dotnet build backend/src/JSO.Api/JSO.Api.csproj -c Release",
+    "cd frontend && npm run build",
+    "cd frontend && npm run lint"
+  ],
+  "blocked_reason": null,
+  "findings": "GREEN BASELINE ESTABLISHED. All three verification commands passed cleanly. Environment: /root/.dotnet10/dotnet version 10.0.401, node v22.23.2, npm 11.4.2.\n\n1) Backend build: `/root/.dotnet10/dotnet build backend/src/JSO.Api/JSO.Api.csproj -c Release` => PASS. 'Build succeeded. 0 Warning(s) 0 Error(s)'. Restore was already up-to-date (no separate restore needed). All 4 projects compiled: JSO.Domain, JSO.Application, JSO.Infrastructure, JSO.Api. Note: TreatWarningsAsErrors is enabled, and the build produced 0 warnings.\n\n2) Frontend install: `cd frontend && npm install` => PASS. Added 85 packages, audited 175. (npm reported 1 high severity vulnerability in transitive deps and offered `npm audit fix --force` - pre-existing, not addressed per verification-only scope.)\n\n3) Frontend build: `cd frontend && npm run build` (vite 6.4.1) => PASS. 1580 modules transformed, built in ~1.5s. Output: dist/index.html, dist/assets/index-*.css (39.04 kB), dist/assets/index-*.js (224.54 kB). No errors.\n\n4) Frontend lint: `cd frontend && npm run lint` (oxlint) => PASS. 'Found 0 warnings and 0 errors.' 6 files, 96 rules.\n\nNO SOURCE FILES MODIFIED by this feature. IMPORTANT WORKSPACE NOTE: The current git branch is `feat/flutter-team-sponsor-screens` (NOT `feat/admin-match-events-lineups` as the briefing stated). The working tree already contains uncommitted/untracked changes from parallel tasks BEFORE this feature ran: modified backend/src/JSO.Infrastructure/JsoDbContext.cs and JsoDbContextModelSnapshot.cs; untracked LiveBlog files (AdminLiveBlogController.cs, LiveBlogController.cs, LiveBlogEntry.cs, 20260926204424_AddLiveBlogEntry.cs + .Designer.cs); untracked mobile/ changes (pubspec.*). These pre-existing changes are part of the current baseline that builds green - do NOT attribute them to this task, and do NOT touch mobile/. Subsequent features should build on this branch as-is."
+}
