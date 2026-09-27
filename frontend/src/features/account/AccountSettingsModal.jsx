@@ -1,13 +1,47 @@
-import { useState } from 'react'
-import { X, User, ShieldCheck, Bell } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { X, User, ShieldCheck, Bell, Receipt } from 'lucide-react'
+import { shopOrderApi } from '../../lib/api'
 
-export default function AccountSettingsModal({ open, user, onClose, onOpenProfile, onOpenChangePassword }) {
+const ORDER_STATUS_LABELS = {
+  Pending: 'En attente de paiement',
+  Paid: 'Payée',
+  Shipped: 'Expédiée',
+  Delivered: 'Livrée',
+  Cancelled: 'Annulée',
+  Failed: 'Échouée',
+}
+const ORDER_STATUS_STYLES = {
+  Pending: 'bg-amber-100 text-amber-700',
+  Paid: 'bg-emerald-100 text-emerald-700',
+  Shipped: 'bg-blue-100 text-blue-700',
+  Delivered: 'bg-slate-200 text-slate-700',
+  Cancelled: 'bg-slate-100 text-slate-500',
+  Failed: 'bg-red-100 text-red-700',
+}
+
+export default function AccountSettingsModal({ open, user, token, onClose, onOpenProfile, onOpenChangePassword }) {
   const [tab, setTab] = useState('profil')
+  const [orders, setOrders] = useState(null)
+  const [ordersError, setOrdersError] = useState('')
+
+  useEffect(() => {
+    if (!open || tab !== 'commandes' || !token) return
+    let active = true
+    setOrders(null)
+    setOrdersError('')
+    shopOrderApi.myOrders(token)
+      .then((list) => { if (active) setOrders(list || []) })
+      .catch((e) => { if (active) setOrdersError(e?.message || 'Impossible de charger vos commandes.') })
+    return () => { active = false }
+  }, [open, tab, token])
 
   if (!open) return null
 
+  const money = (n, c) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: c || 'TND' }).format(n || 0)
+
   const tabs = [
     { id: 'profil', label: 'Profil', icon: User },
+    { id: 'commandes', label: 'Mes commandes', icon: Receipt },
     { id: 'securite', label: 'Sécurité', icon: ShieldCheck },
     { id: 'preferences', label: 'Préférences', icon: Bell },
   ]
@@ -75,6 +109,33 @@ export default function AccountSettingsModal({ open, user, onClose, onOpenProfil
               >
                 Modifier le profil
               </button>
+            </div>
+          )}
+
+          {tab === 'commandes' && (
+            <div className="rounded-2xl border border-slate-200 p-5">
+              <h3 className="text-lg font-black">Mes commandes</h3>
+              {ordersError ? (
+                <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{ordersError}</p>
+              ) : orders === null ? (
+                <p className="mt-4 text-sm text-slate-400">Chargement…</p>
+              ) : orders.length === 0 ? (
+                <p className="mt-4 text-sm text-slate-500">Vous n’avez pas encore de commande. Découvrez la boutique du club !</p>
+              ) : (
+                <div className="mt-4 max-h-80 space-y-2 overflow-y-auto">
+                  {orders.map((o) => (
+                    <div key={o.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-3">
+                      <div>
+                        <p className="font-bold">{money(o.total, o.currency)}</p>
+                        <p className="text-xs text-slate-500">{new Date(o.createdAt).toLocaleDateString('fr-FR', { dateStyle: 'medium' })}</p>
+                      </div>
+                      <span className={'rounded-full px-2.5 py-1 text-xs font-extrabold ' + (ORDER_STATUS_STYLES[o.status] || 'bg-slate-100 text-slate-600')}>
+                        {ORDER_STATUS_LABELS[o.status] || o.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
