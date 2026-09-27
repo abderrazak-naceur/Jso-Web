@@ -3,6 +3,8 @@ import {
   ArrowUpRight,
   CalendarDays,
   ChevronRight,
+  Download,
+  FileText,
   LogIn,
   Menu,
   Shield,
@@ -31,8 +33,10 @@ const navigation = [
   ['Matchs', 'matches'],
   ['Actualités', 'news'],
   ['Médias', 'media'],
+  ['Agenda', 'events'],
   ['App mobile', 'mobile'],
   ['Boutique', 'shop'],
+  ['FAQ', 'faq'],
 ]
 
 // Compact public newsletter signup (idea A4). Double opt-in: the API only sends a generic
@@ -198,6 +202,9 @@ function App() {
   const [media, setMedia] = useState([])
   const [sponsors, setSponsors] = useState([])
   const [products, setProducts] = useState([])
+  const [events, setEvents] = useState([])
+  const [documents, setDocuments] = useState([])
+  const [faq, setFaq] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
   const [demoLoginHint, setDemoLoginHint] = useState(false)
   const cart = useCart()
@@ -207,6 +214,15 @@ function App() {
     publicApi.getProducts(undefined, controller.signal)
       .then((list) => setProducts(list || []))
       .catch((error) => { if (error.name !== 'AbortError') setProducts([]) })
+    publicApi.getEvents(controller.signal)
+      .then((list) => setEvents(list || []))
+      .catch((error) => { if (error.name !== 'AbortError') setEvents([]) })
+    publicApi.getDocuments(undefined, controller.signal)
+      .then((list) => setDocuments(list || []))
+      .catch((error) => { if (error.name !== 'AbortError') setDocuments([]) })
+    publicApi.getFaq(undefined, controller.signal)
+      .then((list) => setFaq(list || []))
+      .catch((error) => { if (error.name !== 'AbortError') setFaq([]) })
     return () => controller.abort()
   }, [])
 
@@ -504,6 +520,51 @@ function App() {
               ? <a key={s.id} href={s.websiteUrl} target="_blank" rel="noopener noreferrer" title={s.name} className="grid h-24 w-40 place-items-center rounded-2xl border border-slate-200 bg-white p-4 transition hover:shadow-lg">{inner}</a>
               : <div key={s.id} title={s.name} className="grid h-24 w-40 place-items-center rounded-2xl border border-slate-200 bg-white p-4">{inner}</div>
           })}
+        </div>
+      </section>}
+
+      {events.length > 0 && <section id="events" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
+        <SectionTitle eyebrow="09 / AGENDA" title="Les événements" muted="du club." />
+        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {events.map((e) => (
+            <article key={e.id} className="flex flex-col rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40">
+              <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-jso-blue">
+                <CalendarDays size={15} />{new Date(e.startAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </div>
+              <h3 className="mt-3 text-xl font-black">{e.title}</h3>
+              {e.location && <p className="mt-1 text-sm font-semibold text-slate-500">{e.location}</p>}
+              {e.description && <p className="mt-2 line-clamp-3 text-sm text-slate-500">{e.description}</p>}
+              <p className="mt-4 text-xs text-slate-400">{new Date(e.startAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}{e.endAt ? ' → ' + new Date(e.endAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''}</p>
+            </article>
+          ))}
+        </div>
+      </section>}
+
+      {documents.length > 0 && <section id="documents" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
+        <SectionTitle eyebrow="10 / DOCUMENTS" title="Documents" muted="officiels." />
+        <div className="mt-8 grid gap-3 md:grid-cols-2">
+          {documents.map((d) => (
+            <a key={d.id} href={d.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition hover:shadow-lg">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-jso-navy text-jso-gold"><FileText size={22} /></span>
+              <div className="min-w-0 flex-1"><p className="truncate font-black">{d.title}</p>{d.category && <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{d.category}</p>}</div>
+              <Download size={18} className="shrink-0 text-jso-blue" />
+            </a>
+          ))}
+        </div>
+      </section>}
+
+      {faq.length > 0 && <section id="faq" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
+        <SectionTitle eyebrow="11 / FAQ" title="Questions" muted="fréquentes." />
+        <div className="mt-8 space-y-3">
+          {faq.map((f) => (
+            <details key={f.id} className="group rounded-2xl border border-slate-200 bg-white p-5 [&_summary::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer items-center justify-between gap-4 font-black text-jso-ink">
+                {f.question}
+                <ChevronRight size={18} className="shrink-0 text-jso-blue transition group-open:rotate-90" />
+              </summary>
+              <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600">{f.answer}</p>
+            </details>
+          ))}
         </div>
       </section>}
 
