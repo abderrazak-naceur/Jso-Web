@@ -72,6 +72,37 @@ class ApiClient {
     Object? body,
     Map<String, String>? headers,
     String? bearerToken,
+  }) => _sendJson(
+    'POST',
+    path,
+    body: body,
+    headers: headers,
+    bearerToken: bearerToken,
+  );
+
+  /// PUTs a JSON-encoded [body] to [path] and decodes the JSON response.
+  ///
+  /// Same headers, [timeout] and [ApiException] mapping as [postJson]; used by
+  /// fan endpoints that update a resource in place (e.g. `PUT /account/me`).
+  Future<dynamic> putJson(
+    String path, {
+    Object? body,
+    Map<String, String>? headers,
+    String? bearerToken,
+  }) => _sendJson(
+    'PUT',
+    path,
+    body: body,
+    headers: headers,
+    bearerToken: bearerToken,
+  );
+
+  Future<dynamic> _sendJson(
+    String method,
+    String path, {
+    Object? body,
+    Map<String, String>? headers,
+    String? bearerToken,
   }) async {
     final uri = _buildUri(path, null);
     final requestHeaders = <String, String>{
@@ -79,16 +110,14 @@ class ApiClient {
       ..._headers(bearerToken: bearerToken),
       ...?headers,
     };
+    final encoded = body == null ? null : jsonEncode(body);
 
     http.Response response;
     try {
-      response = await _http
-          .post(
-            uri,
-            headers: requestHeaders,
-            body: body == null ? null : jsonEncode(body),
-          )
-          .timeout(timeout);
+      final pending = method == 'PUT'
+          ? _http.put(uri, headers: requestHeaders, body: encoded)
+          : _http.post(uri, headers: requestHeaders, body: encoded);
+      response = await pending.timeout(timeout);
     } on TimeoutException {
       throw const ApiTimeoutException();
     } on SocketException catch (e) {
@@ -112,7 +141,11 @@ class ApiClient {
       throw const NotFoundException();
     }
     if (status < 200 || status >= 300) {
-      throw ApiHttpException(status, 'Unexpected status code $status');
+      throw ApiHttpException(
+        status,
+        'Unexpected status code $status',
+        serverMessage: _serverMessage(response.body),
+      );
     }
 
     if (response.body.isEmpty) {
@@ -124,6 +157,22 @@ class ApiClient {
     } on FormatException catch (e) {
       throw ApiParseException('Invalid JSON: ${e.message}');
     }
+  }
+
+  /// Extracts the backend `{ "message": "..." }` from an error body, or null
+  /// when the body is empty, not JSON, or has no string `message`.
+  String? _serverMessage(String body) {
+    if (body.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map && decoded['message'] is String) {
+        final message = (decoded['message'] as String).trim();
+        return message.isEmpty ? null : message;
+      }
+    } on FormatException {
+      // Not JSON (e.g. a plain-text or HTML error page): no server message.
+    }
+    return null;
   }
 
   Uri _buildUri(String path, Map<String, String>? queryParameters) {

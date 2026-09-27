@@ -6,7 +6,7 @@ import '../../core/config/jso_theme.dart';
 class EmptyView extends StatelessWidget {
   const EmptyView({
     super.key,
-    this.message = 'Nothing here yet',
+    this.message = 'Rien à afficher pour le moment.',
     this.icon = Icons.inbox_outlined,
   });
 

@@ -128,7 +128,7 @@ void main() {
       await _openLiveTab(tester);
 
       expect(find.byType(ErrorView), findsOneWidget);
-      expect(find.text('Retry'), findsOneWidget);
+      expect(find.text('Réessayer'), findsOneWidget);
     });
   });
 }

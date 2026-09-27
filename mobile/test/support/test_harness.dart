@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:provider/single_child_widget.dart';
 
 import 'package:jso_mobile/core/config/jso_theme.dart';
 import 'package:jso_mobile/data/models/article.dart';
@@ -17,14 +18,23 @@ import 'package:jso_mobile/data/repositories/public_api_repository.dart';
 
 /// Pumps [child] inside a MaterialApp with the JSO theme and a Provider that
 /// supplies [repository]. Mirrors how the real app wires the tree.
+///
+/// Feature tests can inject their own fakes through [providers] (e.g. a fake
+/// shop repository or an [AuthController] from `fake_auth.dart`) without
+/// touching this shared harness. They sit above the [MaterialApp], so routes
+/// pushed from [child] can read them too.
 Future<void> pumpScreen(
   WidgetTester tester, {
   required PublicApiRepository repository,
   required Widget child,
+  List<SingleChildWidget> providers = const [],
 }) {
   return tester.pumpWidget(
-    Provider<PublicApiRepository>.value(
-      value: repository,
+    MultiProvider(
+      providers: [
+        Provider<PublicApiRepository>.value(value: repository),
+        ...providers,
+      ],
       child: MaterialApp(theme: JsoTheme.dark(), home: child),
     ),
   );

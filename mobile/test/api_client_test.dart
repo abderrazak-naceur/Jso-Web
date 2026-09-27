@@ -161,5 +161,80 @@ void main() {
 
       expect(() => client.getJson('/home'), throwsA(isA<ApiParseException>()));
     });
+
+    test('keeps the backend {message} on ApiHttpException', () async {
+      final client = clientReturning(
+        (req) => http.Response('{"message":"The cart is empty."}', 400),
+      );
+
+      await expectLater(
+        client.getJson('/shop/orders'),
+        throwsA(
+          isA<ApiHttpException>()
+              .having((e) => e.statusCode, 'statusCode', 400)
+              .having(
+                (e) => e.serverMessage,
+                'serverMessage',
+                'The cart is empty.',
+              ),
+        ),
+      );
+    });
+
+    test('leaves serverMessage null for a non-JSON error body', () async {
+      final client = clientReturning((req) => http.Response('<html>', 502));
+
+      await expectLater(
+        client.getJson('/home'),
+        throwsA(
+          isA<ApiHttpException>().having(
+            (e) => e.serverMessage,
+            'serverMessage',
+            isNull,
+          ),
+        ),
+      );
+    });
+  });
+
+  group('ApiClient.putJson', () {
+    test('sends a PUT with a JSON body and bearer token', () async {
+      late http.Request captured;
+      final client = clientReturning((req) {
+        captured = req;
+        return http.Response('{"displayName":"Sami"}', 200);
+      });
+
+      final result = await client.putJson(
+        '/account/me',
+        body: {'displayName': 'Sami'},
+        bearerToken: 'jwt',
+      );
+
+      expect(captured.method, 'PUT');
+      expect(captured.url.toString(), '$baseUrl/account/me');
+      expect(captured.headers['Authorization'], 'Bearer jwt');
+      expect(captured.headers['Content-Type'], startsWith('application/json'));
+      expect(captured.body, '{"displayName":"Sami"}');
+      expect((result as Map)['displayName'], 'Sami');
+    });
+
+    test('maps a 400 with {message} like POST does', () async {
+      final client = clientReturning(
+        (req) =>
+            http.Response('{"message":"Display name cannot be empty."}', 400),
+      );
+
+      await expectLater(
+        client.putJson('/account/me', body: {'displayName': ''}),
+        throwsA(
+          isA<ApiHttpException>().having(
+            (e) => e.serverMessage,
+            'serverMessage',
+            'Display name cannot be empty.',
+          ),
+        ),
+      );
+    });
   });
 }
