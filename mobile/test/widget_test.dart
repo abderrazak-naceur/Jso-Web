@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jso_mobile/app.dart';
+import 'package:jso_mobile/core/api/api_client.dart';
+import 'package:jso_mobile/data/repositories/tickets_repository.dart';
 
 import 'support/fake_auth.dart';
 import 'support/fake_repository.dart';
@@ -17,7 +19,11 @@ void main() {
     final auth = fakeAuthController();
 
     await tester.pumpWidget(
-      JsoApp(repository: repository, authController: auth),
+      JsoApp(
+        repository: repository,
+        ticketsRepository: TicketsRepository(ApiClient()),
+        authController: auth,
+      ),
     );
     await tester.pump();
 

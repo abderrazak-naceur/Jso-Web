@@ -12,6 +12,7 @@ import '../../shared/format.dart';
 import '../../shared/widgets/empty_view.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
+import '../tickets/tickets_screen.dart';
 
 /// Bundles the two calls needed to render match detail.
 class _MatchDetailData {
@@ -116,6 +117,8 @@ class _TimelineTab extends StatelessWidget {
       padding: const EdgeInsets.all(JsoSpacing.md),
       children: [
         _MatchHeader(match: data.match),
+        const SizedBox(height: JsoSpacing.md),
+        _TicketsCta(match: data.match),
         const SizedBox(height: JsoSpacing.lg),
         const Text(
           'Timeline',
@@ -189,6 +192,27 @@ class _MatchHeader extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Entry point to the match billetterie from the timeline tab.
+class _TicketsCta extends StatelessWidget {
+  const _TicketsCta({required this.match});
+
+  final Match match;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => TicketsScreen(match: match)),
+        ),
+        icon: const Icon(Icons.confirmation_number_outlined),
+        label: const Text('Billetterie'),
       ),
     );
   }
