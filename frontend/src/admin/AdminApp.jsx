@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
@@ -16,6 +16,7 @@ import AnniversariesModule from './Anniversaries'
 import ApiUsageModule from './ApiUsage'
 import GdprModule from './Gdpr'
 import SponsorQrModule from './SponsorQr'
+import CommunityProgramsModule from './CommunityPrograms'
 
 async function api(path, options = {}) {
   const token = localStorage.getItem('jso_admin_token')
@@ -343,6 +344,7 @@ function AdminDashboard({ user, onLogout }) {
     ['classifieds', 'Petites annonces', Megaphone, ['ClubAdmin','CommunityManager']],
     ['facilities', 'Installations', CalendarRange, ['ClubAdmin','MatchManager']],
     ['scouting', 'Scouting', ScanSearch, ['ClubAdmin','MatchManager']],
+    ['community', 'Écoles & partenaires', GraduationCap, ['ClubAdmin','CommunityManager']],
     ['featureflags', 'Feature flags', Flag, ['SuperAdmin','ClubAdmin']],
     ['apiusage', 'Utilisation API', Gauge, ['SuperAdmin','ClubAdmin']],
     ['gdpr', 'RGPD', ShieldAlert, ['SuperAdmin','ClubAdmin']],
@@ -404,6 +406,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'classifieds' && <ClassifiedsModule onError={setError}/>}
         {section === 'facilities' && <FacilitiesModule onError={setError}/>}
         {section === 'scouting' && <ScoutingModule onError={setError}/>}
+        {section === 'community' && <CommunityProgramsModule onError={setError}/>}
         {section === 'featureflags' && <FeatureFlagsModule onError={setError}/>}
         {section === 'apiusage' && <ApiUsageModule onError={setError}/>}
         {section === 'gdpr' && <GdprModule onError={setError}/>}

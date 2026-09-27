@@ -3,6 +3,7 @@ using System;
 using JSO.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace JSO.Infrastructure.Migrations.Postgres
 {
     [DbContext(typeof(JsoDbContext))]
-    partial class JsoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260927085146_AddCommunityProgram")]
+    partial class AddCommunityProgram
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1274,9 +1277,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ActivationSlug")
-                        .HasColumnType("text");
-
                     b.Property<DateTimeOffset?>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -1309,35 +1309,9 @@ namespace JSO.Infrastructure.Migrations.Postgres
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ActivationSlug")
-                        .IsUnique()
-                        .HasFilter("\"ActivationSlug\" IS NOT NULL");
-
                     b.HasIndex("Placement", "IsActive", "Priority");
 
                     b.ToTable("Sponsors");
-                });
-
-            modelBuilder.Entity("JSO.Domain.SponsorActivation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Channel")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("ScannedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("SponsorId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SponsorId", "ScannedAt");
-
-                    b.ToTable("SponsorActivations");
                 });
 
             modelBuilder.Entity("JSO.Domain.StaffMember", b =>
