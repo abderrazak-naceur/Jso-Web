@@ -305,15 +305,16 @@ function App() {
     setMatchEvents([])
     setMatchLoading(true)
     try {
-      const [details, events, lineup, officials, stats] = await Promise.all([
+      const [details, events, lineup, officials, stats, liveblog] = await Promise.all([
         publicApi.getMatch(match.Id),
         publicApi.getMatchEvents(match.Id),
         publicApi.getMatchLineup(match.Id),
         publicApi.getMatchOfficials(match.Id),
         publicApi.getMatchStats(match.Id),
+        publicApi.getMatchLiveBlog(match.Id).catch(() => []),
       ])
       const normalizedDetails = normalizeMatch(details)
-      setSelectedMatch({ ...match, ...normalizedDetails, lineup: lineup || [], officials: officials || [], stats: stats || [] })
+      setSelectedMatch({ ...match, ...normalizedDetails, lineup: lineup || [], officials: officials || [], stats: stats || [], liveblog: liveblog || [] })
       setMatchEvents((events || []).map((event) => ({
         ...event,
         Id: pick(event, 'Id', 'id'),
@@ -508,6 +509,7 @@ function App() {
             <p className="text-sm text-white/70">{selectedMatch.Venue || 'Lieu à confirmer'} · {selectedMatch.IsHome ? 'Domicile' : 'Extérieur'}</p>
           </div>
           {matchLoading ? <p className="mt-6 text-sm text-slate-500">Chargement du Match Center…</p> : <div className="mt-7 space-y-7">
+            {selectedMatch.liveblog?.length ? <section><h3 className="flex items-center gap-2 text-xl font-black"><span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />Live</h3><div className="mt-4 space-y-2">{selectedMatch.liveblog.map(entry => <div key={entry.id} className={'rounded-xl p-4 ' + (entry.isPinned ? 'border border-jso-gold bg-jso-gold/10' : 'bg-slate-50')}><div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-jso-blue">{entry.minute != null && <span>{entry.minute}'</span>}<span className="rounded-full bg-jso-navy px-2 py-0.5 text-white">{entry.kind}</span>{entry.isPinned && <span className="text-jso-gold">★ Épinglé</span>}</div><p className="mt-2 text-sm text-jso-ink">{entry.body}</p></div>)}</div></section> : null}
             <section><h3 className="text-xl font-black">Événements</h3>{matchEvents.length ? <div className="mt-4 space-y-2">{matchEvents.map(event => <div key={event.Id} className="flex gap-4 rounded-xl bg-slate-50 p-4"><span className="font-black text-jso-blue">{event.Minute}'</span><div><b>{event.Type}</b>{event.PlayerName && <p className="text-sm text-slate-500">{event.PlayerName}</p>}{event.Notes && <p className="text-sm text-slate-500">{event.Notes}</p>}</div></div>)}</div> : <p className="mt-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Nessun evento registrato.</p>}</section>
             <section><h3 className="text-xl font-black">Composition</h3>{selectedMatch.lineup?.length ? <div className="mt-4 grid gap-2 sm:grid-cols-2">{selectedMatch.lineup.map(p => <div key={p.id} className="flex items-center justify-between rounded-xl border border-slate-200 p-3"><div><b>#{p.shirtNumber ?? '—'} {p.firstName} {p.lastName}</b><p className="text-xs text-slate-500">{p.position || 'Joueur'} · {p.role === 'Substitute' ? 'Banc' : 'Titulaire'}{p.isCaptain ? ' · Capitaine' : ''}</p></div></div>)}</div> : <p className="mt-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Composition non publiée.</p>}</section>
             <div className="grid gap-6 md:grid-cols-2">
