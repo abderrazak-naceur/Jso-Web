@@ -18,6 +18,17 @@ builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuditService>();
 builder.Services.AddScoped<DatabaseInitializer>();
 
+// Weather-enriched match reminders (idea G22). Open-Meteo is a free, keyless
+// provider so no secret is introduced. The HttpClient uses a short timeout and
+// the service falls back to weather=null on any failure, so this is safe even
+// when the production network is closed.
+builder.Services.Configure<WeatherOptions>(builder.Configuration.GetSection(WeatherOptions.SectionName));
+builder.Services.AddHttpClient<WeatherService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.open-meteo.com/");
+    client.Timeout = TimeSpan.FromSeconds(4);
+});
+
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
     throw new InvalidOperationException("Jwt:Key must contain at least 32 characters.");
