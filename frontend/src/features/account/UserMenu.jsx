@@ -12,9 +12,15 @@ export default function UserMenu({ user, onOpenProfile, onOpenSettings, onLogout
       }
     }
 
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
     document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
     }
   }, [])
 
@@ -39,11 +45,13 @@ export default function UserMenu({ user, onOpenProfile, onOpenSettings, onLogout
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label={`Mon compte (${user.displayName})`}
         onClick={() => setOpen((value) => !value)}
-        className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/20 transition"
+        className="flex h-11 items-center gap-2 rounded-full bg-white/10 px-3 text-sm font-bold text-white transition hover:bg-white/20 xl:px-4"
       >
-        <UserCircle className="h-5 w-5" />
-        {user.displayName}
+        <UserCircle className="h-5 w-5" aria-hidden="true" />
+        {/* Icon only on narrow desktops so the header never wraps; long names are truncated. */}
+        <span className="hidden max-w-[8rem] truncate xl:inline">{user.displayName}</span>
       </button>
 
       {open && (

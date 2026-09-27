@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api/api_exception.dart';
+import '../../core/api/error_text.dart';
 import '../../core/config/jso_theme.dart';
 import '../../data/models/match.dart';
 import '../../data/models/ticket_type.dart';
 import '../../data/repositories/tickets_repository.dart';
 import '../../shared/format.dart';
+import '../../shared/snackbars.dart';
 import '../../shared/widgets/empty_view.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../auth/auth_controller.dart';
-import '../auth/login_screen.dart';
+import '../auth/login_prompt.dart';
 
 /// Billetterie for a single match: lists the active ticket types
 /// (`GET /api/tickets/match/{matchId}`) with remaining availability, and lets
@@ -63,7 +65,6 @@ class _TicketsScreenState extends State<TicketsScreen> {
     if (quantity == null || !mounted) return;
 
     final repo = context.read<TicketsRepository>();
-    final messenger = ScaffoldMessenger.of(context);
     try {
       final order = await repo.reserve(
         token: token,
@@ -71,48 +72,22 @@ class _TicketsScreenState extends State<TicketsScreen> {
         quantity: quantity,
       );
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          backgroundColor: JsoColors.navy3,
-          content: Text(
-            'Réservation enregistrée · ${order.quantity} × ${order.ticketTypeName}. '
-            'En attente de confirmation.',
-            style: const TextStyle(color: JsoColors.white),
-          ),
-        ),
+      showJsoMessage(
+        context,
+        'Réservation enregistrée · ${order.quantity} × ${order.ticketTypeName}. '
+        'En attente de confirmation.',
       );
       setState(_load);
     } on ApiException catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          backgroundColor: JsoColors.navy3,
-          content: Text(
-            e.message,
-            style: const TextStyle(color: JsoColors.white),
-          ),
-        ),
-      );
+      showJsoMessage(context, describeApiError(e));
     }
   }
 
   void _promptLogin() {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(
-      SnackBar(
-        backgroundColor: JsoColors.navy3,
-        content: const Text(
-          'Connectez-vous pour réserver vos billets.',
-          style: TextStyle(color: JsoColors.white),
-        ),
-        action: SnackBarAction(
-          label: 'Se connecter',
-          textColor: JsoColors.gold,
-          onPressed: () => Navigator.of(
-            context,
-          ).push(MaterialPageRoute<void>(builder: (_) => const LoginScreen())),
-        ),
-      ),
+    showLoginPrompt(
+      context,
+      message: 'Connectez-vous pour réserver vos billets.',
     );
   }
 

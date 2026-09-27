@@ -14,9 +14,16 @@ sealed class ApiException implements Exception {
 
 /// The server responded with a non-2xx status code (other than 404).
 class ApiHttpException extends ApiException {
-  const ApiHttpException(this.statusCode, super.message);
+  const ApiHttpException(this.statusCode, super.message, {this.serverMessage});
 
   final int statusCode;
+
+  /// The backend's `{ "message": ... }` from the error body, when present.
+  ///
+  /// The JSO API returns this on validation failures (400) and conflicts
+  /// (409); `describeApiError` in `error_text.dart` turns it into French UI
+  /// copy.
+  final String? serverMessage;
 
   @override
   String toString() => 'ApiHttpException($statusCode): $message';

@@ -56,7 +56,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(ErrorView), findsOneWidget);
-      expect(find.text('Retry'), findsOneWidget);
+      expect(find.text('Réessayer'), findsOneWidget);
     });
 
     testWidgets('tapping a team navigates to the roster', (tester) async {

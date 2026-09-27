@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/config/api_config.dart';
 import '../../core/config/jso_theme.dart';
 
 /// A resilient wrapper over [Image.network].
@@ -7,6 +8,8 @@ import '../../core/config/jso_theme.dart';
 /// Uses a [loadingBuilder] to show a subtle progress indicator while bytes
 /// arrive and an [errorBuilder] so a missing/broken URL (or a null/empty one)
 /// degrades to a neutral placeholder icon instead of crashing the screen.
+/// Root-relative upload paths (`/uploads/...`) are resolved against the API
+/// host via [ApiConfig.resolveUrl].
 class RemoteImage extends StatelessWidget {
   const RemoteImage({
     super.key,
@@ -25,7 +28,7 @@ class RemoteImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final src = url?.trim() ?? '';
+    final src = ApiConfig.resolveUrl(url) ?? '';
     if (src.isEmpty) {
       return _placeholder();
     }

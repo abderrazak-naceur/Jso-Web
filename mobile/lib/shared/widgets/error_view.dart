@@ -6,7 +6,7 @@ import '../../core/config/jso_theme.dart';
 class ErrorView extends StatelessWidget {
   const ErrorView({
     super.key,
-    this.message = 'Something went wrong',
+    this.message = 'Une erreur est survenue.',
     this.onRetry,
     this.icon = Icons.error_outline,
   });
@@ -35,7 +35,7 @@ class ErrorView extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                label: const Text('Réessayer'),
               ),
             ],
           ],
