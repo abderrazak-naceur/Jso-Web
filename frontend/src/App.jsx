@@ -21,6 +21,8 @@ import AuthModal from './features/account/AuthModal'
 import ProfileModal from './features/account/ProfileModal'
 import AccountSettingsModal from './features/account/AccountSettingsModal'
 import ChangePasswordModal from './features/account/ChangePasswordModal'
+import { useCart } from './features/shop/useCart'
+import CartDrawer from './features/shop/CartDrawer'
 
 const navigation = [
   ['Accueil', 'home'],
@@ -194,6 +196,18 @@ function App() {
 
   const [media, setMedia] = useState([])
   const [sponsors, setSponsors] = useState([])
+  const [products, setProducts] = useState([])
+  const [cartOpen, setCartOpen] = useState(false)
+  const [demoLoginHint, setDemoLoginHint] = useState(false)
+  const cart = useCart()
+
+  useEffect(() => {
+    const controller = new AbortController()
+    publicApi.getProducts(undefined, controller.signal)
+      .then((list) => setProducts(list || []))
+      .catch((error) => { if (error.name !== 'AbortError') setProducts([]) })
+    return () => controller.abort()
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -320,6 +334,10 @@ function App() {
 
           <div className="flex items-center gap-2">
             <button onClick={() => goTo('Matchs', 'matches')} className="hidden rounded-full bg-jso-gold px-5 py-3 text-sm font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-white sm:block">Match Center ↗</button>
+            <button onClick={() => setCartOpen(true)} className="relative rounded-full border border-white/25 p-3 text-white transition hover:bg-white/10" aria-label="Ouvrir le panier">
+              <ShoppingBag size={18} />
+              {cart.count > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-jso-gold px-1 text-[11px] font-black text-jso-navy">{cart.count}</span>}
+            </button>
             <FanAuth />
             <a href="/admin" className="hidden items-center gap-2 rounded-full border border-white/25 px-5 py-3 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-white/10 sm:inline-flex"><Shield size={16} /> Admin</a>
             <button aria-label="Ouvrir le menu" onClick={() => setMenuOpen((value) => !value)} className="rounded-full border border-white/20 p-3 lg:hidden">
@@ -417,7 +435,41 @@ function App() {
         </div>
       </section>
 
-      <section id="shop" className="mx-auto max-w-7xl px-5 py-16 lg:px-8"><div className="rounded-[2.5rem] bg-jso-gold p-8 sm:p-12"><div className="flex flex-col justify-between gap-8 md:flex-row md:items-end"><div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-navy/60">07 / BOUTIQUE</p><h2 className="mt-3 text-4xl font-black tracking-tight text-jso-navy sm:text-6xl">Porte les couleurs.<br />Vis l’identité.</h2></div><button onClick={() => setDemoOpen(true)} className="rounded-full bg-jso-navy px-6 py-4 font-extrabold text-white transition hover:bg-jso-blue"><ShoppingBag className="mr-2 inline" size={18} /> Boutique bientôt disponible</button></div></div></section>
+      <section id="shop" className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
+        <div className="rounded-[2.5rem] bg-jso-gold p-8 sm:p-12">
+          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            <div>
+              <p className="text-xs font-extrabold tracking-[0.2em] text-jso-navy/60">07 / BOUTIQUE</p>
+              <h2 className="mt-3 text-4xl font-black tracking-tight text-jso-navy sm:text-6xl">Porte les couleurs.<br />Vis l’identité.</h2>
+            </div>
+            {products.length > 0 && <button onClick={() => setCartOpen(true)} className="rounded-full bg-jso-navy px-6 py-4 font-extrabold text-white transition hover:bg-jso-blue"><ShoppingBag className="mr-2 inline" size={18} /> Voir le panier ({cart.count})</button>}
+          </div>
+          {products.length === 0 ? (
+            <p className="mt-8 rounded-2xl bg-white/40 p-5 font-semibold text-jso-navy/80">La boutique arrive bientôt. Les produits officiels seront disponibles ici.</p>
+          ) : (
+            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {products.map((p) => (
+                <div key={p.id} className="flex flex-col overflow-hidden rounded-[1.5rem] bg-white shadow-lg">
+                  <div className="aspect-[4/3] w-full bg-slate-100">
+                    {p.imageUrl ? <img src={p.imageUrl} alt={p.name} loading="lazy" className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-slate-300"><ShoppingBag size={40} /></div>}
+                  </div>
+                  <div className="flex flex-1 flex-col p-5">
+                    <h3 className="text-lg font-black text-jso-ink">{p.name}</h3>
+                    {p.category && <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{p.category}</p>}
+                    {p.description && <p className="mt-2 line-clamp-2 text-sm text-slate-500">{p.description}</p>}
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <span className="text-xl font-black text-jso-navy">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: p.currency || 'TND' }).format(p.price || 0)}</span>
+                      {p.inStock
+                        ? <button onClick={() => { cart.add(p); setCartOpen(true) }} className="rounded-full bg-jso-navy px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-jso-blue">Ajouter au panier</button>
+                        : <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-bold text-slate-400">Épuisé</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
 
       {selectedMatch && <div className="fixed inset-0 z-[70] overflow-y-auto bg-jso-navy/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
         <div className="mx-auto mt-10 max-w-3xl rounded-[2rem] bg-white p-6 shadow-2xl sm:p-8">
@@ -455,6 +507,16 @@ function App() {
       </section>}
 
       <footer className="bg-jso-navy px-5 py-10 text-white lg:px-8"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 lg:flex-row lg:items-center"><div><div className="flex items-center gap-3"><img src="/JSO-crest-regenerated.png" alt="Stemma JSO" className="h-12 w-10 object-contain" /><div className="text-xl font-black">JSO · Jeunesse Sportive de Oudhref</div></div><p className="mt-1 text-sm text-white/60">Plus qu’un club. Une identité.</p></div><NewsletterSignup /><p className="text-sm text-white/50">© 2026 JSO. Tous droits réservés.</p></div></footer>
+
+      <CartDrawer
+        open={cartOpen}
+        cart={cart}
+        token={(() => { try { return localStorage.getItem('jso_fan_token') } catch { return null } })()}
+        onClose={() => setCartOpen(false)}
+        onRequireLogin={() => { setCartOpen(false); setDemoLoginHint(true) }}
+      />
+
+      {demoLoginHint && <div className="fixed inset-0 z-[85] grid place-items-center bg-jso-navy/60 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Connexion requise"><div className="w-full max-w-sm rounded-[2rem] bg-white p-8 text-center shadow-2xl"><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">ESPACE SUPPORTER</p><h2 className="mt-2 text-2xl font-black">Connexion requise</h2><p className="mt-3 text-sm text-slate-500">Pour passer commande, connectez-vous ou créez un compte supporter via le bouton « S’inscrire / Se connecter » en haut de la page.</p><button onClick={() => setDemoLoginHint(false)} className="mt-6 rounded-full bg-jso-navy px-6 py-3 font-extrabold text-white hover:bg-jso-blue">Compris</button></div></div>}
 
       <AccessibilityPanel />
 
