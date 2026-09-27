@@ -36,6 +36,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<MaintenanceLog> MaintenanceLogs => Set<MaintenanceLog>();
  public DbSet<ScoutingNote> ScoutingNotes => Set<ScoutingNote>();
  public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
+ public DbSet<ApiUsageDaily> ApiUsageDaily => Set<ApiUsageDaily>();
  public DbSet<DataExportRequest> DataExportRequests => Set<DataExportRequest>();
  public DbSet<AccountDeletionRequest> AccountDeletionRequests => Set<AccountDeletionRequest>();
  protected override void OnModelCreating(ModelBuilder modelBuilder) {
@@ -95,6 +96,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<ScoutingNote>().Property(x=>x.SubjectType).HasDefaultValue("Opponent");
   modelBuilder.Entity<FeatureFlag>().HasIndex(x=>x.Key).IsUnique();
   modelBuilder.Entity<FeatureFlag>().Property(x=>x.Enabled).HasDefaultValue(false);
+  modelBuilder.Entity<ApiUsageDaily>().HasIndex(x=>new{x.Date,x.RouteGroup,x.StatusClass}).IsUnique();
   modelBuilder.Entity<DataExportRequest>().HasIndex(x=>new{x.FanUserId,x.Status});
   modelBuilder.Entity<DataExportRequest>().HasIndex(x=>x.RequestedAt);
   modelBuilder.Entity<DataExportRequest>().Property(x=>x.Status).HasDefaultValue("Pending");
