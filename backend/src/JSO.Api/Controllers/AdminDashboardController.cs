@@ -66,21 +66,36 @@ public sealed class AdminDashboardController(JsoDbContext db) : ControllerBase
             // No Product/Order entities exist yet, so values stay zero and
             // "enabled" is false until the shop domain and a payment provider
             // are implemented. The dashboard renders a clear "not active" state.
-            sales = new
-            {
-                // Catalog is real; orders/revenue stay zero until checkout + a
-                // payment provider exist. "enabled" flags the shop as live once
-                // there is at least one active product to sell.
-                enabled = await db.Products.AnyAsync(x => x.IsActive, ct),
-                currency = "TND",
-                revenue = 0m,
-                orders = 0,
-                activeProducts = await db.Products.CountAsync(x => x.IsActive, ct),
-                productsSold = 0,
-                conversionRate = 0d
-            }
+            // Real sales metrics from paid orders (Paid/Shipped/Delivered count
+            // as revenue). "enabled" reflects that there is at least one active
+            // product to sell; revenue/orders stay 0 until real orders are paid.
+            sales = await BuildSalesAsync(db, ct)
         };
 
         return Ok(result);
+    }
+
+    private static readonly string[] PaidStatuses = ["Paid", "Shipped", "Delivered"];
+
+    private static async Task<object> BuildSalesAsync(JsoDbContext db, CancellationToken ct)
+    {
+        var paidOrders = db.Orders.AsNoTracking().Where(x => PaidStatuses.Contains(x.Status));
+        var revenue = await paidOrders.SumAsync(x => (decimal?)x.Total, ct) ?? 0m;
+        var orders = await paidOrders.CountAsync(ct);
+        var paidOrderIds = paidOrders.Select(x => x.Id);
+        var productsSold = await db.OrderItems.AsNoTracking()
+            .Where(x => paidOrderIds.Contains(x.OrderId))
+            .SumAsync(x => (int?)x.Quantity, ct) ?? 0;
+
+        return new
+        {
+            enabled = await db.Products.AnyAsync(x => x.IsActive, ct),
+            currency = "TND",
+            revenue,
+            orders,
+            activeProducts = await db.Products.CountAsync(x => x.IsActive, ct),
+            productsSold,
+            conversionRate = 0d
+        };
     }
 }

@@ -23,6 +23,8 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<SponsorActivation> SponsorActivations => Set<SponsorActivation>();
  public DbSet<FanUser> FanUsers => Set<FanUser>();
  public DbSet<Product> Products => Set<Product>();
+ public DbSet<Order> Orders => Set<Order>();
+ public DbSet<OrderItem> OrderItems => Set<OrderItem>();
  public DbSet<Volunteer> Volunteers => Set<Volunteer>();
  public DbSet<MatchAssignment> MatchAssignments => Set<MatchAssignment>();
  public DbSet<NewsletterSubscription> NewsletterSubscriptions => Set<NewsletterSubscription>();
@@ -69,6 +71,13 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<Product>().HasIndex(x=>x.Slug).IsUnique();
   modelBuilder.Entity<Product>().HasIndex(x=>new{x.IsActive,x.Category});
   modelBuilder.Entity<Product>().Property(x=>x.Price).HasPrecision(14,2);
+  modelBuilder.Entity<Order>().HasIndex(x=>new{x.FanUserId,x.CreatedAt});
+  modelBuilder.Entity<Order>().HasIndex(x=>x.Status);
+  modelBuilder.Entity<Order>().HasIndex(x=>x.ProviderRef).IsUnique().HasFilter("\"ProviderRef\" IS NOT NULL");
+  modelBuilder.Entity<Order>().Property(x=>x.Total).HasPrecision(14,2);
+  modelBuilder.Entity<OrderItem>().HasIndex(x=>x.OrderId);
+  modelBuilder.Entity<OrderItem>().Property(x=>x.UnitPrice).HasPrecision(14,2);
+  modelBuilder.Entity<OrderItem>().Property(x=>x.LineTotal).HasPrecision(14,2);
   modelBuilder.Entity<Volunteer>().HasIndex(x=>new{x.IsActive,x.Role});
   modelBuilder.Entity<MatchAssignment>().HasIndex(x=>x.MatchId);
   modelBuilder.Entity<MatchAssignment>().HasIndex(x=>new{x.MatchId,x.VolunteerId,x.Task}).IsUnique();

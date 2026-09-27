@@ -54,6 +54,13 @@ export const accountApi = {
   me: (token) => requestJson('/account/me', 'GET', null, token),
 }
 
+// Fan shop orders API (requires the fan JWT). Prices are recomputed server-side.
+export const shopOrderApi = {
+  create: (data, token) => requestJson('/shop/orders', 'POST', data, token),
+  myOrders: (token) => requestJson('/shop/orders', 'GET', null, token),
+  myOrder: (id, token) => requestJson('/shop/orders/' + id, 'GET', null, token),
+}
+
 // Public newsletter API (double opt-in). /subscribe returns a generic message and never
 // reveals whether the email already exists. Confirmation/unsubscribe happen via emailed
 // token links (email delivery is a backend TODO).
