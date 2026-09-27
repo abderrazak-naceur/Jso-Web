@@ -26,6 +26,10 @@ export const publicApi = {
   getSponsors: (placement, signal) => request('/sponsors' + (placement ? '?placement=' + encodeURIComponent(placement) : ''), signal),
   getProducts: (category, signal) => request('/shop/products' + (category ? '?category=' + encodeURIComponent(category) : ''), signal),
   getProduct: (slug, signal) => request('/shop/products/' + encodeURIComponent(slug), signal),
+  getEvents: (signal) => request('/events', signal),
+  getEvent: (slug, signal) => request('/events/' + encodeURIComponent(slug), signal),
+  getDocuments: (category, signal) => request('/documents' + (category ? '?category=' + encodeURIComponent(category) : ''), signal),
+  getFaq: (category, signal) => request('/faq' + (category ? '?category=' + encodeURIComponent(category) : ''), signal),
 }
 
 async function requestJson(path, method, body, token) {
