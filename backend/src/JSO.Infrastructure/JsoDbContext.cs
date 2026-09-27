@@ -20,6 +20,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
  public DbSet<SiteContent> SiteContents => Set<SiteContent>();
  public DbSet<Sponsor> Sponsors => Set<Sponsor>();
+ public DbSet<SponsorActivation> SponsorActivations => Set<SponsorActivation>();
  public DbSet<FanUser> FanUsers => Set<FanUser>();
  public DbSet<Product> Products => Set<Product>();
  public DbSet<Volunteer> Volunteers => Set<Volunteer>();
@@ -58,6 +59,8 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<MatchEvent>().HasIndex(x=>x.MatchId);
   modelBuilder.Entity<MatchStat>().HasIndex(x=>new{x.MatchId,x.Name}).IsUnique();
   modelBuilder.Entity<Sponsor>().HasIndex(x=>new{x.Placement,x.IsActive,x.Priority});
+  modelBuilder.Entity<Sponsor>().HasIndex(x=>x.ActivationSlug).IsUnique().HasFilter("\"ActivationSlug\" IS NOT NULL");
+  modelBuilder.Entity<SponsorActivation>().HasIndex(x=>new{x.SponsorId,x.ScannedAt});
   modelBuilder.Entity<LiveBlogEntry>().HasIndex(x=>new{x.MatchId,x.IsPinned,x.CreatedAt});
   modelBuilder.Entity<FanUser>().HasIndex(x=>x.Email).IsUnique();
   modelBuilder.Entity<FanUser>().Property(x=>x.AnniversaryOptIn).HasDefaultValue(false);
