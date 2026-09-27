@@ -27,6 +27,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<NewsletterSubscription> NewsletterSubscriptions => Set<NewsletterSubscription>();
  public DbSet<ArchiveItem> ArchiveItems => Set<ArchiveItem>();
  public DbSet<PlayerInjury> PlayerInjuries => Set<PlayerInjury>();
+ public DbSet<SupporterBrick> SupporterBricks => Set<SupporterBrick>();
  protected override void OnModelCreating(ModelBuilder modelBuilder) {
   modelBuilder.Entity<Club>().HasIndex(x=>x.ShortName).IsUnique();
   modelBuilder.Entity<Season>().HasIndex(x=>x.Name).IsUnique();
@@ -61,6 +62,9 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<ArchiveItem>().HasIndex(x=>x.Category);
   modelBuilder.Entity<PlayerInjury>().HasIndex(x=>new{x.PlayerId,x.Status});
   modelBuilder.Entity<PlayerInjury>().Property(x=>x.Status).HasDefaultValue("Active");
+  modelBuilder.Entity<SupporterBrick>().HasIndex(x=>new{x.Status,x.CreatedAt});
+  modelBuilder.Entity<SupporterBrick>().Property(x=>x.Status).HasDefaultValue("Pending");
+  modelBuilder.Entity<SupporterBrick>().Property(x=>x.Amount).HasPrecision(14,2);
   modelBuilder.Entity<Club>().HasData(new Club { Id=Guid.Parse("8d8c1ef6-1c9d-4d1c-9a0f-8a5b6b5c1001"), Name="Jeunesse Sportive de Oudhref", ShortName="JSO", Country="Tunisie", City="Oudhref" });
  }
 }
