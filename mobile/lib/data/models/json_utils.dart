@@ -26,6 +26,13 @@ int asInt(Object? value, {int fallback = 0}) {
   return asIntOrNull(value) ?? fallback;
 }
 
+double asDouble(Object? value, {double fallback = 0}) {
+  if (value == null) return fallback;
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  return double.tryParse(value.toString()) ?? fallback;
+}
+
 bool asBool(Object? value, {bool fallback = false}) {
   if (value == null) return fallback;
   if (value is bool) return value;

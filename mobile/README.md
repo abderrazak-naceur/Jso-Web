@@ -21,6 +21,9 @@ state):
   - **Live** — the match **live blog** feed from
     `GET /api/matches/{id}/liveblog`, polled lightly while the tab is open
     (see [Live blog polling](#live-blog-polling)).
+
+  The timeline tab also exposes a **Billetterie** button that opens the match
+  ticketing screen (see [Ticketing](#ticketing-billetterie)).
 - **News** — article list from `GET /api/news`; tapping opens the article from
   `GET /api/news/{slug}` (news detail is keyed by **slug**, not id).
 - **Media** — a gallery grid from `GET /api/media`, using `thumbnailUrl` (with a
@@ -84,6 +87,7 @@ lib/
     media/    media_screen.dart
     teams/    teams_screen.dart, team_roster_screen.dart
     sponsors/ sponsors_screen.dart
+    tickets/  tickets_screen.dart (reserve), my_tickets_screen.dart
     club/     club_screen.dart (landing for the Club tab)
     auth/     auth_controller.dart (session state), login_screen.dart,
               register_screen.dart, profile_screen.dart
@@ -217,6 +221,45 @@ one authenticated area of the app; every other screen stays anonymous.
   shows *« Identifiants invalides. »* and a 409 shows
   *« Un compte existe déjà avec cet email. »*.
 
+## Ticketing (Billetterie)
+
+Signed-in fans can reserve tickets for a match, following the same **manual
+gateway** as the web app: reserving creates a `Pending` order that a club admin
+later confirms (payment is settled at the club), so there is no payment provider
+wired into the app.
+
+- **Endpoints** (`backend/src/JSO.Api/Controllers/TicketsController.cs`):
+
+  | Method call (TicketsRepository) | Route                              | Auth           |
+  | ------------------------------- | ---------------------------------- | -------------- |
+  | `getForMatch(matchId)`          | `GET /api/tickets/match/{matchId}` | none           |
+  | `myTickets(token)`              | `GET /api/tickets/mine`            | `Bearer <jwt>` |
+  | `reserve(...)`                  | `POST /api/tickets/reserve`        | `Bearer <jwt>` |
+
+- **Ticket types are public.** `getForMatch` returns the active ticket types for
+  a **published** match — `{ id, name, price, currency, available }`, where
+  `available` is `Capacity − SoldCount` computed server-side — so anyone can
+  browse prices and remaining places. The list is reachable from the match
+  detail **Timeline** tab via a **Billetterie** button (`TicketsScreen`).
+
+- **Reserving needs an account.** Tapping **Réserver** opens a bottom sheet with
+  a quantity picker bounded **1…min(available, 10)** (mirroring the backend
+  cap), the running total, and a confirm action. `reserve` sends
+  `{ ticketTypeId, quantity }`; the server recomputes the price and returns a
+  `Pending` order. Anonymous visitors instead get a **Se connecter** prompt —
+  the JWT from the *Fan accounts* flow is attached as a `Bearer` token, and
+  `AuthController.accessToken` exposes it in memory (never logged) only while
+  authenticated.
+
+- **"Mes billets".** The authenticated profile links to `MyTicketsScreen`, which
+  lists the fan's reservations from `myTickets` (most recent first) with a status
+  chip — **En attente** (gold), **Confirmé** (cyan) or **Annulé** (muted) —
+  matching the web admin's Pending / Confirmed / Cancelled states.
+
+- **UI copy is in French** and follows the JSO design system (gold CTAs on dark
+  navy). Every screen renders the same Loading / Error / Empty states as the
+  rest of the app, with pull-to-refresh.
+
 ## Endpoints consumed
 
 Public endpoints require no auth header. IDs are GUID strings; article detail is
@@ -241,6 +284,14 @@ endpoints above are the exception (register/login return a JWT; `/me` needs it).
 The screens use `getHome`, `getMatches`, `getMatch`, `getMatchEvents`,
 `getMatchLiveBlog`, `getNews`, `getNewsArticle` and `getMedia`, plus `getTeams`,
 `getTeamPlayers` and `getSponsors` behind the **Club** tab.
+
+Ticketing adds one public and two fan-only calls (see [Ticketing](#ticketing-billetterie)):
+
+| Method call (TicketsRepository) | Route                              | Auth           |
+| ------------------------------- | ---------------------------------- | -------------- |
+| `getForMatch(matchId)`          | `GET /api/tickets/match/{matchId}` | none           |
+| `myTickets(token)`              | `GET /api/tickets/mine`            | `Bearer <jwt>` |
+| `reserve(...)`                  | `POST /api/tickets/reserve`        | `Bearer <jwt>` |
 
 ## Live blog polling
 

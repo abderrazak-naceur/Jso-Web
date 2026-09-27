@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/config/jso_theme.dart';
 import '../../data/models/fan_user.dart';
+import '../tickets/my_tickets_screen.dart';
 import 'auth_controller.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
@@ -83,6 +84,25 @@ class _AuthenticatedView extends StatelessWidget {
         const SizedBox(height: JsoSpacing.md),
         Center(child: _VerifiedBadge(verified: fan.emailVerified)),
         const SizedBox(height: JsoSpacing.xl),
+        OutlinedButton.icon(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const MyTicketsScreen()),
+          ),
+          icon: const Icon(Icons.confirmation_number_outlined),
+          label: const Text('Mes billets'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: JsoColors.gold,
+            side: const BorderSide(color: JsoColors.gold),
+            padding: const EdgeInsets.symmetric(
+              horizontal: JsoSpacing.lg,
+              vertical: JsoSpacing.md,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(JsoRadius.control),
+            ),
+          ),
+        ),
+        const SizedBox(height: JsoSpacing.md),
         ElevatedButton.icon(
           onPressed: () => context.read<AuthController>().logout(),
           icon: const Icon(Icons.logout),

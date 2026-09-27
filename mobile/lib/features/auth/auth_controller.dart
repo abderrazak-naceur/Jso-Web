@@ -23,11 +23,18 @@ class AuthController extends ChangeNotifier {
 
   AuthStatus _status = AuthStatus.unknown;
   FanUser? _user;
+  String? _accessToken;
   bool _busy = false;
   String? _errorMessage;
 
   AuthStatus get status => _status;
   FanUser? get user => _user;
+
+  /// The current fan JWT when authenticated, else null. Kept in memory only
+  /// (never logged) so authenticated repositories (e.g. ticketing) can attach
+  /// it as a Bearer token without re-reading secure storage.
+  String? get accessToken =>
+      _status == AuthStatus.authenticated ? _accessToken : null;
   bool get isBusy => _busy;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
@@ -42,6 +49,7 @@ class AuthController extends ChangeNotifier {
     }
     try {
       _user = await _repository.getMe(token);
+      _accessToken = token;
       _status = AuthStatus.authenticated;
       notifyListeners();
     } on ApiException {
@@ -72,6 +80,7 @@ class AuthController extends ChangeNotifier {
   Future<void> logout() async {
     await _tokenStore.clear();
     _user = null;
+    _accessToken = null;
     _status = AuthStatus.anonymous;
     _errorMessage = null;
     notifyListeners();
@@ -84,6 +93,7 @@ class AuthController extends ChangeNotifier {
     try {
       final result = await action();
       await _tokenStore.write(result.accessToken);
+      _accessToken = result.accessToken;
       _user = result.user;
       _status = AuthStatus.authenticated;
       return true;
@@ -98,6 +108,7 @@ class AuthController extends ChangeNotifier {
 
   void _setAnonymous() {
     _user = null;
+    _accessToken = null;
     _status = AuthStatus.anonymous;
     notifyListeners();
   }

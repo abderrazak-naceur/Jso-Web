@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'core/config/jso_theme.dart';
 import 'data/repositories/public_api_repository.dart';
+import 'data/repositories/tickets_repository.dart';
 import 'features/auth/auth_controller.dart';
 import 'features/auth/profile_screen.dart';
 import 'features/club/club_screen.dart';
@@ -18,10 +19,12 @@ class JsoApp extends StatelessWidget {
   const JsoApp({
     super.key,
     required this.repository,
+    required this.ticketsRepository,
     required this.authController,
   });
 
   final PublicApiRepository repository;
+  final TicketsRepository ticketsRepository;
   final AuthController authController;
 
   @override
@@ -31,6 +34,7 @@ class JsoApp extends StatelessWidget {
         // Keep the existing repository injection so the 5 public screens keep
         // working exactly as before (anonymous, no auth header).
         Provider<PublicApiRepository>.value(value: repository),
+        Provider<TicketsRepository>.value(value: ticketsRepository),
         ChangeNotifierProvider<AuthController>.value(value: authController),
       ],
       child: MaterialApp(

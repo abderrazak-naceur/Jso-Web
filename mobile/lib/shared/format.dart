@@ -15,6 +15,14 @@ class JsoFormat {
   /// e.g. "15 Mar 2026" (local time).
   static String date(DateTime value) => _date.format(value.toLocal());
 
+  /// Money with the currency code as a suffix, e.g. "25.00 TND".
+  ///
+  /// JSO prices are stored in TND and the API returns the currency code, so a
+  /// simple "amount code" format matches the club convention without pulling
+  /// locale-specific currency symbols.
+  static String money(double amount, String currency) =>
+      '${amount.toStringAsFixed(2)} $currency';
+
   /// Home/away label from JSO's perspective.
   static String homeAway(Match match) => match.isHome ? 'Home' : 'Away';
 
