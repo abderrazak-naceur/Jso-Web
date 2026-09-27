@@ -3,6 +3,7 @@ using System;
 using JSO.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace JSO.Infrastructure.Migrations.Postgres
 {
     [DbContext(typeof(JsoDbContext))]
-    partial class JsoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260927083837_AddFanAnniversaryFields")]
+    partial class AddFanAnniversaryFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,36 +24,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("JSO.Domain.AccountDeletionRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("CompletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("FanUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("RequestedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("Pending");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RequestedAt");
-
-                    b.HasIndex("FanUserId", "Status");
-
-                    b.ToTable("AccountDeletionRequests");
-                });
 
             modelBuilder.Entity("JSO.Domain.AdminUser", b =>
                 {
@@ -89,34 +62,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .IsUnique();
 
                     b.ToTable("AdminUsers");
-                });
-
-            modelBuilder.Entity("JSO.Domain.ApiUsageDaily", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<long>("Count")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
-
-                    b.Property<string>("RouteGroup")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("StatusClass")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Date", "RouteGroup", "StatusClass")
-                        .IsUnique();
-
-                    b.ToTable("ApiUsageDaily");
                 });
 
             modelBuilder.Entity("JSO.Domain.ArchiveItem", b =>
@@ -404,39 +349,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.HasKey("Id");
 
                     b.ToTable("Competitions");
-                });
-
-            modelBuilder.Entity("JSO.Domain.DataExportRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("CompletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("FanUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("FileRef")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("RequestedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("Pending");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RequestedAt");
-
-                    b.HasIndex("FanUserId", "Status");
-
-                    b.ToTable("DataExportRequests");
                 });
 
             modelBuilder.Entity("JSO.Domain.Facility", b =>

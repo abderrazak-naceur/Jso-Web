@@ -92,6 +92,91 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
             .SingleOrDefaultAsync(x => x.Id == id && x.IsActive, ct);
         if (fan is null) return NotFound();
 
-        return Ok(new { fan.Id, fan.Email, fan.DisplayName, fan.EmailVerified });
+        return Ok(new
+        {
+            fan.Id,
+            fan.Email,
+            fan.DisplayName,
+            fan.EmailVerified,
+            // Idea A3: expose the birthday/anniversary opt-in state and the
+            // membership date (CreatedAt) so the fan can review it.
+            fan.BirthDate,
+            fan.AnniversaryOptIn,
+            MemberSince = fan.CreatedAt
+        });
+    }
+
+    // Retrocompatible profile update for idea A3. Every field is optional, so
+    // older clients that never send them keep working unchanged. The fan can
+    // only act on their OWN profile (identity read from the JWT claims).
+    //
+    // Privacy/GDPR: BirthDate is personal data. It is processed only with the
+    // fan's explicit consent (AnniversaryOptIn). When the fan turns the opt-in
+    // off we also clear the stored BirthDate (data minimisation), and a fan may
+    // clear the date at any time by sending an empty value.
+    [HttpPut("me")]
+    [Authorize(Roles = "Fan")]
+    public async Task<IActionResult> UpdateMe(FanProfileUpdateRequest request, CancellationToken ct)
+    {
+        var sub = User.FindFirst("sub")?.Value
+            ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(sub, out var id)) return Unauthorized();
+
+        var fan = await db.FanUsers.SingleOrDefaultAsync(x => x.Id == id && x.IsActive, ct);
+        if (fan is null) return NotFound();
+
+        if (request.DisplayName is not null)
+        {
+            var name = request.DisplayName.Trim();
+            if (name.Length == 0) return BadRequest(new { message = "Display name cannot be empty." });
+            fan.DisplayName = name;
+        }
+
+        if (request.AnniversaryOptIn is bool optIn)
+        {
+            fan.AnniversaryOptIn = optIn;
+            // Consent withdrawn: minimise data by dropping the stored birth date.
+            if (!optIn) fan.BirthDate = null;
+        }
+
+        if (request.BirthDate is not null)
+        {
+            var birth = request.BirthDate.Value;
+            // Reject impossible dates (future or unrealistically old).
+            var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.UtcDateTime);
+            if (birth > today || birth.Year < 1900)
+                return BadRequest(new { message = "A valid birth date is required." });
+            fan.BirthDate = birth;
+        }
+
+        // Keep the birth date consistent with the current consent state: it is
+        // only retained while the opt-in is (or becomes) active.
+        if (!fan.AnniversaryOptIn) fan.BirthDate = null;
+
+        await db.SaveChangesAsync(ct);
+
+        await audit.LogAsync("UPDATE_PROFILE", "FanUser", fan.Id.ToString(), fan.Id.ToString(), fan.Email,
+            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            new { fan.AnniversaryOptIn, HasBirthDate = fan.BirthDate is not null }, ct);
+
+        return Ok(new
+        {
+            fan.Id,
+            fan.Email,
+            fan.DisplayName,
+            fan.EmailVerified,
+            fan.BirthDate,
+            fan.AnniversaryOptIn,
+            MemberSince = fan.CreatedAt
+        });
     }
 }
+
+// Retrocompatible profile update payload (idea A3): all fields optional so
+// existing clients that omit them keep the current behaviour. BirthDate uses a
+// nullable DateOnly; sending null leaves it untouched, and clearing it happens
+// automatically when AnniversaryOptIn is turned off.
+public sealed record FanProfileUpdateRequest(
+    string? DisplayName = null,
+    DateOnly? BirthDate = null,
+    bool? AnniversaryOptIn = null);

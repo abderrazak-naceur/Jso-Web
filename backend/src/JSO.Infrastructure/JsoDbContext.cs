@@ -60,6 +60,8 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<Sponsor>().HasIndex(x=>new{x.Placement,x.IsActive,x.Priority});
   modelBuilder.Entity<LiveBlogEntry>().HasIndex(x=>new{x.MatchId,x.IsPinned,x.CreatedAt});
   modelBuilder.Entity<FanUser>().HasIndex(x=>x.Email).IsUnique();
+  modelBuilder.Entity<FanUser>().Property(x=>x.AnniversaryOptIn).HasDefaultValue(false);
+  modelBuilder.Entity<FanUser>().HasIndex(x=>x.AnniversaryOptIn);
   modelBuilder.Entity<Product>().HasIndex(x=>x.Slug).IsUnique();
   modelBuilder.Entity<Product>().HasIndex(x=>new{x.IsActive,x.Category});
   modelBuilder.Entity<Product>().Property(x=>x.Price).HasPrecision(14,2);
