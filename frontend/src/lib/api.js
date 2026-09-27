@@ -30,6 +30,8 @@ export const publicApi = {
   getEvent: (slug, signal) => request('/events/' + encodeURIComponent(slug), signal),
   getDocuments: (category, signal) => request('/documents' + (category ? '?category=' + encodeURIComponent(category) : ''), signal),
   getFaq: (category, signal) => request('/faq' + (category ? '?category=' + encodeURIComponent(category) : ''), signal),
+  getArchive: (signal) => request('/archive', signal),
+  getCommunityPrograms: (signal) => request('/community-programs', signal),
 }
 
 async function requestJson(path, method, body, token) {

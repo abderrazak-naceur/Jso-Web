@@ -205,6 +205,8 @@ function App() {
   const [events, setEvents] = useState([])
   const [documents, setDocuments] = useState([])
   const [faq, setFaq] = useState([])
+  const [archive, setArchive] = useState([])
+  const [community, setCommunity] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
   const [demoLoginHint, setDemoLoginHint] = useState(false)
   const cart = useCart()
@@ -223,6 +225,12 @@ function App() {
     publicApi.getFaq(undefined, controller.signal)
       .then((list) => setFaq(list || []))
       .catch((error) => { if (error.name !== 'AbortError') setFaq([]) })
+    publicApi.getArchive(controller.signal)
+      .then((list) => setArchive(list || []))
+      .catch((error) => { if (error.name !== 'AbortError') setArchive([]) })
+    publicApi.getCommunityPrograms(controller.signal)
+      .then((list) => setCommunity(list || []))
+      .catch((error) => { if (error.name !== 'AbortError') setCommunity([]) })
     return () => controller.abort()
   }, [])
 
@@ -564,6 +572,36 @@ function App() {
               </summary>
               <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600">{f.answer}</p>
             </details>
+          ))}
+        </div>
+      </section>}
+
+      {community.length > 0 && <section id="community" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
+        <SectionTitle eyebrow="12 / COMMUNAUTÉ" title="Programmes" muted="communautaires." />
+        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {community.map((c) => (
+            <article key={c.id} className="flex flex-col rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/40">
+              <h3 className="text-xl font-black">{c.title}</h3>
+              {c.partnerName && <p className="mt-1 text-sm font-bold text-jso-blue">{c.partnerName}</p>}
+              {c.description && <p className="mt-2 line-clamp-3 text-sm text-slate-500">{c.description}</p>}
+              {c.startDate && <p className="mt-4 text-xs font-semibold text-slate-400">{new Date(c.startDate).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}{c.endDate ? ' → ' + new Date(c.endDate).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : ''}</p>}
+            </article>
+          ))}
+        </div>
+      </section>}
+
+      {archive.length > 0 && <section id="archive" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
+        <SectionTitle eyebrow="13 / MUSÉE" title="L’histoire" muted="du club." />
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {archive.map((a) => (
+            <article key={a.id} className="flex flex-col overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-lg shadow-slate-200/40">
+              {a.mediaUrl && <div className="aspect-[4/3] w-full bg-slate-100"><img src={a.mediaUrl} alt={a.title} loading="lazy" className="h-full w-full object-cover" /></div>}
+              <div className="flex flex-1 flex-col p-5">
+                <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-jso-gold">{a.year && <span className="rounded-full bg-jso-navy px-2.5 py-1 text-jso-gold">{a.year}</span>}{a.category && <span className="text-slate-400">{a.category}</span>}</div>
+                <h3 className="mt-3 text-lg font-black">{a.title}</h3>
+                {a.body && <p className="mt-2 line-clamp-3 text-sm text-slate-500">{a.body}</p>}
+              </div>
+            </article>
           ))}
         </div>
       </section>}
