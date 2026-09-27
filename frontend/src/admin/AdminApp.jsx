@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap, FileText, HelpCircle } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap, Receipt, FileText, HelpCircle } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
@@ -17,6 +17,7 @@ import ApiUsageModule from './ApiUsage'
 import GdprModule from './Gdpr'
 import SponsorQrModule from './SponsorQr'
 import CommunityProgramsModule from './CommunityPrograms'
+import OrdersModule from './Orders'
 import ClubEventsModule from './ClubEvents'
 import DocumentsModule from './Documents'
 import FaqModule from './Faq'
@@ -336,6 +337,7 @@ function AdminDashboard({ user, onLogout }) {
     ['sponsors', 'Sponsors', Handshake, ['SuperAdmin','ClubAdmin']],
     ['sponsorqr', 'QR Sponsors', QrCode, ['SuperAdmin','ClubAdmin']],
     ['shop', 'Boutique', ShoppingBag, ['SuperAdmin','ClubAdmin','ShopManager']],
+    ['orders', 'Commandes', Receipt, ['SuperAdmin','ClubAdmin','ShopManager']],
     ['analytics', 'Analytics joueurs', BarChart3, ['SuperAdmin','ClubAdmin','MatchManager']],
     ['volunteers', 'Bénévoles', ClipboardList, ['ClubAdmin','MatchManager']],
     ['newsletter', 'Newsletter', Mail, ['Editor','CommunityManager']],
@@ -400,6 +402,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'sponsors' && <SponsorsModule onError={setError}/>}
         {section === 'sponsorqr' && <SponsorQrModule onError={setError}/>}
         {section === 'shop' && <ShopModule onError={setError}/>}
+        {section === 'orders' && <OrdersModule onError={setError}/>}
         {section === 'analytics' && <AnalyticsModule onError={setError}/>}
         {section === 'volunteers' && <VolunteersModule onError={setError}/>}
         {section === 'newsletter' && <NewsletterModule onError={setError}/>}
