@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, ScanSearch } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, CalendarRange, ScanSearch } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
@@ -8,6 +8,7 @@ import InjuriesModule from './Injuries'
 import SupportersModule from './Supporters'
 import EditorialCalendarModule from './EditorialCalendar'
 import ChecklistModule from './Checklist'
+import FacilitiesModule from './Facilities'
 import ScoutingModule from './Scouting'
 
 async function api(path, options = {}) {
@@ -331,6 +332,7 @@ function AdminDashboard({ user, onLogout }) {
     ['injuries', 'Infirmerie', HeartPulse, ['ClubAdmin','MatchManager']],
     ['supporters', 'Mur des supporters', BrickWall, ['ClubAdmin','CommunityManager']],
     ['checklist', 'Check-list match', ListChecks, ['ClubAdmin','MatchManager']],
+    ['facilities', 'Installations', CalendarRange, ['ClubAdmin','MatchManager']],
     ['scouting', 'Scouting', ScanSearch, ['ClubAdmin','MatchManager']],
     ['settings', 'Configuration', Server, ['SuperAdmin','ClubAdmin']],
   ]
@@ -385,6 +387,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'supporters' && <SupportersModule onError={setError}/>}
         {section === 'editorial' && <EditorialCalendarModule onError={setError}/>}
         {section === 'checklist' && <ChecklistModule onError={setError}/>}
+        {section === 'facilities' && <FacilitiesModule onError={setError}/>}
         {section === 'scouting' && <ScoutingModule onError={setError}/>}
         {section === 'settings' && <SettingsModule/>}
       </section>
