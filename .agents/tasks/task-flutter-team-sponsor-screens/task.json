@@ -1,0 +1,18 @@
+{
+  "task_id": "task-flutter-team-sponsor-screens",
+  "task_description": "Extend the JSO Flutter mobile app (mobile/) with two new areas - Team/Roster (getTeams -> getTeamPlayers) and Sponsors (getSponsors with external website links via url_launcher) - integrated into navigation, with widget tests and README updates, following the existing screen/test patterns. Work on branch feat/flutter-team-sponsor-screens (branched from feat/flutter-mobile-app).",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "flutter pub get OK; flutter analyze -> No issues found; flutter test -> All tests passed (58 total after review fixes); dart format --set-exit-if-changed lib test -> exit 0. Independently re-ran all four commands. Test quality verified: new tests pump real screens against a FakeRepository/FakeUrlLauncher and assert screen-specific text (player names, '#10', 'Visit website', team category, 'Could not open link.' SnackBar) plus tap->roster navigation; they exercise the new code paths and fail if reverted. flutter build apk/ios not run (no Android SDK, no macOS/Xcode) - documented environment limitation; docker_build not applicable to a Flutter app.",
+    "review": "Semantic review v1 -> NEEDS_CHANGES (4 issues); v2 -> APPROVED. Three in-scope issues fixed (launchUrl try/catch, sponsor-link failure test, five-tab widget_test)."
+  },
+  "carry_forward_for_orchestrator": {
+    "detail": "The branch feat/flutter-team-sponsor-screens carries an UNRELATED commit ef17f55 'feat(liveblog): match day live blog / second screen' (LiveBlog backend controllers, an EF migration, and frontend/src/admin/LiveBlog.jsx) that came from a parallel delegation, NOT from this task. All work by this task was scoped strictly to mobile/. Resolve at the branch/publishing level (e.g. rebase/cherry-pick the mobile-only commits, or open the PR against a base that excludes ef17f55) so the shipped diff stays scoped to mobile/. This is a branch-hygiene concern, not a code defect in the mobile deliverable."
+  }
+}

@@ -33,6 +33,8 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<Club>().HasIndex(x=>x.ShortName).IsUnique();
   modelBuilder.Entity<Season>().HasIndex(x=>x.Name).IsUnique();
   modelBuilder.Entity<Article>().HasIndex(x=>x.Slug).IsUnique();
+  modelBuilder.Entity<Article>().Property(x=>x.EditorialStatus).HasDefaultValue("Draft");
+  modelBuilder.Entity<Article>().HasIndex(x=>new{x.EditorialStatus,x.ScheduledAt});
   modelBuilder.Entity<Match>().HasIndex(x=>new{x.KickoffAt,x.Status});
   modelBuilder.Entity<Player>().HasIndex(x=>new{x.TeamId,x.ShirtNumber});
   modelBuilder.Entity<AdminUser>().HasIndex(x=>x.Email).IsUnique();
