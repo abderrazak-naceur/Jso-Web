@@ -3,6 +3,7 @@ using System;
 using JSO.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace JSO.Infrastructure.Migrations.Postgres
 {
     [DbContext(typeof(JsoDbContext))]
-    partial class JsoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260927083850_AddGdprRequests")]
+    partial class AddGdprRequests
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -89,34 +92,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .IsUnique();
 
                     b.ToTable("AdminUsers");
-                });
-
-            modelBuilder.Entity("JSO.Domain.ApiUsageDaily", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<long>("Count")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
-
-                    b.Property<string>("RouteGroup")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("StatusClass")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Date", "RouteGroup", "StatusClass")
-                        .IsUnique();
-
-                    b.ToTable("ApiUsageDaily");
                 });
 
             modelBuilder.Entity("JSO.Domain.ArchiveItem", b =>

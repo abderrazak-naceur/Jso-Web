@@ -37,6 +37,8 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<ScoutingNote> ScoutingNotes => Set<ScoutingNote>();
  public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
  public DbSet<ApiUsageDaily> ApiUsageDaily => Set<ApiUsageDaily>();
+ public DbSet<DataExportRequest> DataExportRequests => Set<DataExportRequest>();
+ public DbSet<AccountDeletionRequest> AccountDeletionRequests => Set<AccountDeletionRequest>();
  protected override void OnModelCreating(ModelBuilder modelBuilder) {
   modelBuilder.Entity<Club>().HasIndex(x=>x.ShortName).IsUnique();
   modelBuilder.Entity<Season>().HasIndex(x=>x.Name).IsUnique();
@@ -95,6 +97,12 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<FeatureFlag>().HasIndex(x=>x.Key).IsUnique();
   modelBuilder.Entity<FeatureFlag>().Property(x=>x.Enabled).HasDefaultValue(false);
   modelBuilder.Entity<ApiUsageDaily>().HasIndex(x=>new{x.Date,x.RouteGroup,x.StatusClass}).IsUnique();
+  modelBuilder.Entity<DataExportRequest>().HasIndex(x=>new{x.FanUserId,x.Status});
+  modelBuilder.Entity<DataExportRequest>().HasIndex(x=>x.RequestedAt);
+  modelBuilder.Entity<DataExportRequest>().Property(x=>x.Status).HasDefaultValue("Pending");
+  modelBuilder.Entity<AccountDeletionRequest>().HasIndex(x=>new{x.FanUserId,x.Status});
+  modelBuilder.Entity<AccountDeletionRequest>().HasIndex(x=>x.RequestedAt);
+  modelBuilder.Entity<AccountDeletionRequest>().Property(x=>x.Status).HasDefaultValue("Pending");
   modelBuilder.Entity<Club>().HasData(new Club { Id=Guid.Parse("8d8c1ef6-1c9d-4d1c-9a0f-8a5b6b5c1001"), Name="Jeunesse Sportive de Oudhref", ShortName="JSO", Country="Tunisie", City="Oudhref" });
  }
 }
