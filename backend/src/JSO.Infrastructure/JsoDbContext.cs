@@ -30,6 +30,9 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<SupporterBrick> SupporterBricks => Set<SupporterBrick>();
  public DbSet<MatchdayChecklistTemplateItem> MatchdayChecklistTemplateItems => Set<MatchdayChecklistTemplateItem>();
  public DbSet<MatchdayChecklistItem> MatchdayChecklistItems => Set<MatchdayChecklistItem>();
+ public DbSet<Facility> Facilities => Set<Facility>();
+ public DbSet<FacilityBooking> FacilityBookings => Set<FacilityBooking>();
+ public DbSet<MaintenanceLog> MaintenanceLogs => Set<MaintenanceLog>();
  protected override void OnModelCreating(ModelBuilder modelBuilder) {
   modelBuilder.Entity<Club>().HasIndex(x=>x.ShortName).IsUnique();
   modelBuilder.Entity<Season>().HasIndex(x=>x.Name).IsUnique();
@@ -73,6 +76,10 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<MatchdayChecklistItem>().HasIndex(x=>x.MatchId);
   modelBuilder.Entity<MatchdayChecklistItem>().HasIndex(x=>new{x.MatchId,x.Label}).IsUnique();
   modelBuilder.Entity<MatchdayChecklistItem>().Property(x=>x.Done).HasDefaultValue(false);
+  modelBuilder.Entity<Facility>().HasIndex(x=>new{x.IsActive,x.Name});
+  modelBuilder.Entity<Facility>().Property(x=>x.IsActive).HasDefaultValue(true);
+  modelBuilder.Entity<FacilityBooking>().HasIndex(x=>new{x.FacilityId,x.StartsAt});
+  modelBuilder.Entity<MaintenanceLog>().HasIndex(x=>new{x.FacilityId,x.Date});
   modelBuilder.Entity<Club>().HasData(new Club { Id=Guid.Parse("8d8c1ef6-1c9d-4d1c-9a0f-8a5b6b5c1001"), Name="Jeunesse Sportive de Oudhref", ShortName="JSO", Country="Tunisie", City="Oudhref" });
  }
 }
