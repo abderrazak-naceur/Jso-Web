@@ -46,10 +46,10 @@ Lavorare in quest'ordine, perché i passaggi successivi dipendono dai precedenti
 
 ## Priorità 1 — Completare il prodotto web
 
-- [ ] Collegare e rifinire tutti i contenuti pubblici ai dati reali: homepage, match center, notizie, squadra e media; gestire loading, assenza dati ed errori.
-- [ ] Completare gli editor admin: configurazione homepage, sponsor, menu/footer, partite con eventi e formazioni, articoli e libreria media.
+- [x] Collegare e rifinire tutti i contenuti pubblici ai dati reali: homepage, match center, notizie, squadra e media; gestire loading, assenza dati ed errori. Ogni sezione dinamica distingue caricamento/vuoto/errore (niente placeholder "à venir" quando l'API risponde o fallisce).
+- [x] Completare gli editor admin: configurazione homepage e menu/footer, sponsor (+ QR), partite con eventi, formazioni, officiels e statistiche, articoli (create/update/publish/dépublier/supprimer) e libreria media (upload/modifica/suppression).
 - [ ] Rivedere sessioni e permessi admin, tracciamento audit e gestione degli errori su flussi reali.
-- [ ] Verificare accessibilità, prestazioni e SEO sulle pagine pubbliche.
+- [ ] Verificare accessibilità e prestazioni sulle pagine pubbliche. SEO fatto: meta Open Graph/Twitter, canonical, dati strutturati JSON-LD, `robots.txt`, `sitemap.xml` e titoli dinamici per articoli/match.
 
 **Criterio di uscita:** il club pubblica contenuti e aggiorna i dati sportivi senza modificare il codice, e il sito riflette le modifiche.
 
