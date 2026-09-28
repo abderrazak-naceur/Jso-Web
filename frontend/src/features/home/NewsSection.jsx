@@ -5,7 +5,7 @@ import SectionHeading from './SectionHeading'
 
 function NewsVisual({ article, featured }) {
   if (article.coverImageUrl) {
-    return <img src={article.coverImageUrl} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+    return <img src={article.coverImageUrl} alt={article.title || ''} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
   }
   return (
     <div className="relative grid h-full min-h-48 place-items-center overflow-hidden bg-gradient-to-br from-jso-navy to-jso-blue">

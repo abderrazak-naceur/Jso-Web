@@ -148,9 +148,9 @@ export default function CommentsSection({ targetType, targetId, token, onRequire
   }
 
   return (
-    <section aria-labelledby="community-title" className="mt-8 border-t border-slate-200 pt-8">
+    <section aria-labelledby="community-comments-title" className="mt-8 border-t border-slate-200 pt-8">
       <div className="flex items-center justify-between gap-4">
-        <h3 id="community-title" className="flex items-center gap-2 text-xl font-black">
+        <h3 id="community-comments-title" className="flex items-center gap-2 text-xl font-black">
           <MessageSquare size={20} aria-hidden="true" /> Communauté
         </h3>
         {isLoggedIn && (
