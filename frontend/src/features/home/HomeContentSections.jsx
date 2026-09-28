@@ -182,7 +182,7 @@ export function MediaSection({ section, media, status = 'ready' }) {
               <article key={pick(item, 'id', 'Id') || url || title} className={`group overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-lg shadow-slate-200/40 ${index === 0 ? 'md:col-span-2 lg:col-span-2' : ''}`}>
                 <div className={`relative overflow-hidden bg-jso-navy ${index === 0 ? 'h-72' : 'h-60'}`}>
                   {(thumbnail || (!isVideo && url))
-                    ? <img src={thumbnail || url} alt="" loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                    ? <img src={thumbnail || url} alt={caption || title} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
                     : <div className="grid h-full place-items-center"><span className="text-5xl font-black text-jso-gold">JSO</span></div>}
                   {isVideo && <span className="absolute left-5 top-5 grid h-12 w-12 place-items-center rounded-full bg-jso-gold text-jso-navy"><Play size={20} fill="currentColor" aria-hidden="true" /></span>}
                 </div>
@@ -190,7 +190,7 @@ export function MediaSection({ section, media, status = 'ready' }) {
                   <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-jso-blue">{type}</p>
                   <h3 className="mt-2 text-2xl font-black">{title}</h3>
                   {caption && <p className="mt-2 text-sm leading-6 text-slate-500">{caption}</p>}
-                  {url && <a href={url} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-2 text-sm font-extrabold text-jso-blue">Ouvrir <ArrowUpRight size={15} aria-hidden="true" /></a>}
+                  {url && <a href={url} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-2 text-sm font-extrabold text-jso-blue">Ouvrir<span className="sr-only"> (nouvel onglet)</span> <ArrowUpRight size={15} aria-hidden="true" /></a>}
                 </div>
               </article>
             )
@@ -272,7 +272,7 @@ export function ArchiveSection({ section, archive }) {
           return (
             <article key={pick(item, 'id', 'Id')} className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-lg shadow-slate-200/35">
               {mediaUrl
-                ? <div className="aspect-[4/3] overflow-hidden bg-slate-100"><img src={mediaUrl} alt="" loading="lazy" className="h-full w-full object-cover" /></div>
+                ? <div className="aspect-[4/3] overflow-hidden bg-slate-100"><img src={mediaUrl} alt={pick(item, 'title', 'Title') || ''} loading="lazy" className="h-full w-full object-cover" /></div>
                 : <div className="grid aspect-[4/3] place-items-center bg-jso-navy"><Landmark size={50} className="text-jso-gold" aria-hidden="true" /></div>}
               <div className="p-6">
                 <div className="flex flex-wrap items-center gap-2 text-xs font-extrabold uppercase tracking-[0.14em]">
@@ -356,7 +356,7 @@ export function InfoSection({ section, club, documents, faq, documentsStatus = '
                 <div className="mt-4 space-y-2">
                   {documents.map((document) => (
                     <a key={pick(document, 'id', 'Id')} href={pick(document, 'fileUrl', 'FileUrl')} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 text-sm font-bold transition hover:bg-slate-100">
-                      <span className="min-w-0 flex-1 truncate">{pick(document, 'title', 'Title')}</span><Download size={16} className="shrink-0 text-jso-blue" aria-hidden="true" />
+                      <span className="min-w-0 flex-1 truncate">{pick(document, 'title', 'Title')}</span><span className="sr-only"> (télécharger, nouvel onglet)</span><Download size={16} className="shrink-0 text-jso-blue" aria-hidden="true" />
                     </a>
                   ))}
                 </div>

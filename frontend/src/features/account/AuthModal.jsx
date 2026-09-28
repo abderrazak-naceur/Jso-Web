@@ -43,12 +43,13 @@ export default function AuthModal({ open, initialMode = 'login', onClose, onAuth
       className="fixed inset-0 z-[80] grid place-items-center bg-jso-navy/60 p-5 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="auth-title"
     >
       <div className="w-full max-w-md rounded-[2rem] bg-white p-8 text-jso-ink shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">ESPACE SUPPORTER</p>
-            <h2 className="mt-1 text-3xl font-black">
+            <h2 id="auth-title" className="mt-1 text-3xl font-black">
               {isRegister ? 'Créer un compte' : 'Se connecter'}
             </h2>
           </div>
