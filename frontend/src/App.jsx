@@ -17,6 +17,7 @@ import {
 import { publicApi, newsletterApi } from './lib/api'
 import { API_BASE_URL } from './lib/apiConfig'
 import AccessibilityPanel from './AccessibilityPanel'
+import OfflineBanner from './OfflineBanner'
 import { useFanSession } from './features/account/useFanSession'
 import UserMenu from './features/account/UserMenu'
 import AuthModal from './features/account/AuthModal'
@@ -621,6 +622,7 @@ function App() {
       {demoLoginHint && <div className="fixed inset-0 z-[85] grid place-items-center bg-jso-navy/60 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Connexion requise"><div className="w-full max-w-sm rounded-[2rem] bg-white p-8 text-center shadow-2xl"><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">ESPACE SUPPORTER</p><h2 className="mt-2 text-2xl font-black">Connexion requise</h2><p className="mt-3 text-sm text-slate-500">Pour passer commande, connectez-vous ou créez un compte supporter via le bouton « S’inscrire / Se connecter » en haut de la page.</p><button onClick={() => setDemoLoginHint(false)} className="mt-6 rounded-full bg-jso-navy px-6 py-3 font-extrabold text-white hover:bg-jso-blue">Compris</button></div></div>}
 
       <AccessibilityPanel />
+      <OfflineBanner />
 
       {demoOpen && <div className="fixed inset-0 z-[60] grid place-items-center bg-jso-navy/60 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Présentation JSO"><div className="w-full max-w-lg rounded-[2rem] bg-white p-8 shadow-2xl"><div className="flex items-start justify-between gap-5"><div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">JSO DIGITAL</p><h2 className="mt-3 text-3xl font-black">Bienvenue dans la nouvelle maison du club.</h2></div><button aria-label="Fermer" onClick={() => setDemoOpen(false)} className="rounded-full border border-slate-200 p-2"><X size={18} /></button></div><p className="mt-4 leading-7 text-slate-600">Cette interface est une première version visuelle. Les données réelles, les comptes administrateur, les résultats et la boutique seront connectés dans les prochaines étapes.</p><button onClick={() => setDemoOpen(false)} className="mt-7 rounded-full bg-jso-navy px-5 py-3 font-extrabold text-white">Continuer</button></div></div>}
     </main>
