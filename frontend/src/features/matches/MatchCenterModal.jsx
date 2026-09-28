@@ -3,6 +3,7 @@ import { CalendarDays, MapPin, X } from 'lucide-react'
 import { publicApi } from '../../lib/api'
 import { formatDateTime, pick } from '../../lib/format'
 import { useDialog } from '../site/useDialog'
+import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import CommentsSection from '../community/CommentsSection'
 import MatchStreamPanel from './MatchStreamPanel'
 import TeamBadge from './TeamBadge'
@@ -52,6 +53,8 @@ export default function MatchCenterModal({ match, onClose, token, onRequireLogin
 
   const sides = matchSides(details)
   const score = hasScore(details) ? `${sides.home.score} – ${sides.away.score}` : 'VS'
+  // Reflect the open match in the browser tab / shared-link title.
+  useDocumentTitle(`${sides.home.name} - ${sides.away.name}`)
 
   return (
     <div className="fixed inset-0 z-[80] overflow-y-auto bg-jso-navy/65 p-4 backdrop-blur-sm" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>

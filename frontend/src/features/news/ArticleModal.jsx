@@ -4,6 +4,7 @@ import { publicApi } from '../../lib/api'
 import { formatDate, pick } from '../../lib/format'
 import { normalizeArticle } from '../home/useHomeData'
 import { useDialog } from '../site/useDialog'
+import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import CommentsSection from '../community/CommentsSection'
 
 export default function ArticleModal({ initialArticle, onClose, token, onRequireLogin }) {
@@ -39,6 +40,8 @@ export default function ArticleModal({ initialArticle, onClose, token, onRequire
   const author = pick(metadata, 'authorName', 'AuthorName')
   const category = pick(metadata, 'category', 'Category') || 'Actualité'
   const paragraphs = String(article.body || article.excerpt || '').split(/\n+/).filter(Boolean)
+  // Reflect the open article in the browser tab / shared-link title.
+  useDocumentTitle(article.title)
 
   return (
     <div className="fixed inset-0 z-[80] overflow-y-auto bg-jso-navy/65 p-4 backdrop-blur-sm" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
