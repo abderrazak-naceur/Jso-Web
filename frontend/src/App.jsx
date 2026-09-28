@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AccessibilityPanel from './AccessibilityPanel'
 import OfflineBanner from './OfflineBanner'
 import AccountSettingsModal from './features/account/AccountSettingsModal'
@@ -26,6 +26,7 @@ import { useHomeData } from './features/home/useHomeData'
 import { orderHomeSections, useHomeLayout } from './features/home/useHomeLayout'
 import MatchCenterModal from './features/matches/MatchCenterModal'
 import ArticleModal from './features/news/ArticleModal'
+import { pushArticleUrl, restoreHomeUrl, slugFromPath } from './features/news/articleUrl'
 import CartDrawer from './features/shop/CartDrawer'
 import { useCart } from './features/shop/useCart'
 import SiteFooter from './features/site/SiteFooter'
@@ -40,7 +41,35 @@ function App() {
   const fan = useFanSession()
 
   const [selectedMatch, setSelectedMatch] = useState(null)
-  const [selectedArticle, setSelectedArticle] = useState(null)
+  // Seed the open article from a `/actualites/{slug}` deep-link so a shared
+  // link (e.g. from Facebook) reopens the exact article. Only the slug is known
+  // up front; ArticleModal fetches the full article by slug.
+  const [selectedArticle, setSelectedArticle] = useState(() => {
+    const slug = slugFromPath()
+    return slug ? { slug } : null
+  })
+
+  // Open an article and mirror it into the URL; close and restore the home URL.
+  function openArticle(article) {
+    setSelectedArticle(article)
+    if (article?.slug) pushArticleUrl(article.slug)
+  }
+  function closeArticle() {
+    setSelectedArticle(null)
+    restoreHomeUrl()
+  }
+
+  // Keep the modal in sync with browser Back/Forward: navigating away from a
+  // `/actualites/{slug}` URL closes the article, navigating onto one opens it.
+  useEffect(() => {
+    function onPopState() {
+      const slug = slugFromPath()
+      setSelectedArticle(slug ? { slug } : null)
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
   const [cartOpen, setCartOpen] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
   const [authMode, setAuthMode] = useState('login')
@@ -75,7 +104,7 @@ function App() {
       <MatchdaySection key="matches" section={sectionById.matches} status={data.status} nextMatch={data.nextMatch} recentMatches={data.recentMatches} onOpenMatch={setSelectedMatch} />
     ),
     news: () => (
-      <NewsSection key="news" section={sectionById.news} status={data.status} articles={data.news} content={data.content} onOpenArticle={setSelectedArticle} />
+      <NewsSection key="news" section={sectionById.news} status={data.status} articles={data.news} content={data.content} onOpenArticle={openArticle} />
     ),
     team: () => <TeamSection key="team" section={sectionById.team} players={data.players} status={data.sectionStatus.players} />,
     club: () => <ClubSection key="club" section={sectionById.club} club={data.club} content={data.content} />,
@@ -147,10 +176,10 @@ function App() {
       {selectedArticle && (
         <ArticleModal
           initialArticle={selectedArticle}
-          onClose={() => setSelectedArticle(null)}
+          onClose={closeArticle}
           token={fan.token}
           onRequireLogin={() => {
-            setSelectedArticle(null)
+            closeArticle()
             openAuth('login')
           }}
         />

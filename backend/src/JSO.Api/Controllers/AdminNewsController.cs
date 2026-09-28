@@ -13,7 +13,14 @@ public sealed class AdminNewsController(JsoDbContext db, AuditService audit) : C
 {
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken ct) =>
-        Ok(await db.Articles.AsNoTracking().OrderByDescending(x => x.UpdatedAtOrPublished()).Take(100).ToListAsync(ct));
+        // Order server-side by publication date (nulls/drafts last). This must be
+        // an EF-translatable expression: a C# helper method cannot be translated
+        // to SQL and would throw at query time.
+        Ok(await db.Articles.AsNoTracking()
+            .OrderByDescending(x => x.PublishedAt ?? DateTimeOffset.MinValue)
+            .ThenByDescending(x => x.PublishedAt)
+            .Take(100)
+            .ToListAsync(ct));
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
@@ -132,8 +139,3 @@ public sealed class AdminNewsController(JsoDbContext db, AuditService audit) : C
 public sealed record ArticleRequest(
     string Title, string Slug, string? Excerpt, string? Body, string? Status, DateTimeOffset? PublishedAt,
     string? CoverImageUrl, string? AuthorName, string? Category, string? Tags, string? MetaTitle, string? MetaDescription);
-
-file static class ArticleQueryExtensions
-{
-    public static DateTimeOffset UpdatedAtOrPublished(this Article article) => article.PublishedAt ?? DateTimeOffset.MinValue;
-}

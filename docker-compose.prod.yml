@@ -31,6 +31,13 @@ services:
       Database__Provider: postgres
       ConnectionStrings__DefaultConnection: Host=database;Port=5432;Database=JSO;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       Cors__AllowedOrigins__0: ${PUBLIC_ORIGIN:?Set PUBLIC_ORIGIN}
+      # Social publishing (optional). PublicSiteUrl is reused from PUBLIC_ORIGIN
+      # so shareable article links are correct even without a Facebook token.
+      # Auto-posting to the club's Facebook Page only activates when PAGE_ID and
+      # PAGE_ACCESS_TOKEN are supplied; otherwise the admin falls back to manual sharing.
+      Social__PublicSiteUrl: ${PUBLIC_ORIGIN}
+      Social__Facebook__PageId: ${FACEBOOK_PAGE_ID:-}
+      Social__Facebook__PageAccessToken: ${FACEBOOK_PAGE_ACCESS_TOKEN:-}
     volumes:
       - jso-media-data:/app/uploads
     expose:
