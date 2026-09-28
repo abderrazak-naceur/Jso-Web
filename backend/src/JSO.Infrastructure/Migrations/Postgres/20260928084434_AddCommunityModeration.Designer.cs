@@ -3,6 +3,7 @@ using System;
 using JSO.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace JSO.Infrastructure.Migrations.Postgres
 {
     [DbContext(typeof(JsoDbContext))]
-    partial class JsoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260928084434_AddCommunityModeration")]
+    partial class AddCommunityModeration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -893,40 +896,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.ToTable("FeatureFlags");
                 });
 
-            modelBuilder.Entity("JSO.Domain.HomeSection", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsPublished")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("PayloadJson")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Title")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IsPublished", "DisplayOrder");
-
-                    b.ToTable("HomeSections");
-                });
-
             modelBuilder.Entity("JSO.Domain.LiveBlogEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1307,47 +1276,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.HasIndex("CreatedAt");
 
                     b.ToTable("MediaAssets");
-                });
-
-            modelBuilder.Entity("JSO.Domain.NavigationItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("OpensInNewTab")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("Position")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Position", "IsActive", "DisplayOrder");
-
-                    b.ToTable("NavigationItems");
                 });
 
             modelBuilder.Entity("JSO.Domain.NewsletterSubscription", b =>

@@ -35,6 +35,9 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<SupporterBrick> SupporterBricks => Set<SupporterBrick>();
  public DbSet<ClassifiedAd> ClassifiedAds => Set<ClassifiedAd>();
  public DbSet<FanPhoto> FanPhotos => Set<FanPhoto>();
+ public DbSet<CommunityComment> CommunityComments => Set<CommunityComment>();
+ public DbSet<CommunityReaction> CommunityReactions => Set<CommunityReaction>();
+ public DbSet<CommunityReport> CommunityReports => Set<CommunityReport>();
  public DbSet<MatchdayChecklistTemplateItem> MatchdayChecklistTemplateItems => Set<MatchdayChecklistTemplateItem>();
  public DbSet<MatchdayChecklistItem> MatchdayChecklistItems => Set<MatchdayChecklistItem>();
  public DbSet<Facility> Facilities => Set<Facility>();
@@ -115,6 +118,15 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<FanPhoto>().HasIndex(x=>new{x.Status,x.SubmittedAt});
   modelBuilder.Entity<FanPhoto>().HasIndex(x=>x.FanUserId);
   modelBuilder.Entity<FanPhoto>().Property(x=>x.Status).HasDefaultValue("Pending");
+  modelBuilder.Entity<CommunityComment>().HasIndex(x=>new{x.TargetType,x.TargetId,x.Status});
+  modelBuilder.Entity<CommunityComment>().HasIndex(x=>new{x.Status,x.CreatedAt});
+  modelBuilder.Entity<CommunityComment>().HasIndex(x=>x.FanUserId);
+  modelBuilder.Entity<CommunityComment>().Property(x=>x.Status).HasDefaultValue("Pending");
+  modelBuilder.Entity<CommunityReaction>().HasIndex(x=>new{x.FanUserId,x.TargetType,x.TargetId,x.Kind}).IsUnique();
+  modelBuilder.Entity<CommunityReaction>().HasIndex(x=>new{x.TargetType,x.TargetId,x.Kind});
+  modelBuilder.Entity<CommunityReport>().HasIndex(x=>new{x.Status,x.CreatedAt});
+  modelBuilder.Entity<CommunityReport>().HasIndex(x=>new{x.TargetType,x.TargetId});
+  modelBuilder.Entity<CommunityReport>().Property(x=>x.Status).HasDefaultValue("Open");
   modelBuilder.Entity<MatchdayChecklistTemplateItem>().HasIndex(x=>new{x.IsActive,x.DisplayOrder});
   modelBuilder.Entity<MatchdayChecklistItem>().HasIndex(x=>x.MatchId);
   modelBuilder.Entity<MatchdayChecklistItem>().HasIndex(x=>new{x.MatchId,x.Label}).IsUnique();
