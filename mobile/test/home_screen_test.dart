@@ -130,19 +130,14 @@ void main() {
       expect(find.text('Réessayer'), findsOneWidget);
     });
 
-    testWidgets('expose le compte et désactive les notifications', (
-      tester,
-    ) async {
+    testWidgets('expose le compte et les notifications', (tester) async {
       final repo = FakeRepository(homeData: Sample.home(populated: false));
 
       await pumpScreen(tester, repository: repo, child: const HomeScreen());
       await tester.pumpAndSettle();
 
       expect(find.byTooltip('Mon compte'), findsOneWidget);
-      expect(
-        find.byTooltip('Notifications bientôt disponibles'),
-        findsOneWidget,
-      );
+      expect(find.byTooltip('Notifications'), findsOneWidget);
 
       final accountButton = tester.widget<IconButton>(
         find.widgetWithIcon(IconButton, Icons.person_outline_rounded),
@@ -151,7 +146,9 @@ void main() {
         find.widgetWithIcon(IconButton, Icons.notifications_none_rounded),
       );
       expect(accountButton.onPressed, isNotNull);
-      expect(notificationButton.onPressed, isNull);
+      // The bell now opens the in-app notifications centre.
+      expect(notificationButton.onPressed, isNotNull);
+      // No fake unread badge: there is no push backend yet.
       expect(find.byType(Badge), findsNothing);
     });
 
