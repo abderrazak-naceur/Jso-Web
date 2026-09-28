@@ -83,30 +83,74 @@ class _TeamTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: ListTile(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) =>
                 TeamRosterScreen(teamId: team.id, teamName: team.name),
           ),
         ),
-        leading: const JsoCrest(size: 40),
-        title: Text(
-          team.name,
-          style: const TextStyle(
-            color: JsoColors.white,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        subtitle: Text(
-          team.category,
-          style: const TextStyle(color: JsoColors.muted),
-        ),
-        trailing: Text(
-          '${team.playersCount} ${team.playersCount <= 1 ? 'joueur' : 'joueurs'}',
-          style: const TextStyle(
-            color: JsoColors.gold,
-            fontWeight: FontWeight.w700,
+        child: Padding(
+          padding: const EdgeInsets.all(JsoSpacing.md),
+          child: Row(
+            children: [
+              // Crest on a brand gradient medallion, for a stronger identity.
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [JsoColors.navy3, JsoColors.navy],
+                  ),
+                  border: Border.all(color: JsoColors.gold, width: 1.5),
+                ),
+                child: const Center(child: JsoCrest(size: 34)),
+              ),
+              const SizedBox(width: JsoSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      team.name,
+                      style: const TextStyle(
+                        color: JsoColors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      team.category,
+                      style: const TextStyle(color: JsoColors.muted),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: JsoSpacing.sm),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: JsoColors.gold,
+                  borderRadius: BorderRadius.circular(JsoRadius.pill),
+                ),
+                child: Text(
+                  '${team.playersCount}',
+                  style: const TextStyle(
+                    color: JsoColors.navy,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

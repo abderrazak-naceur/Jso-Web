@@ -93,42 +93,77 @@ class _ArticleCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Cover image with a navy scrim and the title overlaid, for a more
+            // editorial, image-forward presentation.
             AspectRatio(
               aspectRatio: 16 / 9,
-              child: RemoteImage(url: article.coverImageUrl),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(JsoSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Text(
-                    article.title,
-                    style: const TextStyle(
-                      color: JsoColors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
+                  RemoteImage(
+                    url: article.coverImageUrl,
+                    placeholderIcon: Icons.photo_outlined,
+                  ),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0x00071A3A),
+                          Color(0x40071A3A),
+                          Color(0xE6071A3A),
+                        ],
+                        stops: [0.3, 0.62, 1],
+                      ),
                     ),
                   ),
-                  if (article.publishedAt != null) ...[
-                    const SizedBox(height: JsoSpacing.xs),
-                    Text(
-                      JsoFormat.date(article.publishedAt!),
-                      style: const TextStyle(color: JsoColors.muted2),
+                  Positioned(
+                    left: JsoSpacing.md,
+                    right: JsoSpacing.md,
+                    bottom: JsoSpacing.md,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (article.publishedAt != null) ...[
+                          Text(
+                            JsoFormat.date(article.publishedAt!),
+                            style: const TextStyle(
+                              color: JsoColors.gold2,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                        ],
+                        Text(
+                          article.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: JsoColors.white,
+                            fontSize: 19,
+                            height: 1.15,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                  if (article.excerpt.isNotEmpty) ...[
-                    const SizedBox(height: JsoSpacing.sm),
-                    Text(
-                      article.excerpt,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: JsoColors.muted),
-                    ),
-                  ],
+                  ),
                 ],
               ),
             ),
+            if (article.excerpt.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.all(JsoSpacing.md),
+                child: Text(
+                  article.excerpt,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: JsoColors.muted, height: 1.4),
+                ),
+              ),
           ],
         ),
       ),

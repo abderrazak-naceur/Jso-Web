@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'app.dart';
 import 'core/api/api_client.dart';
 import 'data/auth/token_store.dart';
+import 'data/repositories/admin_auth_repository.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/club_content_repository.dart';
 import 'data/repositories/match_center_repository.dart';
 import 'data/repositories/public_api_repository.dart';
 import 'data/repositories/shop_repository.dart';
 import 'data/repositories/tickets_repository.dart';
+import 'features/auth/admin_auth_controller.dart';
 import 'features/auth/auth_controller.dart';
 import 'features/shop/cart_controller.dart';
 
@@ -29,6 +31,12 @@ void main() {
   );
   // Restore any persisted fan session; falls back to anonymous on failure.
   authController.restoreSession();
+  final adminAuthController = AdminAuthController(
+    repository: AdminAuthRepository(apiClient),
+    tokenStore: SecureTokenStore(key: SecureTokenStore.adminKey),
+  );
+  // Admin sessions start anonymous each launch (no admin /me to validate).
+  adminAuthController.restoreSession();
   runApp(
     JsoApp(
       repository: repository,
@@ -38,6 +46,7 @@ void main() {
       matchCenterRepository: matchCenterRepository,
       cartController: cartController,
       authController: authController,
+      adminAuthController: adminAuthController,
     ),
   );
 }

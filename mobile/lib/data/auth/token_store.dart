@@ -18,13 +18,17 @@ abstract interface class TokenStore {
 /// [TokenStore] backed by `flutter_secure_storage`, which uses the Android
 /// keystore / iOS Keychain so the JWT is never persisted in clear text.
 class SecureTokenStore implements TokenStore {
-  SecureTokenStore({FlutterSecureStorage? storage})
+  SecureTokenStore({FlutterSecureStorage? storage, this._key = _fanKey})
     : _storage = storage ?? const FlutterSecureStorage();
 
-  /// Single storage key for the fan token.
-  static const String _key = 'jso_fan_token';
+  /// Default storage key for the fan token.
+  static const String _fanKey = 'jso_fan_token';
+
+  /// Storage key for the admin token; use with `SecureTokenStore(key: ...)`.
+  static const String adminKey = 'jso_admin_token';
 
   final FlutterSecureStorage _storage;
+  final String _key;
 
   @override
   Future<String?> read() => _storage.read(key: _key);

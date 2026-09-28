@@ -68,17 +68,20 @@ public static class DevelopmentDataSeeder
 
         if (!await db.Players.AnyAsync(x => x.TeamId == team.Id, ct))
         {
+            // Branded placeholder portrait so player cards are never empty in
+            // dev/demo. Real photos are uploaded by the admin (Player.PhotoUrl).
+            const string playerPhoto = "/jso-club-mark.svg";
             db.Players.AddRange(
-                new Player { TeamId = team.Id, FirstName = "Aymen", LastName = "Ben Saïd", ShirtNumber = 1, Position = "Gardien" },
-                new Player { TeamId = team.Id, FirstName = "Hamza", LastName = "Trabelsi", ShirtNumber = 2, Position = "Défenseur" },
-                new Player { TeamId = team.Id, FirstName = "Mohamed", LastName = "Hachani", ShirtNumber = 4, Position = "Défenseur" },
-                new Player { TeamId = team.Id, FirstName = "Oussama", LastName = "Belhadj", ShirtNumber = 5, Position = "Défenseur" },
-                new Player { TeamId = team.Id, FirstName = "Yassine", LastName = "Dridi", ShirtNumber = 8, Position = "Milieu" },
-                new Player { TeamId = team.Id, FirstName = "Nidhal", LastName = "Gharbi", ShirtNumber = 6, Position = "Milieu" },
-                new Player { TeamId = team.Id, FirstName = "Firas", LastName = "Ayari", ShirtNumber = 7, Position = "Milieu" },
-                new Player { TeamId = team.Id, FirstName = "Khalil", LastName = "Jebali", ShirtNumber = 10, Position = "Attaquant" },
-                new Player { TeamId = team.Id, FirstName = "Seif", LastName = "Mansouri", ShirtNumber = 11, Position = "Attaquant" },
-                new Player { TeamId = team.Id, FirstName = "Wassim", LastName = "Ferchichi", ShirtNumber = 9, Position = "Attaquant" }
+                new Player { TeamId = team.Id, FirstName = "Aymen", LastName = "Ben Saïd", ShirtNumber = 1, Position = "Gardien", PhotoUrl = playerPhoto },
+                new Player { TeamId = team.Id, FirstName = "Hamza", LastName = "Trabelsi", ShirtNumber = 2, Position = "Défenseur", PhotoUrl = playerPhoto },
+                new Player { TeamId = team.Id, FirstName = "Mohamed", LastName = "Hachani", ShirtNumber = 4, Position = "Défenseur", PhotoUrl = playerPhoto },
+                new Player { TeamId = team.Id, FirstName = "Oussama", LastName = "Belhadj", ShirtNumber = 5, Position = "Défenseur", PhotoUrl = playerPhoto },
+                new Player { TeamId = team.Id, FirstName = "Yassine", LastName = "Dridi", ShirtNumber = 8, Position = "Milieu", PhotoUrl = playerPhoto },
+                new Player { TeamId = team.Id, FirstName = "Nidhal", LastName = "Gharbi", ShirtNumber = 6, Position = "Milieu", PhotoUrl = playerPhoto },
+                new Player { TeamId = team.Id, FirstName = "Firas", LastName = "Ayari", ShirtNumber = 7, Position = "Milieu", PhotoUrl = playerPhoto },
+                new Player { TeamId = team.Id, FirstName = "Khalil", LastName = "Jebali", ShirtNumber = 10, Position = "Attaquant", PhotoUrl = playerPhoto },
+                new Player { TeamId = team.Id, FirstName = "Seif", LastName = "Mansouri", ShirtNumber = 11, Position = "Attaquant", PhotoUrl = playerPhoto },
+                new Player { TeamId = team.Id, FirstName = "Wassim", LastName = "Ferchichi", ShirtNumber = 9, Position = "Attaquant", PhotoUrl = playerPhoto }
             );
         }
 

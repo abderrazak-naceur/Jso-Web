@@ -2,7 +2,9 @@ import 'package:jso_mobile/core/api/api_client.dart';
 import 'package:jso_mobile/core/api/api_exception.dart';
 import 'package:jso_mobile/data/auth/token_store.dart';
 import 'package:jso_mobile/data/models/fan_user.dart';
+import 'package:jso_mobile/data/repositories/admin_auth_repository.dart';
 import 'package:jso_mobile/data/repositories/auth_repository.dart';
+import 'package:jso_mobile/features/auth/admin_auth_controller.dart';
 import 'package:jso_mobile/features/auth/auth_controller.dart';
 
 /// In-memory [TokenStore] for widget tests.
@@ -139,6 +141,17 @@ AuthController fakeAuthController({
 }) {
   return AuthController(
     repository: repository ?? FakeAuthRepository(),
+    tokenStore: tokenStore ?? InMemoryTokenStore(),
+  );
+}
+
+/// Convenience factory for an [AdminAuthController] backed by fakes. It never
+/// touches the network: the repository is only exercised on an explicit admin
+/// login, which the widget tests do not trigger. Admin sessions start
+/// anonymous, so no token is seeded.
+AdminAuthController fakeAdminAuthController({InMemoryTokenStore? tokenStore}) {
+  return AdminAuthController(
+    repository: AdminAuthRepository(ApiClient()),
     tokenStore: tokenStore ?? InMemoryTokenStore(),
   );
 }

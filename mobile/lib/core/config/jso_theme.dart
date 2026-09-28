@@ -6,25 +6,28 @@ import 'package:flutter/material.dart';
 /// `docs/DESIGN_SYSTEM.md` and `docs/BRAND_GUIDELINES.md`.
 ///
 /// Typography note: the brand uses **Manrope** for headings and **Inter** for
-/// body/UI. Bundling those fonts (via the `google_fonts` package or local
-/// assets) is deferred; this theme documents the intent and falls back to the
-/// platform default sans-serif so the app stays lightweight for now.
+/// body/UI. Both families are bundled under `assets/fonts/` and wired into the
+/// [ThemeData] below (see [JsoTheme.headingFontFamily] / [bodyFontFamily]).
 class JsoColors {
   const JsoColors._();
 
-  // Deep surfaces (dark navy base).
-  static const Color ink = Color(0xFF040811); // deepest background
-  static const Color navy = Color(0xFF071225); // primary surface
-  static const Color navy2 = Color(0xFF0B1A33); // panels & hero
-  static const Color navy3 = Color(0xFF102748); // cards & active states
+  // Deep surfaces (brand navy base #071a3a).
+  static const Color ink = Color(0xFF04102A); // deepest background
+  static const Color navy = Color(0xFF071A3A); // primary surface (brand navy)
+  static const Color navy2 = Color(0xFF0C2450); // panels & hero
+  static const Color navy3 = Color(0xFF123066); // cards & active states
 
   // Brand identity.
-  static const Color gold = Color(0xFFF4C542); // primary CTA / accent
-  static const Color gold2 = Color(0xFFFFD95A); // highlight & hover
+  static const Color gold = Color(
+    0xFFFFD700,
+  ); // primary CTA / accent (brand gold)
+  static const Color gold2 = Color(0xFFFFE24D); // highlight & hover
 
   // Interactive.
-  static const Color blue = Color(0xFF2F6BFF); // links / interactive
-  static const Color blueBright = Color(0xFF1769E0); // active states
+  static const Color blue = Color(
+    0xFF1769E0,
+  ); // links / interactive (brand blue)
+  static const Color blueBright = Color(0xFF3B86F0); // active states
   static const Color cyan = Color(0xFF58E1FF); // live / micro accents
 
   // Text.
@@ -72,11 +75,56 @@ class JsoSpacing {
 class JsoTheme {
   const JsoTheme._();
 
-  /// Intended heading font family (see typography note above).
+  /// Heading font family — bundled under assets/fonts (see [pubspec.yaml]).
   static const String headingFontFamily = 'Manrope';
 
-  /// Intended body/UI font family.
+  /// Body/UI font family — bundled under assets/fonts.
   static const String bodyFontFamily = 'Inter';
+
+  /// Builds a [TextTheme] that pairs [bodyFontFamily] (Inter) for body/label
+  /// text with [headingFontFamily] (Manrope) for display/headline/title text,
+  /// keeping the base colours applied by each theme.
+  static TextTheme _brandTextTheme(TextTheme base) {
+    const heading = headingFontFamily;
+    return base.copyWith(
+      displayLarge: base.displayLarge?.copyWith(
+        fontFamily: heading,
+        fontWeight: FontWeight.w800,
+      ),
+      displayMedium: base.displayMedium?.copyWith(
+        fontFamily: heading,
+        fontWeight: FontWeight.w800,
+      ),
+      displaySmall: base.displaySmall?.copyWith(
+        fontFamily: heading,
+        fontWeight: FontWeight.w800,
+      ),
+      headlineLarge: base.headlineLarge?.copyWith(
+        fontFamily: heading,
+        fontWeight: FontWeight.w800,
+      ),
+      headlineMedium: base.headlineMedium?.copyWith(
+        fontFamily: heading,
+        fontWeight: FontWeight.w800,
+      ),
+      headlineSmall: base.headlineSmall?.copyWith(
+        fontFamily: heading,
+        fontWeight: FontWeight.w700,
+      ),
+      titleLarge: base.titleLarge?.copyWith(
+        fontFamily: heading,
+        fontWeight: FontWeight.w700,
+      ),
+      titleMedium: base.titleMedium?.copyWith(
+        fontFamily: heading,
+        fontWeight: FontWeight.w700,
+      ),
+      titleSmall: base.titleSmall?.copyWith(
+        fontFamily: heading,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
 
   static ThemeData dark() {
     const scheme = ColorScheme(
@@ -100,18 +148,27 @@ class JsoTheme {
       brightness: Brightness.dark,
       colorScheme: scheme,
       scaffoldBackgroundColor: JsoColors.ink,
+      fontFamily: bodyFontFamily,
     );
 
     return base.copyWith(
-      textTheme: base.textTheme.apply(
-        bodyColor: JsoColors.white,
-        displayColor: JsoColors.white,
+      textTheme: _brandTextTheme(
+        base.textTheme.apply(
+          bodyColor: JsoColors.white,
+          displayColor: JsoColors.white,
+        ),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: JsoColors.navy,
         foregroundColor: JsoColors.white,
         elevation: 0,
         centerTitle: false,
+        titleTextStyle: TextStyle(
+          fontFamily: headingFontFamily,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          color: JsoColors.white,
+        ),
       ),
       cardTheme: CardThemeData(
         color: JsoColors.navy3,
@@ -185,18 +242,27 @@ class JsoTheme {
       brightness: Brightness.light,
       colorScheme: scheme,
       scaffoldBackgroundColor: JsoColors.paper,
+      fontFamily: bodyFontFamily,
     );
 
     return base.copyWith(
-      textTheme: base.textTheme.apply(
-        bodyColor: JsoColors.inkText,
-        displayColor: JsoColors.inkText,
+      textTheme: _brandTextTheme(
+        base.textTheme.apply(
+          bodyColor: JsoColors.inkText,
+          displayColor: JsoColors.inkText,
+        ),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: JsoColors.paper,
         foregroundColor: JsoColors.inkText,
         elevation: 0,
         centerTitle: false,
+        titleTextStyle: TextStyle(
+          fontFamily: headingFontFamily,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          color: JsoColors.inkText,
+        ),
       ),
       cardTheme: CardThemeData(
         color: JsoColors.surface,

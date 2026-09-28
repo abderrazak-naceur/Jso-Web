@@ -88,6 +88,17 @@ flutter:
     - assets/jso-club-mark.svg
     - assets/jso-crest.png
 
+  # Brand typography (SIL Open Font License). Manrope for headings, Inter for
+  # body/UI. Both are variable fonts (weight axis), so a single file covers the
+  # whole weight range used by the theme.
+  fonts:
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-Regular.ttf
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
