@@ -91,6 +91,34 @@ export const shopOrderApi = {
   pay: (id, country, token) => requestJson('/shop/orders/' + id + '/pay', 'POST', { country }, token),
 }
 
+// Fan ticketing API (requires the fan JWT). A reservation is created Pending
+// (POST /tickets/reserve) then paid online. Payment is confirmed server-side by
+// the verified provider webhook (Pending -> Confirmed + capacity incremented);
+// the browser redirect only lands on an "en cours de vérification" page.
+export const ticketApi = {
+  forMatch: (matchId, signal) => request('/tickets/match/' + matchId, signal),
+  mine: (token) => requestJson('/tickets/mine', 'GET', null, token),
+  myTicket: (id, token) => requestJson('/tickets/' + id, 'GET', null, token),
+  reserve: (data, token) => requestJson('/tickets/reserve', 'POST', data, token),
+  // Starts an online payment for a Pending reservation. Routes to Flouci
+  // (Tunisia) or Stripe (elsewhere) by `country`; returns { redirectUrl }.
+  pay: (id, country, token) => requestJson('/tickets/' + id + '/pay', 'POST', { country }, token),
+}
+
+// Fan supporters' wall API (requires the fan JWT for the paid flow). A fan
+// proposes a brick tied to their identity (POST /supporters/mine) which returns
+// its id, then pays it online. Payment is confirmed server-side by the verified
+// webhook (sets PaymentStatus=Paid) and is ORTHOGONAL to moderation: a brick
+// only appears on the public wall once a CommunityManager approves it.
+export const supporterApi = {
+  wall: (name, signal) => request('/supporters/wall' + (name ? '?name=' + encodeURIComponent(name) : ''), signal),
+  proposeMine: (data, token) => requestJson('/supporters/mine', 'POST', data, token),
+  myBrick: (id, token) => requestJson('/supporters/mine/' + id, 'GET', null, token),
+  // Starts an online payment for the fan's own brick. Routes by `country`;
+  // returns { redirectUrl }.
+  pay: (id, country, token) => requestJson('/supporters/' + id + '/pay', 'POST', { country }, token),
+}
+
 // Fan (supporter) community writes — require the fan JWT. Comments are created
 // in a "Pending" state and only appear publicly once a moderator approves them.
 export const communityFanApi = {

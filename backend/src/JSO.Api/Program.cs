@@ -17,6 +17,9 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuditService>();
 builder.Services.AddScoped<DatabaseInitializer>();
+// Shared resolver for payment provider return/cancel base URLs (shop, tickets,
+// supporters' wall). Keeps the Host-header policy in one place.
+builder.Services.AddScoped<JSO.Api.PaymentLinkBuilder>();
 
 // Weather-enriched match reminders (idea G22). Open-Meteo is a free, keyless
 // provider so no secret is introduced. The HttpClient uses a short timeout and

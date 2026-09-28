@@ -25,23 +25,32 @@ public sealed class StripePaymentProvider(
 {
     private readonly StripeOptions _stripe = options.Value.Stripe;
 
+    // Legacy metadata key kept for backward compatibility with any Stripe
+    // session created before the generic abstraction (still resolved by the
+    // webhook as a ShopOrder). New sessions also carry the generic
+    // PayableType/PayableId metadata below.
     public const string OrderIdMetadataKey = "orderId";
+    // Generic payable metadata carried on every new Checkout session so the
+    // webhook can route completion by type without guessing.
+    public const string PayableTypeMetadataKey = "payableType";
+    public const string PayableIdMetadataKey = "payableId";
 
     public string Name => "Stripe";
 
     public bool IsConfigured => _stripe.IsConfigured;
 
-    public async Task<PaymentInitiation> InitiatePaymentAsync(Order order, string returnUrl, string cancelUrl, CancellationToken ct)
+    public async Task<PaymentInitiation> InitiatePaymentAsync(PaymentRequest payable, string returnUrl, string cancelUrl, CancellationToken ct)
     {
         if (!IsConfigured)
             throw new PaymentProviderNotConfiguredException(Name);
 
-        // Prices are stored in TND. Stripe does not universally settle in TND, so
-        // we convert the TND total to the configured Stripe currency (EUR by
-        // default) using the CONFIGURABLE Payments:Stripe:TndToStripeRate. The
-        // rate is a club responsibility (see docs/PAYMENTS.md); a misconfigured
-        // non-positive rate is rejected rather than charging a wrong amount.
-        var chargedAmount = ComputeChargedAmount(order.Total);
+        // Amounts are expressed in TND. Stripe does not universally settle in
+        // TND, so we convert the TND amount to the configured Stripe currency
+        // (EUR by default) using the CONFIGURABLE Payments:Stripe:TndToStripeRate.
+        // The rate is a club responsibility (see docs/PAYMENTS.md); a
+        // misconfigured non-positive rate is rejected rather than charging a
+        // wrong amount.
+        var chargedAmount = ComputeChargedAmount(payable.AmountTnd);
         var currency = _stripe.Currency.Trim().ToUpperInvariant();
 
         // Stripe amounts are in the smallest currency unit (cents for EUR).
@@ -49,13 +58,23 @@ public sealed class StripePaymentProvider(
         if (amountMinor <= 0)
             throw new PaymentProviderException("Montant de paiement invalide après conversion de devise.");
 
+        var metadata = new Dictionary<string, string>
+        {
+            [PayableTypeMetadataKey] = payable.PayableType,
+            [PayableIdMetadataKey] = payable.PayableId.ToString()
+        };
+        // Preserve the legacy key for shop orders so any in-flight session and
+        // existing tooling keep resolving.
+        if (payable.PayableType == PayableTypes.ShopOrder)
+            metadata[OrderIdMetadataKey] = payable.PayableId.ToString();
+
         var sessionOptions = new SessionCreateOptions
         {
             Mode = "payment",
             SuccessUrl = returnUrl,
             CancelUrl = cancelUrl,
-            ClientReferenceId = order.Id.ToString(),
-            Metadata = new Dictionary<string, string> { [OrderIdMetadataKey] = order.Id.ToString() },
+            ClientReferenceId = payable.PayableId.ToString(),
+            Metadata = metadata,
             LineItems =
             [
                 new SessionLineItemOptions
@@ -67,7 +86,7 @@ public sealed class StripePaymentProvider(
                         UnitAmount = amountMinor,
                         ProductData = new SessionLineItemPriceDataProductDataOptions
                         {
-                            Name = $"Commande JSO {order.Id}"
+                            Name = payable.Description
                         }
                     }
                 }
@@ -85,7 +104,7 @@ public sealed class StripePaymentProvider(
         catch (StripeException ex)
         {
             // Log the Stripe error code/message but never the secret key.
-            logger.LogWarning("Stripe session creation failed for order {OrderId}: {Code}", order.Id, ex.StripeError?.Code);
+            logger.LogWarning("Stripe session creation failed for {PayableType} {PayableId}: {Code}", payable.PayableType, payable.PayableId, ex.StripeError?.Code);
             throw new PaymentProviderException("Le fournisseur de paiement a refusé la demande.");
         }
     }

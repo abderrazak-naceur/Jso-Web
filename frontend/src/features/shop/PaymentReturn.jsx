@@ -1,43 +1,94 @@
 import { useEffect, useState } from 'react'
 import { CheckCircle2, Clock, XCircle, RefreshCw } from 'lucide-react'
-import { shopOrderApi } from '../../lib/api'
+import { shopOrderApi, ticketApi, supporterApi } from '../../lib/api'
 
 const FAN_TOKEN_KEY = 'jso_fan_token'
 
 // Landing page shown after the fan comes back from the provider's hosted
-// payment page. It NEVER marks an order paid: it only reads the current order
-// status (which is set server-side by the verified webhook) and reflects it.
+// payment page. It NEVER marks anything paid: it only reads the current payable
+// status (set server-side by the verified webhook) and reflects it.
+//
+// It is GENERIC over the payable type so the same page serves the shop,
+// ticketing and the supporters' wall. The type is carried in the URL:
+//   - Shop (legacy):  /payment/success?orderId=<guid>
+//   - Ticket/Brick:   /payment/success?payableType=TicketOrder|SupporterBrick&payableId=<guid>
 // Two entry paths, decided by the URL (/payment/success or /payment/cancel):
 //   - success: the payment may still be "en cours de vérification" until the
-//     webhook lands, so we poll GetMyOrder a few times.
+//     webhook lands, so we poll the payable status a few times.
 //   - cancel: the fan abandoned the payment; we simply say so.
+
+// Maps each payable type to how we fetch it and how we read a "paid" / "failed"
+// status from its response, so the UI logic stays uniform.
+function resolvePayable(params) {
+  const orderId = params.get('orderId')
+  const payableType = params.get('payableType')
+  const payableId = params.get('payableId')
+
+  // Legacy shop links carry only orderId.
+  if (orderId && !payableType) {
+    return {
+      id: orderId,
+      fetch: (token) => shopOrderApi.myOrder(orderId, token),
+      // Shop order status: Paid / Cancelled / Failed / Pending.
+      isPaid: (s) => s === 'Paid',
+      isFailed: (s) => s === 'Cancelled' || s === 'Failed',
+      readStatus: (r) => r?.status || 'Pending',
+    }
+  }
+
+  if (payableType === 'TicketOrder' && payableId) {
+    return {
+      id: payableId,
+      fetch: (token) => ticketApi.myTicket(payableId, token),
+      // Ticket status: Confirmed (paid) / Cancelled / Pending.
+      isPaid: (s) => s === 'Confirmed',
+      isFailed: (s) => s === 'Cancelled',
+      readStatus: (r) => r?.status || 'Pending',
+    }
+  }
+
+  if (payableType === 'SupporterBrick' && payableId) {
+    return {
+      id: payableId,
+      fetch: (token) => supporterApi.myBrick(payableId, token),
+      // Brick payment status: Paid / Pending (moderation is separate and never
+      // exposed here).
+      isPaid: (s) => s === 'Paid',
+      isFailed: () => false,
+      readStatus: (r) => r?.paymentStatus || 'Pending',
+    }
+  }
+
+  return null
+}
+
 export default function PaymentReturn() {
   const params = new URLSearchParams(window.location.search)
-  const orderId = params.get('orderId')
   const outcome = window.location.pathname.includes('/cancel') ? 'cancel' : 'success'
+  const payable = resolvePayable(params)
 
   const [status, setStatus] = useState(outcome === 'cancel' ? 'Cancelled' : null)
-  const [loading, setLoading] = useState(outcome === 'success')
+  const [loading, setLoading] = useState(outcome === 'success' && !!payable)
   const [error, setError] = useState('')
 
   const token = (() => { try { return localStorage.getItem(FAN_TOKEN_KEY) } catch { return null } })()
 
   async function refresh() {
-    if (!orderId || !token) { setLoading(false); return }
+    if (!payable || !token) { setLoading(false); return }
     setLoading(true)
     setError('')
     try {
-      const order = await shopOrderApi.myOrder(orderId, token)
-      setStatus(order?.status || 'Pending')
+      const row = await payable.fetch(token)
+      setStatus(payable.readStatus(row))
     } catch (e) {
-      setError(e?.message || 'Impossible de récupérer le statut de la commande.')
+      setError(e?.message || 'Impossible de récupérer le statut du paiement.')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    if (outcome !== 'success' || !orderId || !token) {
+    if (outcome !== 'success' || !payable || !token) {
       setLoading(false)
       return undefined
     }
@@ -48,27 +99,28 @@ export default function PaymentReturn() {
     async function poll() {
       attempts += 1
       try {
-        const order = await shopOrderApi.myOrder(orderId, token)
+        const row = await payable.fetch(token)
         if (!active) return
-        setStatus(order?.status || 'Pending')
+        const s = payable.readStatus(row)
+        setStatus(s)
         setLoading(false)
         // Keep polling while still pending (webhook may not have landed yet).
-        if ((order?.status === 'Pending') && attempts < 5) {
+        if (!payable.isPaid(s) && !payable.isFailed(s) && attempts < 5) {
           timer = setTimeout(poll, 2500)
         }
       } catch (e) {
         if (!active) return
-        setError(e?.message || 'Impossible de récupérer le statut de la commande.')
+        setError(e?.message || 'Impossible de récupérer le statut du paiement.')
         setLoading(false)
       }
     }
     poll()
     return () => { active = false; if (timer) clearTimeout(timer) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderId])
+  }, [])
 
-  const isPaid = status === 'Paid'
-  const isCancelled = status === 'Cancelled' || status === 'Failed'
+  const isPaid = payable ? payable.isPaid(status) : status === 'Paid'
+  const isCancelled = payable ? (payable.isFailed(status) || status === 'Cancelled') : (status === 'Cancelled' || status === 'Failed')
   const isPending = !isPaid && !isCancelled
 
   return (
@@ -84,13 +136,13 @@ export default function PaymentReturn() {
           <div className="flex flex-col items-center gap-4">
             <CheckCircle2 size={48} className="text-emerald-600" />
             <h1 className="text-2xl font-black">Paiement confirmé</h1>
-            <p className="text-sm text-slate-500">Merci ! Votre commande a bien été payée. Retrouvez-la dans « Mes commandes ».</p>
+            <p className="text-sm text-slate-500">Merci ! Votre paiement a bien été confirmé.</p>
           </div>
         ) : isCancelled ? (
           <div className="flex flex-col items-center gap-4">
             <XCircle size={48} className="text-red-600" />
             <h1 className="text-2xl font-black">Paiement annulé</h1>
-            <p className="text-sm text-slate-500">Votre paiement n’a pas été finalisé. Vous pouvez réessayer depuis votre panier.</p>
+            <p className="text-sm text-slate-500">Votre paiement n’a pas été finalisé. Vous pouvez réessayer.</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4">

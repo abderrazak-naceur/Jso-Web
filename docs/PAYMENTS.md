@@ -1,12 +1,16 @@
-# Paiements en ligne de la boutique (Flouci + Stripe)
+# Paiements en ligne (Flouci + Stripe)
 
-La boutique fan encaisse les commandes en ligne via **deux prestataires**, choisis
+Les paiements en ligne s'appuient sur **deux prestataires**, choisis
 automatiquement selon le **pays** indiqué par l'acheteur au moment du paiement :
 
 | Pays de l'acheteur | Prestataire | Devise | Page de paiement |
 | ------------------ | ----------- | ------ | ---------------- |
 | Tunisie (`TN`)     | **Flouci**  | TND    | Lien/QR hébergé Flouci |
 | Tout autre pays    | **Stripe**  | EUR *(par défaut)* | Stripe Checkout hébergé |
+
+La même abstraction encaisse aujourd'hui **trois types de « payable »** (voir
+« Abstraction générique » plus bas) : la **boutique** (`ShopOrder`), la
+**billetterie** (`TicketOrder`) et le **mur des supporters** (`SupporterBrick`).
 
 Les prix étant stockés en **TND**, le montant Stripe est **converti** en devise
 internationale avant l'encaissement (voir « Devise et conversion » ci-dessous). Le
@@ -79,6 +83,78 @@ En cas d'écart (session manipulée, périmée ou incohérente), la commande **r
 `Pending`** : l'incident est journalisé (sans secret) et audité (`ORDER_PAY_MISMATCH`)
 plutôt que marqué payé.
 
+## Abstraction générique (boutique, billetterie, mur des supporters)
+
+Les paiements ne sont plus liés à la seule commande boutique : l'abstraction est
+**générique sur le « payable »** afin de réutiliser les **mêmes** prestataires, la
+**même** conversion de devise et la **même** vérification de montant sans dupliquer
+la moindre logique sensible.
+
+- **Contrat générique `PaymentRequest`** (`JSO.Infrastructure.Payments`) :
+  `{ PayableType, PayableId, FanUserId, AmountTnd, Description }`.
+  `PayableType` est un discriminant stable (`ShopOrder` | `TicketOrder` |
+  `SupporterBrick`, voir `PayableTypes`) ; `AmountTnd` est le montant à débiter
+  exprimé en **TND** (converti pour Stripe). `IPaymentProvider.InitiatePaymentAsync`
+  prend désormais ce contrat : Flouci calcule les millimes sur `AmountTnd`, Stripe
+  applique le taux `TndToStripeRate` sur `AmountTnd` (comportement inchangé pour la
+  boutique).
+- **Routage du complètement par type** : chaque type de payable fournit un
+  `IPayableCompletion` (`OrderPaymentService` = boutique, `TicketOrderCompletion`,
+  `SupporterBrickCompletion`) et le `PayableCompletionRouter` aiguille par
+  `PayableType`. Chaque complètement est **idempotent** et **transactionnel** :
+  - `ShopOrder` : `Pending → Paid` + décrément du stock (logique existante,
+    inchangée, partagée avec le passage manuel admin).
+  - `TicketOrder` : `Pending → Confirmed` + **incrément de `SoldCount`** sur le
+    `TicketType` (capacité), exactement comme la confirmation manuelle admin ; refus
+    (laisse `Pending`) s'il n'y a plus de capacité (pas de survente).
+  - `SupporterBrick` : passe `PaymentStatus → Paid` + `PaidAt`, **sans jamais
+    toucher la modération** (`Status`).
+- **Comment le webhook aiguille et vérifie le montant** :
+  - **Stripe** : le `PayableType`/`PayableId` voyagent dans les *metadata* de la
+    session (`payableType` / `payableId` ; l'ancienne clé `orderId` reste reconnue
+    pour compatibilité). Le webhook recroise `amount_total`/`currency` avec le
+    montant attendu du payable (`AmountTnd × TndToStripeRate`, en centimes) via le
+    routeur avant de compléter.
+  - **Flouci** : la notification ne porte pas de metadata ; le `payment_id`
+    (persisté en `ProviderRef` sur le payable, index unique par table) est **résolu**
+    sur les tables `Orders` / `TicketOrders` / `SupporterBricks` pour dériver le
+    `PayableType`. Après `verify_payment` (SUCCESS), le montant vérifié (millimes) est
+    recroisé avec `AmountTnd × 1000` en TND avant complètement.
+  - En cas d'écart, le payable **reste en attente** ; l'incident est audité
+    (`PAYMENT_MISMATCH`). Les complètements réussis sont audités
+    (`PAYMENT_COMPLETED_WEBHOOK`).
+
+### Champs additifs persistés (migration Postgres additive)
+
+`TicketOrder` et `SupporterBrick` reçoivent les mêmes champs *nullable* que la
+commande boutique : `ProviderRef` (index unique partiel), `PaymentProvider`,
+`Country`, `ChargedAmount`, `ChargedCurrency`. `TicketOrder` reçoit aussi `PaidAt`.
+
+**Mur des supporters — paiement vs modération (orthogonaux).** Le champ `Status`
+d'un `SupporterBrick` reste **exclusivement** l'état de **modération**
+(`Pending` / `Approved` / `Rejected`) : un mattone n'apparaît sur le **mur public**
+que s'il est **`Approved`** par un CommunityManager. Un **nouveau champ
+`PaymentStatus`** (`Pending` / `Paid`) suit **indépendamment** le paiement. Payer un
+mattone ne l'approuve **jamais** et l'approuver ne le marque **jamais** payé. Choix
+documenté : la visibilité publique reste pilotée **uniquement** par `Status ==
+Approved` (le paiement n'est **pas** une condition de publication).
+
+### Endpoints fan `/pay`
+
+- **Boutique** : `POST /api/shop/orders/{id}/pay { country }` (inchangé).
+- **Billetterie** : `POST /api/tickets/{id}/pay { country }` `[Authorize(Fan)]` sur
+  **sa propre** réservation `Pending` → `{ redirectUrl }`.
+- **Mur des supporters** : `POST /api/supporters/mine { displayName, message, amount }`
+  `[Authorize(Fan)]` crée un mattone rattaché au fan et **renvoie son id**, puis
+  `POST /api/supporters/{id}/pay { country }` `[Authorize(Fan)]` sur **son propre**
+  mattone → `{ redirectUrl }`. Seul **le fan créateur** peut payer son mattone.
+  (L'endpoint public anonyme `POST /api/supporters/wall` reste inchangé et sans
+  paiement.)
+
+Chaque `/pay` ne concerne que le **propre** payable **en attente** du fan, dégrade en
+`503` propre si le prestataire n'est pas configuré, et n'écrit **jamais** l'état payé
+(seul le webhook vérifié le fait).
+
 ## Configuration (environnement, jamais dans le dépôt)
 
 Renseignez ces variables d'environnement (voir `.env.example` / `.env.prod.example`).
@@ -125,9 +201,11 @@ authentification applicative ; l'authenticité est garantie par la signature/vé
     `webhookSecret`) correspond ; sinon il renvoie `401`. Laissé vide, l'endpoint
     conserve son comportement actuel (protégé par la vérification serveur).
 
-Les deux handlers sont **idempotents** (délégués à `OrderPaymentService`, qui ne
-refait rien sur une commande déjà payée), **recroisent le montant/devise** (voir
-« Vérification du montant ») et sont **audités**.
+Les deux handlers sont **idempotents** (délégués au `PayableCompletionRouter`, qui
+ne refait rien sur un payable déjà réglé), **recroisent le montant/devise** (voir
+« Vérification du montant ») et sont **audités**. Ils gèrent **tous les
+`PayableType`** (boutique, billetterie, mur) via le routage de complètement décrit
+dans « Abstraction générique ».
 
 ## Flux fonctionnel
 
@@ -144,6 +222,13 @@ refait rien sur une commande déjà payée), **recroisent le montant/devise** (v
 4. Le prestataire appelle notre webhook ; après vérification serveur, la commande
    passe `Paid` et le stock est décrémenté (logique partagée avec le passage manuel
    admin, idempotente).
+
+Pour la **billetterie** et le **mur des supporters**, le flux est identique (le fan
+choisit un pays puis lance `POST /api/tickets/{id}/pay` ou `POST
+/api/supporters/{id}/pay`) ; la page de retour `/payment/success` lit l'état du
+payable via `payableType` + `payableId`. À la confirmation du webhook, une
+réservation passe `Confirmed` (+ `SoldCount`) et un mattone passe
+`PaymentStatus = Paid` (la modération reste indépendante).
 
 ## Dégradation sans clés (sandbox)
 

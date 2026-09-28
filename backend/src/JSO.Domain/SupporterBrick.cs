@@ -8,10 +8,11 @@ namespace JSO.Domain;
 // public wall once a CommunityManager/ClubAdmin sets it to "Approved". The wall
 // exposes no PII beyond the freely chosen DisplayName and Message.
 //
-// Payments: real payment processing is intentionally OUT OF SCOPE for this
-// iteration (we never handle card data on our servers). Amount is a declared
-// figure and PaidAt is optional/simulated; confirmation through a certified
-// payment provider is a documented TODO.
+// Payments: a fan can pay their own brick online via the shared Flouci/Stripe
+// abstraction (routed by country). We never handle card data on our servers;
+// confirmation is exclusively server-side via the verified provider webhook,
+// which sets PaymentStatus="Paid" + PaidAt. Payment is ORTHOGONAL to moderation
+// (Status): paying never approves a brick and approving never marks it paid.
 public sealed class SupporterBrick
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -30,11 +31,32 @@ public sealed class SupporterBrick
     public decimal Amount { get; set; }
 
     // Moderation state: Pending / Approved / Rejected. Only Approved is public.
+    // IMPORTANT: this field is the MODERATION state only. Payment is tracked
+    // separately (see PaymentStatus/PaidAt) so the two concerns stay orthogonal:
+    // a brick becomes public only when a CommunityManager sets Status=Approved,
+    // regardless of whether it has been paid, and paying never changes the
+    // moderation decision.
     public string Status { get; set; } = "Pending";
 
-    // Optional/simulated payment timestamp. Real confirmation is a TODO pending
-    // a certified payment provider integration.
+    // Payment state, INDEPENDENT of moderation (Status above). "Pending" until a
+    // certified provider confirms the contribution server-side, then "Paid".
+    // Kept separate from Status so a real online payment never bypasses or
+    // alters moderation. Public wall visibility remains driven by Status only.
+    public string PaymentStatus { get; set; } = "Pending";
+
+    // Payment timestamp: set server-side by the verified provider webhook when
+    // the contribution is confirmed. Null until paid.
     public DateTimeOffset? PaidAt { get; set; }
+
+    // Online payment routing/reconciliation (additive, nullable), mirroring the
+    // shop Order fields. Provider's session/payment id used to reconcile the
+    // webhook with the brick; the routed provider ("Flouci"/"Stripe"); the ISO
+    // country chosen at checkout; and the amount/currency actually charged.
+    public string? ProviderRef { get; set; }
+    public string? PaymentProvider { get; set; }
+    public string? Country { get; set; }
+    public decimal? ChargedAmount { get; set; }
+    public string? ChargedCurrency { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
