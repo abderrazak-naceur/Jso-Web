@@ -1,4 +1,5 @@
 using JSO.Domain; using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JSO.Infrastructure;
 public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbContext(options) {
  public DbSet<Club> Clubs => Set<Club>();
@@ -58,7 +59,22 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<Membership> Memberships => Set<Membership>();
  public DbSet<MatchStream> MatchStreams => Set<MatchStream>();
  public DbSet<MatchStreamAccess> MatchStreamAccesses => Set<MatchStreamAccess>();
+ // PostgreSQL 'timestamp with time zone' only accepts DateTimeOffset values at
+ // offset 0 (UTC). Any value produced in a non-UTC timezone (e.g. a server or
+ // seeder running at UTC+2) would otherwise throw at write time. This global
+ // converter normalises every DateTimeOffset to UTC on write, killing that
+ // whole class of "only offset 0 is supported" errors at the source.
+ private static readonly ValueConverter<DateTimeOffset, DateTimeOffset> UtcDateTimeOffset =
+  new(v => v.ToUniversalTime(), v => v);
+ private static readonly ValueConverter<DateTimeOffset?, DateTimeOffset?> UtcDateTimeOffsetNullable =
+  new(v => v.HasValue ? v.Value.ToUniversalTime() : v, v => v);
  protected override void OnModelCreating(ModelBuilder modelBuilder) {
+  foreach (var entityType in modelBuilder.Model.GetEntityTypes()) {
+   foreach (var property in entityType.GetProperties()) {
+    if (property.ClrType == typeof(DateTimeOffset)) property.SetValueConverter(UtcDateTimeOffset);
+    else if (property.ClrType == typeof(DateTimeOffset?)) property.SetValueConverter(UtcDateTimeOffsetNullable);
+   }
+  }
   modelBuilder.Entity<Club>().HasIndex(x=>x.ShortName).IsUnique();
   modelBuilder.Entity<Season>().HasIndex(x=>x.Name).IsUnique();
   modelBuilder.Entity<Article>().HasIndex(x=>x.Slug).IsUnique();
