@@ -9,8 +9,12 @@ namespace JSO.Api.Controllers;
 [ApiController]
 [Route("api/admin/media")]
 [Authorize(Roles = "SuperAdmin,ClubAdmin,Editor")]
-public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment env) : ControllerBase
+public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment env, AuditService audit) : ControllerBase
 {
+    private Task Audit(string action, Guid id, object? details, CancellationToken ct) =>
+        audit.LogAsync(action, "MediaAsset", id.ToString(), User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value,
+            HttpContext.Connection.RemoteIpAddress?.ToString(), details, ct);
+
     private static readonly IReadOnlyDictionary<string, (string Extension, byte[] Signature)> AllowedImageTypes =
         new Dictionary<string, (string, byte[])>(StringComparer.OrdinalIgnoreCase)
         {
@@ -73,6 +77,7 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         };
         db.MediaAssets.Add(asset);
         await db.SaveChangesAsync(ct);
+        await Audit("CREATE", asset.Id, new { asset.Title, asset.FileName, asset.FileSize }, ct);
         return Created($"/api/admin/media/{asset.Id}", asset);
     }
 
@@ -95,7 +100,9 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         if (string.IsNullOrWhiteSpace(request.Title) || string.IsNullOrWhiteSpace(request.Url))
             return BadRequest(new { message = "Title and URL are required." });
         var asset = new MediaAsset { Title=request.Title.Trim(), Url=request.Url.Trim(), Type=request.Type?.Trim() ?? "Image", ThumbnailUrl=request.ThumbnailUrl?.Trim(), Caption=request.Caption?.Trim(), IsPublished=request.IsPublished };
-        db.MediaAssets.Add(asset); await db.SaveChangesAsync(ct); return Created($"/api/admin/media/{asset.Id}", asset);
+        db.MediaAssets.Add(asset); await db.SaveChangesAsync(ct);
+        await Audit("CREATE", asset.Id, new { asset.Title }, ct);
+        return Created($"/api/admin/media/{asset.Id}", asset);
     }
 
     [HttpPut("{id:guid}")]
@@ -104,7 +111,9 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         var asset = await db.MediaAssets.FindAsync([id], ct);
         if (asset is null) return NotFound();
         asset.Title=request.Title.Trim(); asset.Url=request.Url.Trim(); asset.Type=request.Type?.Trim() ?? asset.Type; asset.ThumbnailUrl=request.ThumbnailUrl?.Trim(); asset.Caption=request.Caption?.Trim(); asset.IsPublished=request.IsPublished;
-        await db.SaveChangesAsync(ct); return Ok(asset);
+        await db.SaveChangesAsync(ct);
+        await Audit("UPDATE", asset.Id, new { asset.Title, asset.IsPublished }, ct);
+        return Ok(asset);
     }
 
     [HttpDelete("{id:guid}")]
@@ -116,7 +125,9 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
             var absolute=Path.Combine(env.ContentRootPath, asset.StoragePath.Replace('/', Path.DirectorySeparatorChar));
             if (System.IO.File.Exists(absolute)) System.IO.File.Delete(absolute);
         }
-        db.MediaAssets.Remove(asset); await db.SaveChangesAsync(ct); return NoContent();
+        db.MediaAssets.Remove(asset); await db.SaveChangesAsync(ct);
+        await Audit("DELETE", asset.Id, new { asset.Title }, ct);
+        return NoContent();
     }
 }
 
