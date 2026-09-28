@@ -29,6 +29,34 @@ Design allineato alla [guida di brand](BRAND_GUIDELINES.md): superfici chiare (p
 
 Il blason ufficiale è incluso come asset; le immagini di concept nel repository restano riferimenti grafici.
 
+## Biglietteria digitale QR / check-in
+
+La biglietteria mobile attuale è implementata per prenotazione, visualizzazione dei biglietti e pagamento predisposto, ma **non include ancora il QR digitale e il check-in all'ingresso**.
+
+Il piano dedicato è in [MOBILE_TICKETING_QR_PLAN.md](MOBILE_TICKETING_QR_PLAN.md).
+
+Task pianificati:
+
+- **TICKET-QR-001** — modello dati e token pubblico ad alta entropia;
+- **TICKET-QR-002** — emissione del ticket dopo conferma;
+- **TICKET-QR-003** — `TicketDetailScreen` + QR;
+- **TICKET-QR-004** — API di validazione/check-in atomico;
+- **TICKET-QR-005** — scanner QR per lo staff;
+- **TICKET-QR-006** — sicurezza, rate limiting e anti-replay;
+- **TICKET-QR-007** — test E2E;
+- **TICKET-QR-008** — collaudo e go-live.
+
+### Identificatori QR
+
+Il QR non deve contenere PII, JWT o usare il solo `TicketOrderId` come segreto. La prima implementazione userà un `PublicTicketToken` casuale e non prevedibile. `TicketOrderId`, `MatchId`, `TicketTypeId` e `FanUserId` resteranno riferimenti server-side. Un payload firmato con più ID è riservato a un'eventuale futura modalità offline.
+
+Stato target:
+
+`Pending -> Confirmed -> CheckedIn`
+
+con `Cancelled` come stato terminale alternativo.
+
+
 ## Prerequisiti (per il go-live mobile)
 
 1. API pubblica via HTTPS con contratti stabili, paginazione e gestione errori.
