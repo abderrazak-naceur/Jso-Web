@@ -45,6 +45,8 @@ public static class PayableTypes
     public const string ShopOrder = "ShopOrder";
     public const string TicketOrder = "TicketOrder";
     public const string SupporterBrick = "SupporterBrick";
+    public const string Membership = "Membership";
+    public const string MatchStreamAccess = "MatchStreamAccess";
 }
 
 // Result of starting a hosted payment. ChargedAmount/ChargedCurrency capture the

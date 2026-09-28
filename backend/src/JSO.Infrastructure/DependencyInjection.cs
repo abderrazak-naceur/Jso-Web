@@ -64,9 +64,13 @@ public static class DependencyInjection
         // as their single, uniform completion entry point.
         services.AddScoped<TicketOrderCompletion>();
         services.AddScoped<SupporterBrickCompletion>();
+        services.AddScoped<MembershipCompletion>();
+        services.AddScoped<MatchStreamAccessCompletion>();
         services.AddScoped<IPayableCompletion>(sp => sp.GetRequiredService<OrderPaymentService>());
         services.AddScoped<IPayableCompletion>(sp => sp.GetRequiredService<TicketOrderCompletion>());
         services.AddScoped<IPayableCompletion>(sp => sp.GetRequiredService<SupporterBrickCompletion>());
+        services.AddScoped<IPayableCompletion>(sp => sp.GetRequiredService<MembershipCompletion>());
+        services.AddScoped<IPayableCompletion>(sp => sp.GetRequiredService<MatchStreamAccessCompletion>());
         services.AddScoped<PayableCompletionRouter>();
 
         return services;

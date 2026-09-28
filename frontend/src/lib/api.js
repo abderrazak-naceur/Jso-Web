@@ -119,6 +119,34 @@ export const supporterApi = {
   pay: (id, country, token) => requestJson('/supporters/' + id + '/pay', 'POST', { country }, token),
 }
 
+// Fan (supporter) memberships API. Plans are public; subscribing and paying
+// require the fan JWT. A membership is created Pending (POST /memberships) then
+// paid online; it only becomes Active server-side via the verified provider
+// webhook (never the browser redirect). Prices are recomputed server-side.
+export const membershipApi = {
+  plans: (signal) => request('/memberships/plans', signal),
+  subscribe: (planId, token) => requestJson('/memberships', 'POST', { planId }, token),
+  mine: (token) => requestJson('/memberships/mine', 'GET', null, token),
+  myMembership: (id, token) => requestJson('/memberships/' + id, 'GET', null, token),
+  // Starts an online payment for a Pending membership. Routes by `country`;
+  // returns { redirectUrl }.
+  pay: (id, country, token) => requestJson('/memberships/' + id + '/pay', 'POST', { country }, token),
+}
+
+// Pay-per-view match live stream API (idea B24). The metadata endpoint is
+// public: the sensitive streamUrl is only present when the viewer is entitled
+// (free stream, or the signed-in fan has a Paid access), verified server-side.
+// Paying grants access only via the verified webhook.
+export const matchStreamApi = {
+  // Public metadata (streamUrl gated server-side). Pass the fan token so a paid
+  // fan gets the streamUrl; anonymous/unpaid callers get streamUrl = null.
+  get: (matchId, token) => requestJson('/matches/' + matchId + '/stream', 'GET', null, token),
+  // Fan: create/reuse a Pending access and start payment. Returns { redirectUrl, accessId }.
+  startAccess: (matchId, country, token) => requestJson('/matches/' + matchId + '/stream/access', 'POST', { country }, token),
+  // Fan: poll a specific access by its id (used by the payment return page).
+  access: (accessId, token) => requestJson('/matches/stream-access/' + accessId, 'GET', null, token),
+}
+
 // Fan (supporter) community writes — require the fan JWT. Comments are created
 // in a "Pending" state and only appear publicly once a moderator approves them.
 export const communityFanApi = {

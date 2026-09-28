@@ -4,6 +4,7 @@ import { publicApi } from '../../lib/api'
 import { formatDateTime, pick } from '../../lib/format'
 import { useDialog } from '../site/useDialog'
 import CommentsSection from '../community/CommentsSection'
+import MatchStreamPanel from './MatchStreamPanel'
 import TeamBadge from './TeamBadge'
 import { eventLabel, hasScore, matchSides, matchStatusLabel, normalizeMatch } from './matchUtils'
 
@@ -83,6 +84,9 @@ export default function MatchCenterModal({ match, onClose, token, onRequireLogin
           <p role="status" className="mt-7 rounded-2xl bg-slate-50 p-5 text-sm text-slate-500">Chargement des informations du match…</p>
         ) : (
           <div className="mt-8 space-y-8">
+            {details.id && (
+              <MatchStreamPanel matchId={details.id} token={token} onRequireLogin={onRequireLogin} />
+            )}
             {details.liveblog.length > 0 && (
               <section aria-labelledby="live-title">
                 <h3 id="live-title" className="flex items-center gap-2 text-xl font-black"><span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" aria-hidden="true" />Fil du match</h3>

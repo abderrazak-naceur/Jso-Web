@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap, Receipt, FileText, HelpCircle, Ticket, MessageSquare, LayoutTemplate, CalendarDays } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap, Receipt, FileText, HelpCircle, Ticket, MessageSquare, LayoutTemplate, CalendarDays, CreditCard, Radio } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
@@ -26,6 +26,8 @@ import FaqModule from './Faq'
 import TicketsModule from './Tickets'
 import HomepageBuilderModule from './HomepageBuilder'
 import SeasonsCompetitionsModule from './SeasonsCompetitions'
+import MembershipsModule from './Memberships'
+import MatchStreamsModule from './MatchStreams'
 
 async function api(path, options = {}) {
   const token = localStorage.getItem('jso_admin_token')
@@ -346,6 +348,8 @@ function AdminDashboard({ user, onLogout }) {
     ['shop', 'Boutique', ShoppingBag, ['SuperAdmin','ClubAdmin','ShopManager']],
     ['orders', 'Commandes', Receipt, ['SuperAdmin','ClubAdmin','ShopManager']],
     ['tickets', 'Billetterie', Ticket, ['SuperAdmin','ClubAdmin','MatchManager']],
+    ['memberships', 'Abonnements', CreditCard, ['SuperAdmin','ClubAdmin']],
+    ['match-streams', 'Diffusion en direct', Radio, ['ClubAdmin','MatchManager']],
     ['analytics', 'Analytics joueurs', BarChart3, ['SuperAdmin','ClubAdmin','MatchManager']],
     ['volunteers', 'Bénévoles', ClipboardList, ['ClubAdmin','MatchManager']],
     ['newsletter', 'Newsletter', Mail, ['Editor','CommunityManager']],
@@ -416,6 +420,8 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'shop' && <ShopModule onError={setError}/>}
         {section === 'orders' && <OrdersModule onError={setError}/>}
         {section === 'tickets' && <TicketsModule onError={setError}/>}
+        {section === 'memberships' && <MembershipsModule onError={setError}/>}
+        {section === 'match-streams' && <MatchStreamsModule onError={setError}/>}
         {section === 'analytics' && <AnalyticsModule onError={setError}/>}
         {section === 'volunteers' && <VolunteersModule onError={setError}/>}
         {section === 'newsletter' && <NewsletterModule onError={setError}/>}

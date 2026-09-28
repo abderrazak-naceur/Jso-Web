@@ -19,6 +19,7 @@ import {
   TeamSection,
 } from './features/home/HomeContentSections'
 import HeroSection from './features/home/HeroSection'
+import MembershipsSection from './features/memberships/MembershipsSection'
 import MatchdaySection from './features/home/MatchdaySection'
 import NewsSection from './features/home/NewsSection'
 import { useHomeData } from './features/home/useHomeData'
@@ -79,6 +80,14 @@ function App() {
     team: () => <TeamSection key="team" section={sectionById.team} players={data.players} />,
     club: () => <ClubSection key="club" section={sectionById.club} club={data.club} content={data.content} />,
     shop: () => <ShopSection key="shop" section={sectionById.shop} products={data.products} cart={cart} onOpenCart={() => setCartOpen(true)} />,
+    memberships: () => (
+      <MembershipsSection
+        key="memberships"
+        section={sectionById.memberships}
+        token={fan.token}
+        onRequireLogin={() => openAuth('login')}
+      />
+    ),
     media: () => <MediaSection key="media" section={sectionById.media} media={data.media} />,
     events: () => <AgendaSection key="events" section={sectionById.events} events={data.events} />,
     community: () => (sectionById.community ? <CommunitySection key="community" section={sectionById.community} programs={data.community} /> : null),
@@ -91,7 +100,7 @@ function App() {
   // Default page order (matches the built-in layout). `orderHomeSections`
   // returns this unchanged when the layout is empty/failed, or reorders the
   // mappable sections (news/matches/media/sponsors) when the admin published one.
-  const defaultSectionOrder = ['matches', 'news', 'team', 'club', 'shop', 'media', 'events', 'community', 'archive', 'mobile', 'sponsors', 'infos']
+  const defaultSectionOrder = ['matches', 'news', 'team', 'club', 'shop', 'memberships', 'media', 'events', 'community', 'archive', 'mobile', 'sponsors', 'infos']
   const orderedSections = orderHomeSections(defaultSectionOrder, homeLayout)
 
   function openAuth(mode) {

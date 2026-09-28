@@ -54,6 +54,10 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<ClubEvent> ClubEvents => Set<ClubEvent>();
  public DbSet<HomeSection> HomeSections => Set<HomeSection>();
  public DbSet<NavigationItem> NavigationItems => Set<NavigationItem>();
+ public DbSet<MembershipPlan> MembershipPlans => Set<MembershipPlan>();
+ public DbSet<Membership> Memberships => Set<Membership>();
+ public DbSet<MatchStream> MatchStreams => Set<MatchStream>();
+ public DbSet<MatchStreamAccess> MatchStreamAccesses => Set<MatchStreamAccess>();
  protected override void OnModelCreating(ModelBuilder modelBuilder) {
   modelBuilder.Entity<Club>().HasIndex(x=>x.ShortName).IsUnique();
   modelBuilder.Entity<Season>().HasIndex(x=>x.Name).IsUnique();
@@ -173,6 +177,30 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<NavigationItem>().HasIndex(x=>new{x.Position,x.IsActive,x.DisplayOrder});
   modelBuilder.Entity<NavigationItem>().Property(x=>x.IsActive).HasDefaultValue(true);
   modelBuilder.Entity<NavigationItem>().Property(x=>x.OpensInNewTab).HasDefaultValue(false);
+  modelBuilder.Entity<MembershipPlan>().HasIndex(x=>new{x.IsActive,x.DisplayOrder});
+  modelBuilder.Entity<MembershipPlan>().Property(x=>x.IsActive).HasDefaultValue(true);
+  modelBuilder.Entity<MembershipPlan>().Property(x=>x.Price).HasPrecision(14,2);
+  modelBuilder.Entity<Membership>().HasIndex(x=>new{x.FanUserId,x.CreatedAt});
+  modelBuilder.Entity<Membership>().HasIndex(x=>x.Status);
+  modelBuilder.Entity<Membership>().Property(x=>x.Status).HasDefaultValue("Pending");
+  modelBuilder.Entity<Membership>().Property(x=>x.PaymentStatus).HasDefaultValue("Pending");
+  modelBuilder.Entity<Membership>().Property(x=>x.Price).HasPrecision(14,2);
+  modelBuilder.Entity<Membership>().HasIndex(x=>x.ProviderRef).IsUnique().HasFilter("\"ProviderRef\" IS NOT NULL");
+  modelBuilder.Entity<Membership>().Property(x=>x.PaymentProvider).HasMaxLength(32);
+  modelBuilder.Entity<Membership>().Property(x=>x.Country).HasMaxLength(64);
+  modelBuilder.Entity<Membership>().Property(x=>x.ChargedAmount).HasPrecision(14,2);
+  modelBuilder.Entity<Membership>().Property(x=>x.ChargedCurrency).HasMaxLength(8);
+  modelBuilder.Entity<MatchStream>().HasIndex(x=>x.MatchId).IsUnique();
+  modelBuilder.Entity<MatchStream>().Property(x=>x.IsPaid).HasDefaultValue(true);
+  modelBuilder.Entity<MatchStream>().Property(x=>x.Price).HasPrecision(14,2);
+  modelBuilder.Entity<MatchStreamAccess>().HasIndex(x=>new{x.FanUserId,x.MatchStreamId}).IsUnique();
+  modelBuilder.Entity<MatchStreamAccess>().HasIndex(x=>x.MatchStreamId);
+  modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.Status).HasDefaultValue("Pending");
+  modelBuilder.Entity<MatchStreamAccess>().HasIndex(x=>x.ProviderRef).IsUnique().HasFilter("\"ProviderRef\" IS NOT NULL");
+  modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.PaymentProvider).HasMaxLength(32);
+  modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.Country).HasMaxLength(64);
+  modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.ChargedAmount).HasPrecision(14,2);
+  modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.ChargedCurrency).HasMaxLength(8);
   modelBuilder.Entity<Club>().HasData(new Club { Id=Guid.Parse("8d8c1ef6-1c9d-4d1c-9a0f-8a5b6b5c1001"), Name="Jeunesse Sportive de Oudhref", ShortName="JSO", Country="Tunisie", City="Oudhref" });
  }
 }

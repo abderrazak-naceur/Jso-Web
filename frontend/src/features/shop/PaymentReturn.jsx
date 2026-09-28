@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { CheckCircle2, Clock, XCircle, RefreshCw } from 'lucide-react'
-import { shopOrderApi, ticketApi, supporterApi } from '../../lib/api'
+import { shopOrderApi, ticketApi, supporterApi, membershipApi, matchStreamApi } from '../../lib/api'
 
 const FAN_TOKEN_KEY = 'jso_fan_token'
 
@@ -56,6 +56,29 @@ function resolvePayable(params) {
       isPaid: (s) => s === 'Paid',
       isFailed: () => false,
       readStatus: (r) => r?.paymentStatus || 'Pending',
+    }
+  }
+
+  if (payableType === 'Membership' && payableId) {
+    return {
+      id: payableId,
+      fetch: (token) => membershipApi.myMembership(payableId, token),
+      // Membership payment status: Paid / Pending (lifecycle Status is Active
+      // once paid, but PaymentStatus is the payment source of truth).
+      isPaid: (s) => s === 'Paid',
+      isFailed: () => false,
+      readStatus: (r) => r?.paymentStatus || 'Pending',
+    }
+  }
+
+  if (payableType === 'MatchStreamAccess' && payableId) {
+    return {
+      id: payableId,
+      fetch: (token) => matchStreamApi.access(payableId, token),
+      // Access status: Paid / Pending.
+      isPaid: (s) => s === 'Paid',
+      isFailed: () => false,
+      readStatus: (r) => r?.status || 'Pending',
     }
   }
 
