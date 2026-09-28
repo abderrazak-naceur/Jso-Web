@@ -28,6 +28,15 @@ public static class DevelopmentDataSeeder
 
         var club = await db.Clubs.SingleAsync(x => x.ShortName == "JSO", ct);
 
+        // Give the club a rich public description + crest so the hero and club
+        // sections read like a real site instead of empty placeholders.
+        if (string.IsNullOrWhiteSpace(club.Description))
+            club.Description = "Fondée en 1973, la Jeunesse Sportive de Oudhref est bien plus qu’un club : "
+                + "c’est l’identité d’une ville et la fierté de toute une communauté. Formation des jeunes, "
+                + "esprit collectif et passion du maillot guident chaque saison.";
+        if (string.IsNullOrWhiteSpace(club.LogoUrl))
+            club.LogoUrl = "/JSO-crest-regenerated-ok.png";
+
         var season = await db.Seasons.FirstOrDefaultAsync(x => x.Name == "2026/27", ct);
         if (season is null)
         {
@@ -61,10 +70,24 @@ public static class DevelopmentDataSeeder
         {
             db.Players.AddRange(
                 new Player { TeamId = team.Id, FirstName = "Aymen", LastName = "Ben Saïd", ShirtNumber = 1, Position = "Gardien" },
+                new Player { TeamId = team.Id, FirstName = "Hamza", LastName = "Trabelsi", ShirtNumber = 2, Position = "Défenseur" },
                 new Player { TeamId = team.Id, FirstName = "Mohamed", LastName = "Hachani", ShirtNumber = 4, Position = "Défenseur" },
+                new Player { TeamId = team.Id, FirstName = "Oussama", LastName = "Belhadj", ShirtNumber = 5, Position = "Défenseur" },
                 new Player { TeamId = team.Id, FirstName = "Yassine", LastName = "Dridi", ShirtNumber = 8, Position = "Milieu" },
+                new Player { TeamId = team.Id, FirstName = "Nidhal", LastName = "Gharbi", ShirtNumber = 6, Position = "Milieu" },
+                new Player { TeamId = team.Id, FirstName = "Firas", LastName = "Ayari", ShirtNumber = 7, Position = "Milieu" },
                 new Player { TeamId = team.Id, FirstName = "Khalil", LastName = "Jebali", ShirtNumber = 10, Position = "Attaquant" },
-                new Player { TeamId = team.Id, FirstName = "Seif", LastName = "Mansouri", ShirtNumber = 11, Position = "Attaquant" }
+                new Player { TeamId = team.Id, FirstName = "Seif", LastName = "Mansouri", ShirtNumber = 11, Position = "Attaquant" },
+                new Player { TeamId = team.Id, FirstName = "Wassim", LastName = "Ferchichi", ShirtNumber = 9, Position = "Attaquant" }
+            );
+        }
+
+        if (!await db.StaffMembers.AnyAsync(x => x.TeamId == team.Id, ct))
+        {
+            db.StaffMembers.AddRange(
+                new StaffMember { TeamId = team.Id, Name = "Lotfi Bouzid", Role = "Entraîneur principal" },
+                new StaffMember { TeamId = team.Id, Name = "Sami Khemiri", Role = "Entraîneur adjoint" },
+                new StaffMember { TeamId = team.Id, Name = "Dr. Nadia Slama", Role = "Médecin du club" }
             );
         }
 
@@ -77,10 +100,22 @@ public static class DevelopmentDataSeeder
                     SeasonId = season.Id,
                     CompetitionId = competition.Id,
                     TeamId = team.Id,
-                    OpponentName = "Adversaire à confirmer",
-                    KickoffAt = now.AddDays(7),
+                    OpponentName = "US Monastir",
+                    KickoffAt = now.AddDays(6),
                     Venue = "Stade d'Oudhref",
                     IsHome = true,
+                    Status = "Scheduled",
+                    IsPublished = true
+                },
+                new Match
+                {
+                    SeasonId = season.Id,
+                    CompetitionId = competition.Id,
+                    TeamId = team.Id,
+                    OpponentName = "Stade Gabésien",
+                    KickoffAt = now.AddDays(13),
+                    Venue = "Stade Municipal de Gabès",
+                    IsHome = false,
                     Status = "Scheduled",
                     IsPublished = true
                 },
@@ -97,6 +132,34 @@ public static class DevelopmentDataSeeder
                     AwayScore = 1,
                     Status = "Finished",
                     IsPublished = true
+                },
+                new Match
+                {
+                    SeasonId = season.Id,
+                    CompetitionId = competition.Id,
+                    TeamId = team.Id,
+                    OpponentName = "CS Hammam-Lif",
+                    KickoffAt = now.AddDays(-14),
+                    Venue = "Stade de Hammam-Lif",
+                    IsHome = false,
+                    HomeScore = 1,
+                    AwayScore = 1,
+                    Status = "Finished",
+                    IsPublished = true
+                },
+                new Match
+                {
+                    SeasonId = season.Id,
+                    CompetitionId = competition.Id,
+                    TeamId = team.Id,
+                    OpponentName = "El Gawafel Gafsa",
+                    KickoffAt = now.AddDays(-21),
+                    Venue = "Stade d'Oudhref",
+                    IsHome = true,
+                    HomeScore = 3,
+                    AwayScore = 0,
+                    Status = "Finished",
+                    IsPublished = true
                 }
             );
         }
@@ -106,11 +169,24 @@ public static class DevelopmentDataSeeder
             db.Articles.AddRange(
                 new Article
                 {
+                    Title = "Victoire nette face à El Gawafel Gafsa",
+                    Slug = "victoire-nette-face-a-el-gawafel-gafsa",
+                    Excerpt = "Portée par son public, la JSO s’impose 3-0 dans un match maîtrisé de bout en bout.",
+                    Body = "Devant un Stade d’Oudhref plein, l’équipe première a livré l’une de ses meilleures prestations "
+                        + "de la saison. Un premier acte sérieux, une seconde période appliquée : la JSO confirme sa dynamique.",
+                    Status = "Published",
+                    CoverImageUrl = "/jso-stadium-hero.png",
+                    PublishedAt = DateTimeOffset.UtcNow.AddDays(-3)
+                },
+                new Article
+                {
                     Title = "Une nouvelle identité digitale pour JSO",
                     Slug = "une-nouvelle-identite-digitale-pour-jso",
                     Excerpt = "La maison digitale de la Jeunesse Sportive de Oudhref entre dans une nouvelle étape.",
-                    Body = "Bienvenue sur la nouvelle plateforme officielle de la Jeunesse Sportive de Oudhref.",
+                    Body = "Bienvenue sur la nouvelle plateforme officielle de la Jeunesse Sportive de Oudhref : "
+                        + "matchs, actualités, boutique et vie du club réunis au même endroit.",
                     Status = "Published",
+                    CoverImageUrl = "/team-hero.svg",
                     PublishedAt = DateTimeOffset.UtcNow.AddDays(-2)
                 },
                 new Article
@@ -118,7 +194,8 @@ public static class DevelopmentDataSeeder
                     Title = "Tout suivre au même endroit",
                     Slug = "tout-suivre-au-meme-endroit",
                     Excerpt = "Calendrier, résultats et informations de match réunis dans un seul espace.",
-                    Body = "Le Match Center rassemble les informations essentielles autour des rencontres.",
+                    Body = "Le Match Center rassemble les informations essentielles autour des rencontres : "
+                        + "compositions, événements du match et statistiques.",
                     Status = "Published",
                     PublishedAt = DateTimeOffset.UtcNow.AddDays(-1)
                 },
@@ -127,10 +204,91 @@ public static class DevelopmentDataSeeder
                     Title = "Construire la relève d'Oudhref",
                     Slug = "construire-la-releve-d-oudhref",
                     Excerpt = "La formation et les jeunes joueurs sont au cœur du projet JSO.",
-                    Body = "Le club poursuit son ambition de développer les talents locaux.",
+                    Body = "Le club poursuit son ambition de développer les talents locaux et d’offrir un cadre "
+                        + "d’excellence aux jeunes de la région.",
                     Status = "Published",
                     PublishedAt = DateTimeOffset.UtcNow
                 }
+            );
+        }
+
+        if (!await db.MediaAssets.AnyAsync(ct))
+        {
+            db.MediaAssets.AddRange(
+                new MediaAsset { Title = "Nuit de match au Stade d’Oudhref", Url = "/jso-stadium-hero.png", ThumbnailUrl = "/jso-stadium-hero.png", Type = "Image", Caption = "L’ambiance des soirs de match à domicile.", IsPublished = true },
+                new MediaAsset { Title = "Les couleurs de la JSO", Url = "/team-hero.svg", ThumbnailUrl = "/team-hero.svg", Type = "Image", Caption = "Maillot et écharpe, la fierté d’Oudhref.", IsPublished = true },
+                new MediaAsset { Title = "Le blason du club", Url = "/JSO-crest-regenerated-ok.png", ThumbnailUrl = "/JSO-crest-regenerated-ok.png", Type = "Image", Caption = "Depuis 1973.", IsPublished = true }
+            );
+        }
+
+        if (!await db.Sponsors.AnyAsync(ct))
+        {
+            db.Sponsors.AddRange(
+                new Sponsor { Name = "Délice Danone", Tier = "Principal", Placement = "Footer", WebsiteUrl = "https://www.delice.tn", Priority = 100, IsActive = true },
+                new Sponsor { Name = "Tunisie Telecom", Tier = "Officiel", Placement = "Footer", WebsiteUrl = "https://www.tunisietelecom.tn", Priority = 90, IsActive = true },
+                new Sponsor { Name = "Biat", Tier = "Officiel", Placement = "Footer", WebsiteUrl = "https://www.biat.com.tn", Priority = 80, IsActive = true },
+                new Sponsor { Name = "STEG", Tier = "Partenaire", Placement = "Footer", Priority = 70, IsActive = true },
+                new Sponsor { Name = "Ville d’Oudhref", Tier = "Institutionnel", Placement = "Footer", Priority = 60, IsActive = true }
+            );
+        }
+
+        if (!await db.Products.AnyAsync(ct))
+        {
+            db.Products.AddRange(
+                new Product { Name = "Maillot Domicile 2026/27", Slug = "maillot-domicile-2026-27", Description = "Le maillot officiel domicile de la saison, floqué JSO.", Price = 79.90m, Currency = "TND", Category = "Maillots", ImageUrl = "/jersey.svg", Stock = 40, IsActive = true },
+                new Product { Name = "Maillot Extérieur 2026/27", Slug = "maillot-exterieur-2026-27", Description = "Le maillot officiel extérieur, léger et respirant.", Price = 79.90m, Currency = "TND", Category = "Maillots", ImageUrl = "/jersey.svg", Stock = 30, IsActive = true },
+                new Product { Name = "Écharpe Supporter", Slug = "echarpe-supporter", Description = "L’écharpe aux couleurs du club pour les soirs de match.", Price = 24.90m, Currency = "TND", Category = "Accessoires", ImageUrl = "/scarf.svg", Stock = 100, IsActive = true },
+                new Product { Name = "Casquette JSO", Slug = "casquette-jso", Description = "Casquette brodée du blason JSO.", Price = 19.90m, Currency = "TND", Category = "Accessoires", ImageUrl = "/cap.svg", Stock = 60, IsActive = true },
+                new Product { Name = "Hoodie Officiel", Slug = "hoodie-officiel", Description = "Sweat à capuche confortable aux couleurs du club.", Price = 89.90m, Currency = "TND", Category = "Textile", ImageUrl = "/hoodie.svg", Stock = 25, IsActive = true },
+                new Product { Name = "Maillot Édition Anniversaire", Slug = "maillot-edition-anniversaire", Description = "Édition spéciale célébrant l’histoire du club depuis 1973.", Price = 99.90m, Currency = "TND", Category = "Maillots", ImageUrl = "/jersey.svg", Stock = 0, IsActive = true }
+            );
+        }
+
+        if (!await db.ClubEvents.AnyAsync(ct))
+        {
+            var now = DateTimeOffset.UtcNow;
+            db.ClubEvents.AddRange(
+                new ClubEvent { Title = "Assemblée générale annuelle", Slug = "assemblee-generale-2026", Description = "Réunion annuelle des membres et bilan de la saison.", StartAt = now.AddDays(20).Date.AddHours(18), Location = "Club house — Oudhref", IsPublished = true },
+                new ClubEvent { Title = "Entraînement ouvert au public", Slug = "entrainement-ouvert-octobre", Description = "Venez encourager l’équipe première lors d’une séance ouverte.", StartAt = now.AddDays(5).Date.AddHours(17), Location = "Stade d’Oudhref", IsPublished = true },
+                new ClubEvent { Title = "Journée portes ouvertes de l’école de foot", Slug = "portes-ouvertes-ecole-foot", Description = "Découverte des catégories jeunes et inscriptions.", StartAt = now.AddDays(12).Date.AddHours(9), EndAt = now.AddDays(12).Date.AddHours(13), Location = "Complexe sportif d’Oudhref", IsPublished = true }
+            );
+        }
+
+        if (!await db.FaqEntries.AnyAsync(ct))
+        {
+            db.FaqEntries.AddRange(
+                new FaqEntry { Question = "Comment acheter un billet pour un match ?", Answer = "La billetterie en ligne ouvre quelques jours avant chaque rencontre à domicile depuis la section Matchs.", Category = "Billetterie", SortOrder = 1, IsPublished = true },
+                new FaqEntry { Question = "Où se trouve le stade ?", Answer = "Le Stade d’Oudhref est situé à Oudhref, dans le gouvernorat de Gabès. L’itinéraire est disponible dans la section Infos pratiques.", Category = "Accès", SortOrder = 2, IsPublished = true },
+                new FaqEntry { Question = "Comment inscrire mon enfant à l’école de foot ?", Answer = "Les inscriptions se font lors des journées portes ouvertes ou directement auprès du club. Consultez l’Agenda pour les prochaines dates.", Category = "École de foot", SortOrder = 3, IsPublished = true },
+                new FaqEntry { Question = "Comment devenir partenaire du club ?", Answer = "Contactez la direction via l’adresse officielle du club pour recevoir le dossier de partenariat.", Category = "Partenaires", SortOrder = 4, IsPublished = true }
+            );
+        }
+
+        if (!await db.ClubDocuments.AnyAsync(ct))
+        {
+            db.ClubDocuments.AddRange(
+                new ClubDocument { Title = "Règlement intérieur du club", Category = "Règlement", FileUrl = "/documents/reglement-interieur.pdf", IsPublished = true },
+                new ClubDocument { Title = "Formulaire d’adhésion 2026/27", Category = "Formulaire", FileUrl = "/documents/formulaire-adhesion.pdf", IsPublished = true },
+                new ClubDocument { Title = "Charte du supporter", Category = "Communiqué", FileUrl = "/documents/charte-supporter.pdf", IsPublished = true }
+            );
+        }
+
+        if (!await db.CommunityPrograms.AnyAsync(ct))
+        {
+            var now = DateTimeOffset.UtcNow;
+            db.CommunityPrograms.AddRange(
+                new CommunityProgram { Title = "Foot à l’école", PartnerName = "Écoles primaires d’Oudhref", Description = "Initiation au football et aux valeurs du sport pour les élèves de la région.", StartDate = now.AddMonths(-1), IsPublished = true },
+                new CommunityProgram { Title = "Tournoi inter-quartiers", PartnerName = "Municipalité d’Oudhref", Description = "Un tournoi convivial qui rassemble les quartiers autour du club.", StartDate = now.AddDays(30), IsPublished = true },
+                new CommunityProgram { Title = "JSO Solidarité", PartnerName = "Croissant-Rouge local", Description = "Actions solidaires et collectes menées avec nos partenaires locaux.", StartDate = now.AddMonths(-3), IsPublished = true }
+            );
+        }
+
+        if (!await db.ArchiveItems.AnyAsync(ct))
+        {
+            db.ArchiveItems.AddRange(
+                new ArchiveItem { Year = 1973, Category = "Milestone", Title = "Fondation du club", Body = "Naissance de la Jeunesse Sportive de Oudhref, portée par la passion d’une ville.", DisplayOrder = 1, IsPublished = true },
+                new ArchiveItem { Year = 1998, Category = "Trophy", Title = "Une saison historique", Body = "L’une des saisons les plus marquantes de l’histoire du club.", DisplayOrder = 1, IsPublished = true },
+                new ArchiveItem { Year = 2015, Category = "Photo", Title = "Le stade en fête", Body = "Retour en images sur une soirée mémorable au Stade d’Oudhref.", DisplayOrder = 1, IsPublished = true }
             );
         }
 
