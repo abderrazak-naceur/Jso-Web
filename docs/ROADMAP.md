@@ -1,7 +1,16 @@
 # JSO Web — piano aggiornato
 
-**Aggiornato:** 26 settembre 2026
-**Stato:** sviluppo; il deployment production e l'app mobile non sono ancora completati.
+**Aggiornato:** 28 settembre 2026
+**Stato:** prodotto web e app mobile completi nel codice; resta il go-live su ambiente reale.
+
+## Cosa manca (sintesi)
+
+Il lavoro realizzabile via codice è completo. Ciò che resta richiede l'ambiente reale/gli account, non altro sviluppo:
+
+- **Priorità 0 — Go-live (bloccato dall'ambiente):** VM Oracle, dominio + HTTPS, CORS verificati sul dominio reale; backup e restore eseguiti e verificati su dati reali; smoke test admin → API → PostgreSQL → sito nel browser di produzione.
+- **Priorità 1 — Prodotto web:** completo nel codice (contenuti+stati, editor admin, sicurezza/audit, SEO, accessibilità, prestazioni). Resta solo il collaudo manuale su ambiente reale (lettore di schermo per WCAG, Lighthouse).
+- **Priorità 2 — App mobile:** completa nel codice. Resta il collaudo su dispositivi Android/iOS fisici, la firma e la pubblicazione sugli store, e le eventuali notifiche push FCM (richiedono account developer/Firebase).
+- **Priorità 3 — Funzioni successive:** community/moderazione, pagamenti, analytics avanzati — in gran parte già presenti nel backend, da rifinire dopo il go-live.
 
 ## Decisione architetturale per l'MVP
 
@@ -48,22 +57,24 @@ Lavorare in quest'ordine, perché i passaggi successivi dipendono dai precedenti
 
 - [x] Collegare e rifinire tutti i contenuti pubblici ai dati reali: homepage, match center, notizie, squadra e media; gestire loading, assenza dati ed errori. Ogni sezione dinamica distingue caricamento/vuoto/errore (niente placeholder "à venir" quando l'API risponde o fallisce).
 - [x] Completare gli editor admin: configurazione homepage e menu/footer, sponsor (+ QR), partite con eventi, formazioni, officiels e statistiche, articoli (create/update/publish/dépublier/supprimer) e libreria media (upload/modifica/suppression).
-- [ ] Rivedere sessioni e permessi admin, tracciamento audit e gestione degli errori su flussi reali.
-- [ ] Verificare accessibilità e prestazioni sulle pagine pubbliche. SEO fatto: meta Open Graph/Twitter, canonical, dati strutturati JSON-LD, `robots.txt`, `sitemap.xml` e titoli dinamici per articoli/match.
+- [x] Rivedere sessioni e permessi admin, tracciamento audit e gestione degli errori. Audit di tutti i controller admin: ogni rotta sotto `[Authorize]` con ruoli corretti, nessun `[AllowAnonymous]`, nessuna superficie di escalation ruoli, token fan isolati, prezzi/stati validati server-side. Corretti gli unici due gap (audit mancante su team/giocatori e media). Resta da collaudare su flussi reali in produzione.
+- [x] Accessibilità, prestazioni e SEO sulle pagine pubbliche: SEO (Open Graph/Twitter, canonical, JSON-LD, `robots.txt`, `sitemap.xml`, titoli dinamici); accessibilità (id duplicati risolti, nomi accessibili dei modali, alt significativi, link "nouvel onglet"; oltre al pannello accessibilità, skip link e focus management già presenti); prestazioni (code-splitting admin/paiement: bundle pubblico iniziale ~561→~281 kB). Restano fuori dal codice: audit WCAG manuale con lettore di schermo e misura Lighthouse sull'ambiente reale.
 
-**Criterio di uscita:** il club pubblica contenuti e aggiorna i dati sportivi senza modificare il codice, e il sito riflette le modifiche.
+**Criterio di uscita:** il club pubblica contenuti e aggiorna i dati sportivi senza modificare il codice, e il sito riflette le modifiche. **Le funzioni sono complete nel codice; resta il collaudo su ambiente reale (vedi Priorità 0).**
 
 ## Priorità 2 — App Flutter
 
-La realizzazione mobile inizia dopo la stabilizzazione dei contratti API, degli URL media e dell'ambiente HTTPS. I concept nel README sono riferimenti grafici, non schermate dell'app funzionante.
+L'app Flutter è implementata e collegata all'API reale (vedi [`mobile/README.md`](../mobile/README.md)); i concept immagine restano riferimenti grafici.
 
-1. Creare il progetto Flutter e il design system JSO; configurare ambienti e client API.
-2. Implementare Home, Match Center, notizie, squadra e media con stati di caricamento/errore.
-3. Integrare login e profilo quando i flussi account sono pronti; proteggere i token sul dispositivo.
-4. Valutare Firebase Cloud Messaging per le notifiche e Crashlytics per la diagnostica, senza spostare il database.
-5. Testare su dispositivi Android e iOS; preparare build e pubblicazione sugli store.
+1. [x] Progetto Flutter + design system JSO allineato al brand; ambienti e client API configurati.
+2. [x] Home, Match Center (Résumé/Direct/Compos/Stats), notizie, squadra e media con stati caricamento/errore.
+3. [x] Login, profilo, gestione account completa (modifica profilo, password, RGPD); token protetto nel keystore/Keychain.
+4. [ ] Firebase Cloud Messaging (notifiche) e Crashlytics: da valutare. Un centro notifiche in-app (senza push) è già presente.
+5. [ ] Testare su dispositivi Android e iOS reali; preparare build firmate e pubblicazione sugli store.
 
-**Criterio di uscita:** app installabile su entrambi i sistemi, collegata agli stessi dati del sito, con flussi principali verificati su dispositivi reali.
+Extra implementati oltre al piano: Boutique con ordini, Biglietteria, hub "Plus" (agenda, documents, FAQ, musée, écoles, sponsors), blason officiel.
+
+**Criterio di uscita:** app installabile su entrambi i sistemi, collegata agli stessi dati del sito, con flussi principali verificati su dispositivi reali. **Codice completo; resta il collaudo su dispositivi fisici, la firma/pubblicazione store e le eventuali notifiche push (richiedono account e ambiente dedicati).**
 
 ## Priorità 3 — Funzioni successive
 
