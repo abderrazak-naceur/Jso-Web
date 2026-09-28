@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text.Json;
 using JSO.Infrastructure;
 using JSO.Infrastructure.Payments;
@@ -30,8 +31,10 @@ public sealed class PaymentsController(
     AuditService audit,
     StripePaymentProvider stripe,
     PaymentProviderSelector selector,
+    Microsoft.Extensions.Options.IOptions<PaymentOptions> paymentOptions,
     ILogger<PaymentsController> logger) : ControllerBase
 {
+    private const string FlouciWebhookSecretHeader = "X-Flouci-Webhook-Secret";
     [HttpPost("stripe/webhook")]
     public async Task<IActionResult> StripeWebhook(CancellationToken ct)
     {
@@ -74,6 +77,31 @@ public sealed class PaymentsController(
             return Ok();
         }
 
+        // Cross-check the amount/currency Stripe actually settled against what we
+        // intended to charge for this order. A mismatch (tampered/stale session)
+        // leaves the order Pending instead of marking it paid.
+        var order = await db.Orders.AsNoTracking().SingleOrDefaultAsync(x => x.Id == orderId.Value, ct);
+        if (order is null)
+        {
+            logger.LogWarning("Stripe webhook: session {SessionId} references an unknown order", session.Id);
+            return Ok();
+        }
+
+        var expectedMinor = stripe.ExpectedMinorUnits(order.Total);
+        var expectedCurrency = stripe.ChargeCurrency;
+        var paidMinor = session.AmountTotal ?? 0;
+        var paidCurrency = session.Currency?.Trim().ToUpperInvariant();
+        if (paidMinor != expectedMinor
+            || !string.Equals(paidCurrency, expectedCurrency, StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogWarning(
+                "Stripe webhook: amount/currency mismatch for order {OrderId} (expected {ExpectedMinor} {ExpectedCurrency}), leaving Pending",
+                order.Id, expectedMinor, expectedCurrency);
+            await audit.LogAsync("ORDER_PAY_MISMATCH", "Order", order.Id.ToString(), null, null,
+                HttpContext.Connection.RemoteIpAddress?.ToString(), new { provider = "Stripe" }, ct);
+            return Ok();
+        }
+
         var result = await payments.MarkOrderPaidAsync(orderId.Value, "Stripe", session.Id, ct);
         await audit.LogAsync("ORDER_PAID_WEBHOOK", "Order", orderId.Value.ToString(), null, null,
             HttpContext.Connection.RemoteIpAddress?.ToString(), new { provider = "Stripe", result = result.ToString() }, ct);
@@ -87,6 +115,14 @@ public sealed class PaymentsController(
         var flouci = selector.Flouci;
         if (!flouci.IsConfigured)
             return StatusCode(StatusCodes.Status503ServiceUnavailable);
+
+        // Optional shared-secret guard. Flouci does not send a verifiable
+        // signature, so authenticity ultimately rests on the verify_payment call
+        // below; when a secret is configured we additionally require a matching
+        // header/query value to reduce unauthenticated abuse and verify-call
+        // amplification. When no secret is set the endpoint keeps its behaviour.
+        if (!IsFlouciWebhookAuthorized())
+            return Unauthorized();
 
         using var reader = new StreamReader(Request.Body);
         var body = await reader.ReadToEndAsync(ct);
@@ -109,11 +145,47 @@ public sealed class PaymentsController(
             return Ok();
         }
 
+        // Cross-check the verified amount/currency against the order total (in
+        // millimes) when Flouci reports them. A mismatch leaves the order Pending.
+        if (verification.Amount is { } paidMillimes)
+        {
+            var expectedMillimes = (long)Math.Round(order.Total * 1000m, MidpointRounding.AwayFromZero);
+            var paidCurrency = verification.Currency;
+            if (paidMillimes != expectedMillimes
+                || (paidCurrency is not null && !string.Equals(paidCurrency, "TND", StringComparison.OrdinalIgnoreCase)))
+            {
+                logger.LogWarning(
+                    "Flouci webhook: amount/currency mismatch for order {OrderId} (expected {ExpectedMillimes} millimes TND), leaving Pending",
+                    order.Id, expectedMillimes);
+                await audit.LogAsync("ORDER_PAY_MISMATCH", "Order", order.Id.ToString(), null, null,
+                    HttpContext.Connection.RemoteIpAddress?.ToString(), new { provider = "Flouci" }, ct);
+                return Ok();
+            }
+        }
+
         var result = await payments.MarkOrderPaidAsync(order.Id, "Flouci", paymentId, ct);
         await audit.LogAsync("ORDER_PAID_WEBHOOK", "Order", order.Id.ToString(), null, null,
             HttpContext.Connection.RemoteIpAddress?.ToString(), new { provider = "Flouci", result = result.ToString() }, ct);
 
         return Ok();
+    }
+
+    // When a Flouci webhook shared secret is configured, require a matching value
+    // in the X-Flouci-Webhook-Secret header (or ?webhookSecret= query). When no
+    // secret is configured the endpoint stays open (protected by verify_payment).
+    private bool IsFlouciWebhookAuthorized()
+    {
+        var configured = paymentOptions.Value.Flouci.WebhookSecret;
+        if (string.IsNullOrWhiteSpace(configured))
+            return true;
+
+        var provided = Request.Headers[FlouciWebhookSecretHeader].ToString();
+        if (string.IsNullOrEmpty(provided))
+            provided = Request.Query["webhookSecret"].ToString();
+
+        return CryptographicOperations.FixedTimeEquals(
+            System.Text.Encoding.UTF8.GetBytes(provided),
+            System.Text.Encoding.UTF8.GetBytes(configured));
     }
 
     private static Guid? ResolveOrderIdFromSession(Session session)

@@ -39,6 +39,7 @@ public sealed class FlouciPaymentProvider(
 
         // Flouci amounts are expressed in millimes (1 TND = 1000 millimes).
         var amountMillimes = (long)Math.Round(order.Total * 1000m, MidpointRounding.AwayFromZero);
+        var chargedAmount = Math.Round(order.Total, 2, MidpointRounding.AwayFromZero);
 
         var request = new GeneratePaymentRequest
         {
@@ -68,7 +69,8 @@ public sealed class FlouciPaymentProvider(
             throw new PaymentProviderException("Réponse invalide du fournisseur de paiement.");
         }
 
-        return new PaymentInitiation(link, paymentId);
+        // Flouci settles in TND: the charged amount equals the order total in TND.
+        return new PaymentInitiation(link, paymentId, chargedAmount, "TND");
     }
 
     // Authoritative server-side verification: called from the webhook with the
@@ -95,11 +97,15 @@ public sealed class FlouciPaymentProvider(
 
         var payload = await response.Content.ReadFromJsonAsync<VerifyPaymentResponse>(cancellationToken: ct);
         var status = payload?.Result?.Status?.Trim().ToUpperInvariant();
+        // Flouci reports the paid amount in millimes and the currency; expose them
+        // so the webhook can cross-check the amount against the order total.
+        var amount = payload?.Result?.Amount;
+        var currency = payload?.Result?.Currency?.Trim().ToUpperInvariant();
         return status switch
         {
-            "SUCCESS" => new PaymentVerification(PaymentVerificationStatus.Succeeded, paymentId),
-            "FAILURE" or "FAILED" or "EXPIRED" or "CANCELLED" => new PaymentVerification(PaymentVerificationStatus.Failed, paymentId),
-            _ => new PaymentVerification(PaymentVerificationStatus.Pending, paymentId)
+            "SUCCESS" => new PaymentVerification(PaymentVerificationStatus.Succeeded, paymentId, amount, currency),
+            "FAILURE" or "FAILED" or "EXPIRED" or "CANCELLED" => new PaymentVerification(PaymentVerificationStatus.Failed, paymentId, amount, currency),
+            _ => new PaymentVerification(PaymentVerificationStatus.Pending, paymentId, amount, currency)
         };
     }
 
@@ -134,5 +140,8 @@ public sealed class FlouciPaymentProvider(
     private sealed class VerifyPaymentResult
     {
         [JsonPropertyName("status")] public string? Status { get; set; }
+        // Amount actually paid, in millimes. Flouci returns it as a number.
+        [JsonPropertyName("amount")] public long? Amount { get; set; }
+        [JsonPropertyName("currency")] public string? Currency { get; set; }
     }
 }

@@ -24,6 +24,14 @@ public sealed class Order
     public string? PaymentProvider { get; set; }
     // ISO 3166-1 alpha-2 country the fan selected at checkout (e.g. "TN", "FR").
     public string? Country { get; set; }
+    // Amount actually charged by the provider, in the currency actually used
+    // (see ChargedCurrency). For Flouci this equals Total in TND; for Stripe it
+    // is Total converted at the configured TND->Stripe rate. Null until an
+    // online payment is initiated so the record reflects what the buyer paid.
+    public decimal? ChargedAmount { get; set; }
+    // Currency actually charged (upper-case, e.g. "TND" or "EUR"). Null until an
+    // online payment is initiated.
+    public string? ChargedCurrency { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? PaidAt { get; set; }
 }

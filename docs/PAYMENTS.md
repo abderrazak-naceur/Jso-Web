@@ -8,6 +8,12 @@ automatiquement selon le **pays** indiqué par l'acheteur au moment du paiement 
 | Tunisie (`TN`)     | **Flouci**  | TND    | Lien/QR hébergé Flouci |
 | Tout autre pays    | **Stripe**  | EUR *(par défaut)* | Stripe Checkout hébergé |
 
+Les prix étant stockés en **TND**, le montant Stripe est **converti** en devise
+internationale avant l'encaissement (voir « Devise et conversion » ci-dessous). Le
+montant et la devise réellement débités sont **persistés sur la commande**
+(`ChargedAmount` / `ChargedCurrency`) et **recroisés** avec la notification du
+prestataire avant tout passage en « payé » (voir « Vérification du montant »).
+
 ## Principes de sécurité (non négociables)
 
 1. **Aucune donnée de carte ne transite par nos serveurs.** On utilise toujours la
@@ -28,14 +34,50 @@ automatiquement selon le **pays** indiqué par l'acheteur au moment du paiement 
    dans `appsettings.json` (section `Payments`) et dans `.env.example` /
    `.env.prod.example`. Les secrets ne sont jamais journalisés.
 
-## Devise
+## Devise et conversion
 
 Les prix de la boutique sont exprimés en **TND**. Pour Flouci (Tunisie), la commande
-est réglée en **TND** (montant converti en millimes, `TND × 1000`). Pour Stripe
-(international), le règlement se fait dans une devise internationale largement
-supportée : **EUR par défaut** (configurable via `Payments:Stripe:Currency`). Ce
-choix est volontaire : Stripe ne prend pas le TND en charge de façon universelle,
-et l'EUR couvre la majorité des acheteurs hors Tunisie.
+est réglée en **TND** (montant converti en millimes, `TND × 1000`) : aucune
+conversion de devise.
+
+Pour Stripe (international), Stripe ne prend pas le TND en charge de façon
+universelle : on règle donc dans une devise internationale largement supportée
+(**EUR par défaut**, configurable via `Payments:Stripe:Currency`) et **on convertit
+le montant** avant l'encaissement. Le montant débité est :
+
+```
+montant_stripe = round(order.Total (TND) × Payments:Stripe:TndToStripeRate, 2)
+```
+
+puis exprimé en plus petite unité (centimes) pour Stripe. Sans conversion, une
+commande de 100 TND serait facturée 100 EUR (~3,4×) : la conversion corrige ce bug.
+
+- **`Payments:Stripe:TndToStripeRate`** (décimal) : taux de conversion TND → devise
+  Stripe. C'est **une responsabilité du club** : il doit renseigner et **tenir à
+  jour** ce taux en fonction du taux de change réel TND → devise. La valeur par
+  défaut (`0.30`, approx. TND → EUR) est un **placeholder explicite et documenté**,
+  **pas** un flux de change temps réel. Aucun service de change payant n'est intégré
+  volontairement (pas de dépendance externe).
+- **`Payments:Stripe:Currency`** : devise de règlement Stripe (`eur` par défaut).
+
+Le montant et la devise réellement débités sont enregistrés sur la commande
+(`ChargedAmount`, `ChargedCurrency`) au moment de l'initiation du paiement, de sorte
+que l'enregistrement reflète ce que l'acheteur a payé.
+
+## Vérification du montant (anti-manipulation)
+
+Confirmer l'état « payé » ne suffit pas : les deux webhooks **recroisent le montant
+et la devise réellement payés** avec ce qui est attendu pour la commande, **avant**
+de la passer en `Paid`.
+
+- **Stripe** : `amount_total` / `currency` de la session sont comparés au montant
+  attendu (`order.Total × TndToStripeRate`, en centimes) et à la devise configurée.
+- **Flouci** : le montant retourné par `verify_payment` (en millimes) et la devise
+  sont comparés à `order.Total × 1000` en TND.
+
+En cas d'écart (session manipulée, périmée ou incohérente), la commande **reste
+`Pending`** : l'incident est journalisé (sans secret) et audité (`ORDER_PAY_MISMATCH`)
+plutôt que marqué payé.
 
 ## Configuration (environnement, jamais dans le dépôt)
 
@@ -46,12 +88,21 @@ double underscore standard .NET) :
 ```
 Payments__Flouci__AppToken=<APP_TOKEN Flouci>
 Payments__Flouci__AppSecret=<APP_SECRET Flouci>
+Payments__Flouci__WebhookSecret=<optionnel: secret partagé du webhook Flouci>
 Payments__Stripe__SecretKey=sk_live_xxx        # ou sk_test_xxx en test
 Payments__Stripe__WebhookSecret=whsec_xxx      # secret de signature du webhook
-Payments__PublicBaseUrl=https://votre-domaine  # base des liens retour/annulation
+Payments__Stripe__TndToStripeRate=0.30         # taux TND -> devise Stripe (à tenir à jour)
+Payments__PublicBaseUrl=https://votre-domaine  # base des liens retour/annulation (REQUIS en prod)
 # Optionnel : Payments__Stripe__Currency=eur, Payments__Flouci__BaseUrl=...
 ```
 
+- **`Payments__PublicBaseUrl`** : **obligatoire en production**. Les liens de retour /
+  annulation transmis au prestataire sont dérivés de cette base. En production, si ni
+  `Payments:PublicBaseUrl` ni une origine CORS ne sont configurés, le backend
+  **refuse** de se rabattre sur l'en-tête `Host` (usurpable) : `POST /pay` répond
+  `503`. En développement, le repli sur le `Host` de la requête reste toléré.
+- **`Payments__Stripe__TndToStripeRate`** : taux de conversion TND → devise Stripe
+  (voir « Devise et conversion »). Responsabilité du club, à tenir à jour.
 - **Flouci** : créez une application sur votre espace développeur Flouci pour obtenir
   l'*app token* (public) et l'*app secret*. Base API par défaut :
   `https://developers.flouci.com/`.
@@ -65,10 +116,18 @@ authentification applicative ; l'authenticité est garantie par la signature/vé
 
 - Stripe : `POST https://votre-domaine/api/payments/stripe/webhook`
   - Évènement à activer : `checkout.session.completed`.
+  - Authenticité garantie par la signature `Stripe-Signature` (`whsec_...`).
 - Flouci : `POST https://votre-domaine/api/payments/flouci/webhook`
+  - Flouci n'émet pas de signature vérifiable : l'authenticité repose sur l'appel
+    serveur `verify_payment`. En complément, un **secret partagé optionnel**
+    (`Payments:Flouci:WebhookSecret`) peut être exigé : s'il est renseigné, le webhook
+    n'agit que si l'en-tête `X-Flouci-Webhook-Secret` (ou le paramètre de requête
+    `webhookSecret`) correspond ; sinon il renvoie `401`. Laissé vide, l'endpoint
+    conserve son comportement actuel (protégé par la vérification serveur).
 
 Les deux handlers sont **idempotents** (délégués à `OrderPaymentService`, qui ne
-refait rien sur une commande déjà payée) et **audités**.
+refait rien sur une commande déjà payée), **recroisent le montant/devise** (voir
+« Vérification du montant ») et sont **audités**.
 
 ## Flux fonctionnel
 

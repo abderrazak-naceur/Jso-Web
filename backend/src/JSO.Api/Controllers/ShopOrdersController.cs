@@ -21,7 +21,8 @@ public sealed class ShopOrdersController(
     JsoDbContext db,
     AuditService audit,
     PaymentProviderSelector paymentSelector,
-    Microsoft.Extensions.Configuration.IConfiguration configuration) : ControllerBase
+    Microsoft.Extensions.Configuration.IConfiguration configuration,
+    Microsoft.Extensions.Hosting.IHostEnvironment environment) : ControllerBase
 {
     private Guid? CurrentFanId()
     {
@@ -172,7 +173,19 @@ public sealed class ShopOrdersController(
             return StatusCode(StatusCodes.Status503ServiceUnavailable,
                 new { message = $"Le paiement en ligne via {provider.Name} n'est pas encore disponible. Veuillez réessayer plus tard." });
 
-        var baseUrl = ResolvePublicBaseUrl();
+        string baseUrl;
+        try
+        {
+            baseUrl = ResolvePublicBaseUrl();
+        }
+        catch (InvalidOperationException)
+        {
+            // Production without a configured Payments:PublicBaseUrl: refuse to
+            // derive the provider return/cancel links from the (spoofable) Host
+            // header. Surface a clean 503 the UI can handle.
+            return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                new { message = "Le paiement en ligne n'est pas correctement configuré. Veuillez réessayer plus tard." });
+        }
         var returnUrl = $"{baseUrl}/payment/success?orderId={order.Id}";
         var cancelUrl = $"{baseUrl}/payment/cancel?orderId={order.Id}";
 
@@ -198,6 +211,11 @@ public sealed class ShopOrdersController(
         order.Country = country;
         order.ProviderRef = initiation.ProviderRef;
         order.Currency = isTunisia ? "TND" : (configuration["Payments:Stripe:Currency"] ?? "eur").ToUpperInvariant();
+        // Persist the amount/currency actually charged (for Stripe this is the
+        // TND total converted at the configured rate) so the record reflects what
+        // the buyer paid and the webhook can cross-check it.
+        order.ChargedAmount = initiation.ChargedAmount;
+        order.ChargedCurrency = initiation.ChargedCurrency;
         await db.SaveChangesAsync(ct);
 
         await audit.LogAsync("ORDER_PAY_INIT", "Order", order.Id.ToString(), fanId.Value.ToString(),
@@ -209,7 +227,11 @@ public sealed class ShopOrdersController(
 
     // Resolves the public frontend base URL used to build the provider
     // return/cancel links. Prefers an explicit "Payments:PublicBaseUrl", then the
-    // first configured CORS origin, then the current request host.
+    // first configured CORS origin. In Production these links are handed to the
+    // payment provider as post-payment landing pages, so we refuse to fall back
+    // to the (spoofable) request Host header: if neither an explicit base nor a
+    // CORS origin is configured we throw. In Development the Host-header fallback
+    // is kept for convenience.
     private string ResolvePublicBaseUrl()
     {
         var explicitBase = configuration["Payments:PublicBaseUrl"];
@@ -219,6 +241,10 @@ public sealed class ShopOrdersController(
         var origins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
         if (origins is { Length: > 0 } && !string.IsNullOrWhiteSpace(origins[0]))
             return origins[0].TrimEnd('/');
+
+        if (environment.IsProduction())
+            throw new InvalidOperationException(
+                "Payments:PublicBaseUrl must be configured in Production; refusing to derive return URLs from the Host header.");
 
         return $"{Request.Scheme}://{Request.Host}";
     }

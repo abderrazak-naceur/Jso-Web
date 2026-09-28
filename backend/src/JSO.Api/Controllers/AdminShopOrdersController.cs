@@ -74,17 +74,25 @@ public sealed class AdminShopOrdersController(JsoDbContext db, AuditService audi
         // stock" logic (same code as the provider webhooks).
         if (target == "Paid")
         {
-            var current = await db.Orders.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct);
-            if (current is null) return NotFound();
-            if (current.Status == "Paid")
-                return Ok(new { current.Id, current.Status }); // idempotent no-op
-            if (!Transitions.TryGetValue(current.Status, out var allowedToPaid) || !allowedToPaid.Contains("Paid"))
-                return BadRequest(new { message = $"Cannot move an order from {current.Status} to Paid." });
-
+            // Rely on the shared, transactional service result rather than a
+            // speculative pre-read: the service re-checks the Pending state inside
+            // its transaction, so the result is the single source of truth and no
+            // TOCTOU window exists between a read and the write.
             var result = await payments.MarkOrderPaidAsync(id, ct: ct);
-            if (result == OrderPaymentService.MarkPaidResult.NotFound) return NotFound();
-            if (result == OrderPaymentService.MarkPaidResult.InsufficientStock)
-                return BadRequest(new { message = "Not enough stock to fulfil the order." });
+            switch (result)
+            {
+                case OrderPaymentService.MarkPaidResult.NotFound:
+                    return NotFound();
+                case OrderPaymentService.MarkPaidResult.InsufficientStock:
+                    return BadRequest(new { message = "Not enough stock to fulfil the order." });
+                case OrderPaymentService.MarkPaidResult.AlreadyPaid:
+                {
+                    // Already past Pending (paid by a webhook, an admin, or in a
+                    // terminal state). Idempotent no-op; reflect the current state.
+                    var existing = await db.Orders.AsNoTracking().SingleAsync(x => x.Id == id, ct);
+                    return Ok(new { existing.Id, existing.Status, existing.PaidAt });
+                }
+            }
 
             var paid = await db.Orders.AsNoTracking().SingleAsync(x => x.Id == id, ct);
             await audit.LogAsync("ORDER_PAID", "Order", paid.Id.ToString(),

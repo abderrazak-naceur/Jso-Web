@@ -22,8 +22,11 @@ public interface IPaymentProvider
     Task<PaymentInitiation> InitiatePaymentAsync(Order order, string returnUrl, string cancelUrl, CancellationToken ct);
 }
 
-// Result of starting a hosted payment.
-public sealed record PaymentInitiation(string RedirectUrl, string ProviderRef);
+// Result of starting a hosted payment. ChargedAmount/ChargedCurrency capture the
+// exact amount and currency the buyer will be charged (for Flouci this is the
+// TND total; for Stripe the TND total converted at the configured rate), so the
+// order record and the later webhook cross-check reflect what was really paid.
+public sealed record PaymentInitiation(string RedirectUrl, string ProviderRef, decimal ChargedAmount, string ChargedCurrency);
 
 // Outcome of verifying a payment with the provider (server-side, authoritative).
 public enum PaymentVerificationStatus
@@ -33,4 +36,13 @@ public enum PaymentVerificationStatus
     Failed
 }
 
-public sealed record PaymentVerification(PaymentVerificationStatus Status, string ProviderRef);
+// Verification result. When available (e.g. Flouci verify_payment), Amount is the
+// amount reported by the provider in its minor unit (millimes for TND) and
+// Currency the reported currency, so the webhook can cross-check them against the
+// order before marking it paid. Amount is null when the provider does not return
+// it on verification.
+public sealed record PaymentVerification(
+    PaymentVerificationStatus Status,
+    string ProviderRef,
+    long? Amount = null,
+    string? Currency = null);
