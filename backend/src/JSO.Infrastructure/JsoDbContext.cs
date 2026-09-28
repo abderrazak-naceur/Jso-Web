@@ -49,6 +49,8 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<ClubDocument> ClubDocuments => Set<ClubDocument>();
  public DbSet<FaqEntry> FaqEntries => Set<FaqEntry>();
  public DbSet<ClubEvent> ClubEvents => Set<ClubEvent>();
+ public DbSet<HomeSection> HomeSections => Set<HomeSection>();
+ public DbSet<NavigationItem> NavigationItems => Set<NavigationItem>();
  protected override void OnModelCreating(ModelBuilder modelBuilder) {
   modelBuilder.Entity<Club>().HasIndex(x=>x.ShortName).IsUnique();
   modelBuilder.Entity<Season>().HasIndex(x=>x.Name).IsUnique();
@@ -139,6 +141,11 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<FaqEntry>().HasIndex(x=>new{x.IsPublished,x.SortOrder});
   modelBuilder.Entity<ClubEvent>().HasIndex(x=>x.Slug).IsUnique();
   modelBuilder.Entity<ClubEvent>().HasIndex(x=>new{x.IsPublished,x.StartAt});
+  modelBuilder.Entity<HomeSection>().HasIndex(x=>new{x.IsPublished,x.DisplayOrder});
+  modelBuilder.Entity<HomeSection>().Property(x=>x.IsPublished).HasDefaultValue(false);
+  modelBuilder.Entity<NavigationItem>().HasIndex(x=>new{x.Position,x.IsActive,x.DisplayOrder});
+  modelBuilder.Entity<NavigationItem>().Property(x=>x.IsActive).HasDefaultValue(true);
+  modelBuilder.Entity<NavigationItem>().Property(x=>x.OpensInNewTab).HasDefaultValue(false);
   modelBuilder.Entity<Club>().HasData(new Club { Id=Guid.Parse("8d8c1ef6-1c9d-4d1c-9a0f-8a5b6b5c1001"), Name="Jeunesse Sportive de Oudhref", ShortName="JSO", Country="Tunisie", City="Oudhref" });
  }
 }
