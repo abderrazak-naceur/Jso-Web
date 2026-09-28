@@ -27,6 +27,7 @@ import { orderHomeSections, useHomeLayout } from './features/home/useHomeLayout'
 import MatchCenterModal from './features/matches/MatchCenterModal'
 import ArticleModal from './features/news/ArticleModal'
 import { pushArticleUrl, restoreHomeUrl, slugFromPath } from './features/news/articleUrl'
+import HighlightsCarousel from './features/home/HighlightsCarousel'
 import CartDrawer from './features/shop/CartDrawer'
 import { useCart } from './features/shop/useCart'
 import SiteFooter from './features/site/SiteFooter'
@@ -34,6 +35,53 @@ import SiteHeader from './features/site/SiteHeader'
 import { visibleSections } from './features/site/navigation'
 import { useActiveSection } from './features/site/useActiveSection'
 import { useNavigation } from './features/site/useNavigation'
+import { formatDate } from './lib/format'
+
+// Builds the "À la une" carousel cards from real home data. Every card links to
+// an existing destination; cards without data are omitted (1–4 cards shown).
+function buildHighlights({ data, onOpenMatch, onOpenArticle }) {
+  const items = []
+  const nextMatch = data.nextMatch
+  if (nextMatch) {
+    items.push({
+      key: 'match',
+      badge: 'Prochain match',
+      title: `JSO — ${nextMatch.opponentName || nextMatch.OpponentName || 'À venir'}`,
+      subtitle: formatDate(nextMatch.kickoffAt || nextMatch.KickoffAt) || 'Bientôt',
+      cta: 'Voir le match',
+      onSelect: () => onOpenMatch(nextMatch),
+    })
+  }
+  const lead = data.news?.[0]
+  if (lead) {
+    items.push({
+      key: 'news',
+      badge: 'Actualité',
+      title: lead.title,
+      subtitle: lead.publishedAt ? formatDate(lead.publishedAt) : 'Dernière actualité',
+      cta: 'Lire l’article',
+      imageUrl: lead.coverImageUrl || undefined,
+      onSelect: () => onOpenArticle(lead),
+    })
+  }
+  items.push({
+    key: 'shop',
+    badge: 'Boutique',
+    title: 'Maillots & articles officiels',
+    subtitle: 'La boutique du club',
+    cta: 'Découvrir',
+    onSelect: () => { window.location.hash = '#shop' },
+  })
+  items.push({
+    key: 'memberships',
+    badge: 'Abonnements',
+    title: 'Rejoignez les abonnés',
+    subtitle: 'Soutenez la JSO toute la saison',
+    cta: 'S’abonner',
+    onSelect: () => { window.location.hash = '#memberships' },
+  })
+  return items
+}
 
 function App() {
   const data = useHomeData()
@@ -157,6 +205,7 @@ function App() {
 
       <main id="main-content" tabIndex={-1}>
         <HeroSection content={data.content} club={data.club} />
+        <HighlightsCarousel items={buildHighlights({ data, onOpenMatch: setSelectedMatch, onOpenArticle: openArticle })} />
         {orderedSections.map((key) => sectionRenderers[key]?.())}
       </main>
 
