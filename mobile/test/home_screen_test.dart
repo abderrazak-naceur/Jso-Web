@@ -50,32 +50,45 @@ void main() {
       expect(find.text('Stade de Oudhref'), findsOneWidget);
       expect(find.byType(EmptyView), findsNothing);
 
+      // Scroll the vertical home list explicitly (the carousel adds a
+      // horizontal PageView Scrollable, so target the list's Scrollable by key).
+      // The list itself is the first Scrollable under its key; the carousel's
+      // horizontal PageView is a nested Scrollable, so take the outer one.
+      final homeList = find
+          .descendant(
+            of: find.byKey(const PageStorageKey<String>('home-scroll-view')),
+            matching: find.byType(Scrollable),
+          )
+          .first;
       await tester.scrollUntilVisible(
         find.text('Actualités'),
         180,
-        scrollable: find.byType(Scrollable).first,
+        scrollable: homeList,
       );
       expect(find.text('Actualités'), findsOneWidget);
-      expect(find.text('Victoire à domicile'), findsOneWidget);
+      // The lead article now also appears in the "À la une" carousel, so its
+      // title can be present more than once (carousel card + featured card).
+      expect(find.text('Victoire à domicile'), findsWidgets);
       expect(find.text('Voir tout'), findsOneWidget);
 
+      await tester.ensureVisible(find.text('Voir tout'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Voir tout'));
       expect(viewAllCalls, 1);
 
       await tester.scrollUntilVisible(
         find.text('Derniers résultats'),
         180,
-        scrollable: find.byType(Scrollable).first,
+        scrollable: homeList,
       );
       expect(find.text('Derniers résultats'), findsOneWidget);
       expect(find.text('hero.title'), findsNothing);
 
-      final greetingContext = tester.element(find.text('Bonjour,'));
-      expect(Theme.of(greetingContext).brightness, Brightness.light);
-      expect(
-        Theme.of(greetingContext).scaffoldBackgroundColor,
-        JsoColors.paper,
-      );
+      // The header greeting may be scrolled off-screen after paging down, so
+      // read the applied theme from a widget that is always mounted.
+      final themedContext = tester.element(find.byType(Scaffold).first);
+      expect(Theme.of(themedContext).brightness, Brightness.light);
+      expect(Theme.of(themedContext).scaffoldBackgroundColor, JsoColors.paper);
     });
 
     testWidgets('masque Voir tout sans callback', (tester) async {

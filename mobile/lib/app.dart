@@ -7,6 +7,7 @@ import 'data/repositories/match_center_repository.dart';
 import 'data/repositories/public_api_repository.dart';
 import 'data/repositories/shop_repository.dart';
 import 'data/repositories/tickets_repository.dart';
+import 'features/auth/admin_auth_controller.dart';
 import 'features/auth/auth_controller.dart';
 import 'features/club/club_screen.dart';
 import 'features/home/home_screen.dart';
@@ -27,6 +28,7 @@ class JsoApp extends StatelessWidget {
     required this.matchCenterRepository,
     required this.cartController,
     required this.authController,
+    required this.adminAuthController,
   });
 
   final PublicApiRepository repository;
@@ -36,6 +38,7 @@ class JsoApp extends StatelessWidget {
   final MatchCenterRepository matchCenterRepository;
   final CartController cartController;
   final AuthController authController;
+  final AdminAuthController adminAuthController;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +51,9 @@ class JsoApp extends StatelessWidget {
         Provider<MatchCenterRepository>.value(value: matchCenterRepository),
         ChangeNotifierProvider<CartController>.value(value: cartController),
         ChangeNotifierProvider<AuthController>.value(value: authController),
+        ChangeNotifierProvider<AdminAuthController>.value(
+          value: adminAuthController,
+        ),
       ],
       child: MaterialApp(
         title: 'JSO',

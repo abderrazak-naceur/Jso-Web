@@ -16,6 +16,9 @@ import '../auth/profile_screen.dart';
 import '../matches/match_detail_screen.dart';
 import '../news/news_detail_screen.dart';
 import '../notifications/notifications_screen.dart';
+import '../shop/shop_screen.dart';
+import '../tickets/tickets_screen.dart';
+import 'home_carousel.dart';
 
 /// Home tab: renders the aggregated `GET /api/home` payload.
 class HomeScreen extends StatefulWidget {
@@ -345,41 +348,129 @@ class _HomeContent extends StatelessWidget {
   final List<String> contentValues;
   final VoidCallback? onViewAllNews;
 
+  /// Builds the "À la une" carousel cards from real club content. Every card
+  /// navigates to an existing screen; cards without data are simply omitted, so
+  /// the carousel shows between one and four cards.
+  List<HomeHighlight> _highlights(BuildContext context) {
+    final items = <HomeHighlight>[];
+    final nextMatch = home.nextMatch;
+
+    if (nextMatch != null) {
+      items.add(
+        HomeHighlight(
+          badge: 'PROCHAIN MATCH',
+          title: 'JSO — ${nextMatch.opponentName}',
+          subtitle:
+              '${JsoFormat.date(nextMatch.kickoffAt)} · ${JsoFormat.time(nextMatch.kickoffAt)}',
+          cta: 'Voir le match',
+          icon: Icons.sports_soccer_rounded,
+          accent: JsoColors.navy3,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => MatchDetailScreen(matchId: nextMatch.id),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (home.news.isNotEmpty) {
+      final lead = home.news.first;
+      items.add(
+        HomeHighlight(
+          badge: 'À LA UNE',
+          title: lead.title,
+          subtitle: lead.publishedAt == null
+              ? 'Dernière actualité'
+              : JsoFormat.date(lead.publishedAt!),
+          cta: 'Lire l’article',
+          icon: Icons.newspaper_rounded,
+          imageUrl: lead.coverImageUrl,
+          accent: JsoColors.navy,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => NewsDetailScreen(slug: lead.slug),
+            ),
+          ),
+        ),
+      );
+    }
+
+    items.add(
+      HomeHighlight(
+        badge: 'BOUTIQUE',
+        title: 'Maillots & articles officiels',
+        subtitle: 'La boutique du club',
+        cta: 'Découvrir',
+        icon: Icons.storefront_rounded,
+        accent: JsoColors.navy2,
+        onTap: () => Navigator.of(context).push(ShopScreen.route()),
+      ),
+    );
+
+    if (nextMatch != null) {
+      items.add(
+        HomeHighlight(
+          badge: 'BILLETTERIE',
+          title: 'Réservez votre place',
+          subtitle: 'JSO — ${nextMatch.opponentName}',
+          cta: 'Réserver',
+          icon: Icons.confirmation_number_rounded,
+          accent: JsoColors.navy3,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => TicketsScreen(match: nextMatch),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return items;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final hasNextMatch = home.nextMatch != null;
+    final highlights = _highlights(context);
 
-    return Transform.translate(
-      offset: Offset(0, hasNextMatch ? -32 : 0),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: JsoSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (!hasNextMatch) const SizedBox(height: JsoSpacing.sm),
-            if (hasNextMatch) _NextMatchCard(match: home.nextMatch!),
-            if (home.news.isNotEmpty) ...[
-              _SectionHeader(
-                title: 'Actualités',
-                actionLabel: onViewAllNews == null ? null : 'Voir tout',
-                onAction: onViewAllNews,
-              ),
-              ...home.news
-                  .take(3)
-                  .map((article) => _NewsPreviewCard(article: article)),
-            ],
-            if (home.recentMatches.isNotEmpty) ...[
-              const _SectionHeader(title: 'Derniers résultats'),
-              ...home.recentMatches.map(
-                (match) => _RecentMatchCard(match: match),
-              ),
-            ],
-            if (contentValues.isNotEmpty) ...[
-              const _SectionHeader(title: 'À propos du club'),
-              _AboutCard(values: contentValues.take(2).toList()),
-            ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: JsoSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: JsoSpacing.md),
+          if (highlights.isNotEmpty) ...[
+            const _SectionHeader(title: 'À la une'),
+            HomeCarousel(items: highlights),
+            const SizedBox(height: JsoSpacing.sm),
           ],
-        ),
+          if (home.nextMatch != null) ...[
+            const SizedBox(height: JsoSpacing.sm),
+            _NextMatchCard(match: home.nextMatch!),
+          ],
+          if (home.news.isNotEmpty) ...[
+            _SectionHeader(
+              title: 'Actualités',
+              actionLabel: onViewAllNews == null ? null : 'Voir tout',
+              onAction: onViewAllNews,
+            ),
+            _FeaturedNewsCard(article: home.news.first),
+            ...home.news
+                .skip(1)
+                .take(3)
+                .map((article) => _NewsPreviewCard(article: article)),
+          ],
+          if (home.recentMatches.isNotEmpty) ...[
+            const _SectionHeader(title: 'Derniers résultats'),
+            ...home.recentMatches.map(
+              (match) => _RecentMatchCard(match: match),
+            ),
+          ],
+          if (contentValues.isNotEmpty) ...[
+            const _SectionHeader(title: 'À propos du club'),
+            _AboutCard(values: contentValues.take(2).toList()),
+          ],
+        ],
       ),
     );
   }
@@ -668,6 +759,132 @@ class _MatchInfo extends StatelessWidget {
         const SizedBox(width: 6),
         if (expand) Expanded(child: label) else label,
       ],
+    );
+  }
+}
+
+/// Large hero-style card for the lead article: full-width cover image with a
+/// navy gradient scrim and the title overlaid, for a richer, editorial look.
+class _FeaturedNewsCard extends StatelessWidget {
+  const _FeaturedNewsCard({required this.article});
+
+  final Article article;
+
+  void _openArticle(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => NewsDetailScreen(slug: article.slug),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Lire l’actualité à la une : ${article.title}',
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(JsoRadius.largeCard),
+          boxShadow: const [
+            BoxShadow(
+              color: JsoColors.shadow,
+              blurRadius: 22,
+              offset: Offset(0, 12),
+            ),
+          ],
+        ),
+        child: Material(
+          color: JsoColors.navy,
+          borderRadius: BorderRadius.circular(JsoRadius.largeCard),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => _openArticle(context),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ExcludeSemantics(
+                    child: RemoteImage(
+                      url: article.coverImageUrl,
+                      fit: BoxFit.cover,
+                      placeholderIcon: Icons.photo_outlined,
+                    ),
+                  ),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0x00071A3A),
+                          Color(0x66071A3A),
+                          Color(0xF2071A3A),
+                        ],
+                        stops: [0.25, 0.6, 1],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(JsoSpacing.md),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: JsoColors.gold,
+                            borderRadius: BorderRadius.circular(JsoRadius.pill),
+                          ),
+                          child: const Text(
+                            'À la une',
+                            style: TextStyle(
+                              color: JsoColors.navy,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: JsoSpacing.sm),
+                        Text(
+                          article.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: JsoColors.white,
+                            fontSize: 21,
+                            height: 1.15,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                        if (article.publishedAt != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            JsoFormat.date(article.publishedAt!),
+                            style: const TextStyle(
+                              color: JsoColors.gold2,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

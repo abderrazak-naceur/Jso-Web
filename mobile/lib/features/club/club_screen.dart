@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/config/jso_theme.dart';
+import '../../shared/widgets/jso_crest.dart';
 import '../archive/archive_screen.dart';
+import '../auth/admin_login_screen.dart';
 import '../auth/auth_controller.dart';
 import '../auth/profile_screen.dart';
 import '../community/community_programs_screen.dart';
@@ -82,6 +84,20 @@ class ClubScreen extends StatelessWidget {
           title: const Text('Plus'),
           backgroundColor: JsoColors.paper,
           foregroundColor: JsoColors.inkText,
+          // Hidden admin entry point: a long-press on the crest opens the
+          // secure administrator login. Invisible to regular supporters.
+          leading: Center(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onLongPress: () {
+                Navigator.of(context).push(AdminLoginScreen.route());
+              },
+              child: const Padding(
+                padding: EdgeInsets.only(left: JsoSpacing.sm),
+                child: ExcludeSemantics(child: JsoCrest(size: 28)),
+              ),
+            ),
+          ),
         ),
         body: LayoutBuilder(
           builder: (context, constraints) {

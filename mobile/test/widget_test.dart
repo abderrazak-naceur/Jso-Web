@@ -20,10 +20,12 @@ void main() {
     final apiClient = ApiClient();
     final cartController = CartController();
     final authController = fakeAuthController();
+    final adminAuthController = fakeAdminAuthController();
     await authController.restoreSession();
     addTearDown(apiClient.dispose);
     addTearDown(cartController.dispose);
     addTearDown(authController.dispose);
+    addTearDown(adminAuthController.dispose);
 
     await tester.pumpWidget(
       JsoApp(
@@ -34,6 +36,7 @@ void main() {
         matchCenterRepository: MatchCenterRepository(apiClient),
         cartController: cartController,
         authController: authController,
+        adminAuthController: adminAuthController,
       ),
     );
     await tester.pump();
