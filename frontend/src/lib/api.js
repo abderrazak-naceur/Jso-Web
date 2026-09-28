@@ -33,6 +33,19 @@ export const publicApi = {
   getFaq: (category, signal) => request('/faq' + (category ? '?category=' + encodeURIComponent(category) : ''), signal),
   getArchive: (signal) => request('/archive', signal),
   getCommunityPrograms: (signal) => request('/community-programs', signal),
+  // Editable menu/footer (Homepage Builder). Returns active items ordered by
+  // DisplayOrder; an empty list means "use the built-in navigation".
+  getNavigation: (position, signal) =>
+    request('/navigation' + (position ? '?position=' + encodeURIComponent(position) : ''), signal),
+}
+
+// Public, read-only community feed: approved comments and aggregate reaction
+// counts for a target (targetType = 'News' | 'Match', targetId = its Guid).
+export const communityApi = {
+  getComments: (targetType, targetId, signal) =>
+    request('/community/comments?targetType=' + encodeURIComponent(targetType) + '&targetId=' + encodeURIComponent(targetId), signal),
+  getReactions: (targetType, targetId, signal) =>
+    request('/community/reactions?targetType=' + encodeURIComponent(targetType) + '&targetId=' + encodeURIComponent(targetId), signal),
 }
 
 async function requestJson(path, method, body, token) {
@@ -68,6 +81,23 @@ export const shopOrderApi = {
   create: (data, token) => requestJson('/shop/orders', 'POST', data, token),
   myOrders: (token) => requestJson('/shop/orders', 'GET', null, token),
   myOrder: (id, token) => requestJson('/shop/orders/' + id, 'GET', null, token),
+}
+
+// Fan (supporter) community writes — require the fan JWT. Comments are created
+// in a "Pending" state and only appear publicly once a moderator approves them.
+export const communityFanApi = {
+  postComment: (data, token) => requestJson('/community/comments', 'POST', data, token),
+  addReaction: (data, token) => requestJson('/community/reactions', 'POST', data, token),
+  removeReaction: (targetType, targetId, kind, token) =>
+    requestJson(
+      '/community/reactions?targetType=' + encodeURIComponent(targetType)
+      + '&targetId=' + encodeURIComponent(targetId)
+      + '&kind=' + encodeURIComponent(kind),
+      'DELETE',
+      null,
+      token,
+    ),
+  report: (data, token) => requestJson('/community/reports', 'POST', data, token),
 }
 
 // Public newsletter API (double opt-in). /subscribe returns a generic message and never

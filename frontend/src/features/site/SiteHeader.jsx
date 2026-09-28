@@ -14,6 +14,7 @@ const panelButtonClass = 'flex w-full items-center gap-3 rounded-xl px-3 py-3 te
 // points to a section that is actually rendered.
 export default function SiteHeader({
   sections,
+  extraLinks = [],
   activeId,
   cartCount,
   onOpenCart,
@@ -95,7 +96,7 @@ export default function SiteHeader({
             </a>
           ))}
 
-          {secondary.length > 0 && (
+          {(secondary.length > 0 || extraLinks.length > 0) && (
             <div ref={moreRef} className="relative">
               <button
                 ref={moreButtonRef}
@@ -122,6 +123,20 @@ export default function SiteHeader({
                         >
                           {section.label}
                           <span className="text-xs font-extrabold text-slate-300" aria-hidden="true">{section.number}</span>
+                        </a>
+                      </li>
+                    ))}
+                    {extraLinks.map((link) => (
+                      <li key={link.id}>
+                        <a
+                          href={link.url}
+                          onClick={closeMenus}
+                          target={link.opensInNewTab ? '_blank' : undefined}
+                          rel={link.opensInNewTab ? 'noopener noreferrer' : undefined}
+                          className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold text-jso-ink transition hover:bg-slate-100"
+                        >
+                          {link.label}
+                          {link.opensInNewTab && <ArrowUpRight size={14} aria-hidden="true" className="text-slate-300" />}
                         </a>
                       </li>
                     ))}
@@ -216,7 +231,7 @@ export default function SiteHeader({
                 ))}
               </ul>
 
-              {secondary.length > 0 && (
+              {(secondary.length > 0 || extraLinks.length > 0) && (
                 <>
                   <p className="mt-6 text-xs font-extrabold tracking-[0.2em] text-white/45">PLUS</p>
                   <ul className="mt-3 grid grid-cols-2 gap-2">
@@ -229,6 +244,20 @@ export default function SiteHeader({
                           className={`block rounded-xl px-4 py-3 text-sm font-bold transition hover:bg-white/10 ${activeId === section.id ? 'bg-white/10 text-jso-gold' : 'bg-white/5 text-white/85'}`}
                         >
                           {section.label}
+                        </a>
+                      </li>
+                    ))}
+                    {extraLinks.map((link) => (
+                      <li key={link.id}>
+                        <a
+                          href={link.url}
+                          onClick={closeMenus}
+                          target={link.opensInNewTab ? '_blank' : undefined}
+                          rel={link.opensInNewTab ? 'noopener noreferrer' : undefined}
+                          className="flex items-center justify-between gap-2 rounded-xl bg-white/5 px-4 py-3 text-sm font-bold text-white/85 transition hover:bg-white/10"
+                        >
+                          {link.label}
+                          {link.opensInNewTab && <ArrowUpRight size={14} aria-hidden="true" />}
                         </a>
                       </li>
                     ))}
