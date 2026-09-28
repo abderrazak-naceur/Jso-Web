@@ -97,23 +97,24 @@ Legenda: ✅ fatto · 🟡 parziale · ⛔ da fare · 🔒 bloccato da dipendenz
 |---|------|-------|------|
 | A2 | UGC foto tifosi con moderazione | ✅ | Fatto: upload Fan + moderazione admin + galleria pubblica approvate |
 | E19 | Modalità stadio offline (PWA leggera) | ✅ | Fatto: manifest + service worker + banner offline (esclude admin/autenticato) |
-| B24 | Streaming pay-per-view della partita | 🔒 | Richiede diritti di trasmissione + gateway pagamenti |
+| B24 | Streaming pay-per-view della partita | ✅ | Meccanismo fatto: accesso a pagamento, StreamUrl rivelato solo dopo pagamento verificato. Diritti di trasmissione = scelta del club |
 | F20 | Trascrizioni / sottotitoli automatici | 🔒 | Richiede provider AI a pagamento |
 
-Tutte le idee del piano **fattibili a costo zero** sono completate. Restano solo le due bloccate da servizi esterni (B24 pagamenti, F20 AI).
+Tutte le idee del piano fattibili in sandbox sono completate. Resta solo F20 (bloccata da provider AI a pagamento).
 
 ---
 
-## ⛔ Da fare — Aree di prodotto non ancora sviluppate
+## Aree di prodotto — stato aggiornato
 
-Dalla [visione 2030](docs/PLATFORM_VISION_2030.md) e dal README, restano intere aree:
+Dalla [visione 2030](docs/PLATFORM_VISION_2030.md) e dal README:
 
-- ⛔ **Homepage Builder + Menu/Footer editabili** (il club compone la home senza codice)
+- ✅ **Homepage Builder + Menu/Footer editabili** — fatto (admin + navigazione dinamica + sezioni home dinamiche sul sito)
+- ✅ **Community & moderazione** — fatto (commenti/reazioni/segnalazioni, code di moderazione admin, commenti sul sito pubblico)
+- ✅ **Membership / abbonamenti tifosi** — fatto (piani admin + acquisto fan + attivazione via pagamento verificato)
+- ✅ **Pagamenti reali** — integrati (Flouci per Tunisia / Stripe per estero, scelta per Paese) su shop, biglietti, muro sostenitori, membership, streaming. 🔒 Manca solo: creare account provider, mettere le chiavi nell'ambiente, puntare i webhook, collaudo end-to-end (post-deploy)
 - ⛔ **Finanze del club** (entrate/uscite, reportistica) — vedi [piano dedicato](docs/ADMIN_SQUAD_FINANCE_ANALYTICS_PLAN.md)
-- ⛔ **Membership / abbonamenti tifosi**
-- ⛔ **Community & moderazione** (post, commenti, reazioni, code di moderazione)
-- 🔒 **Notifiche & messaging** (push FCM / email) — richiede provider
-- ⛔ **Frontend web lato tifoso**: le API fan esistono, ma manca una UI web tifoso (oggi c'è solo admin + app Flutter). Es. la UI GDPR per il tifoso.
+- 🔒 **Notifiche & messaging** (push FCM / email) — richiede provider esterno
+- 🟡 **Frontend web lato tifoso**: molte UI ci sono (account, shop/carrello, commenti, abbonamenti, streaming); resta da completare qualche superficie (es. UI GDPR per il tifoso, pagine dedicate biglietti/muro).
 
 ---
 
@@ -130,7 +131,7 @@ Questi non sono singole feature ma prerequisiti che sbloccano il valore reale. I
 
 ### 2. Servizi esterni (email + pagamenti)
 - 🔒 **Invio email reale**: newsletter, compleanni, GDPR, conferme — oggi sono stub/TODO
-- 🔒 **Gateway pagamenti** (TND): muro sostenitori, annunci, shop, biglietti, streaming — logica pronta, pagamento reale assente
+- 🔒 **Attivazione pagamenti**: l'integrazione **Flouci (Tunisia) / Stripe (estero)** è **implementata** su shop, biglietti, muro sostenitori, membership e streaming (pagine hosted, conferma server-side via webhook, verifica importo). Manca solo, e resta a carico del club: creare gli account provider, inserire le **chiavi come variabili d'ambiente**, impostare il tasso TND→valuta Stripe, **puntare i webhook** agli endpoint, e il **collaudo end-to-end** con un pagamento vero (richiede il deploy pubblico). Vedi [docs/PAYMENTS.md](docs/PAYMENTS.md).
 
 ### 3. Qualità
 - ⛔ **Test automatici backend** quasi assenti (verifica oggi = build + lint + smoke CI); l'app Flutter ha test widget
