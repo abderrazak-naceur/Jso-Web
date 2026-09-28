@@ -1,4 +1,5 @@
 using JSO.Infrastructure;
+using JSO.Infrastructure.Payments;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,12 +9,14 @@ namespace JSO.Api.Controllers;
 // Admin management of fan shop orders (manual payment gateway). The admin lists
 // and inspects orders and advances their status. Confirming payment (-> Paid)
 // is the point where stock is decremented, inside a transaction, and is
-// idempotent (an already-paid order is not decremented twice). Status
-// transitions are validated to avoid illegal jumps.
+// idempotent (an already-paid order is not decremented twice). The "mark paid +
+// decrement stock" step is delegated to the shared OrderPaymentService, which is
+// the same code the provider webhooks use. Status transitions are validated to
+// avoid illegal jumps.
 [ApiController]
 [Authorize(Roles = "SuperAdmin,ClubAdmin,ShopManager")]
 [Route("api/admin/shop/orders")]
-public sealed class AdminShopOrdersController(JsoDbContext db, AuditService audit) : ControllerBase
+public sealed class AdminShopOrdersController(JsoDbContext db, AuditService audit, OrderPaymentService payments) : ControllerBase
 {
     // Allowed forward transitions. Cancelled/Failed are terminal-ish sinks.
     private static readonly Dictionary<string, string[]> Transitions = new()
@@ -67,8 +70,36 @@ public sealed class AdminShopOrdersController(JsoDbContext db, AuditService audi
         if (string.IsNullOrWhiteSpace(target) || !Transitions.ContainsKey(target))
             return BadRequest(new { message = "Unknown status." });
 
-        // Use a transaction because moving to Paid also decrements stock.
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        // Confirming payment reuses the shared, idempotent "mark paid + decrement
+        // stock" logic (same code as the provider webhooks).
+        if (target == "Paid")
+        {
+            // Rely on the shared, transactional service result rather than a
+            // speculative pre-read: the service re-checks the Pending state inside
+            // its transaction, so the result is the single source of truth and no
+            // TOCTOU window exists between a read and the write.
+            var result = await payments.MarkOrderPaidAsync(id, ct: ct);
+            switch (result)
+            {
+                case OrderPaymentService.MarkPaidResult.NotFound:
+                    return NotFound();
+                case OrderPaymentService.MarkPaidResult.InsufficientStock:
+                    return BadRequest(new { message = "Not enough stock to fulfil the order." });
+                case OrderPaymentService.MarkPaidResult.AlreadyPaid:
+                {
+                    // Already past Pending (paid by a webhook, an admin, or in a
+                    // terminal state). Idempotent no-op; reflect the current state.
+                    var existing = await db.Orders.AsNoTracking().SingleAsync(x => x.Id == id, ct);
+                    return Ok(new { existing.Id, existing.Status, existing.PaidAt });
+                }
+            }
+
+            var paid = await db.Orders.AsNoTracking().SingleAsync(x => x.Id == id, ct);
+            await audit.LogAsync("ORDER_PAID", "Order", paid.Id.ToString(),
+                User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value,
+                HttpContext.Connection.RemoteIpAddress?.ToString(), new { paid.Status }, ct);
+            return Ok(new { paid.Id, paid.Status, paid.PaidAt });
+        }
 
         var order = await db.Orders.SingleOrDefaultAsync(x => x.Id == id, ct);
         if (order is null) return NotFound();
@@ -79,25 +110,10 @@ public sealed class AdminShopOrdersController(JsoDbContext db, AuditService audi
         if (!Transitions.TryGetValue(order.Status, out var allowed) || !allowed.Contains(target))
             return BadRequest(new { message = $"Cannot move an order from {order.Status} to {target}." });
 
-        if (target == "Paid")
-        {
-            var items = await db.OrderItems.Where(x => x.OrderId == id).ToListAsync(ct);
-            foreach (var item in items)
-            {
-                var product = await db.Products.SingleOrDefaultAsync(p => p.Id == item.ProductId, ct);
-                if (product is null) continue; // product removed; keep historical order
-                if (product.Stock < item.Quantity)
-                    return BadRequest(new { message = $"Not enough stock to fulfil '{item.ProductName}'." });
-                product.Stock -= item.Quantity;
-            }
-            order.PaidAt = DateTimeOffset.UtcNow;
-        }
-
         order.Status = target;
         await db.SaveChangesAsync(ct);
-        await tx.CommitAsync(ct);
 
-        await audit.LogAsync(target == "Paid" ? "ORDER_PAID" : "UPDATE", "Order", order.Id.ToString(),
+        await audit.LogAsync("UPDATE", "Order", order.Id.ToString(),
             User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value,
             HttpContext.Connection.RemoteIpAddress?.ToString(), new { order.Status }, ct);
 

@@ -86,6 +86,10 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<Order>().HasIndex(x=>x.Status);
   modelBuilder.Entity<Order>().HasIndex(x=>x.ProviderRef).IsUnique().HasFilter("\"ProviderRef\" IS NOT NULL");
   modelBuilder.Entity<Order>().Property(x=>x.Total).HasPrecision(14,2);
+  modelBuilder.Entity<Order>().Property(x=>x.PaymentProvider).HasMaxLength(32);
+  modelBuilder.Entity<Order>().Property(x=>x.Country).HasMaxLength(64);
+  modelBuilder.Entity<Order>().Property(x=>x.ChargedAmount).HasPrecision(14,2);
+  modelBuilder.Entity<Order>().Property(x=>x.ChargedCurrency).HasMaxLength(8);
   modelBuilder.Entity<OrderItem>().HasIndex(x=>x.OrderId);
   modelBuilder.Entity<OrderItem>().Property(x=>x.UnitPrice).HasPrecision(14,2);
   modelBuilder.Entity<TicketType>().HasIndex(x=>new{x.MatchId,x.IsActive});

@@ -1,3 +1,4 @@
+using JSO.Infrastructure.Payments;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +29,34 @@ public static class DependencyInjection
                     throw new InvalidOperationException($"Unsupported database provider '{provider}'. Use 'sqlserver' or 'postgres'.");
             }
         });
+
+        services.AddPayments(configuration);
+
+        return services;
+    }
+
+    // Registers the real payment providers behind the shared abstraction. All
+    // secrets are bound from the "Payments" configuration section (environment
+    // variables in production). Flouci talks to its REST API via a typed
+    // HttpClient; Stripe uses the official Stripe.net SDK. The selector routes a
+    // checkout by country and OrderPaymentService is the shared "mark paid +
+    // decrement stock" logic reused by webhooks and the admin manual gateway.
+    public static IServiceCollection AddPayments(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<PaymentOptions>(configuration.GetSection(PaymentOptions.SectionName));
+
+        var flouciBaseUrl = configuration[$"{PaymentOptions.SectionName}:{nameof(PaymentOptions.Flouci)}:{nameof(FlouciOptions.BaseUrl)}"];
+        services.AddHttpClient<FlouciPaymentProvider>(client =>
+        {
+            client.BaseAddress = new Uri(string.IsNullOrWhiteSpace(flouciBaseUrl)
+                ? "https://developers.flouci.com/"
+                : flouciBaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
+
+        services.AddScoped<StripePaymentProvider>();
+        services.AddScoped<PaymentProviderSelector>();
+        services.AddScoped<OrderPaymentService>();
 
         return services;
     }

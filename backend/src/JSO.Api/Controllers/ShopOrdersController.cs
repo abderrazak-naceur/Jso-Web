@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using JSO.Domain;
 using JSO.Infrastructure;
+using JSO.Infrastructure.Payments;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -16,7 +17,12 @@ namespace JSO.Api.Controllers;
 [ApiController]
 [Authorize(Roles = "Fan")]
 [Route("api/shop/orders")]
-public sealed class ShopOrdersController(JsoDbContext db, AuditService audit) : ControllerBase
+public sealed class ShopOrdersController(
+    JsoDbContext db,
+    AuditService audit,
+    PaymentProviderSelector paymentSelector,
+    Microsoft.Extensions.Configuration.IConfiguration configuration,
+    Microsoft.Extensions.Hosting.IHostEnvironment environment) : ControllerBase
 {
     private Guid? CurrentFanId()
     {
@@ -135,7 +141,116 @@ public sealed class ShopOrdersController(JsoDbContext db, AuditService audit) : 
             items = orderItems.Select(x => new { x.ProductId, x.ProductName, x.UnitPrice, x.Quantity, x.LineTotal })
         });
     }
+
+    // Starts an online payment for one of the fan's own Pending orders. The
+    // buyer picks the country at checkout: Tunisia -> Flouci (TND), otherwise
+    // Stripe (international). We create a HOSTED payment session with the chosen
+    // provider (no card data ever touches our servers), persist the provider,
+    // country and ProviderRef, and return the redirect URL. The order is NOT
+    // marked paid here - only the provider webhook (verified server-side) does
+    // that. When the provider is not configured (e.g. sandbox without keys) this
+    // returns a clean 503 the UI can handle instead of crashing.
+    [HttpPost("{id:guid}/pay")]
+    [EnableRateLimiting("auth-login")]
+    public async Task<IActionResult> Pay(Guid id, PayOrderRequest request, CancellationToken ct)
+    {
+        var fanId = CurrentFanId();
+        if (fanId is null) return Unauthorized();
+
+        var country = request.Country?.Trim();
+        if (string.IsNullOrWhiteSpace(country))
+            return BadRequest(new { message = "Le pays est requis pour choisir le mode de paiement." });
+
+        var order = await db.Orders.SingleOrDefaultAsync(x => x.Id == id && x.FanUserId == fanId, ct);
+        if (order is null) return NotFound();
+        if (order.Status != "Pending")
+            return BadRequest(new { message = "Cette commande n'est plus en attente de paiement." });
+
+        var provider = paymentSelector.Select(country);
+        var isTunisia = PaymentProviderSelector.IsTunisia(country);
+
+        if (!provider.IsConfigured)
+            return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                new { message = $"Le paiement en ligne via {provider.Name} n'est pas encore disponible. Veuillez réessayer plus tard." });
+
+        string baseUrl;
+        try
+        {
+            baseUrl = ResolvePublicBaseUrl();
+        }
+        catch (InvalidOperationException)
+        {
+            // Production without a configured Payments:PublicBaseUrl: refuse to
+            // derive the provider return/cancel links from the (spoofable) Host
+            // header. Surface a clean 503 the UI can handle.
+            return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                new { message = "Le paiement en ligne n'est pas correctement configuré. Veuillez réessayer plus tard." });
+        }
+        var returnUrl = $"{baseUrl}/payment/success?orderId={order.Id}";
+        var cancelUrl = $"{baseUrl}/payment/cancel?orderId={order.Id}";
+
+        PaymentInitiation initiation;
+        try
+        {
+            initiation = await provider.InitiatePaymentAsync(order, returnUrl, cancelUrl, ct);
+        }
+        catch (PaymentProviderNotConfiguredException)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                new { message = $"Le paiement en ligne via {provider.Name} n'est pas encore disponible. Veuillez réessayer plus tard." });
+        }
+        catch (PaymentProviderException ex)
+        {
+            return StatusCode(StatusCodes.Status502BadGateway, new { message = ex.Message });
+        }
+
+        // Persist the routing decision and the provider reference for webhook
+        // reconciliation. Currency is TND for Flouci; for Stripe we settle in the
+        // configured international currency (EUR by default).
+        order.PaymentProvider = provider.Name;
+        order.Country = country;
+        order.ProviderRef = initiation.ProviderRef;
+        order.Currency = isTunisia ? "TND" : (configuration["Payments:Stripe:Currency"] ?? "eur").ToUpperInvariant();
+        // Persist the amount/currency actually charged (for Stripe this is the
+        // TND total converted at the configured rate) so the record reflects what
+        // the buyer paid and the webhook can cross-check it.
+        order.ChargedAmount = initiation.ChargedAmount;
+        order.ChargedCurrency = initiation.ChargedCurrency;
+        await db.SaveChangesAsync(ct);
+
+        await audit.LogAsync("ORDER_PAY_INIT", "Order", order.Id.ToString(), fanId.Value.ToString(),
+            User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(),
+            new { provider = provider.Name, order.Country }, ct);
+
+        return Ok(new { redirectUrl = initiation.RedirectUrl, provider = provider.Name });
+    }
+
+    // Resolves the public frontend base URL used to build the provider
+    // return/cancel links. Prefers an explicit "Payments:PublicBaseUrl", then the
+    // first configured CORS origin. In Production these links are handed to the
+    // payment provider as post-payment landing pages, so we refuse to fall back
+    // to the (spoofable) request Host header: if neither an explicit base nor a
+    // CORS origin is configured we throw. In Development the Host-header fallback
+    // is kept for convenience.
+    private string ResolvePublicBaseUrl()
+    {
+        var explicitBase = configuration["Payments:PublicBaseUrl"];
+        if (!string.IsNullOrWhiteSpace(explicitBase))
+            return explicitBase.TrimEnd('/');
+
+        var origins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+        if (origins is { Length: > 0 } && !string.IsNullOrWhiteSpace(origins[0]))
+            return origins[0].TrimEnd('/');
+
+        if (environment.IsProduction())
+            throw new InvalidOperationException(
+                "Payments:PublicBaseUrl must be configured in Production; refusing to derive return URLs from the Host header.");
+
+        return $"{Request.Scheme}://{Request.Host}";
+    }
 }
+
+public sealed record PayOrderRequest(string Country);
 
 public sealed record CreateOrderRequest(
     List<CreateOrderLine> Items,

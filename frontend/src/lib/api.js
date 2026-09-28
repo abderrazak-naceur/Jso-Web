@@ -84,6 +84,11 @@ export const shopOrderApi = {
   create: (data, token) => requestJson('/shop/orders', 'POST', data, token),
   myOrders: (token) => requestJson('/shop/orders', 'GET', null, token),
   myOrder: (id, token) => requestJson('/shop/orders/' + id, 'GET', null, token),
+  // Starts an online payment for an order. The backend routes to Flouci
+  // (Tunisia) or Stripe (elsewhere) based on `country` and returns a hosted
+  // { redirectUrl } the browser must navigate to. Payment is only confirmed
+  // server-side via the provider webhook, never by the browser redirect.
+  pay: (id, country, token) => requestJson('/shop/orders/' + id + '/pay', 'POST', { country }, token),
 }
 
 // Fan (supporter) community writes — require the fan JWT. Comments are created
