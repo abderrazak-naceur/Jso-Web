@@ -3,6 +3,7 @@ import { CalendarDays, MapPin, X } from 'lucide-react'
 import { publicApi } from '../../lib/api'
 import { formatDateTime, pick } from '../../lib/format'
 import { useDialog } from '../site/useDialog'
+import CommentsSection from '../community/CommentsSection'
 import TeamBadge from './TeamBadge'
 import { eventLabel, hasScore, matchSides, matchStatusLabel, normalizeMatch } from './matchUtils'
 
@@ -12,7 +13,7 @@ function asArray(result) {
   return result.status === 'fulfilled' && Array.isArray(result.value) ? result.value : []
 }
 
-export default function MatchCenterModal({ match, onClose }) {
+export default function MatchCenterModal({ match, onClose, token, onRequireLogin }) {
   const [details, setDetails] = useState(() => ({ ...match, ...EMPTY_DETAILS }))
   const [loading, setLoading] = useState(true)
   const dialogRef = useDialog(onClose)
@@ -155,6 +156,15 @@ export default function MatchCenterModal({ match, onClose }) {
               </section>
             </div>
           </div>
+        )}
+
+        {details.id && (
+          <CommentsSection
+            targetType="Match"
+            targetId={details.id}
+            token={token}
+            onRequireLogin={onRequireLogin}
+          />
         )}
       </div>
     </div>

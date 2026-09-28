@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowUp, Shield } from 'lucide-react'
+import { ArrowUp, ArrowUpRight, Shield } from 'lucide-react'
 import { newsletterApi } from '../../lib/api'
 import { CLUB_FULL_NAME, CREST_SRC } from './brand'
 
@@ -40,7 +40,7 @@ function NewsletterSignup() {
   )
 }
 
-export default function SiteFooter({ sections }) {
+export default function SiteFooter({ sections, extraLinks = [] }) {
   return (
     <footer className="bg-jso-navy px-5 py-12 text-white lg:px-8">
       <div className="mx-auto max-w-7xl">
@@ -57,6 +57,19 @@ export default function SiteFooter({ sections }) {
             <p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">EXPLORER</p>
             <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
               {sections.map((section) => <li key={section.id}><a href={`#${section.id}`} className="text-sm font-semibold text-white/65 transition hover:text-white">{section.label}</a></li>)}
+              {extraLinks.map((link) => (
+                <li key={link.id}>
+                  <a
+                    href={link.url}
+                    target={link.opensInNewTab ? '_blank' : undefined}
+                    rel={link.opensInNewTab ? 'noopener noreferrer' : undefined}
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-white/65 transition hover:text-white"
+                  >
+                    {link.label}
+                    {link.opensInNewTab && <ArrowUpRight size={13} aria-hidden="true" />}
+                  </a>
+                </li>
+              ))}
             </ul>
           </nav>
 

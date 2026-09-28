@@ -30,6 +30,7 @@ import SiteFooter from './features/site/SiteFooter'
 import SiteHeader from './features/site/SiteHeader'
 import { visibleSections } from './features/site/navigation'
 import { useActiveSection } from './features/site/useActiveSection'
+import { useNavigation } from './features/site/useNavigation'
 
 function App() {
   const data = useHomeData()
@@ -55,6 +56,11 @@ function App() {
   const sectionById = Object.fromEntries(sections.map((section) => [section.id, section]))
   const activeSection = useActiveSection(['home', ...sections.map((section) => section.id)]) || 'home'
 
+  // Extra links configured by the admin (Homepage Builder). Additive: shown
+  // alongside the built-in section navigation; empty (or failed) => nothing extra.
+  const headerLinks = useNavigation('Header')
+  const footerLinks = useNavigation('Footer')
+
   function openAuth(mode) {
     setAuthMode(mode)
     setAuthOpen(true)
@@ -66,6 +72,7 @@ function App() {
 
       <SiteHeader
         sections={sections}
+        extraLinks={headerLinks}
         activeId={activeSection}
         cartCount={cart.count}
         onOpenCart={() => setCartOpen(true)}
@@ -93,10 +100,30 @@ function App() {
         <InfoSection section={sectionById.infos} club={data.club} documents={data.documents} faq={data.faq} />
       </main>
 
-      <SiteFooter sections={sections} />
+      <SiteFooter sections={sections} extraLinks={footerLinks} />
 
-      {selectedMatch && <MatchCenterModal match={selectedMatch} onClose={() => setSelectedMatch(null)} />}
-      {selectedArticle && <ArticleModal initialArticle={selectedArticle} onClose={() => setSelectedArticle(null)} />}
+      {selectedMatch && (
+        <MatchCenterModal
+          match={selectedMatch}
+          onClose={() => setSelectedMatch(null)}
+          token={fan.token}
+          onRequireLogin={() => {
+            setSelectedMatch(null)
+            openAuth('login')
+          }}
+        />
+      )}
+      {selectedArticle && (
+        <ArticleModal
+          initialArticle={selectedArticle}
+          onClose={() => setSelectedArticle(null)}
+          token={fan.token}
+          onRequireLogin={() => {
+            setSelectedArticle(null)
+            openAuth('login')
+          }}
+        />
+      )}
 
       <CartDrawer
         open={cartOpen}
