@@ -15,6 +15,7 @@ import '../../shared/widgets/remote_image.dart';
 import '../auth/profile_screen.dart';
 import '../matches/match_detail_screen.dart';
 import '../news/news_detail_screen.dart';
+import '../notifications/notifications_screen.dart';
 
 /// Home tab: renders the aggregated `GET /api/home` payload.
 class HomeScreen extends StatefulWidget {
@@ -53,6 +54,12 @@ class _HomeScreenState extends State<HomeScreen> {
         .push(MaterialPageRoute<void>(builder: (_) => const ProfileScreen()));
   }
 
+  void _openNotifications() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const NotificationsScreen()),
+    );
+  }
+
   /// Content values worth rendering. API keys are implementation details and
   /// must never become visible labels in the app.
   static List<String> _visibleContent(Map<String, String> content) {
@@ -73,12 +80,14 @@ class _HomeScreenState extends State<HomeScreen> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return _HomeStatusLayout(
                 onAccountPressed: _openProfile,
+                onNotificationsPressed: _openNotifications,
                 child: const LoadingView(message: 'Chargement de l’accueil…'),
               );
             }
             if (snapshot.hasError) {
               return _HomeStatusLayout(
                 onAccountPressed: _openProfile,
+                onNotificationsPressed: _openNotifications,
                 child: ErrorView(
                   message: 'Impossible de charger l’accueil.',
                   onRetry: () => setState(_load),
@@ -90,6 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
             if (home == null) {
               return _HomeStatusLayout(
                 onAccountPressed: _openProfile,
+                onNotificationsPressed: _openNotifications,
                 child: ErrorView(
                   message: 'Impossible de charger l’accueil.',
                   onRetry: () => setState(_load),
@@ -117,6 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _HomeHeader(
                     hasNextMatch: home.nextMatch != null,
                     onAccountPressed: _openProfile,
+                    onNotificationsPressed: _openNotifications,
                   ),
                   _ContentBounds(
                     child: isEmpty
@@ -146,17 +157,22 @@ class _HomeScreenState extends State<HomeScreen> {
 class _HomeStatusLayout extends StatelessWidget {
   const _HomeStatusLayout({
     required this.onAccountPressed,
+    required this.onNotificationsPressed,
     required this.child,
   });
 
   final VoidCallback onAccountPressed;
+  final VoidCallback onNotificationsPressed;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _HomeHeader(onAccountPressed: onAccountPressed),
+        _HomeHeader(
+          onAccountPressed: onAccountPressed,
+          onNotificationsPressed: onNotificationsPressed,
+        ),
         Expanded(child: _ContentBounds(child: child)),
       ],
     );
@@ -166,10 +182,12 @@ class _HomeStatusLayout extends StatelessWidget {
 class _HomeHeader extends StatelessWidget {
   const _HomeHeader({
     required this.onAccountPressed,
+    required this.onNotificationsPressed,
     this.hasNextMatch = false,
   });
 
   final VoidCallback onAccountPressed;
+  final VoidCallback onNotificationsPressed;
   final bool hasNextMatch;
 
   @override
@@ -239,7 +257,8 @@ class _HomeHeader extends StatelessWidget {
                     const SizedBox(width: JsoSpacing.sm),
                     _HeaderIconButton(
                       icon: Icons.notifications_none_rounded,
-                      tooltip: 'Notifications bientôt disponibles',
+                      tooltip: 'Notifications',
+                      onPressed: onNotificationsPressed,
                     ),
                     const SizedBox(width: JsoSpacing.xs),
                     _HeaderIconButton(
