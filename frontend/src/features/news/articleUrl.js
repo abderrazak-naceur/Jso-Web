@@ -10,6 +10,9 @@
 
 export const ARTICLE_PATH_PREFIX = '/actualites/'
 
+// The "all articles" listing page (no slug).
+export const NEWS_LIST_PATH = '/actualites'
+
 // Extract the slug from the current location, or null when we're not on an
 // article deep-link. Kept tolerant of a trailing slash.
 export function slugFromPath(pathname = window.location.pathname) {

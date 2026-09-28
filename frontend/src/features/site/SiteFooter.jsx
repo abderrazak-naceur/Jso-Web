@@ -91,13 +91,16 @@ function NewsletterSignup() {
   )
 }
 
-export default function SiteFooter({ sections, extraLinks = [] }) {
+// `homeHref` prefixes the in-page anchors. On the home page it stays '' so
+// links are plain #anchors; on a standalone page (e.g. /actualites) pass '/'
+// so an anchor first navigates back to the home page, then scrolls.
+export default function SiteFooter({ sections, extraLinks = [], homeHref = '' }) {
   return (
     <footer className="bg-jso-navy px-5 py-12 text-white lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-10 border-b border-white/10 pb-10 lg:grid-cols-[1fr_0.8fr_1.2fr]">
           <div>
-            <a href="#home" className="inline-flex items-center gap-3 rounded-xl">
+            <a href={`${homeHref}#home`} className="inline-flex items-center gap-3 rounded-xl">
               <img src={CREST_SRC} alt="" className="h-14 w-14 object-contain" />
               <span><strong className="block text-xl font-black">JSO Oudhref</strong><span className="text-sm text-white/55">Plus qu’un club. Une identité.</span></span>
             </a>
@@ -108,7 +111,7 @@ export default function SiteFooter({ sections, extraLinks = [] }) {
           <nav aria-label="Navigation de pied de page">
             <p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">EXPLORER</p>
             <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
-              {sections.map((section) => <li key={section.id}><a href={`#${section.id}`} className="text-sm font-semibold text-white/65 transition hover:text-white">{section.label}</a></li>)}
+              {sections.map((section) => <li key={section.id}><a href={`${homeHref}#${section.id}`} className="text-sm font-semibold text-white/65 transition hover:text-white">{section.label}</a></li>)}
               {extraLinks.map((link) => (
                 <li key={link.id}>
                   <a
@@ -132,7 +135,7 @@ export default function SiteFooter({ sections, extraLinks = [] }) {
           <p>© {new Date().getFullYear()} JSO. Tous droits réservés.</p>
           <div className="flex flex-wrap items-center gap-5">
             <a href="/admin" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-1.5 font-semibold transition hover:border-white/40 hover:text-white"><Shield size={15} aria-hidden="true" />Espace admin</a>
-            <a href="#home" className="inline-flex items-center gap-2 transition hover:text-white">Retour en haut <ArrowUp size={15} aria-hidden="true" /></a>
+            <a href={`${homeHref}#home`} className="inline-flex items-center gap-2 transition hover:text-white">Retour en haut <ArrowUp size={15} aria-hidden="true" /></a>
           </div>
         </div>
       </div>

@@ -14,6 +14,10 @@ export const publicApi = {
   getClub: (signal) => request('/club', signal),
   getMatches: (signal) => request('/matches', signal),
   getNews: (signal) => request('/news', signal),
+  // Paged published news for the "all articles" listing page. Returns
+  // { items, page, pageSize, total }.
+  getNewsPage: (page, pageSize, signal) =>
+    request('/news?page=' + encodeURIComponent(page) + '&pageSize=' + encodeURIComponent(pageSize), signal),
   getMedia: (signal) => request('/media', signal),
   getTeams: (signal) => request('/teams', signal),
   getTeamPlayers: (teamId, signal) => request('/teams/' + teamId + '/players', signal),
