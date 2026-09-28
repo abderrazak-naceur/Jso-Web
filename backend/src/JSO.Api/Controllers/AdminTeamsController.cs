@@ -9,8 +9,12 @@ namespace JSO.Api.Controllers;
 [ApiController]
 [Authorize(Roles = "SuperAdmin,ClubAdmin")]
 [Route("api/admin/teams")]
-public sealed class AdminTeamsController(JsoDbContext db) : ControllerBase
+public sealed class AdminTeamsController(JsoDbContext db, AuditService audit) : ControllerBase
 {
+    private Task Audit(string action, string entity, Guid id, object? details, CancellationToken ct) =>
+        audit.LogAsync(action, entity, id.ToString(), User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value,
+            HttpContext.Connection.RemoteIpAddress?.ToString(), details, ct);
+
     [HttpGet]
     public async Task<IActionResult> GetTeams(CancellationToken ct) =>
         Ok(await db.Teams.AsNoTracking().OrderBy(x => x.Category).ThenBy(x => x.Name).ToListAsync(ct));
@@ -24,6 +28,7 @@ public sealed class AdminTeamsController(JsoDbContext db) : ControllerBase
         var team = new Team { Name = request.Name.Trim(), Category = request.Category.Trim(), IsActive = true };
         db.Teams.Add(team);
         await db.SaveChangesAsync(ct);
+        await Audit("CREATE", "Team", team.Id, new { team.Name, team.Category }, ct);
         return Created($"/api/admin/teams/{team.Id}", team);
     }
 
@@ -39,6 +44,7 @@ public sealed class AdminTeamsController(JsoDbContext db) : ControllerBase
         team.Category = request.Category.Trim();
         team.IsActive = request.IsActive;
         await db.SaveChangesAsync(ct);
+        await Audit("UPDATE", "Team", team.Id, new { team.Name, team.Category, team.IsActive }, ct);
         return Ok(team);
     }
 
@@ -49,6 +55,7 @@ public sealed class AdminTeamsController(JsoDbContext db) : ControllerBase
         if (team is null) return NotFound();
         team.IsActive = false;
         await db.SaveChangesAsync(ct);
+        await Audit("DELETE", "Team", team.Id, null, ct);
         return NoContent();
     }
 
@@ -75,6 +82,7 @@ public sealed class AdminTeamsController(JsoDbContext db) : ControllerBase
         };
         db.Players.Add(player);
         await db.SaveChangesAsync(ct);
+        await Audit("CREATE", "Player", player.Id, new { player.TeamId, player.FirstName, player.LastName }, ct);
         return Created($"/api/admin/teams/{teamId}/players/{player.Id}", player);
     }
 
@@ -91,6 +99,7 @@ public sealed class AdminTeamsController(JsoDbContext db) : ControllerBase
         player.PhotoUrl = request.PhotoUrl?.Trim();
         player.IsActive = request.IsActive;
         await db.SaveChangesAsync(ct);
+        await Audit("UPDATE", "Player", player.Id, new { player.TeamId, player.FirstName, player.LastName, player.IsActive }, ct);
         return Ok(player);
     }
 
@@ -101,6 +110,7 @@ public sealed class AdminTeamsController(JsoDbContext db) : ControllerBase
         if (player is null) return NotFound();
         player.IsActive = false;
         await db.SaveChangesAsync(ct);
+        await Audit("DELETE", "Player", player.Id, new { player.TeamId }, ct);
         return NoContent();
     }
 }
