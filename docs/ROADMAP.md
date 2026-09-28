@@ -1,16 +1,17 @@
 # JSO Web — piano aggiornato
 
 **Aggiornato:** 28 settembre 2026
-**Stato:** prodotto web e app mobile completi nel codice; resta il go-live su ambiente reale.
+**Stato:** prodotto web e app mobile completi nel codice; resta il go-live su ambiente reale. La biglietteria QR/check-in è ora pianificata come estensione successiva della biglietteria esistente.
 
 ## Cosa manca (sintesi)
 
-Il lavoro realizzabile via codice è completo. Ciò che resta richiede l'ambiente reale/gli account, non altro sviluppo:
+Il lavoro realizzabile via codice è completo per il perimetro attuale. Restano il go-live e alcune estensioni successive:
 
 - **Priorità 0 — Go-live (bloccato dall'ambiente):** VM Oracle, dominio + HTTPS, CORS verificati sul dominio reale; backup e restore eseguiti e verificati su dati reali; smoke test admin → API → PostgreSQL → sito nel browser di produzione. **Checklist operativa passo-passo: [Go-live](GO_LIVE.md).**
 - **Priorità 1 — Prodotto web:** completo nel codice (contenuti+stati, editor admin, sicurezza/audit, SEO, accessibilità, prestazioni). Resta solo il collaudo manuale su ambiente reale (lettore di schermo per WCAG, Lighthouse).
-- **Priorità 2 — App mobile:** completa nel codice. Resta il collaudo su dispositivi Android/iOS fisici, la firma e la pubblicazione sugli store, e le eventuali notifiche push FCM (richiedono account developer/Firebase).
-- **Priorità 3 — Funzioni successive:** community/moderazione, pagamenti, analytics avanzati — in gran parte già presenti nel backend, da rifinire dopo il go-live.
+- **Priorità 2 — App mobile:** completa nel codice per il perimetro attuale. Resta il collaudo su dispositivi Android/iOS fisici, la firma e la pubblicazione sugli store, e le eventuali notifiche push FCM.
+- **Priorità 2.5 — Biglietteria digitale QR:** analizzata e pianificata, ma **non ancora implementata**. La biglietteria attuale supporta prenotazione, pagamento predisposto e conferma; manca il biglietto digitale QR e il check-in staff. Piano dettagliato: [MOBILE_TICKETING_QR_PLAN.md](MOBILE_TICKETING_QR_PLAN.md).
+- **Priorità 3 — Funzioni successive:** community/moderazione, analytics avanzati e altre estensioni dopo il go-live.
 
 ## Decisione architetturale per l'MVP
 
@@ -37,6 +38,8 @@ PostgreSQL non richiede una licenza a pagamento. L'obiettivo di costo infrastrut
 - [ ] URL API, CORS e HTTPS verificati sul dominio reale.
 - [ ] Ambiente Oracle reale, HTTPS, backup e restore verificati.
 - [x] App Flutter implementata: Home, Match Center (Résumé/Direct/Compos/Stats), Actualités, Équipe, Médias, account tifoso completo (profilo, password, RGPD), Boutique e Biglietteria, hub Plus, design allineato al brand. Vedi [`mobile/README.md`](../mobile/README.md).
+- [x] Analisi e piano della biglietteria digitale QR/check-in aggiunti in [`MOBILE_TICKETING_QR_PLAN.md`](MOBILE_TICKETING_QR_PLAN.md).
+- [ ] Biglietto digitale QR/check-in staff implementato (task TICKET-QR-001…008).
 - [ ] App Flutter collaudata su dispositivi Android/iOS reali e pubblicata sugli store; notifiche push (FCM) da valutare.
 
 Le caselle completate attestano la presenza delle funzioni nel codice, non un collaudo end-to-end o il go-live.
@@ -55,26 +58,49 @@ Lavorare in quest'ordine, perché i passaggi successivi dipendono dai precedenti
 
 ## Priorità 1 — Completare il prodotto web
 
-- [x] Collegare e rifinire tutti i contenuti pubblici ai dati reali: homepage, match center, notizie, squadra e media; gestire loading, assenza dati ed errori. Ogni sezione dinamica distingue caricamento/vuoto/errore (niente placeholder "à venir" quando l'API risponde o fallisce).
-- [x] Completare gli editor admin: configurazione homepage e menu/footer, sponsor (+ QR), partite con eventi, formazioni, officiels e statistiche, articoli (create/update/publish/dépublier/supprimer) e libreria media (upload/modifica/suppression).
-- [x] Rivedere sessioni e permessi admin, tracciamento audit e gestione degli errori. Audit di tutti i controller admin: ogni rotta sotto `[Authorize]` con ruoli corretti, nessun `[AllowAnonymous]`, nessuna superficie di escalation ruoli, token fan isolati, prezzi/stati validati server-side. Corretti gli unici due gap (audit mancante su team/giocatori e media). Resta da collaudare su flussi reali in produzione.
-- [x] Accessibilità, prestazioni e SEO sulle pagine pubbliche: SEO (Open Graph/Twitter, canonical, JSON-LD, `robots.txt`, `sitemap.xml`, titoli dinamici); accessibilità (id duplicati risolti, nomi accessibili dei modali, alt significativi, link "nouvel onglet"; oltre al pannello accessibilità, skip link e focus management già presenti); prestazioni (code-splitting admin/paiement: bundle pubblico iniziale ~561→~281 kB). Restano fuori dal codice: audit WCAG manuale con lettore di schermo e misura Lighthouse sull'ambiente reale.
+- [x] Collegare e rifinire tutti i contenuti pubblici ai dati reali: homepage, match center, notizie, squadra e media; gestire loading, assenza dati ed errori.
+- [x] Completare gli editor admin: configurazione homepage e menu/footer, sponsor (+ QR), partite con eventi, formazioni, officiels e statistiche, articoli e libreria media.
+- [x] Rivedere sessioni e permessi admin, tracciamento audit e gestione degli errori.
+- [x] Accessibilità, prestazioni e SEO sulle pagine pubbliche.
 
-**Criterio di uscita:** il club pubblica contenuti e aggiorna i dati sportivi senza modificare il codice, e il sito riflette le modifiche. **Le funzioni sono complete nel codice; resta il collaudo su ambiente reale (vedi Priorità 0).**
+**Criterio di uscita:** il club pubblica contenuti e aggiorna i dati sportivi senza modificare il codice. Le funzioni sono complete nel codice; resta il collaudo su ambiente reale.
 
 ## Priorità 2 — App Flutter
 
-L'app Flutter è implementata e collegata all'API reale (vedi [`mobile/README.md`](../mobile/README.md)); i concept immagine restano riferimenti grafici.
+L'app Flutter è implementata e collegata all'API reale. I concept immagine restano riferimenti grafici.
 
 1. [x] Progetto Flutter + design system JSO allineato al brand; ambienti e client API configurati.
 2. [x] Home, Match Center (Résumé/Direct/Compos/Stats), notizie, squadra e media con stati caricamento/errore.
 3. [x] Login, profilo, gestione account completa (modifica profilo, password, RGPD); token protetto nel keystore/Keychain.
-4. [ ] Firebase Cloud Messaging (notifiche) e Crashlytics: da valutare. Un centro notifiche in-app (senza push) è già presente.
+4. [ ] Firebase Cloud Messaging (notifiche) e Crashlytics: da valutare.
 5. [ ] Testare su dispositivi Android e iOS reali; preparare build firmate e pubblicazione sugli store.
 
 Extra implementati oltre al piano: Boutique con ordini, Biglietteria, hub "Plus" (agenda, documents, FAQ, musée, écoles, sponsors), blason officiel.
 
-**Criterio di uscita:** app installabile su entrambi i sistemi, collegata agli stessi dati del sito, con flussi principali verificati su dispositivi reali. **Codice completo; resta il collaudo su dispositivi fisici, la firma/pubblicazione store e le eventuali notifiche push (richiedono account e ambiente dedicati).**
+**Criterio di uscita:** app installabile su entrambi i sistemi, collegata agli stessi dati del sito, con flussi principali verificati su dispositivi reali.
+
+## Priorità 2.5 — Biglietteria digitale QR e check-in
+
+La biglietteria attuale **non viene riscritta**. Si estende il flusso esistente di prenotazione/pagamento/conferma.
+
+### Piano task
+
+1. **TICKET-QR-001 — Contratto e modello dati:** token pubblico casuale, stato `CheckedIn`, eventuale `TicketCheckIn`, migration e indici.
+2. **TICKET-QR-002 — Emissione ticket:** token generato alla conferma e dettaglio ticket idempotente.
+3. **TICKET-QR-003 — Digital Ticket Flutter:** `TicketDetailScreen`, QR grande, dati partita/ticket e stato.
+4. **TICKET-QR-004 — Validazione/check-in backend:** endpoint staff, controlli, transizione atomica `Confirmed -> CheckedIn`, audit.
+5. **TICKET-QR-005 — Scanner staff:** scanner QR, permesso camera, feedback immediato, fallback codice manuale.
+6. **TICKET-QR-006 — Sicurezza:** alta entropia del token, rate limiting, autorizzazione staff, nessuna PII/JWT nel QR, replay protection e audit.
+7. **TICKET-QR-007 — Test E2E:** reserve → pay → webhook → Confirmed → QR → scan → CheckedIn → seconda scansione rifiutata.
+8. **TICKET-QR-008 — Go-live:** test Android/iOS, rete mobile, luminosità QR, PostgreSQL production, backup/restore e procedura staff.
+
+### Decisione sugli ID del QR
+
+Il QR **non deve contenere dati personali, JWT o un semplice `TicketOrderId` come segreto**. L'identificatore principale sarà un `PublicTicketToken` casuale ad alta entropia. `TicketOrderId`, `MatchId` e `TicketTypeId` restano riferimenti server-side; potranno essere inclusi in un payload firmato solo se servirà una futura modalità offline.
+
+Per la prima versione il formato raccomandato è un payload minimo tipo `JSO1.<opaque-token>` oppure un URL di ticket pubblico. Il backend resta la fonte di verità.
+
+**Criterio di uscita:** un ticket Confirmed genera un QR verificabile; lo staff lo scansiona; il primo ingresso diventa CheckedIn; il secondo viene rifiutato; tutte le operazioni sono auditabili.
 
 ## Priorità 3 — Funzioni successive
 
@@ -84,9 +110,9 @@ Extra implementati oltre al piano: Boutique con ordini, Biglietteria, hub "Plus"
 
 ## Opzioni Firebase e punti decisionali
 
-- **Firebase Hosting:** fare una prova solo se offre un vantaggio operativo sul sito statico; misurare peso degli asset e traffico rispetto alla quota Spark. L'API .NET resta ospitata separatamente.
+- **Firebase Hosting:** fare una prova solo se offre un vantaggio operativo sul sito statico.
 - **Firebase Cloud Messaging/Crashlytics:** introdurre con l'app Flutter se servono notifiche e diagnostica.
-- **Firestore, Firebase Auth o Cloud Storage:** aprire una nuova decisione tecnica solo con un requisito concreto, una stima dei costi e un piano di migrazione. Cloud Storage richiede Blaze; il progetto non assume che l'intero stack Firebase sia sempre gratuito.
+- **Firestore, Firebase Auth o Cloud Storage:** aprire una nuova decisione tecnica solo con un requisito concreto, una stima dei costi e un piano di migrazione.
 
 ## Documenti collegati
 
@@ -95,3 +121,4 @@ Extra implementati oltre al piano: Boutique con ordini, Biglietteria, hub "Plus"
 - [Decisione database production](DATABASE_PRODUCTION_DECISION.md)
 - [Piano deploy Oracle](DEPLOY_ORACLE_CLOUD.md)
 - [Analisi mobile](MOBILE_ANALYSIS.md)
+- [Piano Biglietteria QR/check-in](MOBILE_TICKETING_QR_PLAN.md)
