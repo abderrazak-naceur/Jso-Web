@@ -7,7 +7,7 @@
 
 Il lavoro realizzabile via codice è completo. Ciò che resta richiede l'ambiente reale/gli account, non altro sviluppo:
 
-- **Priorità 0 — Go-live (bloccato dall'ambiente):** VM Oracle, dominio + HTTPS, CORS verificati sul dominio reale; backup e restore eseguiti e verificati su dati reali; smoke test admin → API → PostgreSQL → sito nel browser di produzione.
+- **Priorità 0 — Go-live (bloccato dall'ambiente):** VM Oracle, dominio + HTTPS, CORS verificati sul dominio reale; backup e restore eseguiti e verificati su dati reali; smoke test admin → API → PostgreSQL → sito nel browser di produzione. **Checklist operativa passo-passo: [Go-live](GO_LIVE.md).**
 - **Priorità 1 — Prodotto web:** completo nel codice (contenuti+stati, editor admin, sicurezza/audit, SEO, accessibilità, prestazioni). Resta solo il collaudo manuale su ambiente reale (lettore di schermo per WCAG, Lighthouse).
 - **Priorità 2 — App mobile:** completa nel codice. Resta il collaudo su dispositivi Android/iOS fisici, la firma e la pubblicazione sugli store, e le eventuali notifiche push FCM (richiedono account developer/Firebase).
 - **Priorità 3 — Funzioni successive:** community/moderazione, pagamenti, analytics avanzati — in gran parte già presenti nel backend, da rifinire dopo il go-live.
@@ -90,6 +90,7 @@ Extra implementati oltre al piano: Boutique con ordini, Biglietteria, hub "Plus"
 
 ## Documenti collegati
 
+- [Checklist go-live (passo-passo)](GO_LIVE.md)
 - [Analisi Firebase vs PostgreSQL](FIREBASE_VS_POSTGRESQL_ANALYSIS.md)
 - [Decisione database production](DATABASE_PRODUCTION_DECISION.md)
 - [Piano deploy Oracle](DEPLOY_ORACLE_CLOUD.md)
