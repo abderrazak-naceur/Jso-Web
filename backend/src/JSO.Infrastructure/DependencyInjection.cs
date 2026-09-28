@@ -58,6 +58,17 @@ public static class DependencyInjection
         services.AddScoped<PaymentProviderSelector>();
         services.AddScoped<OrderPaymentService>();
 
+        // Generic payment completion: one IPayableCompletion per payable type
+        // (shop order = OrderPaymentService, ticket order, supporter brick) plus
+        // the router that dispatches by PayableType. The webhooks use the router
+        // as their single, uniform completion entry point.
+        services.AddScoped<TicketOrderCompletion>();
+        services.AddScoped<SupporterBrickCompletion>();
+        services.AddScoped<IPayableCompletion>(sp => sp.GetRequiredService<OrderPaymentService>());
+        services.AddScoped<IPayableCompletion>(sp => sp.GetRequiredService<TicketOrderCompletion>());
+        services.AddScoped<IPayableCompletion>(sp => sp.GetRequiredService<SupporterBrickCompletion>());
+        services.AddScoped<PayableCompletionRouter>();
+
         return services;
     }
 }

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using JSO.Domain;
 using JSO.Infrastructure;
+using JSO.Infrastructure.Payments;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -14,7 +15,12 @@ namespace JSO.Api.Controllers;
 // admin confirms it (manual gateway).
 [ApiController]
 [Route("api/tickets")]
-public sealed class TicketsController(JsoDbContext db, AuditService audit) : ControllerBase
+public sealed class TicketsController(
+    JsoDbContext db,
+    AuditService audit,
+    PaymentProviderSelector paymentSelector,
+    PaymentLinkBuilder paymentLinks,
+    Microsoft.Extensions.Configuration.IConfiguration configuration) : ControllerBase
 {
     [HttpGet("match/{matchId:guid}")]
     public async Task<IActionResult> GetForMatch(Guid matchId, CancellationToken ct)
@@ -47,9 +53,25 @@ public sealed class TicketsController(JsoDbContext db, AuditService audit) : Con
         var orders = await db.TicketOrders.AsNoTracking()
             .Where(x => x.FanUserId == fanId)
             .OrderByDescending(x => x.CreatedAt)
-            .Select(x => new { x.Id, x.MatchId, x.TicketTypeName, x.Quantity, x.Total, x.Currency, x.Status, x.CreatedAt })
+            .Select(x => new { x.Id, x.MatchId, x.TicketTypeName, x.Quantity, x.Total, x.Currency, x.Status, x.CreatedAt, x.ConfirmedAt })
             .ToListAsync(ct);
         return Ok(orders);
+    }
+
+    // Single reservation lookup for the owning fan. Used by the payment return
+    // page to poll the reservation status (set server-side by the webhook).
+    [HttpGet("{id:guid}")]
+    [Authorize(Roles = "Fan")]
+    public async Task<IActionResult> MyTicket(Guid id, CancellationToken ct)
+    {
+        var fanId = CurrentFanId();
+        if (fanId is null) return Unauthorized();
+        var order = await db.TicketOrders.AsNoTracking()
+            .Where(x => x.Id == id && x.FanUserId == fanId)
+            .Select(x => new { x.Id, x.MatchId, x.TicketTypeName, x.Quantity, x.Total, x.Currency, x.Status, x.CreatedAt, x.ConfirmedAt })
+            .SingleOrDefaultAsync(ct);
+        if (order is null) return NotFound();
+        return Ok(order);
     }
 
     [HttpPost("reserve")]
@@ -89,6 +111,86 @@ public sealed class TicketsController(JsoDbContext db, AuditService audit) : Con
         return Created($"/api/tickets/mine", new { order.Id, order.TicketTypeName, order.Quantity, order.Total, order.Currency, order.Status });
     }
 
+    // Starts an online payment for one of the fan's own Pending ticket
+    // reservations. Identical model to the shop /pay: the buyer picks a country
+    // (Tunisia -> Flouci/TND, otherwise Stripe/international), we create a HOSTED
+    // payment session (no card data touches our servers), persist the provider,
+    // country and ProviderRef, and return the redirect URL. The reservation is
+    // NOT confirmed here - only the verified provider webhook confirms it
+    // (Pending -> Confirmed + SoldCount incremented). A missing provider config
+    // degrades to a clean 503.
+    [HttpPost("{id:guid}/pay")]
+    [Authorize(Roles = "Fan")]
+    [EnableRateLimiting("auth-login")]
+    public async Task<IActionResult> Pay(Guid id, PayTicketRequest request, CancellationToken ct)
+    {
+        var fanId = CurrentFanId();
+        if (fanId is null) return Unauthorized();
+
+        var country = request.Country?.Trim();
+        if (string.IsNullOrWhiteSpace(country))
+            return BadRequest(new { message = "Le pays est requis pour choisir le mode de paiement." });
+
+        // Only the owning fan may pay their own reservation.
+        var order = await db.TicketOrders.SingleOrDefaultAsync(x => x.Id == id && x.FanUserId == fanId, ct);
+        if (order is null) return NotFound();
+        if (order.Status != "Pending")
+            return BadRequest(new { message = "Cette réservation n'est plus en attente de paiement." });
+
+        var provider = paymentSelector.Select(country);
+        var isTunisia = PaymentProviderSelector.IsTunisia(country);
+
+        if (!provider.IsConfigured)
+            return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                new { message = $"Le paiement en ligne via {provider.Name} n'est pas encore disponible. Veuillez réessayer plus tard." });
+
+        string baseUrl;
+        try
+        {
+            baseUrl = paymentLinks.ResolvePublicBaseUrl(Request);
+        }
+        catch (InvalidOperationException)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                new { message = "Le paiement en ligne n'est pas correctement configuré. Veuillez réessayer plus tard." });
+        }
+        var returnUrl = $"{baseUrl}/payment/success?payableType=TicketOrder&payableId={order.Id}";
+        var cancelUrl = $"{baseUrl}/payment/cancel?payableType=TicketOrder&payableId={order.Id}";
+
+        var paymentRequest = new PaymentRequest(
+            PayableTypes.TicketOrder, order.Id, fanId.Value, order.Total,
+            $"Billet JSO {order.TicketTypeName} x{order.Quantity}");
+
+        PaymentInitiation initiation;
+        try
+        {
+            initiation = await provider.InitiatePaymentAsync(paymentRequest, returnUrl, cancelUrl, ct);
+        }
+        catch (PaymentProviderNotConfiguredException)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                new { message = $"Le paiement en ligne via {provider.Name} n'est pas encore disponible. Veuillez réessayer plus tard." });
+        }
+        catch (PaymentProviderException ex)
+        {
+            return StatusCode(StatusCodes.Status502BadGateway, new { message = ex.Message });
+        }
+
+        order.PaymentProvider = provider.Name;
+        order.Country = country;
+        order.ProviderRef = initiation.ProviderRef;
+        order.Currency = isTunisia ? "TND" : (configuration["Payments:Stripe:Currency"] ?? "eur").ToUpperInvariant();
+        order.ChargedAmount = initiation.ChargedAmount;
+        order.ChargedCurrency = initiation.ChargedCurrency;
+        await db.SaveChangesAsync(ct);
+
+        await audit.LogAsync("TICKET_PAY_INIT", "TicketOrder", order.Id.ToString(), fanId.Value.ToString(),
+            User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(),
+            new { provider = provider.Name, order.Country }, ct);
+
+        return Ok(new { redirectUrl = initiation.RedirectUrl, provider = provider.Name });
+    }
+
     private Guid? CurrentFanId()
     {
         var sub = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -97,3 +199,5 @@ public sealed class TicketsController(JsoDbContext db, AuditService audit) : Con
 }
 
 public sealed record TicketReserveRequest(Guid TicketTypeId, int Quantity);
+
+public sealed record PayTicketRequest(string Country);

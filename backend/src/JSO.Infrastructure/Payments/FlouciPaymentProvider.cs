@@ -32,14 +32,14 @@ public sealed class FlouciPaymentProvider(
 
     public bool IsConfigured => _flouci.IsConfigured;
 
-    public async Task<PaymentInitiation> InitiatePaymentAsync(Order order, string returnUrl, string cancelUrl, CancellationToken ct)
+    public async Task<PaymentInitiation> InitiatePaymentAsync(PaymentRequest payable, string returnUrl, string cancelUrl, CancellationToken ct)
     {
         if (!IsConfigured)
             throw new PaymentProviderNotConfiguredException(Name);
 
         // Flouci amounts are expressed in millimes (1 TND = 1000 millimes).
-        var amountMillimes = (long)Math.Round(order.Total * 1000m, MidpointRounding.AwayFromZero);
-        var chargedAmount = Math.Round(order.Total, 2, MidpointRounding.AwayFromZero);
+        var amountMillimes = (long)Math.Round(payable.AmountTnd * 1000m, MidpointRounding.AwayFromZero);
+        var chargedAmount = Math.Round(payable.AmountTnd, 2, MidpointRounding.AwayFromZero);
 
         var request = new GeneratePaymentRequest
         {
@@ -50,13 +50,13 @@ public sealed class FlouciPaymentProvider(
             SessionTimeoutSecs = _flouci.SessionTimeoutSeconds,
             SuccessLink = returnUrl,
             FailLink = cancelUrl,
-            DeveloperTrackingId = _flouci.DeveloperTrackingId ?? order.Id.ToString()
+            DeveloperTrackingId = _flouci.DeveloperTrackingId ?? payable.PayableId.ToString()
         };
 
         using var response = await httpClient.PostAsJsonAsync("api/generate_payment", request, ct);
         if (!response.IsSuccessStatusCode)
         {
-            logger.LogWarning("Flouci generate_payment failed with status {Status} for order {OrderId}", (int)response.StatusCode, order.Id);
+            logger.LogWarning("Flouci generate_payment failed with status {Status} for {PayableType} {PayableId}", (int)response.StatusCode, payable.PayableType, payable.PayableId);
             throw new PaymentProviderException("Le fournisseur de paiement a refusé la demande.");
         }
 
@@ -65,7 +65,7 @@ public sealed class FlouciPaymentProvider(
         var paymentId = payload?.Result?.PaymentId;
         if (string.IsNullOrWhiteSpace(link) || string.IsNullOrWhiteSpace(paymentId))
         {
-            logger.LogWarning("Flouci generate_payment returned an incomplete payload for order {OrderId}", order.Id);
+            logger.LogWarning("Flouci generate_payment returned an incomplete payload for {PayableType} {PayableId}", payable.PayableType, payable.PayableId);
             throw new PaymentProviderException("Réponse invalide du fournisseur de paiement.");
         }
 

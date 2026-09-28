@@ -21,8 +21,8 @@ public sealed class ShopOrdersController(
     JsoDbContext db,
     AuditService audit,
     PaymentProviderSelector paymentSelector,
-    Microsoft.Extensions.Configuration.IConfiguration configuration,
-    Microsoft.Extensions.Hosting.IHostEnvironment environment) : ControllerBase
+    PaymentLinkBuilder paymentLinks,
+    Microsoft.Extensions.Configuration.IConfiguration configuration) : ControllerBase
 {
     private Guid? CurrentFanId()
     {
@@ -176,7 +176,7 @@ public sealed class ShopOrdersController(
         string baseUrl;
         try
         {
-            baseUrl = ResolvePublicBaseUrl();
+            baseUrl = paymentLinks.ResolvePublicBaseUrl(Request);
         }
         catch (InvalidOperationException)
         {
@@ -189,10 +189,13 @@ public sealed class ShopOrdersController(
         var returnUrl = $"{baseUrl}/payment/success?orderId={order.Id}";
         var cancelUrl = $"{baseUrl}/payment/cancel?orderId={order.Id}";
 
+        var paymentRequest = new PaymentRequest(
+            PayableTypes.ShopOrder, order.Id, fanId.Value, order.Total, $"Commande JSO {order.Id}");
+
         PaymentInitiation initiation;
         try
         {
-            initiation = await provider.InitiatePaymentAsync(order, returnUrl, cancelUrl, ct);
+            initiation = await provider.InitiatePaymentAsync(paymentRequest, returnUrl, cancelUrl, ct);
         }
         catch (PaymentProviderNotConfiguredException)
         {
@@ -223,30 +226,6 @@ public sealed class ShopOrdersController(
             new { provider = provider.Name, order.Country }, ct);
 
         return Ok(new { redirectUrl = initiation.RedirectUrl, provider = provider.Name });
-    }
-
-    // Resolves the public frontend base URL used to build the provider
-    // return/cancel links. Prefers an explicit "Payments:PublicBaseUrl", then the
-    // first configured CORS origin. In Production these links are handed to the
-    // payment provider as post-payment landing pages, so we refuse to fall back
-    // to the (spoofable) request Host header: if neither an explicit base nor a
-    // CORS origin is configured we throw. In Development the Host-header fallback
-    // is kept for convenience.
-    private string ResolvePublicBaseUrl()
-    {
-        var explicitBase = configuration["Payments:PublicBaseUrl"];
-        if (!string.IsNullOrWhiteSpace(explicitBase))
-            return explicitBase.TrimEnd('/');
-
-        var origins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
-        if (origins is { Length: > 0 } && !string.IsNullOrWhiteSpace(origins[0]))
-            return origins[0].TrimEnd('/');
-
-        if (environment.IsProduction())
-            throw new InvalidOperationException(
-                "Payments:PublicBaseUrl must be configured in Production; refusing to derive return URLs from the Host header.");
-
-        return $"{Request.Scheme}://{Request.Host}";
     }
 }
 

@@ -98,6 +98,11 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<TicketOrder>().HasIndex(x=>new{x.MatchId,x.Status});
   modelBuilder.Entity<TicketOrder>().Property(x=>x.UnitPrice).HasPrecision(14,2);
   modelBuilder.Entity<TicketOrder>().Property(x=>x.Total).HasPrecision(14,2);
+  modelBuilder.Entity<TicketOrder>().HasIndex(x=>x.ProviderRef).IsUnique().HasFilter("\"ProviderRef\" IS NOT NULL");
+  modelBuilder.Entity<TicketOrder>().Property(x=>x.PaymentProvider).HasMaxLength(32);
+  modelBuilder.Entity<TicketOrder>().Property(x=>x.Country).HasMaxLength(64);
+  modelBuilder.Entity<TicketOrder>().Property(x=>x.ChargedAmount).HasPrecision(14,2);
+  modelBuilder.Entity<TicketOrder>().Property(x=>x.ChargedCurrency).HasMaxLength(8);
   modelBuilder.Entity<OrderItem>().Property(x=>x.LineTotal).HasPrecision(14,2);
   modelBuilder.Entity<Volunteer>().HasIndex(x=>new{x.IsActive,x.Role});
   modelBuilder.Entity<MatchAssignment>().HasIndex(x=>x.MatchId);
@@ -114,6 +119,12 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<SupporterBrick>().HasIndex(x=>new{x.Status,x.CreatedAt});
   modelBuilder.Entity<SupporterBrick>().Property(x=>x.Status).HasDefaultValue("Pending");
   modelBuilder.Entity<SupporterBrick>().Property(x=>x.Amount).HasPrecision(14,2);
+  modelBuilder.Entity<SupporterBrick>().Property(x=>x.PaymentStatus).HasDefaultValue("Pending");
+  modelBuilder.Entity<SupporterBrick>().HasIndex(x=>x.ProviderRef).IsUnique().HasFilter("\"ProviderRef\" IS NOT NULL");
+  modelBuilder.Entity<SupporterBrick>().Property(x=>x.PaymentProvider).HasMaxLength(32);
+  modelBuilder.Entity<SupporterBrick>().Property(x=>x.Country).HasMaxLength(64);
+  modelBuilder.Entity<SupporterBrick>().Property(x=>x.ChargedAmount).HasPrecision(14,2);
+  modelBuilder.Entity<SupporterBrick>().Property(x=>x.ChargedCurrency).HasMaxLength(8);
   modelBuilder.Entity<ClassifiedAd>().HasIndex(x=>new{x.Status,x.CreatedAt});
   modelBuilder.Entity<ClassifiedAd>().HasIndex(x=>x.Category);
   modelBuilder.Entity<ClassifiedAd>().Property(x=>x.Status).HasDefaultValue("Pending");
