@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap, Receipt, FileText, HelpCircle, Ticket } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap, Receipt, FileText, HelpCircle, Ticket, MessageSquare } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
@@ -10,6 +10,7 @@ import EditorialCalendarModule from './EditorialCalendar'
 import ChecklistModule from './Checklist'
 import ClassifiedsModule from './Classifieds'
 import FanPhotosModule from './FanPhotos'
+import CommunityModule from './Community'
 import FacilitiesModule from './Facilities'
 import ScoutingModule from './Scouting'
 import FeatureFlagsModule from './FeatureFlags'
@@ -351,6 +352,7 @@ function AdminDashboard({ user, onLogout }) {
     ['checklist', 'Check-list match', ListChecks, ['ClubAdmin','MatchManager']],
     ['classifieds', 'Petites annonces', Megaphone, ['ClubAdmin','CommunityManager']],
     ['fan-photos', 'Photos supporters', Images, ['CommunityManager','Editor']],
+    ['community-moderation', 'Communauté · Modération', MessageSquare, ['ClubAdmin','CommunityManager']],
     ['facilities', 'Installations', CalendarRange, ['ClubAdmin','MatchManager']],
     ['scouting', 'Scouting', ScanSearch, ['ClubAdmin','MatchManager']],
     ['community', 'Écoles & partenaires', GraduationCap, ['ClubAdmin','CommunityManager']],
@@ -419,6 +421,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'checklist' && <ChecklistModule onError={setError}/>}
         {section === 'classifieds' && <ClassifiedsModule onError={setError}/>}
         {section === 'fan-photos' && <FanPhotosModule onError={setError}/>}
+        {section === 'community-moderation' && <CommunityModule onError={setError}/>}
         {section === 'facilities' && <FacilitiesModule onError={setError}/>}
         {section === 'scouting' && <ScoutingModule onError={setError}/>}
         {section === 'community' && <CommunityProgramsModule onError={setError}/>}
