@@ -8,9 +8,11 @@ automatiquement selon le **pays** indiqué par l'acheteur au moment du paiement 
 | Tunisie (`TN`)     | **Flouci**  | TND    | Lien/QR hébergé Flouci |
 | Tout autre pays    | **Stripe**  | EUR *(par défaut)* | Stripe Checkout hébergé |
 
-La même abstraction encaisse aujourd'hui **trois types de « payable »** (voir
+La même abstraction encaisse aujourd'hui **cinq types de « payable »** (voir
 « Abstraction générique » plus bas) : la **boutique** (`ShopOrder`), la
-**billetterie** (`TicketOrder`) et le **mur des supporters** (`SupporterBrick`).
+**billetterie** (`TicketOrder`), le **mur des supporters** (`SupporterBrick`), les
+**abonnements tifoso** (`Membership`) et l'**accès au direct pay-per-view**
+(`MatchStreamAccess`).
 
 Les prix étant stockés en **TND**, le montant Stripe est **converti** en devise
 internationale avant l'encaissement (voir « Devise et conversion » ci-dessous). Le
@@ -99,7 +101,8 @@ la moindre logique sensible.
 - **Contrat générique `PaymentRequest`** (`JSO.Infrastructure.Payments`) :
   `{ PayableType, PayableId, FanUserId, AmountTnd, Description }`.
   `PayableType` est un discriminant stable (`ShopOrder` | `TicketOrder` |
-  `SupporterBrick`, voir `PayableTypes`) ; `AmountTnd` est le montant à débiter
+  `SupporterBrick` | `Membership` | `MatchStreamAccess`, voir `PayableTypes`) ;
+  `AmountTnd` est le montant à débiter
   exprimé en **TND** (converti pour Stripe). `IPaymentProvider.InitiatePaymentAsync`
   prend désormais ce contrat : Flouci calcule les millimes sur `AmountTnd`, Stripe
   applique le taux `TndToStripeRate` sur `AmountTnd` (comportement inchangé pour la
@@ -115,6 +118,14 @@ la moindre logique sensible.
     (laisse `Pending`) s'il n'y a plus de capacité (pas de survente).
   - `SupporterBrick` : passe `PaymentStatus → Paid` + `PaidAt`, **sans jamais
     toucher la modération** (`Status`).
+  - `Membership` : passe l'abonnement `Pending → Active` (+ `PaymentStatus = Paid`,
+    `PaidAt`) et fixe la fenêtre `StartsAt = maintenant`, `EndsAt = maintenant +
+    DurationDays` du plan ; refus (laisse `Pending`) si le plan a disparu. Le prix
+    attendu est le **prix figé** (`Membership.Price`) au moment de la souscription.
+  - `MatchStreamAccess` : passe l'accès `Pending → Paid` (+ `PaidAt`) ; le prix
+    attendu est le **prix du flux** (`MatchStream.Price`). C'est **la seule** porte
+    qui autorise ensuite la révélation du lien de diffusion (voir « Streaming
+    pay-per-view » plus bas).
 - **Comment le webhook aiguille et vérifie le montant** :
   - **Stripe** : le `PayableType`/`PayableId` voyagent dans les *metadata* de la
     session (`payableType` / `payableId` ; l'ancienne clé `orderId` reste reconnue
@@ -123,8 +134,8 @@ la moindre logique sensible.
     routeur avant de compléter.
   - **Flouci** : la notification ne porte pas de metadata ; le `payment_id`
     (persisté en `ProviderRef` sur le payable, index unique par table) est **résolu**
-    sur les tables `Orders` / `TicketOrders` / `SupporterBricks` pour dériver le
-    `PayableType`. Après `verify_payment` (SUCCESS), le montant vérifié (millimes) est
+    sur les tables `Orders` / `TicketOrders` / `SupporterBricks` / `Memberships` /
+    `MatchStreamAccesses` pour dériver le `PayableType`. Après `verify_payment` (SUCCESS), le montant vérifié (millimes) est
     recroisé avec `AmountTnd × 1000` en TND avant complètement.
   - En cas d'écart, le payable **reste en attente** ; l'incident est audité
     (`PAYMENT_MISMATCH`). Les complètements réussis sont audités
@@ -135,6 +146,12 @@ la moindre logique sensible.
 `TicketOrder` et `SupporterBrick` reçoivent les mêmes champs *nullable* que la
 commande boutique : `ProviderRef` (index unique partiel), `PaymentProvider`,
 `Country`, `ChargedAmount`, `ChargedCurrency`. `TicketOrder` reçoit aussi `PaidAt`.
+
+Les nouvelles entités **`Membership`** et **`MatchStreamAccess`** (plus leurs tables
+de référence `MembershipPlan` et `MatchStream`) sont ajoutées par une migration
+**additive** (aucune table existante modifiée). `Membership` et `MatchStreamAccess`
+portent les mêmes champs de paiement *nullable* (`ProviderRef` index unique partiel,
+`PaymentProvider`, `Country`, `ChargedAmount`, `ChargedCurrency`, `PaidAt`).
 
 **Mur des supporters — paiement vs modération (orthogonaux).** Le champ `Status`
 d'un `SupporterBrick` reste **exclusivement** l'état de **modération**
@@ -156,10 +173,66 @@ Approved` (le paiement n'est **pas** une condition de publication).
   mattone → `{ redirectUrl }`. Seul **le fan créateur** peut payer son mattone.
   (L'endpoint public anonyme `POST /api/supporters/wall` reste inchangé et sans
   paiement.)
+- **Abonnements** : `GET /api/memberships/plans` (public, plans actifs) ;
+  `POST /api/memberships { planId }` `[Authorize(Fan)]` crée un abonnement `Pending`
+  (prix **recalculé côté serveur** depuis le plan actif) ; `POST
+  /api/memberships/{id}/pay { country }` `[Authorize(Fan)]` sur **son propre**
+  abonnement → `{ redirectUrl }` ; `GET /api/memberships/mine` et `GET
+  /api/memberships/{id}` pour le polling.
+- **Accès au direct (pay-per-view)** : `POST /api/matches/{id}/stream/access
+  { country }` `[Authorize(Fan)]` crée **ou réutilise** un `MatchStreamAccess`
+  `Pending` (unicité `FanUserId` + `MatchStreamId`) → `{ redirectUrl, accessId }` ;
+  `GET /api/matches/stream-access/{accessId}` pour le polling.
 
-Chaque `/pay` ne concerne que le **propre** payable **en attente** du fan, dégrade en
-`503` propre si le prestataire n'est pas configuré, et n'écrit **jamais** l'état payé
-(seul le webhook vérifié le fait).
+Chaque `/pay` (et `/access`) ne concerne que le **propre** payable **en attente** du
+fan, dégrade en `503` propre si le prestataire n'est pas configuré, et n'écrit
+**jamais** l'état payé (seul le webhook vérifié le fait).
+
+## Abonnements tifoso (`Membership`)
+
+Un **plan** (`MembershipPlan` : nom, prix `numeric(14,2)`, `DurationDays`, actif,
+ordre) est configuré par l'admin (`/api/admin/membership-plans`,
+`[Authorize(Roles="ClubAdmin,SuperAdmin")]`, écritures **auditées**). Le public
+liste les plans actifs ; un fan souscrit (`Membership` `Pending`, **prix figé**
+côté serveur depuis le plan actif) puis paie via le même flux hébergé. L'abonnement
+ne devient **`Active`** que **côté serveur** via le webhook vérifié
+(`StartsAt = maintenant`, `EndsAt = maintenant + DurationDays`). Aucune donnée de
+carte, dégradation `503` sans clés — identique aux autres payables.
+
+## Streaming pay-per-view de la partite (`MatchStreamAccess`, idée B24)
+
+**Périmètre honnête.** Cette fonctionnalité implémente **uniquement le mécanisme
+d'accès payant** à la diffusion en direct d'une partite. Elle **n'implémente pas** la
+production du flux ni ne gère les **droits de diffusion** : le club reste
+**seul responsable** d'avoir le droit de diffuser la partite et de produire le flux
+réel (par exemple une diffusion **YouTube en lien non répertorié / unlisted**, ou un
+embed d'un autre prestataire).
+
+**Modèle.** L'admin (`/api/admin/matches/{id}/stream`,
+`[Authorize(Roles="MatchManager,ClubAdmin")]`, écritures **auditées**) configure un
+`MatchStream` unique par match : `Provider`, `StreamUrl` (le lien/embed sensible),
+`IsPaid`, `Price` (`numeric(14,2)`), fenêtre `StartsAt`/`EndsAt`, `IsPublished`. Un
+fan crée/réutilise un `MatchStreamAccess` (`Pending`) et paie ; l'accès passe
+**`Paid`** **uniquement** via le webhook vérifié.
+
+**Protection du `StreamUrl` (le cœur de la sécurité).** L'endpoint public
+`GET /api/matches/{id}/stream` renvoie les **métadonnées** (fournisseur, prix,
+fenêtre, `isPaid`) mais **ne révèle le `StreamUrl` que si** :
+
+- le flux est **gratuit** (`IsPaid == false`), **ou**
+- le fan courant possède un `MatchStreamAccess` **`Paid`**, vérifié **côté serveur**
+  à partir du claim d'identité (jamais déduit côté client).
+
+Sinon `streamUrl` vaut `null` et `hasAccess` est `false`. Le frontend n'affiche donc
+jamais un lien qu'il n'a pas reçu du serveur, et le webhook reste la **seule** source
+de vérité de l'accès payé.
+
+**Limite honnête (pas de DRM).** Ce *gating* par lien n'est **pas** du DRM : un fan
+ayant payé peut techniquement **repartager** le lien (YouTube unlisted, embed). Le
+durcissement (jetons signés à durée de vie courte, DRM, restriction par domaine)
+est **hors périmètre** de cette itération et relève d'un choix ultérieur du club.
+Les coûts de **droits**, de **production** et de **CDN/bande passante** restent à la
+charge du club.
 
 ## Configuration (environnement, jamais dans le dépôt)
 

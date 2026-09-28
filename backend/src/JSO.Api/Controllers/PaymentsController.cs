@@ -275,6 +275,18 @@ public sealed class PaymentsController(
         if (brick is { } brickId)
             return (PayableTypes.SupporterBrick, brickId);
 
+        var membership = await db.Memberships.AsNoTracking()
+            .Where(x => x.ProviderRef == providerRef)
+            .Select(x => (Guid?)x.Id).SingleOrDefaultAsync(ct);
+        if (membership is { } membershipId)
+            return (PayableTypes.Membership, membershipId);
+
+        var streamAccess = await db.MatchStreamAccesses.AsNoTracking()
+            .Where(x => x.ProviderRef == providerRef)
+            .Select(x => (Guid?)x.Id).SingleOrDefaultAsync(ct);
+        if (streamAccess is { } streamAccessId)
+            return (PayableTypes.MatchStreamAccess, streamAccessId);
+
         return null;
     }
 
