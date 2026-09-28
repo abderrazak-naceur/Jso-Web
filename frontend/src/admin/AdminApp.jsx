@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap, Receipt, FileText, HelpCircle, Ticket, MessageSquare, LayoutTemplate, CalendarDays, CreditCard, Radio } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, EyeOff, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap, Receipt, FileText, HelpCircle, Ticket, MessageSquare, LayoutTemplate, CalendarDays, CreditCard, Radio } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
@@ -195,9 +195,20 @@ function SecurityModule({ onError }) {
 
 function MediaModule({ onError }) {
   const [items,setItems]=useState([]); const [file,setFile]=useState(null); const [title,setTitle]=useState(''); const [caption,setCaption]=useState('')
+  const [editing,setEditing]=useState(null); const [editForm,setEditForm]=useState({title:'',caption:'',isPublished:true})
   async function load(){try{setItems(await api('/admin/media'))}catch(e){onError(e.message)}} useEffect(()=>{load()},[])
   async function upload(e){e.preventDefault();if(!file)return;try{const fd=new FormData();fd.append('file',file);fd.append('title',title);fd.append('caption',caption);await api('/admin/media/upload',{method:'POST',body:fd,headers:{}});setFile(null);setTitle('');setCaption('');e.target.reset();await load()}catch(e){onError(e.message)}}
   async function remove(id){if(!confirm('Supprimer ce média ?'))return;try{await api('/admin/media/'+id,{method:'DELETE'});await load()}catch(e){onError(e.message)}}
+  function startEdit(m){setEditing(m.id);setEditForm({title:m.title||'',caption:m.caption||'',isPublished:m.isPublished!==false})}
+  function cancelEdit(){setEditing(null)}
+  async function saveEdit(m){
+    try{
+      // The backend PUT replaces the record, so resend the unchanged url/type/thumbnail.
+      const body={title:editForm.title.trim(),caption:editForm.caption.trim()||null,url:m.url,type:m.type||'Image',thumbnailUrl:m.thumbnailUrl||null,isPublished:editForm.isPublished}
+      await api('/admin/media/'+m.id,{method:'PUT',body:JSON.stringify(body)})
+      setEditing(null);onError('');await load()
+    }catch(e){onError(e.message)}
+  }
   return <div className="space-y-6">
     <form onSubmit={upload} className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
       <div className="flex items-center justify-between"><div><h2 className="text-xl font-black">Media Library</h2><p className="text-xs text-slate-500">Images · JPEG, PNG, WebP, GIF · maximum 10 MB</p></div></div>
@@ -205,7 +216,21 @@ function MediaModule({ onError }) {
       {file&&<p className="mt-3 text-xs text-slate-500">{file.name} · {(file.size/1024/1024).toFixed(2)} MB</p>}
       <button disabled={!file} className="mt-4 flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-3 font-bold text-white disabled:opacity-40"><Upload size={16}/>Uploader le média</button>
     </form>
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{items.map(m=><div key={m.id} className="overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white"><div className="aspect-video bg-slate-100">{m.url&&<img src={m.url} alt={m.title} className="h-full w-full object-cover" loading="lazy"/>}</div><div className="p-4"><b className="block truncate">{m.title}</b><p className="mt-1 text-xs text-slate-500">{m.fileSize?((m.fileSize/1024/1024).toFixed(2)+' MB'):m.type}</p><button onClick={()=>remove(m.id)} className="mt-3 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700"><X size={13} className="mr-1 inline"/>Supprimer</button></div></div>)}</div>
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{items.map(m=><div key={m.id} className="overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white"><div className="aspect-video bg-slate-100">{m.url&&<img src={m.url} alt={m.title} className="h-full w-full object-cover" loading="lazy"/>}</div><div className="p-4">
+      {editing===m.id
+        ? <div className="space-y-2">
+            <input value={editForm.title} onChange={e=>setEditForm({...editForm,title:e.target.value})} placeholder="Titre" className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-jso-blue"/>
+            <input value={editForm.caption} onChange={e=>setEditForm({...editForm,caption:e.target.value})} placeholder="Légende" className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-jso-blue"/>
+            <label className="flex items-center gap-2 text-xs font-bold"><input type="checkbox" checked={editForm.isPublished} onChange={e=>setEditForm({...editForm,isPublished:e.target.checked})}/> Publié</label>
+            <div className="flex gap-2"><button onClick={()=>saveEdit(m)} className="flex items-center gap-1 rounded-lg bg-jso-navy px-3 py-1.5 text-xs font-bold text-white"><Save size={13}/>Enregistrer</button><button onClick={cancelEdit} className="rounded-lg px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100">Annuler</button></div>
+          </div>
+        : <>
+            <b className="block truncate">{m.title}</b>
+            {m.caption&&<p className="mt-1 truncate text-xs text-slate-500">{m.caption}</p>}
+            <p className="mt-1 text-xs text-slate-500">{m.fileSize?((m.fileSize/1024/1024).toFixed(2)+' MB'):m.type}{m.isPublished===false?' · Masqué':''}</p>
+            <div className="mt-3 flex gap-2"><button onClick={()=>startEdit(m)} className="flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-bold text-jso-navy"><Pencil size={13}/>Modifier</button><button onClick={()=>remove(m.id)} className="flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700"><X size={13}/>Supprimer</button></div>
+          </>}
+    </div></div>)}</div>
   </div>
 }
 
@@ -649,8 +674,10 @@ function NewsModule({ onError }) {
   function edit(item){setEditing(item.id);setForm({...item,publishedAt:item.publishedAt?.slice(0,16)||''})}
   async function save(e){e.preventDefault();try{const body={...form,publishedAt:form.publishedAt?new Date(form.publishedAt).toISOString():null};if(editing)await api('/admin/news/'+editing,{method:'PUT',body:JSON.stringify(body)});else await api('/admin/news',{method:'POST',body:JSON.stringify(body)});setEditing(null);setForm(emptyNews);await load()}catch(e){onError(e.message)}}
   async function publish(id){try{await api('/admin/news/'+id+'/publish',{method:'POST'});await load()}catch(e){onError(e.message)}}
+  async function unpublish(id){try{await api('/admin/news/'+id+'/unpublish',{method:'POST'});await load()}catch(e){onError(e.message)}}
+  async function remove(id){if(!confirm('Supprimer cet article ?'))return;try{await api('/admin/news/'+id,{method:'DELETE'});if(editing===id){setEditing(null);setForm(emptyNews)}await load()}catch(e){onError(e.message)}}
   return <div className="grid gap-6 xl:grid-cols-[1fr_1.2fr]">
-    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><div className="flex items-center justify-between"><h2 className="text-xl font-black">News CMS</h2><button onClick={()=>{setEditing(null);setForm(emptyNews)}} className="rounded-xl bg-jso-navy p-2 text-white"><Plus size={18}/></button></div><div className="mt-5 space-y-2">{items.map(n=><div key={n.id} className="rounded-xl bg-slate-50 p-4"><div className="flex justify-between gap-3"><div><b>{n.title}</b><p className="text-xs text-slate-500">{n.status} · {n.slug}</p></div><div className="flex gap-2"><button onClick={()=>edit(n)} className="text-jso-blue"><Pencil size={16}/></button>{n.status!=='Published'&&<button onClick={()=>publish(n.id)} className="text-emerald-600"><Eye size={16}/></button>}</div></div></div>)}</div></div>
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><div className="flex items-center justify-between"><h2 className="text-xl font-black">News CMS</h2><button onClick={()=>{setEditing(null);setForm(emptyNews)}} className="rounded-xl bg-jso-navy p-2 text-white"><Plus size={18}/></button></div><div className="mt-5 space-y-2">{items.map(n=><div key={n.id} className="rounded-xl bg-slate-50 p-4"><div className="flex justify-between gap-3"><div><b>{n.title}</b><p className="text-xs text-slate-500">{n.status} · {n.slug}</p></div><div className="flex gap-2">{n.status==='Published'?<button onClick={()=>unpublish(n.id)} title="Dépublier" className="text-amber-600"><EyeOff size={16}/></button>:<button onClick={()=>publish(n.id)} title="Publier" className="text-emerald-600"><Eye size={16}/></button>}<button onClick={()=>edit(n)} title="Modifier" className="text-jso-blue"><Pencil size={16}/></button><button onClick={()=>remove(n.id)} title="Supprimer" className="text-red-600"><X size={16}/></button></div></div></div>)}</div></div>
     <form onSubmit={save} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 space-y-3"><h2 className="text-xl font-black">{editing?'Modifier l’article':'Nouvel article'}</h2><Field label="Titre" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required/><Field label="Slug" value={form.slug} onChange={e=>setForm({...form,slug:e.target.value})} required/><Field label="Extrait" value={form.excerpt} onChange={e=>setForm({...form,excerpt:e.target.value})}/><label className="block text-sm font-bold">Contenu<textarea value={form.body} onChange={e=>setForm({...form,body:e.target.value})} rows="9" className="mt-2 w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-jso-blue"/></label><Field label="Cover URL" value={form.coverImageUrl} onChange={e=>setForm({...form,coverImageUrl:e.target.value})}/><button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/>Enregistrer</button></form>
   </div>
 }
