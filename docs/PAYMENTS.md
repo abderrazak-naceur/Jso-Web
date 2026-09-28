@@ -77,11 +77,17 @@ de la passer en `Paid`.
 - **Stripe** : `amount_total` / `currency` de la session sont comparés au montant
   attendu (`order.Total × TndToStripeRate`, en centimes) et à la devise configurée.
 - **Flouci** : le montant retourné par `verify_payment` (en millimes) et la devise
-  sont comparés à `order.Total × 1000` en TND.
+  sont comparés à `order.Total × 1000` en TND. Un `SUCCESS` dont la réponse
+  `verify_payment` **ne comporte pas** le montant (ou pas de devise) est traité
+  **comme un écart** : sans le montant réellement débité, on ne peut pas confirmer
+  que l'acheteur a payé le bon montant, donc on **ne complète pas** (montant/devise
+  manquants = méfiance, pas confiance). La devise `null` **ne passe jamais**.
 
-En cas d'écart (session manipulée, périmée ou incohérente), la commande **reste
-`Pending`** : l'incident est journalisé (sans secret) et audité (`ORDER_PAY_MISMATCH`)
-plutôt que marqué payé.
+En cas d'écart (session manipulée, périmée, incohérente, ou montant/devise manquant
+sur un paiement réussi), la commande **reste `Pending`** : l'incident est journalisé
+(sans secret) et audité (`PAYMENT_MISMATCH`) plutôt que marqué payé. Le webhook étant
+idempotent, il pourra compléter la commande lors d'une nouvelle notification si
+Flouci finit par renvoyer le montant.
 
 ## Abstraction générique (boutique, billetterie, mur des supporters)
 
@@ -164,7 +170,7 @@ double underscore standard .NET) :
 ```
 Payments__Flouci__AppToken=<APP_TOKEN Flouci>
 Payments__Flouci__AppSecret=<APP_SECRET Flouci>
-Payments__Flouci__WebhookSecret=<optionnel: secret partagé du webhook Flouci>
+Payments__Flouci__WebhookSecret=<secret partagé du webhook Flouci (OBLIGATOIRE en prod)>
 Payments__Stripe__SecretKey=sk_live_xxx        # ou sk_test_xxx en test
 Payments__Stripe__WebhookSecret=whsec_xxx      # secret de signature du webhook
 Payments__Stripe__TndToStripeRate=0.30         # taux TND -> devise Stripe (à tenir à jour)
@@ -195,11 +201,17 @@ authentification applicative ; l'authenticité est garantie par la signature/vé
   - Authenticité garantie par la signature `Stripe-Signature` (`whsec_...`).
 - Flouci : `POST https://votre-domaine/api/payments/flouci/webhook`
   - Flouci n'émet pas de signature vérifiable : l'authenticité repose sur l'appel
-    serveur `verify_payment`. En complément, un **secret partagé optionnel**
-    (`Payments:Flouci:WebhookSecret`) peut être exigé : s'il est renseigné, le webhook
-    n'agit que si l'en-tête `X-Flouci-Webhook-Secret` (ou le paramètre de requête
-    `webhookSecret`) correspond ; sinon il renvoie `401`. Laissé vide, l'endpoint
-    conserve son comportement actuel (protégé par la vérification serveur).
+    serveur `verify_payment`. En complément, un **secret partagé**
+    (`Payments:Flouci:WebhookSecret`) protège l'endpoint : s'il est renseigné, le
+    webhook n'agit que si l'en-tête `X-Flouci-Webhook-Secret` (ou le paramètre de
+    requête `webhookSecret`) correspond (comparaison à temps constant) ; sinon il
+    renvoie `401`.
+  - **En production, `Payments:Flouci:WebhookSecret` est OBLIGATOIRE.** S'il n'est
+    pas configuré, le webhook Flouci **refuse** la requête (`503`) au lieu de rester
+    anonyme : cela évite d'amplifier des appels `verify_payment` non authentifiés.
+    **En développement uniquement**, l'endpoint reste ouvert quand le secret est
+    vide (pour ne pas bloquer les tests locaux ; il reste protégé par la
+    vérification serveur `verify_payment`).
 
 Les deux handlers sont **idempotents** (délégués au `PayableCompletionRouter`, qui
 ne refait rien sur un payable déjà réglé), **recroisent le montant/devise** (voir

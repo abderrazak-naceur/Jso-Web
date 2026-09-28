@@ -18,7 +18,9 @@ namespace JSO.Api.Controllers;
 //     act on checkout.session.completed.
 //   - Flouci: we do NOT trust the notification body. We extract the payment id
 //     and call Flouci's verify endpoint with our secret to confirm "SUCCESS"
-//     before completing the payable.
+//     before completing the payable. A SUCCESS whose verify response omits the
+//     amount/currency is treated as a mismatch (left pending), not as trust. In
+//     Production a configured Payments:Flouci:WebhookSecret is mandatory.
 // Both handlers are GENERIC over the payable: from the provider metadata
 // (Stripe) or the stored ProviderRef (Flouci) they resolve a PayableType +
 // PayableId and delegate to the shared PayableCompletionRouter, which
@@ -36,6 +38,7 @@ public sealed class PaymentsController(
     StripePaymentProvider stripe,
     PaymentProviderSelector selector,
     Microsoft.Extensions.Options.IOptions<PaymentOptions> paymentOptions,
+    Microsoft.Extensions.Hosting.IHostEnvironment environment,
     ILogger<PaymentsController> logger) : ControllerBase
 {
     private const string FlouciWebhookSecretHeader = "X-Flouci-Webhook-Secret";
@@ -124,11 +127,20 @@ public sealed class PaymentsController(
         if (!flouci.IsConfigured)
             return StatusCode(StatusCodes.Status503ServiceUnavailable);
 
-        // Optional shared-secret guard. Flouci does not send a verifiable
-        // signature, so authenticity ultimately rests on the verify_payment call
-        // below; when a secret is configured we additionally require a matching
-        // header/query value to reduce unauthenticated abuse and verify-call
-        // amplification. When no secret is set the endpoint keeps its behaviour.
+        // Shared-secret guard. Flouci does not send a verifiable signature, so
+        // authenticity ultimately rests on the verify_payment call below; a
+        // configured secret additionally requires a matching header/query value
+        // to reduce unauthenticated abuse and verify-call amplification. In
+        // Production the secret is MANDATORY: an unconfigured secret rejects the
+        // request (503) instead of leaving the endpoint anonymous. In
+        // Development the endpoint stays open to keep local testing simple.
+        if (string.IsNullOrWhiteSpace(paymentOptions.Value.Flouci.WebhookSecret)
+            && environment.IsProduction())
+        {
+            logger.LogWarning("Flouci webhook rejected: WebhookSecret is not configured in Production");
+            return StatusCode(StatusCodes.Status503ServiceUnavailable);
+        }
+
         if (!IsFlouciWebhookAuthorized())
             return Unauthorized();
 
@@ -164,21 +176,24 @@ public sealed class PaymentsController(
         }
 
         // Cross-check the verified amount/currency against the expected TND amount
-        // (in millimes) when Flouci reports them. A mismatch leaves it pending.
-        if (verification.Amount is { } paidMillimes)
+        // (in millimes). A SUCCESS with a MISSING amount or currency is treated as
+        // a mismatch, NOT as trust: without the settled amount we cannot confirm
+        // the buyer paid what we intended, so the payable stays Pending and we
+        // record a mismatch audit (safe to retry once Flouci reports the amount).
+        var expectedMillimes = (long)Math.Round(expectedTnd.Value * 1000m, MidpointRounding.AwayFromZero);
+        var paidMillimes = verification.Amount;
+        var paidCurrency = verification.Currency;
+        if (paidMillimes is not { } settledMillimes
+            || settledMillimes != expectedMillimes
+            || string.IsNullOrWhiteSpace(paidCurrency)
+            || !string.Equals(paidCurrency, "TND", StringComparison.OrdinalIgnoreCase))
         {
-            var expectedMillimes = (long)Math.Round(expectedTnd.Value * 1000m, MidpointRounding.AwayFromZero);
-            var paidCurrency = verification.Currency;
-            if (paidMillimes != expectedMillimes
-                || (paidCurrency is not null && !string.Equals(paidCurrency, "TND", StringComparison.OrdinalIgnoreCase)))
-            {
-                logger.LogWarning(
-                    "Flouci webhook: amount/currency mismatch for {PayableType} {PayableId} (expected {ExpectedMillimes} millimes TND), leaving pending",
-                    payableType, payableId, expectedMillimes);
-                await audit.LogAsync("PAYMENT_MISMATCH", payableType, payableId.ToString(), null, null,
-                    HttpContext.Connection.RemoteIpAddress?.ToString(), new { provider = "Flouci" }, ct);
-                return Ok();
-            }
+            logger.LogWarning(
+                "Flouci webhook: amount/currency missing or mismatched for {PayableType} {PayableId} (expected {ExpectedMillimes} millimes TND), leaving pending",
+                payableType, payableId, expectedMillimes);
+            await audit.LogAsync("PAYMENT_MISMATCH", payableType, payableId.ToString(), null, null,
+                HttpContext.Connection.RemoteIpAddress?.ToString(), new { provider = "Flouci" }, ct);
+            return Ok();
         }
 
         var result = await completions.CompleteAsync(payableType, payableId, "Flouci", paymentId, ct);
@@ -189,8 +204,10 @@ public sealed class PaymentsController(
     }
 
     // When a Flouci webhook shared secret is configured, require a matching value
-    // in the X-Flouci-Webhook-Secret header (or ?webhookSecret= query). When no
-    // secret is configured the endpoint stays open (protected by verify_payment).
+    // in the X-Flouci-Webhook-Secret header (or ?webhookSecret= query) using a
+    // constant-time comparison. When no secret is configured this returns true;
+    // the caller enforces that the unconfigured case is only allowed outside
+    // Production (in Production the missing secret is already rejected upstream).
     private bool IsFlouciWebhookAuthorized()
     {
         var configured = paymentOptions.Value.Flouci.WebhookSecret;
