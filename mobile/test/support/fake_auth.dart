@@ -77,6 +77,59 @@ class FakeAuthRepository extends AuthRepository {
     }
     return meUser!;
   }
+
+  /// Records for the profile/GDPR flows and injectable outcomes.
+  final List<Map<String, Object?>> profileUpdates = [];
+  final List<Map<String, String>> passwordChanges = [];
+  int deleteCalls = 0;
+  FanUser? updateResult;
+  ApiException? updateError;
+  ApiException? changePasswordError;
+  Map<String, dynamic> exportData = const {};
+  ApiException? exportError;
+  ApiException? deleteError;
+
+  @override
+  Future<FanUser> updateProfile(
+    String token, {
+    String? displayName,
+    DateTime? birthDate,
+    bool? anniversaryOptIn,
+  }) async {
+    profileUpdates.add({
+      'displayName': displayName,
+      'birthDate': birthDate,
+      'anniversaryOptIn': anniversaryOptIn,
+    });
+    if (updateError != null) throw updateError!;
+    return updateResult ??
+        SampleFan.user(
+          displayName: displayName ?? 'Sami Ultras',
+          anniversaryOptIn: anniversaryOptIn ?? false,
+        );
+  }
+
+  @override
+  Future<void> changePassword(
+    String token, {
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    passwordChanges.add({'current': currentPassword, 'next': newPassword});
+    if (changePasswordError != null) throw changePasswordError!;
+  }
+
+  @override
+  Future<Map<String, dynamic>> exportMyData(String token) async {
+    if (exportError != null) throw exportError!;
+    return exportData;
+  }
+
+  @override
+  Future<void> deleteMyAccount(String token) async {
+    deleteCalls++;
+    if (deleteError != null) throw deleteError!;
+  }
 }
 
 /// Convenience factory for an [AuthController] backed by fakes.
@@ -99,11 +152,15 @@ class SampleFan {
     String email = 'supporter@jso.tn',
     String displayName = 'Sami Ultras',
     bool emailVerified = true,
+    bool anniversaryOptIn = false,
+    DateTime? birthDate,
   }) => FanUser(
     id: id,
     email: email,
     displayName: displayName,
     emailVerified: emailVerified,
+    anniversaryOptIn: anniversaryOptIn,
+    birthDate: birthDate,
   );
 
   static AuthResult authResult({String token = 'jwt-token', FanUser? user}) =>

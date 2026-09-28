@@ -76,6 +76,13 @@ class AuthController extends ChangeNotifier {
     );
   }
 
+  /// Applies an updated [FanUser] (e.g. after a profile edit) and notifies
+  /// listeners so the profile screen reflects it immediately.
+  void applyUser(FanUser user) {
+    _user = user;
+    notifyListeners();
+  }
+
   /// Clears the stored token and resets to the anonymous state.
   Future<void> logout() async {
     await _tokenStore.clear();
@@ -111,5 +118,55 @@ class AuthController extends ChangeNotifier {
     _accessToken = null;
     _status = AuthStatus.anonymous;
     notifyListeners();
+  }
+
+  /// Updates the profile via `PUT /account/me` using the in-memory token and
+  /// applies the refreshed [FanUser]. Throws [ApiException] on failure so the
+  /// screen can show the translated message; returns the updated user.
+  Future<FanUser> updateProfile({
+    String? displayName,
+    DateTime? birthDate,
+    bool? anniversaryOptIn,
+  }) async {
+    final token = _accessToken;
+    if (token == null) throw const InvalidCredentialsException();
+    final updated = await _repository.updateProfile(
+      token,
+      displayName: displayName,
+      birthDate: birthDate,
+      anniversaryOptIn: anniversaryOptIn,
+    );
+    applyUser(updated);
+    return updated;
+  }
+
+  /// Changes the password via `POST /account/change-password`. Throws
+  /// [ApiException] on failure.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final token = _accessToken;
+    if (token == null) throw const InvalidCredentialsException();
+    await _repository.changePassword(
+      token,
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+  }
+
+  /// Fetches the RGPD personal-data export (`GET /fan/data-export`).
+  Future<Map<String, dynamic>> exportMyData() async {
+    final token = _accessToken;
+    if (token == null) throw const InvalidCredentialsException();
+    return _repository.exportMyData(token);
+  }
+
+  /// Requests account erasure (`POST /fan/account-deletion`) then signs out.
+  Future<void> deleteAccount() async {
+    final token = _accessToken;
+    if (token == null) throw const InvalidCredentialsException();
+    await _repository.deleteMyAccount(token);
+    await logout();
   }
 }

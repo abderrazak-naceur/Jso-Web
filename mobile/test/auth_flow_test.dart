@@ -65,6 +65,13 @@ void main() {
       // Back on the profile, which now shows the authenticated fan.
       expect(find.byType(LoginScreen), findsNothing);
       expect(find.text('Sami Ultras'), findsOneWidget);
+      // The profile is now a scrollable list of actions; bring the logout
+      // button (at the bottom) into view before asserting it.
+      await tester.scrollUntilVisible(
+        find.text('Se déconnecter'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('Se déconnecter'), findsOneWidget);
     });
 
@@ -130,6 +137,11 @@ void main() {
       await pumpWithAuth(tester, auth: auth, child: const ProfileScreen());
       await tester.pumpAndSettle();
 
+      await tester.scrollUntilVisible(
+        find.widgetWithText(ElevatedButton, 'Se déconnecter'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.widgetWithText(ElevatedButton, 'Se déconnecter'));
       await tester.pumpAndSettle();
 
