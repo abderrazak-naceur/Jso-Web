@@ -3,6 +3,7 @@ using System;
 using JSO.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace JSO.Infrastructure.Migrations.Postgres
 {
     [DbContext(typeof(JsoDbContext))]
-    partial class JsoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260928084316_AddHomeSectionAndNavigation")]
+    partial class AddHomeSectionAndNavigation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -460,53 +463,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.ToTable("ClubEvents");
                 });
 
-            modelBuilder.Entity("JSO.Domain.CommunityComment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("FanUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("ModeratedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ModeratedByAdminId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("Pending");
-
-                    b.Property<string>("TargetId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("TargetType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FanUserId");
-
-                    b.HasIndex("Status", "CreatedAt");
-
-                    b.HasIndex("TargetType", "TargetId", "Status");
-
-                    b.ToTable("CommunityComments");
-                });
-
             modelBuilder.Entity("JSO.Domain.CommunityProgram", b =>
                 {
                     b.Property<Guid>("Id")
@@ -547,84 +503,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.HasIndex("IsPublished", "StartDate");
 
                     b.ToTable("CommunityPrograms");
-                });
-
-            modelBuilder.Entity("JSO.Domain.CommunityReaction", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("FanUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Kind")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("TargetId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("TargetType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TargetType", "TargetId", "Kind");
-
-                    b.HasIndex("FanUserId", "TargetType", "TargetId", "Kind")
-                        .IsUnique();
-
-                    b.ToTable("CommunityReactions");
-                });
-
-            modelBuilder.Entity("JSO.Domain.CommunityReport", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("HandledAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("HandledByAdminId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Reason")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("ReporterFanUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("Open");
-
-                    b.Property<string>("TargetId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("TargetType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Status", "CreatedAt");
-
-                    b.HasIndex("TargetType", "TargetId");
-
-                    b.ToTable("CommunityReports");
                 });
 
             modelBuilder.Entity("JSO.Domain.Competition", b =>

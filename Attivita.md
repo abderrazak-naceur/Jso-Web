@@ -91,14 +91,16 @@ Legenda: ✅ fatto · 🟡 parziale · ⛔ da fare · 🔒 bloccato da dipendenz
 
 ---
 
-## ⛔ Da fare — Idee del piano ancora mancanti
+## Idee del piano — stato aggiornato
 
 | # | Idea | Stato | Nota |
 |---|------|-------|------|
-| A2 | UGC foto tifosi con moderazione | ⛔ | Fattibile a costo zero (riusa MediaAsset + moderazione) |
-| E19 | Modalità stadio offline (PWA leggera) | ⛔ | Solo frontend, costo zero (service worker) |
+| A2 | UGC foto tifosi con moderazione | ✅ | Fatto: upload Fan + moderazione admin + galleria pubblica approvate |
+| E19 | Modalità stadio offline (PWA leggera) | ✅ | Fatto: manifest + service worker + banner offline (esclude admin/autenticato) |
 | B24 | Streaming pay-per-view della partita | 🔒 | Richiede diritti di trasmissione + gateway pagamenti |
 | F20 | Trascrizioni / sottotitoli automatici | 🔒 | Richiede provider AI a pagamento |
+
+Tutte le idee del piano **fattibili a costo zero** sono completate. Restano solo le due bloccate da servizi esterni (B24 pagamenti, F20 AI).
 
 ---
 
