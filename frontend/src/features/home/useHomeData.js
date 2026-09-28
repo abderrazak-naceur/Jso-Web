@@ -3,6 +3,25 @@ import { publicApi } from '../../lib/api'
 import { pick } from '../../lib/format'
 import { normalizeMatch } from '../matches/matchUtils'
 
+// Per-section fetch status: 'loading' | 'ready' | 'error'. Lets each section
+// tell "still loading" and "request failed" apart from a genuinely empty
+// result, instead of every failure collapsing into a "coming soon" placeholder.
+const SECTION_KEYS = [
+  'players',
+  'media',
+  'sponsors',
+  'products',
+  'events',
+  'documents',
+  'faq',
+  'archive',
+  'community',
+]
+
+const INITIAL_SECTION_STATUS = Object.fromEntries(
+  SECTION_KEYS.map((key) => [key, 'loading']),
+)
+
 const INITIAL_STATE = {
   status: 'loading', // loading | ready | offline, driven by /api/home (club, matches, news)
   club: null,
@@ -19,6 +38,7 @@ const INITIAL_STATE = {
   faq: [],
   archive: [],
   community: [],
+  sectionStatus: INITIAL_SECTION_STATUS,
 }
 
 export function normalizeArticle(item) {
@@ -62,9 +82,27 @@ export function useHomeData() {
     const merge = (patch) => {
       if (!signal.aborted) setData((previous) => ({ ...previous, ...patch }))
     }
+    // Patch a single section's status without clobbering the others.
+    const setStatus = (key, value) => {
+      if (signal.aborted) return
+      setData((previous) => ({
+        ...previous,
+        sectionStatus: { ...previous.sectionStatus, [key]: value },
+      }))
+    }
+    // Loads a list section, tracking loading/ready/error so the UI can tell an
+    // empty result apart from a failed request. An aborted request (navigation
+    // away) is not an error and leaves the status untouched.
     const loadList = (key, request) => request
-      .then((value) => merge({ [key]: Array.isArray(value) ? value : [] }))
-      .catch(() => merge({ [key]: [] }))
+      .then((value) => {
+        merge({ [key]: Array.isArray(value) ? value : [] })
+        setStatus(key, 'ready')
+      })
+      .catch(() => {
+        if (signal.aborted) return
+        merge({ [key]: [] })
+        setStatus(key, 'error')
+      })
 
     publicApi.getHome(signal)
       .then((home) => merge({
@@ -82,12 +120,18 @@ export function useHomeData() {
         const teamId = pick(pickFirstTeam(Array.isArray(teams) ? teams : []), 'Id', 'id')
         if (!teamId) {
           merge({ players: [] })
+          setStatus('players', 'ready')
           return
         }
         const players = await publicApi.getTeamPlayers(teamId, signal)
         merge({ players: (Array.isArray(players) ? players : []).map(normalizePlayer).sort(byShirtNumber) })
+        setStatus('players', 'ready')
       })
-      .catch(() => merge({ players: [] }))
+      .catch(() => {
+        if (signal.aborted) return
+        merge({ players: [] })
+        setStatus('players', 'error')
+      })
 
     loadList('media', publicApi.getMedia(signal))
     loadList('sponsors', publicApi.getSponsors('Footer', signal))

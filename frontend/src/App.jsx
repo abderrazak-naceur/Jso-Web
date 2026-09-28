@@ -77,9 +77,9 @@ function App() {
     news: () => (
       <NewsSection key="news" section={sectionById.news} status={data.status} articles={data.news} content={data.content} onOpenArticle={setSelectedArticle} />
     ),
-    team: () => <TeamSection key="team" section={sectionById.team} players={data.players} />,
+    team: () => <TeamSection key="team" section={sectionById.team} players={data.players} status={data.sectionStatus.players} />,
     club: () => <ClubSection key="club" section={sectionById.club} club={data.club} content={data.content} />,
-    shop: () => <ShopSection key="shop" section={sectionById.shop} products={data.products} cart={cart} onOpenCart={() => setCartOpen(true)} />,
+    shop: () => <ShopSection key="shop" section={sectionById.shop} products={data.products} status={data.sectionStatus.products} cart={cart} onOpenCart={() => setCartOpen(true)} />,
     memberships: () => (
       <MembershipsSection
         key="memberships"
@@ -88,13 +88,13 @@ function App() {
         onRequireLogin={() => openAuth('login')}
       />
     ),
-    media: () => <MediaSection key="media" section={sectionById.media} media={data.media} />,
-    events: () => <AgendaSection key="events" section={sectionById.events} events={data.events} />,
+    media: () => <MediaSection key="media" section={sectionById.media} media={data.media} status={data.sectionStatus.media} />,
+    events: () => <AgendaSection key="events" section={sectionById.events} events={data.events} status={data.sectionStatus.events} />,
     community: () => (sectionById.community ? <CommunitySection key="community" section={sectionById.community} programs={data.community} /> : null),
     archive: () => (sectionById.archive ? <ArchiveSection key="archive" section={sectionById.archive} archive={data.archive} /> : null),
     mobile: () => <MobileSection key="mobile" section={sectionById.mobile} />,
     sponsors: () => (sectionById.sponsors ? <SponsorsSection key="sponsors" section={sectionById.sponsors} sponsors={data.sponsors} /> : null),
-    infos: () => <InfoSection key="infos" section={sectionById.infos} club={data.club} documents={data.documents} faq={data.faq} />,
+    infos: () => <InfoSection key="infos" section={sectionById.infos} club={data.club} documents={data.documents} faq={data.faq} documentsStatus={data.sectionStatus.documents} faqStatus={data.sectionStatus.faq} />,
   }
 
   // Default page order (matches the built-in layout). `orderHomeSections`
