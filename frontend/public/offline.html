@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#071a3a" />
+    <title>Hors ligne — JSO</title>
+    <style>
+      :root {
+        --jso-navy: #071a3a;
+        --jso-blue: #1769e0;
+        --jso-gold: #ffd700;
+        --jso-paper: #f6f8fc;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; }
+      body {
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        padding: 1.5rem;
+        background: var(--jso-navy);
+        color: #ffffff;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+        text-align: center;
+      }
+      .card {
+        max-width: 30rem;
+        width: 100%;
+      }
+      .crest {
+        width: 72px;
+        height: 72px;
+        object-fit: contain;
+        margin: 0 auto 1.25rem;
+        display: block;
+      }
+      .eyebrow {
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.2em;
+        color: var(--jso-gold);
+        margin: 0 0 0.5rem;
+      }
+      h1 {
+        font-size: 1.9rem;
+        font-weight: 900;
+        margin: 0 0 0.75rem;
+        line-height: 1.15;
+      }
+      p {
+        color: rgba(255, 255, 255, 0.75);
+        line-height: 1.6;
+        margin: 0 0 1.75rem;
+      }
+      button {
+        appearance: none;
+        border: 0;
+        cursor: pointer;
+        border-radius: 9999px;
+        background: var(--jso-gold);
+        color: var(--jso-navy);
+        font-weight: 800;
+        font-size: 0.95rem;
+        padding: 0.85rem 1.75rem;
+        transition: transform 0.15s ease, background 0.15s ease;
+      }
+      button:hover { transform: translateY(-1px); background: #ffe14d; }
+      .hint {
+        margin-top: 1.5rem;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.55);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <img class="crest" src="/favicon.svg" alt="Blason JSO" />
+      <p class="eyebrow">MODE HORS-LIGNE</p>
+      <h1>Vous êtes hors ligne</h1>
+      <p>
+        Cette page n'a pas encore été enregistrée pour la consultation hors
+        connexion. Les pages déjà visitées et les dernières données publiques
+        (calendrier, matchs, actualités) restent disponibles.
+      </p>
+      <button type="button" onclick="location.reload()">Réessayer</button>
+      <p class="hint">Reconnectez-vous au réseau pour retrouver le contenu à jour.</p>
+    </div>
+    <script>
+      // Auto-reload when the connection comes back, so the fan does not have
+      // to tap "Réessayer" manually once the stadium network recovers.
+      window.addEventListener('online', function () {
+        location.reload()
+      })
+    </script>
+  </body>
+</html>

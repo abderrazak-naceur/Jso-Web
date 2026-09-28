@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import AccessibilityPanel from './AccessibilityPanel'
+import OfflineBanner from './OfflineBanner'
 import AccountSettingsModal from './features/account/AccountSettingsModal'
 import AuthModal from './features/account/AuthModal'
 import ChangePasswordModal from './features/account/ChangePasswordModal'
@@ -144,6 +145,7 @@ function App() {
       />
       <ChangePasswordModal open={passwordOpen} token={fan.token} onClose={() => setPasswordOpen(false)} />
       <AccessibilityPanel />
+      <OfflineBanner />
     </div>
   )
 }

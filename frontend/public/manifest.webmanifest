@@ -1,0 +1,34 @@
+{
+  "name": "JSO — Jeunesse Sportive de Oudhref",
+  "short_name": "JSO",
+  "description": "Plateforme digitale officielle de la Jeunesse Sportive de Oudhref. Calendrier, résultats, compositions et actualités du club, consultables même au stade avec une connexion faible.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f6f8fc",
+  "theme_color": "#071a3a",
+  "categories": ["sports", "news"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "/JSO-crest-regenerated.png",
+      "type": "image/png",
+      "sizes": "1230x1278",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/JSO-official-crest.png",
+      "type": "image/png",
+      "sizes": "86x100",
+      "purpose": "any"
+    }
+  ]
+}

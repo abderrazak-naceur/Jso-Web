@@ -124,6 +124,75 @@ section[id] {
   outline-offset: 3px;
 }
 
+/* Offline / update banner (idea E19). Fixed at the top so the fan sees the
+   "mode hors-ligne" state clearly without covering the accessibility launcher
+   (bottom-left). Respects reduced-motion via the shared preference. */
+.jso-offline-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 95;
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem;
+  pointer-events: none;
+}
+.jso-offline-banner__inner {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  max-width: 42rem;
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  border-radius: 0.9rem;
+  background: #071a3a;
+  color: #ffffff;
+  box-shadow: 0 12px 32px rgba(7, 26, 58, 0.35);
+  animation: jso-offline-slide 0.2s ease;
+}
+.jso-offline-banner__inner--update {
+  background: #1769e0;
+}
+.jso-offline-banner__text {
+  flex: 1;
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+.jso-offline-banner__action {
+  flex-shrink: 0;
+  border: 0;
+  cursor: pointer;
+  border-radius: 9999px;
+  background: #ffd700;
+  color: #071a3a;
+  font-weight: 800;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.9rem;
+}
+.jso-offline-banner__close {
+  flex-shrink: 0;
+  display: inline-flex;
+  border: 0;
+  cursor: pointer;
+  border-radius: 9999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0.25rem;
+}
+.jso-offline-banner__close:hover {
+  color: #ffffff;
+}
+@keyframes jso-offline-slide {
+  from { transform: translateY(-120%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+html.jso-reduce-motion .jso-offline-banner__inner {
+  animation: none;
+}
+
 /* Floating accessibility launcher, bottom-left so it never covers the fan
    auth / match-center controls that live on the right. */
 .jso-a11y-launcher {
