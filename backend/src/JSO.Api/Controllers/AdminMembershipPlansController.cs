@@ -92,13 +92,7 @@ public sealed class AdminMembershipPlansController(JsoDbContext db, AuditService
     [HttpGet("/api/admin/memberships")]
     public async Task<IActionResult> GetMemberships([FromQuery] string? status, CancellationToken ct)
     {
-        var query = db.Memberships.AsNoTracking();
-        if (!string.IsNullOrWhiteSpace(status))
-        {
-            var s = status.Trim();
-            query = query.Where(x => x.Status == s);
-        }
-        var rows = await query
+        var rows = await db.Memberships.AsNoTracking()
             .OrderByDescending(x => x.CreatedAt)
             .Join(db.MembershipPlans.AsNoTracking(), m => m.MembershipPlanId, p => p.Id, (m, p) => new
             {
@@ -106,7 +100,22 @@ public sealed class AdminMembershipPlansController(JsoDbContext db, AuditService
                 m.Status, m.PaymentStatus, m.StartsAt, m.EndsAt, m.PaymentProvider, m.Country, m.CreatedAt
             })
             .ToListAsync(ct);
-        return Ok(rows);
+        // Derive the effective status (Active past EndsAt -> Expired) so the
+        // oversight list never over-reports an entitlement, and filter on it so
+        // ?status=Active returns only currently-active subscriptions.
+        var now = DateTimeOffset.UtcNow;
+        var projected = rows.Select(x => new
+        {
+            x.Id, x.FanUserId, x.MembershipPlanId, x.PlanName, x.Price, x.Currency,
+            Status = MembershipStatus.Effective(x.Status, x.EndsAt, now),
+            x.PaymentStatus, x.StartsAt, x.EndsAt, x.PaymentProvider, x.Country, x.CreatedAt
+        });
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            var s = status.Trim();
+            projected = projected.Where(x => x.Status == s);
+        }
+        return Ok(projected);
     }
 
     private static string? Validate(MembershipPlanRequest r)

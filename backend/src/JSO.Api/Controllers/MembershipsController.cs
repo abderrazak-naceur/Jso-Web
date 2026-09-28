@@ -51,6 +51,26 @@ public sealed class MembershipsController(
         if (plan is null) return BadRequest(new { message = "Cet abonnement n'est pas disponible." });
         if (plan.Price <= 0) return BadRequest(new { message = "Le prix de l'abonnement est invalide." });
 
+        // Reuse the fan's last unpaid Pending membership for this same plan
+        // instead of piling up orphan rows on every retry. The price/currency are
+        // still recomputed server-side from the active plan so a plan price change
+        // is reflected before payment. Idempotent from the fan's perspective.
+        var existing = await db.Memberships
+            .Where(x => x.FanUserId == fanId.Value
+                        && x.MembershipPlanId == plan.Id
+                        && x.Status == "Pending"
+                        && x.PaymentStatus != "Paid")
+            .OrderByDescending(x => x.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+        if (existing is not null)
+        {
+            existing.Price = plan.Price;
+            existing.Currency = plan.Currency;
+            await db.SaveChangesAsync(ct);
+            return Created($"/api/memberships/{existing.Id}",
+                new { existing.Id, existing.MembershipPlanId, existing.Price, existing.Currency, existing.Status, existing.PaymentStatus });
+        }
+
         var membership = new Membership
         {
             FanUserId = fanId.Value,
@@ -78,6 +98,7 @@ public sealed class MembershipsController(
     {
         var fanId = CurrentFanId();
         if (fanId is null) return Unauthorized();
+        var now = DateTimeOffset.UtcNow;
         var rows = await db.Memberships.AsNoTracking()
             .Where(x => x.FanUserId == fanId)
             .OrderByDescending(x => x.CreatedAt)
@@ -87,7 +108,15 @@ public sealed class MembershipsController(
                 m.Status, m.PaymentStatus, m.StartsAt, m.EndsAt, m.CreatedAt
             })
             .ToListAsync(ct);
-        return Ok(rows);
+        // Derive the effective status at read-time so an Active membership past
+        // its EndsAt is reported as Expired (single source: MembershipStatus).
+        var result = rows.Select(x => new
+        {
+            x.Id, x.MembershipPlanId, x.PlanName, x.Price, x.Currency,
+            Status = MembershipStatus.Effective(x.Status, x.EndsAt, now),
+            x.PaymentStatus, x.StartsAt, x.EndsAt, x.CreatedAt
+        });
+        return Ok(result);
     }
 
     // Fan: single membership lookup for the owning fan. Used by the payment
@@ -103,7 +132,14 @@ public sealed class MembershipsController(
             .Select(x => new { x.Id, x.MembershipPlanId, x.Price, x.Currency, x.Status, x.PaymentStatus, x.StartsAt, x.EndsAt, x.CreatedAt })
             .SingleOrDefaultAsync(ct);
         if (row is null) return NotFound();
-        return Ok(row);
+        // Effective status: an Active membership past EndsAt is reported as Expired.
+        var now = DateTimeOffset.UtcNow;
+        return Ok(new
+        {
+            row.Id, row.MembershipPlanId, row.Price, row.Currency,
+            Status = MembershipStatus.Effective(row.Status, row.EndsAt, now),
+            row.PaymentStatus, row.StartsAt, row.EndsAt, row.CreatedAt
+        });
     }
 
     // Fan: start an online payment for the fan's OWN Pending membership. Same
