@@ -19,11 +19,17 @@ import { formatDate, formatMoney, formatTime, pick } from '../../lib/format'
 import { CLUB_FOUNDED, CLUB_NAME } from '../site/brand'
 import { eyebrowText } from '../site/navigation'
 import SectionHeading from './SectionHeading'
+import { SectionError, SectionLoading } from './SectionState'
 
-export function TeamSection({ section, players }) {
+export function TeamSection({ section, players, status = 'ready' }) {
   return (
     <section id="team" aria-labelledby="team-title" className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
       <SectionHeading section={section} title="Les visages" muted="de la JSO." description="Découvrez les joueurs de l’équipe première et ceux qui portent les couleurs d’Oudhref." />
+      {status === 'loading' ? (
+        <div className="mt-10"><SectionLoading message="Chargement de l’effectif…" /></div>
+      ) : status === 'error' ? (
+        <div className="mt-10"><SectionError message="L’effectif est momentanément indisponible." /></div>
+      ) : (
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {players.length > 0 ? players.slice(0, 10).map((player) => (
           <article key={player.id} className="group overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-4 shadow-lg shadow-slate-200/35 transition hover:-translate-y-1 hover:shadow-xl">
@@ -44,6 +50,7 @@ export function TeamSection({ section, players }) {
           </div>
         )}
       </div>
+      )}
     </section>
   )
 }
@@ -86,7 +93,7 @@ export function ClubSection({ section, club, content }) {
   )
 }
 
-export function ShopSection({ section, products, cart, onOpenCart }) {
+export function ShopSection({ section, products, cart, onOpenCart, status = 'ready' }) {
   return (
     <section id="shop" aria-labelledby="shop-title" className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
       <div className="relative overflow-hidden rounded-[2.5rem] bg-jso-gold p-7 sm:p-10 lg:p-12">
@@ -103,7 +110,11 @@ export function ShopSection({ section, products, cart, onOpenCart }) {
               </button>
             ) : null}
           />
-          {products.length === 0 ? (
+          {status === 'loading' ? (
+            <p className="mt-10 rounded-2xl bg-white/45 p-6 font-semibold text-jso-navy/75" role="status">Chargement de la boutique…</p>
+          ) : status === 'error' ? (
+            <p className="mt-10 rounded-2xl bg-white/60 p-6 font-semibold text-jso-navy/75" role="alert">La boutique est momentanément indisponible.</p>
+          ) : products.length === 0 ? (
             <p className="mt-10 rounded-2xl bg-white/45 p-6 font-semibold text-jso-navy/75">La boutique arrive bientôt. Les produits officiels seront disponibles ici.</p>
           ) : (
             <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -147,13 +158,18 @@ export function ShopSection({ section, products, cart, onOpenCart }) {
   )
 }
 
-export function MediaSection({ section, media }) {
+export function MediaSection({ section, media, status = 'ready' }) {
   const featured = media.slice(0, 3)
 
   return (
     <section id="media" aria-labelledby="media-title" className="border-y border-slate-200 bg-white/45">
       <div className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
         <SectionHeading section={section} title="Voir, vivre," muted="partager." description="Photos, vidéos et moments forts de la communauté JSO." />
+        {status === 'loading' ? (
+          <div className="mt-10"><SectionLoading message="Chargement des médias…" /></div>
+        ) : status === 'error' ? (
+          <div className="mt-10"><SectionError message="Les médias sont momentanément indisponibles." /></div>
+        ) : (
         <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {featured.length > 0 ? featured.map((item, index) => {
             const url = pick(item, 'url', 'Url')
@@ -185,15 +201,21 @@ export function MediaSection({ section, media }) {
             </div>
           )}
         </div>
+        )}
       </div>
     </section>
   )
 }
 
-export function AgendaSection({ section, events }) {
+export function AgendaSection({ section, events, status = 'ready' }) {
   return (
     <section id="events" aria-labelledby="events-title" className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
       <SectionHeading section={section} title="Les rendez-vous" muted="du club." description="Matchs, réunions et événements à ne pas manquer." />
+      {status === 'loading' ? (
+        <div className="mt-10"><SectionLoading message="Chargement de l’agenda…" /></div>
+      ) : status === 'error' ? (
+        <div className="mt-10"><SectionError message="L’agenda est momentanément indisponible." /></div>
+      ) : (
       <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {events.length > 0 ? events.map((event) => {
           const id = pick(event, 'id', 'Id')
@@ -215,6 +237,7 @@ export function AgendaSection({ section, events }) {
           <div className="rounded-[2rem] border border-dashed border-slate-300 bg-white p-8 text-slate-500 md:col-span-2 lg:col-span-3">Aucun événement annoncé pour le moment.</div>
         )}
       </div>
+      )}
     </section>
   )
 }
@@ -305,7 +328,7 @@ export function SponsorsSection({ section, sponsors }) {
   )
 }
 
-export function InfoSection({ section, club, documents, faq }) {
+export function InfoSection({ section, club, documents, faq, documentsStatus = 'ready', faqStatus = 'ready' }) {
   const city = pick(club, 'city', 'City') || 'Oudhref'
   const country = pick(club, 'country', 'Country') || 'Tunisie'
 
@@ -322,7 +345,12 @@ export function InfoSection({ section, club, documents, faq }) {
               <a href="#matches" className="mt-7 inline-flex items-center gap-2 text-sm font-extrabold text-jso-gold">Voir le calendrier <ArrowUpRight size={15} aria-hidden="true" /></a>
             </article>
 
-            {documents.length > 0 && (
+            {documentsStatus === 'error' ? (
+              <div className="rounded-[2rem] border border-slate-200 bg-white p-6">
+                <div className="flex items-center gap-3"><FileText className="text-jso-blue" size={22} aria-hidden="true" /><h3 className="text-xl font-black">Documents officiels</h3></div>
+                <p className="mt-4 text-sm font-semibold text-amber-800" role="alert">Les documents sont momentanément indisponibles.</p>
+              </div>
+            ) : documents.length > 0 && (
               <div className="rounded-[2rem] border border-slate-200 bg-white p-6">
                 <div className="flex items-center gap-3"><FileText className="text-jso-blue" size={22} aria-hidden="true" /><h3 className="text-xl font-black">Documents officiels</h3></div>
                 <div className="mt-4 space-y-2">
@@ -338,7 +366,11 @@ export function InfoSection({ section, club, documents, faq }) {
 
           <div className="rounded-[2rem] border border-slate-200 bg-white p-6 sm:p-8">
             <div className="flex items-center gap-3"><CircleHelp className="text-jso-blue" size={24} aria-hidden="true" /><h3 className="text-2xl font-black">Questions fréquentes</h3></div>
-            {faq.length > 0 ? (
+            {faqStatus === 'loading' ? (
+              <p className="mt-6 rounded-2xl bg-slate-50 p-6 font-semibold text-slate-500" role="status">Chargement des questions…</p>
+            ) : faqStatus === 'error' ? (
+              <p className="mt-6 rounded-2xl bg-amber-50 p-6 font-semibold text-amber-900" role="alert">La foire aux questions est momentanément indisponible.</p>
+            ) : faq.length > 0 ? (
               <div className="mt-5 divide-y divide-slate-200">
                 {faq.map((item) => (
                   <details key={pick(item, 'id', 'Id')} className="group py-4 [&_summary::-webkit-details-marker]:hidden">
