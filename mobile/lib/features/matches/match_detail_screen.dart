@@ -7,12 +7,17 @@ import '../../core/config/jso_theme.dart';
 import '../../data/models/live_blog_entry.dart';
 import '../../data/models/match.dart';
 import '../../data/models/match_event.dart';
+import '../../data/models/match_reminder.dart';
+import '../../data/repositories/match_center_repository.dart';
 import '../../data/repositories/public_api_repository.dart';
 import '../../shared/format.dart';
 import '../../shared/widgets/empty_view.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../tickets/tickets_screen.dart';
+import 'match_lineup_tab.dart';
+import 'match_stats_tab.dart';
+import 'match_weather_card.dart';
 
 /// Bundles the two calls needed to render match detail.
 class _MatchDetailData {
@@ -22,10 +27,7 @@ class _MatchDetailData {
   final List<MatchEvent> events;
 }
 
-/// Match detail: score/status/venue from `GET /api/matches/{id}` and the
-/// timeline from `GET /api/matches/{id}/events`. A second "Live" tab renders
-/// the polling live blog from `GET /api/matches/{id}/liveblog`. IDs are GUID
-/// strings.
+/// Match detail and match-center tabs for a public fixture.
 class MatchDetailScreen extends StatefulWidget {
   const MatchDetailScreen({super.key, required this.matchId});
 
@@ -37,6 +39,7 @@ class MatchDetailScreen extends StatefulWidget {
 
 class _MatchDetailScreenState extends State<MatchDetailScreen> {
   late Future<_MatchDetailData> _future;
+  late Future<MatchWeather?> _weatherFuture;
 
   @override
   void initState() {
@@ -45,30 +48,55 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
   }
 
   void _load() {
-    final repo = context.read<PublicApiRepository>();
+    final publicRepository = context.read<PublicApiRepository>();
+    final matchCenterRepository = context.read<MatchCenterRepository>();
+    _weatherFuture = Future<MatchWeather?>.value();
     _future =
         Future.wait([
-          repo.getMatch(widget.matchId),
-          repo.getMatchEvents(widget.matchId),
-        ]).then(
-          (results) => _MatchDetailData(
+          publicRepository.getMatch(widget.matchId),
+          publicRepository.getMatchEvents(widget.matchId),
+        ]).then((results) {
+          final data = _MatchDetailData(
             match: results[0] as Match,
             events: results[1] as List<MatchEvent>,
-          ),
-        );
+          );
+          _weatherFuture = _loadWeather(
+            matchCenterRepository,
+            data.match,
+            widget.matchId,
+          );
+          return data;
+        });
+  }
+
+  Future<MatchWeather?> _loadWeather(
+    MatchCenterRepository repository,
+    Match match,
+    String matchId,
+  ) async {
+    if (!_canRequestWeather(match)) return null;
+    try {
+      final reminder = await repository.getReminder(matchId);
+      return reminder.weather;
+    } catch (_) {
+      // Weather is optional and must never hide the core match detail.
+      return null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Match'),
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'Timeline'),
-              Tab(text: 'Live'),
+              Tab(text: 'Résumé'),
+              Tab(text: 'Direct'),
+              Tab(text: 'Compos'),
+              Tab(text: 'Stats'),
             ],
           ),
         ),
@@ -76,11 +104,11 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const LoadingView(message: 'Loading match…');
+              return const LoadingView(message: 'Chargement du match…');
             }
             if (snapshot.hasError) {
               return ErrorView(
-                message: 'Could not load this match.',
+                message: 'Impossible de charger ce match.',
                 onRetry: () => setState(_load),
               );
             }
@@ -88,15 +116,17 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
             final data = snapshot.data;
             if (data == null) {
               return ErrorView(
-                message: 'Could not load this match.',
+                message: 'Impossible de charger ce match.',
                 onRetry: () => setState(_load),
               );
             }
 
             return TabBarView(
               children: [
-                _TimelineTab(data: data),
-                _LiveBlogTab(matchId: widget.matchId, match: data.match),
+                _MatchSummaryTab(data: data, weatherFuture: _weatherFuture),
+                _LiveBlogTab(matchId: widget.matchId),
+                MatchLineupTab(matchId: widget.matchId),
+                MatchStatsTab(matchId: widget.matchId, match: data.match),
               ],
             );
           },
@@ -106,10 +136,19 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
   }
 }
 
-class _TimelineTab extends StatelessWidget {
-  const _TimelineTab({required this.data});
+bool _canRequestWeather(Match match) {
+  final status = match.status.trim().toLowerCase();
+  return !match.hasResult && status != 'finished' && status != 'cancelled';
+}
+
+bool _canShowWeather(Match match) =>
+    _canRequestWeather(match) && match.kickoffAt.isAfter(DateTime.now());
+
+class _MatchSummaryTab extends StatelessWidget {
+  const _MatchSummaryTab({required this.data, required this.weatherFuture});
 
   final _MatchDetailData data;
+  final Future<MatchWeather?> weatherFuture;
 
   @override
   Widget build(BuildContext context) {
@@ -118,10 +157,11 @@ class _TimelineTab extends StatelessWidget {
       children: [
         _MatchHeader(match: data.match),
         const SizedBox(height: JsoSpacing.md),
+        _WeatherSection(match: data.match, future: weatherFuture),
         _TicketsCta(match: data.match),
         const SizedBox(height: JsoSpacing.lg),
         const Text(
-          'Timeline',
+          'Chronologie',
           style: TextStyle(
             color: JsoColors.white,
             fontSize: 16,
@@ -131,14 +171,40 @@ class _TimelineTab extends StatelessWidget {
         const SizedBox(height: JsoSpacing.sm),
         if (data.events.isEmpty)
           const EmptyView(
-            message: 'No events recorded for this match.',
+            message: 'Aucun événement enregistré pour ce match.',
             icon: Icons.timeline_outlined,
           )
         else
           ...(data.events.toList()
                 ..sort((a, b) => a.minute.compareTo(b.minute)))
-              .map((e) => _EventTile(event: e)),
+              .map((event) => _EventTile(event: event)),
       ],
+    );
+  }
+}
+
+class _WeatherSection extends StatelessWidget {
+  const _WeatherSection({required this.match, required this.future});
+
+  final Match match;
+  final Future<MatchWeather?> future;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_canShowWeather(match)) return const SizedBox.shrink();
+
+    return FutureBuilder<MatchWeather?>(
+      future: future,
+      builder: (context, snapshot) {
+        final weather = snapshot.data;
+        if (snapshot.hasError || weather == null) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          padding: const EdgeInsets.only(bottom: JsoSpacing.md),
+          child: MatchWeatherCard(weather: weather),
+        );
+      },
     );
   }
 }
@@ -175,7 +241,8 @@ class _MatchHeader extends StatelessWidget {
             ),
             const SizedBox(height: JsoSpacing.sm),
             Text(
-              '${match.status} · ${JsoFormat.homeAway(match)}',
+              '${JsoFormat.matchStatus(match.status)} · '
+              '${JsoFormat.homeAway(match)}',
               style: const TextStyle(color: JsoColors.muted),
             ),
             const SizedBox(height: JsoSpacing.xs),
@@ -197,7 +264,7 @@ class _MatchHeader extends StatelessWidget {
   }
 }
 
-/// Entry point to the match billetterie from the timeline tab.
+/// Entry point to the match billetterie from the summary tab.
 class _TicketsCta extends StatelessWidget {
   const _TicketsCta({required this.match});
 
@@ -239,7 +306,7 @@ class _EventTile extends StatelessWidget {
           ),
         ),
         title: Text(
-          event.type,
+          _eventTypeLabel(event.type),
           style: const TextStyle(
             color: JsoColors.white,
             fontWeight: FontWeight.w700,
@@ -258,31 +325,37 @@ class _EventTile extends StatelessWidget {
   }
 }
 
-/// Live blog tab: renders the feed from `GET /api/matches/{id}/liveblog` and
-/// refreshes it with a lightweight [Timer] while the view is mounted.
+String _eventTypeLabel(String type) {
+  return switch (type) {
+    'Goal' => 'But',
+    'YellowCard' => 'Carton jaune',
+    'RedCard' => 'Carton rouge',
+    'Substitution' => 'Remplacement',
+    'Kickoff' => 'Coup d’envoi',
+    'HalfTime' => 'Mi-temps',
+    'FullTime' => 'Fin du match',
+    _ => type,
+  };
+}
+
+/// Direct tab: polls `GET /api/matches/{id}/liveblog` every 25 seconds.
 ///
-/// The timer starts in [initState] and is cancelled in [dispose] so there is
-/// no leak. A guard flag prevents overlapping polls, and a pull-to-refresh
-/// plus an "Actualiser" button allow manual reloads. The initial load drives
-/// LOADING/EMPTY/ERROR states; subsequent polls update the list silently and
-/// keep the last good data on transient failures.
+/// The timer is cancelled in [dispose], [_isFetching] prevents overlapping
+/// calls, and transient poll failures keep the last successful feed visible.
 class _LiveBlogTab extends StatefulWidget {
-  const _LiveBlogTab({required this.matchId, required this.match});
+  const _LiveBlogTab({required this.matchId});
 
   final String matchId;
-  final Match match;
 
   @override
   State<_LiveBlogTab> createState() => _LiveBlogTabState();
 }
 
 class _LiveBlogTabState extends State<_LiveBlogTab> {
-  /// Polling cadence for the live feed. Kept intentionally light.
   static const Duration _pollInterval = Duration(seconds: 25);
 
   Timer? _timer;
   bool _isFetching = false;
-
   bool _loading = true;
   Object? _error;
   List<LiveBlogEntry> _entries = const [];
@@ -301,7 +374,6 @@ class _LiveBlogTabState extends State<_LiveBlogTab> {
     super.dispose();
   }
 
-  /// Initial/manual load: drives the LOADING and ERROR states.
   Future<void> _refresh() async {
     if (_isFetching) return;
     _isFetching = true;
@@ -321,20 +393,17 @@ class _LiveBlogTabState extends State<_LiveBlogTab> {
         _loading = false;
         _error = null;
       });
-    } catch (e) {
+    } catch (error) {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = e;
+        _error = error;
       });
     } finally {
       _isFetching = false;
     }
   }
 
-  /// Background poll: updates the list silently and keeps the last good data
-  /// (and any existing error) on a transient failure. Skips when a fetch is
-  /// already in flight to avoid overlapping calls.
   Future<void> _poll() async {
     if (_isFetching) return;
     _isFetching = true;
@@ -348,7 +417,7 @@ class _LiveBlogTabState extends State<_LiveBlogTab> {
         _error = null;
       });
     } catch (_) {
-      // Ignore transient poll failures; the manual refresh surfaces errors.
+      // Ignore transient poll failures; manual refresh surfaces errors.
     } finally {
       _isFetching = false;
     }
@@ -357,11 +426,11 @@ class _LiveBlogTabState extends State<_LiveBlogTab> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const LoadingView(message: 'Loading live blog…');
+      return const LoadingView(message: 'Chargement du direct…');
     }
     if (_error != null) {
       return ErrorView(
-        message: 'Could not load the live blog.',
+        message: 'Impossible de charger le direct.',
         onRetry: _refresh,
       );
     }
@@ -376,7 +445,7 @@ class _LiveBlogTabState extends State<_LiveBlogTab> {
             children: [
               const Expanded(
                 child: Text(
-                  'Live',
+                  'Direct',
                   style: TextStyle(
                     color: JsoColors.white,
                     fontSize: 16,
@@ -394,11 +463,11 @@ class _LiveBlogTabState extends State<_LiveBlogTab> {
           const SizedBox(height: JsoSpacing.sm),
           if (_entries.isEmpty)
             const EmptyView(
-              message: 'No live updates yet.',
+              message: 'Pas encore de mise à jour en direct.',
               icon: Icons.podcasts_outlined,
             )
           else
-            ..._entries.map((e) => _LiveBlogTile(entry: e)),
+            ..._entries.map((entry) => _LiveBlogTile(entry: entry)),
         ],
       ),
     );
@@ -483,8 +552,6 @@ class _Badge extends StatelessWidget {
   }
 }
 
-/// Maps a live blog `kind` to an icon and label; unknown kinds fall back to a
-/// neutral text style so the feed keeps rendering.
 class _KindStyle {
   const _KindStyle(this.icon, this.label);
 
@@ -492,20 +559,12 @@ class _KindStyle {
   final String label;
 
   static _KindStyle of(String kind) {
-    switch (kind) {
-      case 'Goal':
-        return const _KindStyle(Icons.sports_soccer, 'Goal');
-      case 'Card':
-        return const _KindStyle(Icons.style, 'Card');
-      case 'Substitution':
-        return const _KindStyle(Icons.swap_horiz, 'Substitution');
-      case 'Text':
-        return const _KindStyle(Icons.chat_bubble_outline, 'Update');
-      default:
-        return _KindStyle(
-          Icons.chat_bubble_outline,
-          kind.isEmpty ? 'Update' : kind,
-        );
-    }
+    return switch (kind) {
+      'Goal' => const _KindStyle(Icons.sports_soccer, 'But'),
+      'Card' => const _KindStyle(Icons.style, 'Carton'),
+      'Substitution' => const _KindStyle(Icons.swap_horiz, 'Remplacement'),
+      'Text' => const _KindStyle(Icons.chat_bubble_outline, 'Info'),
+      _ => const _KindStyle(Icons.chat_bubble_outline, 'Info'),
+    };
   }
 }

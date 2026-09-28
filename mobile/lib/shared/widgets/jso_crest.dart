@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/config/jso_theme.dart';
 
-/// Renders the JSO club crest.
+/// Renders the official JSO club crest.
 ///
-/// The vector mark is bundled from `assets/jso-club-mark.svg` (a copy of
-/// `frontend/public/jso-club-mark.svg`). If loading the asset fails for any
-/// reason a simple gold monogram badge is shown as a fallback.
+/// The crest is bundled as a raster asset (`assets/jso-crest.png`, a copy of
+/// `frontend/public/JSO-official-crest.png`) so the app shows the real club
+/// emblem rather than an abstract mark. If the asset fails to load a simple
+/// gold monogram badge is shown as a fallback.
 class JsoCrest extends StatelessWidget {
   const JsoCrest({super.key, this.size = 48});
 
@@ -15,12 +15,14 @@ class JsoCrest extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SvgPicture.asset(
-      'assets/jso-club-mark.svg',
+    return Image.asset(
+      'assets/jso-crest.png',
       width: size,
       height: size,
       fit: BoxFit.contain,
-      placeholderBuilder: (_) => _fallback(),
+      filterQuality: FilterQuality.medium,
+      semanticLabel: 'Blason JSO',
+      errorBuilder: (_, _, _) => _fallback(),
     );
   }
 

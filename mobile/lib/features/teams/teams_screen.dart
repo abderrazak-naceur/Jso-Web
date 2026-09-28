@@ -35,16 +35,16 @@ class _TeamsScreenState extends State<TeamsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Teams')),
+      appBar: AppBar(title: const Text('Équipes')),
       body: FutureBuilder<List<Team>>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingView(message: 'Loading teams…');
+            return const LoadingView(message: 'Chargement des équipes…');
           }
           if (snapshot.hasError) {
             return ErrorView(
-              message: 'Could not load teams.',
+              message: 'Impossible de charger les équipes.',
               onRetry: () => setState(_load),
             );
           }
@@ -52,7 +52,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
           final teams = snapshot.data ?? const <Team>[];
           if (teams.isEmpty) {
             return const EmptyView(
-              message: 'No teams available yet.',
+              message: 'Aucune équipe pour le moment.',
               icon: Icons.groups_outlined,
             );
           }
@@ -103,7 +103,7 @@ class _TeamTile extends StatelessWidget {
           style: const TextStyle(color: JsoColors.muted),
         ),
         trailing: Text(
-          '${team.playersCount} players',
+          '${team.playersCount} ${team.playersCount <= 1 ? 'joueur' : 'joueurs'}',
           style: const TextStyle(
             color: JsoColors.gold,
             fontWeight: FontWeight.w700,

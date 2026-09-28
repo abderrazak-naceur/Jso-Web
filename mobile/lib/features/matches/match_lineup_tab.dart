@@ -18,9 +18,8 @@ import '../../shared/widgets/loading_view.dart';
 /// Anything else is shown as entered.
 String officialRoleLabel(String role) {
   final key = role.toLowerCase().replaceAll(RegExp(r'[\s_.\-]'), '');
-  final assistant = RegExp(
-    r'^(?:assistant(?:referee)?|ar|linesman)(\d?)$',
-  ).firstMatch(key);
+  final assistant = RegExp(r'^(?:assistant(?:referee)?|ar|linesman)(\d?)$')
+      .firstMatch(key);
   if (assistant != null) {
     final number = assistant.group(1)!;
     return number.isEmpty ? 'Arbitre assistant' : 'Arbitre assistant $number';
@@ -142,9 +141,7 @@ class _MatchLineupTabState extends State<MatchLineupTab>
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting &&
                     !snapshot.hasData) {
-                  return const LoadingView(
-                    message: 'Chargement des arbitres…',
-                  );
+                  return const LoadingView(message: 'Chargement des arbitres…');
                 }
                 if (snapshot.hasError) {
                   return ErrorView(
@@ -304,10 +301,7 @@ class _CaptainBadge extends StatelessWidget {
         ),
         child: const Text(
           'C',
-          style: TextStyle(
-            color: JsoColors.ink,
-            fontWeight: FontWeight.w900,
-          ),
+          style: TextStyle(color: JsoColors.ink, fontWeight: FontWeight.w900),
         ),
       ),
     );

@@ -35,16 +35,16 @@ class _NewsScreenState extends State<NewsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('News')),
+      appBar: AppBar(title: const Text('Actualités')),
       body: FutureBuilder<List<Article>>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingView(message: 'Loading news…');
+            return const LoadingView(message: 'Chargement des actualités…');
           }
           if (snapshot.hasError) {
             return ErrorView(
-              message: 'Could not load news.',
+              message: 'Impossible de charger les actualités.',
               onRetry: () => setState(_load),
             );
           }
@@ -52,7 +52,7 @@ class _NewsScreenState extends State<NewsScreen> {
           final articles = snapshot.data ?? const <Article>[];
           if (articles.isEmpty) {
             return const EmptyView(
-              message: 'No news published yet.',
+              message: 'Aucune actualité pour le moment.',
               icon: Icons.article_outlined,
             );
           }

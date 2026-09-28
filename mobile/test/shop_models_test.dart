@@ -59,8 +59,7 @@ void main() {
     });
 
     test('tolerates blank/missing optional fields (GET /products/{slug})', () {
-      final json =
-          jsonDecode('''
+      final json = jsonDecode('''
       {
         "id": "0b7f3c2a-5d1e-4c8b-9a6f-000000000004",
         "name": "Casquette",
@@ -70,8 +69,7 @@ void main() {
         "imageUrl": "",
         "category": null
       }
-      ''')
-              as Map<String, dynamic>;
+      ''') as Map<String, dynamic>;
 
       final product = Product.fromJson(json);
 
@@ -86,8 +84,7 @@ void main() {
 
   group('ShopOrder.fromJson', () {
     test('parses an order detail with items (GET /api/shop/orders/{id})', () {
-      final json =
-          jsonDecode('''
+      final json = jsonDecode('''
       {
         "id": "3f2504e0-4f89-11d3-9a0c-0305e82c3301",
         "status": "Paid",
@@ -112,8 +109,7 @@ void main() {
           }
         ]
       }
-      ''')
-              as Map<String, dynamic>;
+      ''') as Map<String, dynamic>;
 
       final order = ShopOrder.fromJson(json);
 
@@ -138,8 +134,7 @@ void main() {
     });
 
     test('parses the list projection: null paidAt and no items', () {
-      final json =
-          jsonDecode('''
+      final json = jsonDecode('''
       [
         {
           "id": "9c1d2e3f-0000-4000-8000-000000000001",
@@ -150,8 +145,7 @@ void main() {
           "paidAt": null
         }
       ]
-      ''')
-              as List;
+      ''') as List;
 
       final orders = asList(json, ShopOrder.fromJson);
 
@@ -167,8 +161,7 @@ void main() {
     });
 
     test('parses the 201 create response (no paidAt key)', () {
-      final json =
-          jsonDecode('''
+      final json = jsonDecode('''
       {
         "id": "3f2504e0-4f89-11d3-9a0c-0305e82c3301",
         "status": "Pending",
@@ -184,8 +177,7 @@ void main() {
           }
         ]
       }
-      ''')
-              as Map<String, dynamic>;
+      ''') as Map<String, dynamic>;
 
       final order = ShopOrder.fromJson(json);
 

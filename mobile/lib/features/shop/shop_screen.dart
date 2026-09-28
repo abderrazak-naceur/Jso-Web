@@ -197,9 +197,7 @@ class _CategoryFilter extends StatelessWidget {
         showCheckmark: false,
         selectedColor: JsoColors.gold,
         backgroundColor: JsoColors.navy2,
-        side: BorderSide(
-          color: isSelected ? JsoColors.gold : JsoColors.border,
-        ),
+        side: BorderSide(color: isSelected ? JsoColors.gold : JsoColors.border),
         labelStyle: TextStyle(
           color: isSelected ? JsoColors.ink : JsoColors.white,
           fontWeight: FontWeight.w700,

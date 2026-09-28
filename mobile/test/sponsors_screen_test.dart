@@ -40,7 +40,7 @@ void main() {
 
       expect(find.text('Ooredoo'), findsOneWidget);
       expect(find.text('Platinum'), findsOneWidget);
-      expect(find.text('Visit website'), findsOneWidget);
+      expect(find.text('Visiter le site'), findsOneWidget);
     });
 
     testWidgets('hides Visit website when websiteUrl is empty', (tester) async {
@@ -52,39 +52,44 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Local Bakery'), findsOneWidget);
-      expect(find.text('Visit website'), findsNothing);
+      expect(find.text('Visiter le site'), findsNothing);
     });
 
-    testWidgets('shows "Could not open link." SnackBar when launch throws', (
-      tester,
-    ) async {
-      // Route the sponsor link through a fake platform whose launchUrl
-      // throws a PlatformException, exercising the throwing failure path
-      // without any real platform channel.
-      final original = UrlLauncherPlatform.instance;
-      final fakeLauncher = FakeUrlLauncher(throwOnLaunch: true);
-      UrlLauncherPlatform.instance = fakeLauncher;
-      addTearDown(() => UrlLauncherPlatform.instance = original);
+    testWidgets(
+      'shows "Impossible d’ouvrir le lien." SnackBar when launch throws',
+      (tester) async {
+        // Route the sponsor link through a fake platform whose launchUrl
+        // throws a PlatformException, exercising the throwing failure path
+        // without any real platform channel.
+        final original = UrlLauncherPlatform.instance;
+        final fakeLauncher = FakeUrlLauncher(throwOnLaunch: true);
+        UrlLauncherPlatform.instance = fakeLauncher;
+        addTearDown(() => UrlLauncherPlatform.instance = original);
 
-      final repo = FakeRepository(
-        sponsors: [
-          Sample.sponsor(
-            name: 'Ooredoo',
-            websiteUrl: 'https://sponsor.example.tn',
-          ),
-        ],
-      );
+        final repo = FakeRepository(
+          sponsors: [
+            Sample.sponsor(
+              name: 'Ooredoo',
+              websiteUrl: 'https://sponsor.example.tn',
+            ),
+          ],
+        );
 
-      await pumpScreen(tester, repository: repo, child: const SponsorsScreen());
-      await tester.pumpAndSettle();
+        await pumpScreen(
+          tester,
+          repository: repo,
+          child: const SponsorsScreen(),
+        );
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Visit website'));
-      await tester.pump(); // let the async handler run
-      await tester.pump(); // let the SnackBar animate in
+        await tester.tap(find.text('Visiter le site'));
+        await tester.pump(); // let the async handler run
+        await tester.pump(); // let the SnackBar animate in
 
-      expect(fakeLauncher.launchedUrls, isNotEmpty);
-      expect(find.text('Could not open link.'), findsOneWidget);
-    });
+        expect(fakeLauncher.launchedUrls, isNotEmpty);
+        expect(find.text('Impossible d’ouvrir le lien.'), findsOneWidget);
+      },
+    );
 
     testWidgets('shows EmptyView when there are no sponsors', (tester) async {
       final repo = FakeRepository(sponsors: const []);

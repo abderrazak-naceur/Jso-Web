@@ -40,11 +40,11 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingView(message: 'Loading article…');
+            return const LoadingView(message: 'Chargement de l’article…');
           }
           if (snapshot.hasError) {
             return ErrorView(
-              message: 'Could not load this article.',
+              message: 'Impossible de charger cet article.',
               onRetry: () => setState(_load),
             );
           }
@@ -52,7 +52,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
           final detail = snapshot.data;
           if (detail == null) {
             return ErrorView(
-              message: 'Could not load this article.',
+              message: 'Impossible de charger cet article.',
               onRetry: () => setState(_load),
             );
           }
