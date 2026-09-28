@@ -37,6 +37,9 @@ export const publicApi = {
   // DisplayOrder; an empty list means "use the built-in navigation".
   getNavigation: (position, signal) =>
     request('/navigation' + (position ? '?position=' + encodeURIComponent(position) : ''), signal),
+  // Published homepage layout sections (Homepage Builder), ordered by
+  // DisplayOrder. An empty list means "use the built-in home layout".
+  getHomeLayout: (signal) => request('/home-layout', signal),
 }
 
 // Public, read-only community feed: approved comments and aggregate reaction
