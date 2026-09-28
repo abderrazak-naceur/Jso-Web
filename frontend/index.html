@@ -10,8 +10,53 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="JSO" />
-    <meta name="description" content="Plateforme digitale officielle de la Jeunesse Sportive de Oudhref." />
+    <meta name="description" content="Plateforme digitale officielle de la Jeunesse Sportive de Oudhref : actualités, calendrier et résultats, effectif, médias et boutique du club." />
     <title>JSO — Jeunesse Sportive de Oudhref</title>
+
+    <!-- Canonical + robots. Update the absolute URL to the real domain at
+         go-live (see docs/DEPLOY_ORACLE_CLOUD.md). -->
+    <link rel="canonical" href="https://jso-oudhref.tn/" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph (Facebook, WhatsApp, LinkedIn…) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="JSO Oudhref" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:title" content="JSO — Jeunesse Sportive de Oudhref" />
+    <meta property="og:description" content="Plateforme digitale officielle de la Jeunesse Sportive de Oudhref : actualités, calendrier et résultats, effectif, médias et boutique du club." />
+    <meta property="og:url" content="https://jso-oudhref.tn/" />
+    <meta property="og:image" content="https://jso-oudhref.tn/jso-stadium-hero.png" />
+    <meta property="og:image:alt" content="Le stade de la Jeunesse Sportive de Oudhref" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="JSO — Jeunesse Sportive de Oudhref" />
+    <meta name="twitter:description" content="Plateforme digitale officielle de la Jeunesse Sportive de Oudhref." />
+    <meta name="twitter:image" content="https://jso-oudhref.tn/jso-stadium-hero.png" />
+
+    <!-- Structured data: the sports club identity (schema.org/SportsClub) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SportsClub",
+        "name": "Jeunesse Sportive de Oudhref",
+        "alternateName": "JSO",
+        "sport": "Football",
+        "foundingDate": "1973",
+        "url": "https://jso-oudhref.tn/",
+        "logo": "https://jso-oudhref.tn/JSO-official-crest.png",
+        "image": "https://jso-oudhref.tn/jso-stadium-hero.png",
+        "location": {
+          "@type": "Place",
+          "name": "Stade d’Oudhref",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Oudhref",
+            "addressCountry": "TN"
+          }
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
