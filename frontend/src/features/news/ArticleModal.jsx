@@ -6,6 +6,8 @@ import { normalizeArticle } from '../home/useHomeData'
 import { useDialog } from '../site/useDialog'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import CommentsSection from '../community/CommentsSection'
+import ShareBar from './ShareBar'
+import { articleShareUrl } from './articleUrl'
 
 export default function ArticleModal({ initialArticle, onClose, token, onRequireLogin }) {
   const [article, setArticle] = useState(initialArticle)
@@ -63,6 +65,11 @@ export default function ArticleModal({ initialArticle, onClose, token, onRequire
           {loading ? <p role="status" className="mt-7 text-sm text-slate-400">Chargement de l’article…</p> : (
             <div className="mt-7 space-y-5 text-base leading-8 text-slate-600">
               {paragraphs.length > 0 ? paragraphs.map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 20)}`}>{paragraph}</p>) : <p>Le contenu complet sera disponible prochainement.</p>}
+            </div>
+          )}
+          {article.slug && (
+            <div className="mt-8 border-t border-slate-200 pt-6">
+              <ShareBar url={articleShareUrl(article.slug)} title={article.title} />
             </div>
           )}
           {article.id && (

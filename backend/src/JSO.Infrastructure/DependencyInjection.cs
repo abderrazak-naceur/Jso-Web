@@ -1,4 +1,5 @@
 using JSO.Infrastructure.Payments;
+using JSO.Infrastructure.Social;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +32,27 @@ public static class DependencyInjection
         });
 
         services.AddPayments(configuration);
+        services.AddSocial(configuration);
+
+        return services;
+    }
+
+    // Registers social publishing (Facebook Page auto-post). All secrets are
+    // bound from the "Social" configuration section (environment variables in
+    // production). The Graph API is reached through a typed HttpClient. When no
+    // Page token is configured the publisher reports NotConfigured and the admin
+    // falls back to manual sharing — the feature is additive and never blocks.
+    public static IServiceCollection AddSocial(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<SocialOptions>(configuration.GetSection(SocialOptions.SectionName));
+
+        // The Graph API version is part of each request path ("{version}/{pageId}/feed"),
+        // so the base address is just the Graph host.
+        services.AddHttpClient<FacebookPublisher>(client =>
+        {
+            client.BaseAddress = new Uri("https://graph.facebook.com/");
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
 
         return services;
     }

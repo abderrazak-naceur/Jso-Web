@@ -10,8 +10,8 @@ import '../documents/documents_screen.dart';
 import '../events/events_screen.dart';
 import '../faq/faq_screen.dart';
 import '../media/media_screen.dart';
-import '../shop/shop_screen.dart';
 import '../sponsors/sponsors_screen.dart';
+import '../teams/teams_screen.dart';
 
 /// Fifth primary tab: account access and the club's secondary destinations.
 class ClubScreen extends StatelessWidget {
@@ -23,10 +23,10 @@ class ClubScreen extends StatelessWidget {
     final fan = auth.status == AuthStatus.authenticated ? auth.user : null;
     final discoveryDestinations = <_PlusDestination>[
       _PlusDestination(
-        icon: Icons.storefront_outlined,
-        title: 'Boutique',
-        subtitle: 'Maillots et articles officiels',
-        onTap: () => Navigator.of(context).push(ShopScreen.route()),
+        icon: Icons.groups_outlined,
+        title: 'Équipe',
+        subtitle: 'Effectif et staff de la JSO',
+        onTap: () => _push(context, const TeamsScreen()),
       ),
       _PlusDestination(
         icon: Icons.calendar_month_outlined,

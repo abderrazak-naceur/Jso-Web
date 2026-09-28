@@ -29,15 +29,32 @@ public sealed class PublicController(JsoDbContext db) : ControllerBase
         return Ok(matches);
     }
 
+    // Published news feed. Without paging parameters it keeps its original
+    // shape (a plain array of the 20 most recent articles) so existing callers
+    // — the home page — are unaffected. When `page` is supplied it returns a
+    // paged envelope { items, page, pageSize, total } for the "all articles"
+    // listing page. pageSize is clamped to a sane maximum.
     [HttpGet("news")]
-    public async Task<IActionResult> GetNews(CancellationToken ct)
+    public async Task<IActionResult> GetNews(int? page, int? pageSize, CancellationToken ct)
     {
-        var articles = await db.Articles.AsNoTracking()
+        var query = db.Articles.AsNoTracking()
             .Where(x => x.Status == "Published")
-            .OrderByDescending(x => x.PublishedAt)
-            .Take(20)
+            .OrderByDescending(x => x.PublishedAt);
+
+        if (page is null)
+        {
+            var recent = await query.Take(20).ToListAsync(ct);
+            return Ok(recent);
+        }
+
+        var currentPage = page.Value < 1 ? 1 : page.Value;
+        var size = pageSize is null or < 1 ? 9 : Math.Min(pageSize.Value, 48);
+        var total = await query.CountAsync(ct);
+        var items = await query
+            .Skip((currentPage - 1) * size)
+            .Take(size)
             .ToListAsync(ct);
 
-        return Ok(articles);
+        return Ok(new { items, page = currentPage, pageSize = size, total });
     }
 }

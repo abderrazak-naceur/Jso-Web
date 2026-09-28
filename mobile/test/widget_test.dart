@@ -48,7 +48,7 @@ void main() {
       orderedEquals(const [
         'Accueil',
         'Matchs',
-        'Équipe',
+        'Boutique',
         'Actualités',
         'Plus',
       ]),
@@ -60,7 +60,7 @@ void main() {
     for (final label in const [
       'Accueil',
       'Matchs',
-      'Équipe',
+      'Boutique',
       'Actualités',
       'Plus',
     ]) {

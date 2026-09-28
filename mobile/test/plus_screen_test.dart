@@ -10,7 +10,7 @@ import 'package:jso_mobile/data/repositories/tickets_repository.dart';
 import 'package:jso_mobile/features/auth/auth_controller.dart';
 import 'package:jso_mobile/features/club/club_screen.dart';
 import 'package:jso_mobile/features/shop/cart_controller.dart';
-import 'package:jso_mobile/features/shop/shop_screen.dart';
+import 'package:jso_mobile/features/teams/teams_screen.dart';
 import 'package:provider/provider.dart';
 
 import 'support/fake_club_content.dart';
@@ -18,7 +18,7 @@ import 'support/fake_repository.dart';
 import 'support/fake_shop.dart';
 
 void main() {
-  testWidgets('Plus affiche toutes les entrées et ouvre la Boutique', (
+  testWidgets('Plus affiche toutes les entrées et ouvre l’Équipe', (
     WidgetTester tester,
   ) async {
     final auth = await anonymousAuth();
@@ -28,19 +28,18 @@ void main() {
     expect(find.text('Mon compte'), findsOneWidget);
     expect(find.text('Se connecter ou créer un compte'), findsOneWidget);
 
-    await tester.tap(find.text('Boutique'));
+    // Équipe moved into the Plus hub (Boutique is now a primary bottom tab).
+    await tester.tap(find.text('Équipe'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(ShopScreen), findsOneWidget);
-    final route = ModalRoute.of(tester.element(find.byType(ShopScreen)));
-    expect(route?.settings.name, ShopScreen.routeName);
+    expect(find.byType(TeamsScreen), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.pageBack();
     await tester.pumpAndSettle();
 
     for (final label in const [
-      'Boutique',
+      'Équipe',
       'Agenda du club',
       'Médias',
       'Sponsors',

@@ -9,6 +9,7 @@ import App from './App.jsx'
 // site's initial JS payload small.
 const AdminApp = lazy(() => import('./admin/AdminApp.jsx'))
 const PaymentReturn = lazy(() => import('./features/shop/PaymentReturn.jsx'))
+const NewsListPage = lazy(() => import('./features/news/NewsListPage.jsx'))
 
 // Minimal, framework-free fallback shown while a lazy chunk loads. Kept inline
 // so it needs no extra chunk and matches the JSO paper background.
@@ -29,6 +30,10 @@ function Root() {
   // Provider return/cancel landing pages. They only read the order status
   // (set server-side by the verified webhook); they never confirm payment.
   if (path.startsWith('/payment/')) return <PaymentReturn />
+  // The "all articles" listing page is exactly /actualites (optionally with a
+  // ?page= query). A deeper /actualites/{slug} path is a single article and is
+  // handled by App (opens the article view over the home page).
+  if (path === '/actualites' || path === '/actualites/') return <NewsListPage />
   return <App />
 }
 
