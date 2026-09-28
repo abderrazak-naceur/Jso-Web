@@ -22,6 +22,7 @@ import HeroSection from './features/home/HeroSection'
 import MatchdaySection from './features/home/MatchdaySection'
 import NewsSection from './features/home/NewsSection'
 import { useHomeData } from './features/home/useHomeData'
+import { orderHomeSections, useHomeLayout } from './features/home/useHomeLayout'
 import MatchCenterModal from './features/matches/MatchCenterModal'
 import ArticleModal from './features/news/ArticleModal'
 import CartDrawer from './features/shop/CartDrawer'
@@ -61,6 +62,38 @@ function App() {
   const headerLinks = useNavigation('Header')
   const footerLinks = useNavigation('Footer')
 
+  // Published homepage layout (Homepage Builder). When present it drives the
+  // order/visibility of the mappable sections; empty or failed => the built-in
+  // order below is used unchanged (total fallback, identical to today).
+  const homeLayout = useHomeLayout()
+
+  // Renderers for every home section, keyed by section id. Hero is always first
+  // and is rendered outside the ordered list.
+  const sectionRenderers = {
+    matches: () => (
+      <MatchdaySection key="matches" section={sectionById.matches} status={data.status} nextMatch={data.nextMatch} recentMatches={data.recentMatches} onOpenMatch={setSelectedMatch} />
+    ),
+    news: () => (
+      <NewsSection key="news" section={sectionById.news} status={data.status} articles={data.news} content={data.content} onOpenArticle={setSelectedArticle} />
+    ),
+    team: () => <TeamSection key="team" section={sectionById.team} players={data.players} />,
+    club: () => <ClubSection key="club" section={sectionById.club} club={data.club} content={data.content} />,
+    shop: () => <ShopSection key="shop" section={sectionById.shop} products={data.products} cart={cart} onOpenCart={() => setCartOpen(true)} />,
+    media: () => <MediaSection key="media" section={sectionById.media} media={data.media} />,
+    events: () => <AgendaSection key="events" section={sectionById.events} events={data.events} />,
+    community: () => (sectionById.community ? <CommunitySection key="community" section={sectionById.community} programs={data.community} /> : null),
+    archive: () => (sectionById.archive ? <ArchiveSection key="archive" section={sectionById.archive} archive={data.archive} /> : null),
+    mobile: () => <MobileSection key="mobile" section={sectionById.mobile} />,
+    sponsors: () => (sectionById.sponsors ? <SponsorsSection key="sponsors" section={sectionById.sponsors} sponsors={data.sponsors} /> : null),
+    infos: () => <InfoSection key="infos" section={sectionById.infos} club={data.club} documents={data.documents} faq={data.faq} />,
+  }
+
+  // Default page order (matches the built-in layout). `orderHomeSections`
+  // returns this unchanged when the layout is empty/failed, or reorders the
+  // mappable sections (news/matches/media/sponsors) when the admin published one.
+  const defaultSectionOrder = ['matches', 'news', 'team', 'club', 'shop', 'media', 'events', 'community', 'archive', 'mobile', 'sponsors', 'infos']
+  const orderedSections = orderHomeSections(defaultSectionOrder, homeLayout)
+
   function openAuth(mode) {
     setAuthMode(mode)
     setAuthOpen(true)
@@ -86,18 +119,7 @@ function App() {
 
       <main id="main-content" tabIndex={-1}>
         <HeroSection content={data.content} club={data.club} />
-        <MatchdaySection section={sectionById.matches} status={data.status} nextMatch={data.nextMatch} recentMatches={data.recentMatches} onOpenMatch={setSelectedMatch} />
-        <NewsSection section={sectionById.news} status={data.status} articles={data.news} content={data.content} onOpenArticle={setSelectedArticle} />
-        <TeamSection section={sectionById.team} players={data.players} />
-        <ClubSection section={sectionById.club} club={data.club} content={data.content} />
-        <ShopSection section={sectionById.shop} products={data.products} cart={cart} onOpenCart={() => setCartOpen(true)} />
-        <MediaSection section={sectionById.media} media={data.media} />
-        <AgendaSection section={sectionById.events} events={data.events} />
-        {sectionById.community && <CommunitySection section={sectionById.community} programs={data.community} />}
-        {sectionById.archive && <ArchiveSection section={sectionById.archive} archive={data.archive} />}
-        <MobileSection section={sectionById.mobile} />
-        {sectionById.sponsors && <SponsorsSection section={sectionById.sponsors} sponsors={data.sponsors} />}
-        <InfoSection section={sectionById.infos} club={data.club} documents={data.documents} faq={data.faq} />
+        {orderedSections.map((key) => sectionRenderers[key]?.())}
       </main>
 
       <SiteFooter sections={sections} extraLinks={footerLinks} />
