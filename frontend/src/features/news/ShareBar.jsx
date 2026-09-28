@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Facebook, Link2, Linkedin, Check, MessageCircle, Share2 } from 'lucide-react'
+import { Facebook, Instagram, Link2, Linkedin, Check, MessageCircle, Music2, Share2 } from 'lucide-react'
 
 // Social share bar. Uses each network's official web-intent/sharer URL, so it
 // needs no API keys, no app review and no personal data — the same approach
@@ -41,23 +41,35 @@ export default function ShareBar({ url, title = '' }) {
     },
   ]
 
-  async function copyLink() {
+  // Instagram and TikTok have no web share intent that prefills a post with a
+  // link, so we copy the article link (to paste in a bio/story/caption) — an
+  // honest, working action rather than a dead share button.
+  const copyTargets = [
+    { key: 'instagram', label: 'Copier le lien pour Instagram', Icon: Instagram },
+    { key: 'tiktok', label: 'Copier le lien pour TikTok', Icon: Music2 },
+  ]
+
+  async function writeToClipboard() {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url)
+      return
+    }
+    const field = document.createElement('textarea')
+    field.value = url
+    field.setAttribute('readonly', '')
+    field.style.position = 'absolute'
+    field.style.left = '-9999px'
+    document.body.appendChild(field)
+    field.select()
+    document.execCommand('copy')
+    document.body.removeChild(field)
+  }
+
+  async function copyLink(tag = 'link') {
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url)
-      } else {
-        const field = document.createElement('textarea')
-        field.value = url
-        field.setAttribute('readonly', '')
-        field.style.position = 'absolute'
-        field.style.left = '-9999px'
-        document.body.appendChild(field)
-        field.select()
-        document.execCommand('copy')
-        document.body.removeChild(field)
-      }
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      await writeToClipboard()
+      setCopied(tag)
+      setTimeout(() => setCopied((current) => (current === tag ? false : current)), 2000)
     } catch { /* ignore: the user can still copy from the address bar */ }
   }
 
@@ -76,13 +88,25 @@ export default function ShareBar({ url, title = '' }) {
           <Icon size={18} aria-hidden="true" />
         </a>
       ))}
+      {copyTargets.map(({ key, label, Icon }) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => copyLink(key)}
+          aria-label={label}
+          title={label}
+          className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 text-jso-navy transition hover:border-jso-blue hover:text-jso-blue"
+        >
+          {copied === key ? <Check size={18} aria-hidden="true" /> : <Icon size={18} aria-hidden="true" />}
+        </button>
+      ))}
       <button
         type="button"
-        onClick={copyLink}
+        onClick={() => copyLink('link')}
         className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-jso-navy transition hover:border-jso-blue hover:text-jso-blue"
       >
-        {copied ? <Check size={16} aria-hidden="true" /> : <Link2 size={16} aria-hidden="true" />}
-        {copied ? 'Lien copié' : 'Copier le lien'}
+        {copied === 'link' ? <Check size={16} aria-hidden="true" /> : <Link2 size={16} aria-hidden="true" />}
+        {copied === 'link' ? 'Lien copié' : 'Copier le lien'}
       </button>
     </div>
   )

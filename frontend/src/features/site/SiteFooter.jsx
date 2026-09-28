@@ -1,7 +1,58 @@
 import { useState } from 'react'
-import { ArrowUp, ArrowUpRight, Shield } from 'lucide-react'
+import { ArrowUp, ArrowUpRight, Check, Copy, Facebook, Instagram, Music2, Shield } from 'lucide-react'
 import { newsletterApi } from '../../lib/api'
-import { CLUB_FULL_NAME, CREST_SRC } from './brand'
+import { CLUB_FULL_NAME, CLUB_SOCIALS, CREST_SRC } from './brand'
+
+const SOCIAL_ICONS = { facebook: Facebook, instagram: Instagram, tiktok: Music2 }
+
+// Follow-us block: links to the club's official profiles, each with a "copy
+// link" button. Instagram and TikTok have no web share intent that prefills a
+// post, so copying the profile URL (to paste in a bio/story) is the useful,
+// honest behaviour rather than a share button that would not work.
+function FollowUs() {
+  const [copied, setCopied] = useState(null)
+
+  async function copy(social) {
+    try {
+      await navigator.clipboard.writeText(social.url)
+      setCopied(social.key)
+      setTimeout(() => setCopied((current) => (current === social.key ? null : current)), 2000)
+    } catch { /* the user can still open the profile and copy from the address bar */ }
+  }
+
+  return (
+    <div>
+      <p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">SUIVEZ-NOUS</p>
+      <ul className="mt-4 space-y-2">
+        {CLUB_SOCIALS.map((social) => {
+          const Icon = SOCIAL_ICONS[social.key] ?? ArrowUpRight
+          return (
+            <li key={social.key} className="flex items-center gap-2">
+              <a
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${social.label} du club (nouvel onglet)`}
+                className="inline-flex flex-1 items-center gap-2 rounded-xl border border-white/15 px-3 py-2 text-sm font-semibold text-white/75 transition hover:border-white/40 hover:text-white"
+              >
+                <Icon size={16} aria-hidden="true" />
+                {social.label}
+              </a>
+              <button
+                type="button"
+                onClick={() => copy(social)}
+                aria-label={`Copier le lien ${social.label}`}
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/15 text-white/75 transition hover:border-white/40 hover:text-white"
+              >
+                {copied === social.key ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
 
 function NewsletterSignup() {
   const [email, setEmail] = useState('')
@@ -51,6 +102,7 @@ export default function SiteFooter({ sections, extraLinks = [] }) {
               <span><strong className="block text-xl font-black">JSO Oudhref</strong><span className="text-sm text-white/55">Plus qu’un club. Une identité.</span></span>
             </a>
             <p className="mt-5 max-w-xs text-sm leading-6 text-white/55">Le site officiel de la {CLUB_FULL_NAME}.</p>
+            <div className="mt-6"><FollowUs /></div>
           </div>
 
           <nav aria-label="Navigation de pied de page">
@@ -79,7 +131,7 @@ export default function SiteFooter({ sections, extraLinks = [] }) {
         <div className="flex flex-col justify-between gap-4 pt-6 text-sm text-white/45 sm:flex-row sm:items-center">
           <p>© {new Date().getFullYear()} JSO. Tous droits réservés.</p>
           <div className="flex flex-wrap items-center gap-5">
-            <a href="/admin" className="inline-flex items-center gap-2 transition hover:text-white"><Shield size={15} aria-hidden="true" />Administration</a>
+            <a href="/admin" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-1.5 font-semibold transition hover:border-white/40 hover:text-white"><Shield size={15} aria-hidden="true" />Espace admin</a>
             <a href="#home" className="inline-flex items-center gap-2 transition hover:text-white">Retour en haut <ArrowUp size={15} aria-hidden="true" /></a>
           </div>
         </div>
