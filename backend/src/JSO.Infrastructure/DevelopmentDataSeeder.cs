@@ -246,11 +246,17 @@ public static class DevelopmentDataSeeder
 
         if (!await db.ClubEvents.AnyAsync(ct))
         {
-            var now = DateTimeOffset.UtcNow;
+            // Build day+hour instants in UTC: PostgreSQL 'timestamp with time
+            // zone' only accepts offset 0, and DateTime.Date drops the offset.
+            static DateTimeOffset UtcDayAt(int addDays, int hour)
+            {
+                var day = DateTime.UtcNow.Date.AddDays(addDays).AddHours(hour);
+                return new DateTimeOffset(day, TimeSpan.Zero);
+            }
             db.ClubEvents.AddRange(
-                new ClubEvent { Title = "Assemblée générale annuelle", Slug = "assemblee-generale-2026", Description = "Réunion annuelle des membres et bilan de la saison.", StartAt = now.AddDays(20).Date.AddHours(18), Location = "Club house — Oudhref", IsPublished = true },
-                new ClubEvent { Title = "Entraînement ouvert au public", Slug = "entrainement-ouvert-octobre", Description = "Venez encourager l’équipe première lors d’une séance ouverte.", StartAt = now.AddDays(5).Date.AddHours(17), Location = "Stade d’Oudhref", IsPublished = true },
-                new ClubEvent { Title = "Journée portes ouvertes de l’école de foot", Slug = "portes-ouvertes-ecole-foot", Description = "Découverte des catégories jeunes et inscriptions.", StartAt = now.AddDays(12).Date.AddHours(9), EndAt = now.AddDays(12).Date.AddHours(13), Location = "Complexe sportif d’Oudhref", IsPublished = true }
+                new ClubEvent { Title = "Assemblée générale annuelle", Slug = "assemblee-generale-2026", Description = "Réunion annuelle des membres et bilan de la saison.", StartAt = UtcDayAt(20, 18), Location = "Club house — Oudhref", IsPublished = true },
+                new ClubEvent { Title = "Entraînement ouvert au public", Slug = "entrainement-ouvert-octobre", Description = "Venez encourager l’équipe première lors d’une séance ouverte.", StartAt = UtcDayAt(5, 17), Location = "Stade d’Oudhref", IsPublished = true },
+                new ClubEvent { Title = "Journée portes ouvertes de l’école de foot", Slug = "portes-ouvertes-ecole-foot", Description = "Découverte des catégories jeunes et inscriptions.", StartAt = UtcDayAt(12, 9), EndAt = UtcDayAt(12, 13), Location = "Complexe sportif d’Oudhref", IsPublished = true }
             );
         }
 
@@ -289,6 +295,78 @@ public static class DevelopmentDataSeeder
                 new ArchiveItem { Year = 1973, Category = "Milestone", Title = "Fondation du club", Body = "Naissance de la Jeunesse Sportive de Oudhref, portée par la passion d’une ville.", DisplayOrder = 1, IsPublished = true },
                 new ArchiveItem { Year = 1998, Category = "Trophy", Title = "Une saison historique", Body = "L’une des saisons les plus marquantes de l’histoire du club.", DisplayOrder = 1, IsPublished = true },
                 new ArchiveItem { Year = 2015, Category = "Photo", Title = "Le stade en fête", Body = "Retour en images sur une soirée mémorable au Stade d’Oudhref.", DisplayOrder = 1, IsPublished = true }
+            );
+        }
+
+        // Persist the matches/players created above so their Ids are available
+        // for the match-detail seed (events, lineup, officials, stats, live blog).
+        await db.SaveChangesAsync(ct);
+
+        // Rich Match Center data so Résumé/Compos/Stats/Direct are not empty.
+        var lastWin = await db.Matches
+            .FirstOrDefaultAsync(x => x.TeamId == team.Id && x.OpponentName == "AS Gabès", ct);
+        // The next published home fixture (soonest upcoming) drives the live blog seed.
+        var nextMatch = await db.Matches
+            .Where(x => x.TeamId == team.Id && x.IsPublished && x.Status == "Scheduled")
+            .OrderBy(x => x.KickoffAt)
+            .FirstOrDefaultAsync(ct);
+        var roster = await db.Players.Where(x => x.TeamId == team.Id)
+            .OrderBy(x => x.ShirtNumber).ToListAsync(ct);
+
+        if (lastWin is not null && !await db.MatchEvents.AnyAsync(x => x.MatchId == lastWin.Id, ct))
+        {
+            db.MatchEvents.AddRange(
+                new MatchEvent { MatchId = lastWin.Id, Minute = 18, Type = "Goal", PlayerName = "Khalil Jebali", Team = "Home", Notes = "Ouverture du score sur une belle action collective." },
+                new MatchEvent { MatchId = lastWin.Id, Minute = 34, Type = "YellowCard", PlayerName = "Hamza Trabelsi", Team = "Home" },
+                new MatchEvent { MatchId = lastWin.Id, Minute = 57, Type = "Goal", PlayerName = "Wassim Ferchichi", Team = "Home", Notes = "Doublé du score après un contre rapide." },
+                new MatchEvent { MatchId = lastWin.Id, Minute = 72, Type = "Goal", PlayerName = "AS Gabès", Team = "Away", Notes = "Réduction du score sur penalty." },
+                new MatchEvent { MatchId = lastWin.Id, Minute = 80, Type = "Substitution", PlayerName = "Seif Mansouri", SecondaryPlayerName = "Firas Ayari", Team = "Home" }
+            );
+
+            if (roster.Count > 0)
+            {
+                // Most of the squad starts; any extra players sit on the bench.
+                var starterCount = Math.Min(11, roster.Count);
+                for (var i = 0; i < roster.Count; i++)
+                {
+                    var isSub = i >= starterCount;
+                    db.MatchLineups.Add(new MatchLineup
+                    {
+                        MatchId = lastWin.Id,
+                        PlayerId = roster[i].Id,
+                        Role = isSub ? "Substitute" : "Starter",
+                        PositionOrder = isSub ? null : i,
+                        Position = roster[i].Position,
+                        IsCaptain = i == 0,
+                        IsSubstitute = isSub
+                    });
+                }
+            }
+
+            db.MatchOfficials.AddRange(
+                new MatchOfficial { MatchId = lastWin.Id, Name = "Sofiene Jerbi", Role = "Referee" },
+                new MatchOfficial { MatchId = lastWin.Id, Name = "Marouen Sassi", Role = "Assistant" },
+                new MatchOfficial { MatchId = lastWin.Id, Name = "Anis Ben Amor", Role = "Assistant" },
+                new MatchOfficial { MatchId = lastWin.Id, Name = "Karim Zouari", Role = "Fourth" }
+            );
+
+            db.MatchStats.AddRange(
+                new MatchStat { MatchId = lastWin.Id, Name = "Possession (%)", HomeValue = 58, AwayValue = 42 },
+                new MatchStat { MatchId = lastWin.Id, Name = "Tirs", HomeValue = 14, AwayValue = 8 },
+                new MatchStat { MatchId = lastWin.Id, Name = "Tirs cadrés", HomeValue = 7, AwayValue = 3 },
+                new MatchStat { MatchId = lastWin.Id, Name = "Corners", HomeValue = 6, AwayValue = 2 },
+                new MatchStat { MatchId = lastWin.Id, Name = "Fautes", HomeValue = 11, AwayValue = 15 }
+            );
+        }
+
+        if (nextMatch is not null && !await db.LiveBlogEntries.AnyAsync(x => x.MatchId == nextMatch.Id, ct))
+        {
+            // Use a UTC instant: PostgreSQL 'timestamp with time zone' only
+            // accepts DateTimeOffset values at offset 0.
+            var now = DateTime.UtcNow;
+            db.LiveBlogEntries.AddRange(
+                new LiveBlogEntry { MatchId = nextMatch.Id, Kind = "Text", Body = "Bienvenue au Stade d’Oudhref pour le prochain match à domicile. Coup d’envoi dans quelques instants.", CreatedAt = new DateTimeOffset(now.AddMinutes(-5), TimeSpan.Zero), IsPinned = true },
+                new LiveBlogEntry { MatchId = nextMatch.Id, Minute = 1, Kind = "Text", Body = "C’est parti ! La JSO donne le coup d’envoi.", CreatedAt = new DateTimeOffset(now.AddMinutes(-4), TimeSpan.Zero) }
             );
         }
 
