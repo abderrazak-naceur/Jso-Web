@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap, Receipt, FileText, HelpCircle, Ticket, MessageSquare, LayoutTemplate } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap, Receipt, FileText, HelpCircle, Ticket, MessageSquare, LayoutTemplate, CalendarDays } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
@@ -25,6 +25,7 @@ import DocumentsModule from './Documents'
 import FaqModule from './Faq'
 import TicketsModule from './Tickets'
 import HomepageBuilderModule from './HomepageBuilder'
+import SeasonsCompetitionsModule from './SeasonsCompetitions'
 
 async function api(path, options = {}) {
   const token = localStorage.getItem('jso_admin_token')
@@ -330,6 +331,7 @@ function AdminDashboard({ user, onLogout }) {
     ['dashboard', 'Dashboard', LayoutDashboard, ['SuperAdmin','ClubAdmin','Editor','MatchManager','CommunityManager','ShopManager']],
     ['club', 'Club Settings', ShieldCheck, ['SuperAdmin','ClubAdmin']],
     ['matches', 'Match Center', Trophy, ['SuperAdmin','ClubAdmin','MatchManager']],
+    ['seasons-competitions', 'Saisons & compétitions', CalendarDays, ['SuperAdmin','ClubAdmin']],
     ['events', 'Événements', Trophy, ['SuperAdmin','ClubAdmin','MatchManager']],
     ['formations', 'Formations', Users, ['SuperAdmin','ClubAdmin','MatchManager']],
     ['teams', 'Équipes & joueurs', Users, ['SuperAdmin','ClubAdmin']],
@@ -401,6 +403,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'club' && <ClubSettingsModule onError={setError}/>}
         {section === 'teams' && <TeamsModule onError={setError}/>}
         {section === 'matches' && <MatchesModule onError={setError}/>}
+        {section === 'seasons-competitions' && <SeasonsCompetitionsModule onError={setError}/>}
         {section === 'events' && <EventsModule onError={setError}/>}
         {section === 'formations' && <FormationsModule onError={setError}/>}
         {section === 'news' && <NewsModule onError={setError}/>}
