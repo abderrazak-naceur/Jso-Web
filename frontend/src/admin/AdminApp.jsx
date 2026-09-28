@@ -9,6 +9,7 @@ import SupportersModule from './Supporters'
 import EditorialCalendarModule from './EditorialCalendar'
 import ChecklistModule from './Checklist'
 import ClassifiedsModule from './Classifieds'
+import FanPhotosModule from './FanPhotos'
 import FacilitiesModule from './Facilities'
 import ScoutingModule from './Scouting'
 import FeatureFlagsModule from './FeatureFlags'
@@ -349,6 +350,7 @@ function AdminDashboard({ user, onLogout }) {
     ['anniversaries', 'Anniversaires', PartyPopper, ['ClubAdmin','CommunityManager']],
     ['checklist', 'Check-list match', ListChecks, ['ClubAdmin','MatchManager']],
     ['classifieds', 'Petites annonces', Megaphone, ['ClubAdmin','CommunityManager']],
+    ['fan-photos', 'Photos supporters', Images, ['CommunityManager','Editor']],
     ['facilities', 'Installations', CalendarRange, ['ClubAdmin','MatchManager']],
     ['scouting', 'Scouting', ScanSearch, ['ClubAdmin','MatchManager']],
     ['community', 'Écoles & partenaires', GraduationCap, ['ClubAdmin','CommunityManager']],
@@ -416,6 +418,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'editorial' && <EditorialCalendarModule onError={setError}/>}
         {section === 'checklist' && <ChecklistModule onError={setError}/>}
         {section === 'classifieds' && <ClassifiedsModule onError={setError}/>}
+        {section === 'fan-photos' && <FanPhotosModule onError={setError}/>}
         {section === 'facilities' && <FacilitiesModule onError={setError}/>}
         {section === 'scouting' && <ScoutingModule onError={setError}/>}
         {section === 'community' && <CommunityProgramsModule onError={setError}/>}

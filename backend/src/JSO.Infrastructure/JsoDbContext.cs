@@ -34,6 +34,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<PlayerInjury> PlayerInjuries => Set<PlayerInjury>();
  public DbSet<SupporterBrick> SupporterBricks => Set<SupporterBrick>();
  public DbSet<ClassifiedAd> ClassifiedAds => Set<ClassifiedAd>();
+ public DbSet<FanPhoto> FanPhotos => Set<FanPhoto>();
  public DbSet<MatchdayChecklistTemplateItem> MatchdayChecklistTemplateItems => Set<MatchdayChecklistTemplateItem>();
  public DbSet<MatchdayChecklistItem> MatchdayChecklistItems => Set<MatchdayChecklistItem>();
  public DbSet<Facility> Facilities => Set<Facility>();
@@ -109,6 +110,9 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<ClassifiedAd>().Property(x=>x.Status).HasDefaultValue("Pending");
   modelBuilder.Entity<ClassifiedAd>().Property(x=>x.ShowContact).HasDefaultValue(false);
   modelBuilder.Entity<ClassifiedAd>().Property(x=>x.Price).HasPrecision(14,2);
+  modelBuilder.Entity<FanPhoto>().HasIndex(x=>new{x.Status,x.SubmittedAt});
+  modelBuilder.Entity<FanPhoto>().HasIndex(x=>x.FanUserId);
+  modelBuilder.Entity<FanPhoto>().Property(x=>x.Status).HasDefaultValue("Pending");
   modelBuilder.Entity<MatchdayChecklistTemplateItem>().HasIndex(x=>new{x.IsActive,x.DisplayOrder});
   modelBuilder.Entity<MatchdayChecklistItem>().HasIndex(x=>x.MatchId);
   modelBuilder.Entity<MatchdayChecklistItem>().HasIndex(x=>new{x.MatchId,x.Label}).IsUnique();
