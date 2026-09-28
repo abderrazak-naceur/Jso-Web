@@ -6,7 +6,10 @@ import '../../data/models/fan_user.dart';
 import '../shop/my_orders_screen.dart';
 import '../tickets/my_tickets_screen.dart';
 import 'auth_controller.dart';
+import 'change_password_screen.dart';
+import 'edit_profile_screen.dart';
 import 'login_screen.dart';
+import 'privacy_screen.dart';
 import 'register_screen.dart';
 
 /// Fan account screen.
@@ -85,41 +88,45 @@ class _AuthenticatedView extends StatelessWidget {
         const SizedBox(height: JsoSpacing.md),
         Center(child: _VerifiedBadge(verified: fan.emailVerified)),
         const SizedBox(height: JsoSpacing.xl),
-        OutlinedButton.icon(
+        _ProfileAction(
+          icon: Icons.confirmation_number_outlined,
+          label: 'Mes billets',
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute<void>(builder: (_) => const MyTicketsScreen()),
           ),
-          icon: const Icon(Icons.confirmation_number_outlined),
-          label: const Text('Mes billets'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: JsoColors.gold,
-            side: const BorderSide(color: JsoColors.gold),
-            padding: const EdgeInsets.symmetric(
-              horizontal: JsoSpacing.lg,
-              vertical: JsoSpacing.md,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(JsoRadius.control),
+        ),
+        const SizedBox(height: JsoSpacing.md),
+        _ProfileAction(
+          icon: Icons.receipt_long_outlined,
+          label: 'Mes commandes',
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const MyOrdersScreen()),
+          ),
+        ),
+        const SizedBox(height: JsoSpacing.md),
+        _ProfileAction(
+          icon: Icons.edit_outlined,
+          label: 'Modifier le profil',
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const EditProfileScreen()),
+          ),
+        ),
+        const SizedBox(height: JsoSpacing.md),
+        _ProfileAction(
+          icon: Icons.lock_outline,
+          label: 'Changer le mot de passe',
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const ChangePasswordScreen(),
             ),
           ),
         ),
         const SizedBox(height: JsoSpacing.md),
-        OutlinedButton.icon(
+        _ProfileAction(
+          icon: Icons.privacy_tip_outlined,
+          label: 'Confidentialité (RGPD)',
           onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const MyOrdersScreen()),
-          ),
-          icon: const Icon(Icons.receipt_long_outlined),
-          label: const Text('Mes commandes'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: JsoColors.gold,
-            side: const BorderSide(color: JsoColors.gold),
-            padding: const EdgeInsets.symmetric(
-              horizontal: JsoSpacing.lg,
-              vertical: JsoSpacing.md,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(JsoRadius.control),
-            ),
+            MaterialPageRoute<void>(builder: (_) => const PrivacyScreen()),
           ),
         ),
         const SizedBox(height: JsoSpacing.md),
@@ -146,6 +153,40 @@ class _AuthenticatedView extends StatelessWidget {
     }
     return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
         .toUpperCase();
+  }
+}
+
+/// A full-width gold-outlined action row used in the authenticated profile.
+class _ProfileAction extends StatelessWidget {
+  const _ProfileAction({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: JsoColors.gold,
+        side: const BorderSide(color: JsoColors.gold),
+        padding: const EdgeInsets.symmetric(
+          horizontal: JsoSpacing.lg,
+          vertical: JsoSpacing.md,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(JsoRadius.control),
+        ),
+        alignment: Alignment.centerLeft,
+      ),
+    );
   }
 }
 
