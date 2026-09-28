@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/config/jso_theme.dart';
 import '../../data/models/fan_user.dart';
+import '../shop/my_orders_screen.dart';
 import '../tickets/my_tickets_screen.dart';
 import 'auth_controller.dart';
 import 'login_screen.dart';
@@ -90,6 +91,25 @@ class _AuthenticatedView extends StatelessWidget {
           ),
           icon: const Icon(Icons.confirmation_number_outlined),
           label: const Text('Mes billets'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: JsoColors.gold,
+            side: const BorderSide(color: JsoColors.gold),
+            padding: const EdgeInsets.symmetric(
+              horizontal: JsoSpacing.lg,
+              vertical: JsoSpacing.md,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(JsoRadius.control),
+            ),
+          ),
+        ),
+        const SizedBox(height: JsoSpacing.md),
+        OutlinedButton.icon(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const MyOrdersScreen()),
+          ),
+          icon: const Icon(Icons.receipt_long_outlined),
+          label: const Text('Mes commandes'),
           style: OutlinedButton.styleFrom(
             foregroundColor: JsoColors.gold,
             side: const BorderSide(color: JsoColors.gold),

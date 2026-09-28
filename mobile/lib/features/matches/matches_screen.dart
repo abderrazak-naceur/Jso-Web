@@ -34,16 +34,16 @@ class _MatchesScreenState extends State<MatchesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Match Center')),
+      appBar: AppBar(title: const Text('Matchs')),
       body: FutureBuilder<List<Match>>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingView(message: 'Loading matches…');
+            return const LoadingView(message: 'Chargement des matchs…');
           }
           if (snapshot.hasError) {
             return ErrorView(
-              message: 'Could not load matches.',
+              message: 'Impossible de charger les matchs.',
               onRetry: () => setState(_load),
             );
           }
@@ -51,7 +51,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
           final matches = snapshot.data ?? const <Match>[];
           if (matches.isEmpty) {
             return const EmptyView(
-              message: 'No matches scheduled yet.',
+              message: 'Aucun match pour le moment.',
               icon: Icons.sports_soccer_outlined,
             );
           }

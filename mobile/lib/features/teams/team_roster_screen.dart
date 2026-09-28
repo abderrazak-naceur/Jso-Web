@@ -46,11 +46,11 @@ class _TeamRosterScreenState extends State<TeamRosterScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingView(message: 'Loading roster…');
+            return const LoadingView(message: 'Chargement de l’effectif…');
           }
           if (snapshot.hasError) {
             return ErrorView(
-              message: 'Could not load the roster.',
+              message: 'Impossible de charger l’effectif.',
               onRetry: () => setState(_load),
             );
           }
@@ -58,7 +58,7 @@ class _TeamRosterScreenState extends State<TeamRosterScreen> {
           final players = snapshot.data ?? const <Player>[];
           if (players.isEmpty) {
             return const EmptyView(
-              message: 'No players in this squad yet.',
+              message: 'Aucun joueur dans cet effectif pour le moment.',
               icon: Icons.person_outline,
             );
           }

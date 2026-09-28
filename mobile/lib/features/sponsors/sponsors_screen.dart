@@ -11,7 +11,7 @@ import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/remote_image.dart';
 
 /// Sponsors: the partner list from `GET /api/sponsors`; sponsors with a
-/// `websiteUrl` expose a "Visit website" action opening the link externally.
+/// `websiteUrl` expose a "Visiter le site" action opening the link externally.
 class SponsorsScreen extends StatefulWidget {
   const SponsorsScreen({super.key});
 
@@ -39,7 +39,7 @@ class _SponsorsScreenState extends State<SponsorsScreen> {
     if (uri != null) {
       // launchUrl can either return false or throw a PlatformException on
       // failure; treat a thrown exception as the same failure path so the
-      // user always sees the "Could not open link." SnackBar.
+      // user always sees the "Impossible d'ouvrir le lien." SnackBar.
       try {
         opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
       } catch (_) {
@@ -47,8 +47,9 @@ class _SponsorsScreenState extends State<SponsorsScreen> {
       }
     }
     if (!opened && mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Could not open link.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Impossible d’ouvrir le lien.')),
+      );
     }
   }
 
@@ -60,11 +61,11 @@ class _SponsorsScreenState extends State<SponsorsScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingView(message: 'Loading sponsors…');
+            return const LoadingView(message: 'Chargement des sponsors…');
           }
           if (snapshot.hasError) {
             return ErrorView(
-              message: 'Could not load sponsors.',
+              message: 'Impossible de charger les sponsors.',
               onRetry: () => setState(_load),
             );
           }
@@ -72,7 +73,7 @@ class _SponsorsScreenState extends State<SponsorsScreen> {
           final sponsors = snapshot.data ?? const <Sponsor>[];
           if (sponsors.isEmpty) {
             return const EmptyView(
-              message: 'No sponsors to show yet.',
+              message: 'Aucun sponsor à afficher pour le moment.',
               icon: Icons.handshake_outlined,
             );
           }
@@ -146,7 +147,7 @@ class _SponsorCard extends StatelessWidget {
               TextButton.icon(
                 onPressed: onVisit,
                 icon: const Icon(Icons.open_in_new, size: 16),
-                label: const Text('Visit website'),
+                label: const Text('Visiter le site'),
               ),
             ],
           ],

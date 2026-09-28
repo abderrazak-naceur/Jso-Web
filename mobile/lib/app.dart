@@ -2,39 +2,51 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'core/config/jso_theme.dart';
+import 'data/repositories/club_content_repository.dart';
+import 'data/repositories/match_center_repository.dart';
 import 'data/repositories/public_api_repository.dart';
+import 'data/repositories/shop_repository.dart';
 import 'data/repositories/tickets_repository.dart';
 import 'features/auth/auth_controller.dart';
-import 'features/auth/profile_screen.dart';
 import 'features/club/club_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/matches/matches_screen.dart';
-import 'features/media/media_screen.dart';
 import 'features/news/news_screen.dart';
+import 'features/shop/cart_controller.dart';
+import 'features/teams/teams_screen.dart';
 
-/// Root widget: installs the JSO theme and provides both the public API
-/// repository and the fan [AuthController] to the widget tree via
-/// [MultiProvider], then hosts the bottom-navigation shell.
+/// Root widget: installs the global dark theme for legacy and pushed screens,
+/// provides the app-lifetime dependencies, and hosts the five-tab shell.
 class JsoApp extends StatelessWidget {
   const JsoApp({
     super.key,
     required this.repository,
     required this.ticketsRepository,
+    required this.clubContentRepository,
+    required this.shopRepository,
+    required this.matchCenterRepository,
+    required this.cartController,
     required this.authController,
   });
 
   final PublicApiRepository repository;
   final TicketsRepository ticketsRepository;
+  final ClubContentRepository clubContentRepository;
+  final ShopRepository shopRepository;
+  final MatchCenterRepository matchCenterRepository;
+  final CartController cartController;
   final AuthController authController;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // Keep the existing repository injection so the 5 public screens keep
-        // working exactly as before (anonymous, no auth header).
         Provider<PublicApiRepository>.value(value: repository),
         Provider<TicketsRepository>.value(value: ticketsRepository),
+        Provider<ClubContentRepository>.value(value: clubContentRepository),
+        Provider<ShopRepository>.value(value: shopRepository),
+        Provider<MatchCenterRepository>.value(value: matchCenterRepository),
+        ChangeNotifierProvider<CartController>.value(value: cartController),
         ChangeNotifierProvider<AuthController>.value(value: authController),
       ],
       child: MaterialApp(
@@ -47,12 +59,10 @@ class JsoApp extends StatelessWidget {
   }
 }
 
-/// Bottom-navigation shell with the five public tabs.
+/// Root shell matching the five primary destinations of the mobile app.
 ///
-/// The account entry point is a person icon overlaid on the top-right of the
-/// shell rather than a sixth tab: the public tabs stay usable anonymously and
-/// the bottom bar keeps its five-item layout (see mobile/README.md). Tapping it
-/// pushes the [ProfileScreen], which itself branches on the auth state.
+/// [IndexedStack] keeps every tab alive while the account entry point lives in
+/// the Home header and in the Plus hub, rather than floating over all screens.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -62,128 +72,150 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
+  late final List<Widget> _tabs;
 
-  static const List<Widget> _tabs = [
-    HomeScreen(),
-    MatchesScreen(),
-    NewsScreen(),
-    MediaScreen(),
-    ClubScreen(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _tabs = [
+      HomeScreen(onViewAllNews: _showNews),
+      const MatchesScreen(),
+      const TeamsScreen(),
+      const NewsScreen(),
+      const ClubScreen(),
+    ];
+  }
 
-  void _openAccount() {
-    Navigator.of(context)
-        .push(MaterialPageRoute<void>(builder: (_) => const ProfileScreen()));
+  void _showNews() => _selectTab(3);
+
+  void _selectTab(int index) {
+    if (_index == index) return;
+    setState(() => _index = index);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          IndexedStack(index: _index, children: _tabs),
-          const _AccountButton(),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _index,
-        onTap: (i) => setState(() => _index = i),
-        backgroundColor: JsoColors.navy,
-        selectedItemColor: JsoColors.gold,
-        unselectedItemColor: JsoColors.muted,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.sports_soccer_outlined),
-            activeIcon: Icon(Icons.sports_soccer),
-            label: 'Matches',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.article_outlined),
-            activeIcon: Icon(Icons.article),
-            label: 'News',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.photo_library_outlined),
-            activeIcon: Icon(Icons.photo_library),
-            label: 'Media',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shield_outlined),
-            activeIcon: Icon(Icons.shield),
-            label: 'Club',
-          ),
-        ],
+      body: IndexedStack(index: _index, children: _tabs),
+      bottomNavigationBar: DecoratedBox(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _index,
+          onTap: _selectTab,
+          backgroundColor: Colors.white,
+          selectedItemColor: JsoColors.navy,
+          unselectedItemColor: JsoColors.inkMuted,
+          type: BottomNavigationBarType.fixed,
+          elevation: 0,
+          iconSize: 25,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w800),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
+          items: const [
+            BottomNavigationBarItem(
+              icon: _BottomTabIcon(
+                icon: Icons.home_outlined,
+                semanticLabel: 'Accueil',
+              ),
+              activeIcon: _BottomTabIcon(
+                icon: Icons.home_rounded,
+                semanticLabel: 'Accueil',
+                selected: true,
+              ),
+              label: 'Accueil',
+            ),
+            BottomNavigationBarItem(
+              icon: _BottomTabIcon(
+                icon: Icons.sports_soccer_outlined,
+                semanticLabel: 'Matchs',
+              ),
+              activeIcon: _BottomTabIcon(
+                icon: Icons.sports_soccer,
+                semanticLabel: 'Matchs',
+                selected: true,
+              ),
+              label: 'Matchs',
+            ),
+            BottomNavigationBarItem(
+              icon: _BottomTabIcon(
+                icon: Icons.groups_outlined,
+                semanticLabel: 'Équipe',
+              ),
+              activeIcon: _BottomTabIcon(
+                icon: Icons.groups,
+                semanticLabel: 'Équipe',
+                selected: true,
+              ),
+              label: 'Équipe',
+            ),
+            BottomNavigationBarItem(
+              icon: _BottomTabIcon(
+                icon: Icons.newspaper_outlined,
+                semanticLabel: 'Actualités',
+              ),
+              activeIcon: _BottomTabIcon(
+                icon: Icons.newspaper,
+                semanticLabel: 'Actualités',
+                selected: true,
+              ),
+              label: 'Actualités',
+            ),
+            BottomNavigationBarItem(
+              icon: _BottomTabIcon(
+                icon: Icons.more_horiz,
+                semanticLabel: 'Plus',
+              ),
+              activeIcon: _BottomTabIcon(
+                icon: Icons.more_horiz,
+                semanticLabel: 'Plus',
+                selected: true,
+              ),
+              label: 'Plus',
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Account entry point: a person icon in the top-right safe area of the shell.
-///
-/// Kept private to app.dart to minimise merge collisions with the parallel
-/// live-blog work. It reads the [AuthController] only to switch the icon
-/// between anonymous and authenticated; the tap always opens [ProfileScreen].
-class _AccountButton extends StatelessWidget {
-  const _AccountButton();
+/// Accessible icon with the gold selection marker from the mobile reference.
+class _BottomTabIcon extends StatelessWidget {
+  const _BottomTabIcon({
+    required this.icon,
+    required this.semanticLabel,
+    this.selected = false,
+  });
+
+  final IconData icon;
+  final String semanticLabel;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
-    final authenticated = context.select<AuthController, bool>(
-      (auth) => auth.isAuthenticated,
-    );
-    final shell = context.findAncestorStateOfType<_HomeShellState>();
-    return Positioned(
-      top: 0,
-      right: 0,
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(JsoSpacing.sm),
-          child: Material(
-            color: JsoColors.navy2,
-            shape: const CircleBorder(
-              side: BorderSide(color: JsoColors.border),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: IconButton(
-              tooltip: 'Mon compte',
-              onPressed: shell?._openAccount,
-              icon: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Icon(
-                    authenticated
-                        ? Icons.account_circle
-                        : Icons.account_circle_outlined,
-                    color: authenticated ? JsoColors.gold : JsoColors.white,
-                  ),
-                  // Small gold dot badge signalling an active session.
-                  if (authenticated)
-                    Positioned(
-                      top: -1,
-                      right: -1,
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: JsoColors.gold,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: JsoColors.navy2,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+    return Semantics(
+      label: semanticLabel,
+      selected: selected,
+      button: true,
+      excludeSemantics: true,
+      child: Tooltip(
+        message: semanticLabel,
+        child: Container(
+          width: 44,
+          padding: const EdgeInsets.only(top: 7),
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(
+                color: selected ? JsoColors.gold : Colors.transparent,
+                width: 3,
               ),
             ),
           ),
+          child: Icon(icon),
         ),
       ),
     );

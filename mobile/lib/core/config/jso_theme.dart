@@ -34,7 +34,12 @@ class JsoColors {
 
   // Light surfaces.
   static const Color paper = Color(0xFFF6F8FC); // light background
+  static const Color surface = Color(0xFFFFFFFF); // cards on light
+  static const Color surfaceMuted = Color(0xFFEEF2F7); // subtle panels
+  static const Color borderLight = Color(0xFFE0E6EF); // light dividers
   static const Color inkText = Color(0xFF0B1730); // primary text on light
+  static const Color inkMuted = Color(0xFF66758A); // secondary text on light
+  static const Color shadow = Color(0x1F071A3A); // navy-tinted elevation
 
   // Borders (subtle, semi-transparent).
   static const Color border = Color(0x17FFFFFF); // rgba(255,255,255,.09)
@@ -151,6 +156,85 @@ class JsoTheme {
         type: BottomNavigationBarType.fixed,
       ),
       dividerTheme: const DividerThemeData(color: JsoColors.border),
+    );
+  }
+
+  /// Light paper theme for primary public tabs.
+  ///
+  /// Apply it locally so existing detail and recovery screens keep the dark
+  /// presentation supplied by [dark].
+  static ThemeData paper() {
+    const scheme = ColorScheme(
+      brightness: Brightness.light,
+      primary: JsoColors.navy,
+      onPrimary: JsoColors.white,
+      secondary: JsoColors.gold,
+      onSecondary: JsoColors.ink,
+      tertiary: JsoColors.blueBright,
+      onTertiary: JsoColors.white,
+      surface: JsoColors.surface,
+      onSurface: JsoColors.inkText,
+      surfaceContainerHighest: JsoColors.surfaceMuted,
+      error: Color(0xFFB42318),
+      onError: JsoColors.white,
+      outline: JsoColors.borderLight,
+    );
+
+    final base = ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: JsoColors.paper,
+    );
+
+    return base.copyWith(
+      textTheme: base.textTheme.apply(
+        bodyColor: JsoColors.inkText,
+        displayColor: JsoColors.inkText,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: JsoColors.paper,
+        foregroundColor: JsoColors.inkText,
+        elevation: 0,
+        centerTitle: false,
+      ),
+      cardTheme: CardThemeData(
+        color: JsoColors.surface,
+        elevation: 0,
+        margin: const EdgeInsets.symmetric(vertical: JsoSpacing.sm),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(JsoRadius.card),
+          side: const BorderSide(color: JsoColors.borderLight),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: JsoColors.gold,
+          foregroundColor: JsoColors.ink,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(JsoRadius.control),
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: JsoSpacing.lg,
+            vertical: JsoSpacing.md,
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: JsoColors.navy),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: JsoColors.navy,
+      ),
+      chipTheme: base.chipTheme.copyWith(
+        backgroundColor: JsoColors.surfaceMuted,
+        side: const BorderSide(color: JsoColors.borderLight),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(JsoRadius.pill),
+        ),
+      ),
+      dividerTheme: const DividerThemeData(color: JsoColors.borderLight),
     );
   }
 }

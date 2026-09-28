@@ -192,8 +192,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 }
 
-String _articleCount(int count) =>
-    count == 1 ? '1 article' : '$count articles';
+String _articleCount(int count) => count == 1 ? '1 article' : '$count articles';
 
 class _EmptyCart extends StatelessWidget {
   const _EmptyCart();
@@ -443,9 +442,9 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
 
   void _confirm() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    Navigator.of(context).pop(
-      _CheckoutDetails(name: _name.text.trim(), email: _email.text.trim()),
-    );
+    Navigator.of(
+      context,
+    ).pop(_CheckoutDetails(name: _name.text.trim(), email: _email.text.trim()));
   }
 
   @override
@@ -497,8 +496,7 @@ class _CheckoutSheetState extends State<_CheckoutSheet> {
                   labelText: 'E-mail de contact (facultatif)',
                   counterText: '',
                 ),
-                validator: (value) =>
-                    (value == null || value.trim().isEmpty)
+                validator: (value) => (value == null || value.trim().isEmpty)
                     ? null
                     : validateEmail(value),
                 onFieldSubmitted: (_) => _confirm(),

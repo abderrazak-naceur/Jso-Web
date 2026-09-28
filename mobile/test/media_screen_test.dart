@@ -34,7 +34,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Image'), findsWidgets);
-      expect(find.text('Video'), findsWidgets);
+      expect(find.text('Vidéo'), findsWidgets);
     });
 
     testWidgets('shows EmptyView when there is no media', (tester) async {

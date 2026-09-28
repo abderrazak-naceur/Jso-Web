@@ -33,16 +33,16 @@ class _MediaScreenState extends State<MediaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Media')),
+      appBar: AppBar(title: const Text('Médias')),
       body: FutureBuilder<List<MediaAsset>>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingView(message: 'Loading media…');
+            return const LoadingView(message: 'Chargement des médias…');
           }
           if (snapshot.hasError) {
             return ErrorView(
-              message: 'Could not load media.',
+              message: 'Impossible de charger les médias.',
               onRetry: () => setState(_load),
             );
           }
@@ -50,7 +50,7 @@ class _MediaScreenState extends State<MediaScreen> {
           final assets = snapshot.data ?? const <MediaAsset>[];
           if (assets.isEmpty) {
             return const EmptyView(
-              message: 'No media available yet.',
+              message: 'Aucun média disponible pour le moment.',
               icon: Icons.photo_library_outlined,
             );
           }
@@ -160,7 +160,7 @@ class _TypeBadge extends StatelessWidget {
           ),
           const SizedBox(width: JsoSpacing.xs),
           Text(
-            isVideo ? 'Video' : 'Image',
+            isVideo ? 'Vidéo' : 'Image',
             style: const TextStyle(
               color: JsoColors.white,
               fontSize: 11,

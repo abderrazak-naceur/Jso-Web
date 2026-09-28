@@ -15,14 +15,11 @@ class CartButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final count = context.select<CartController, int>(
-      (cart) => cart.itemCount,
-    );
+    final count = context.select<CartController, int>((cart) => cart.itemCount);
     return IconButton(
       tooltip: 'Panier',
-      onPressed: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const CartScreen()),
-      ),
+      onPressed: () => Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => const CartScreen())),
       icon: Badge(
         isLabelVisible: count > 0,
         backgroundColor: JsoColors.gold,
