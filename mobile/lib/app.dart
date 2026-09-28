@@ -13,7 +13,7 @@ import 'features/home/home_screen.dart';
 import 'features/matches/matches_screen.dart';
 import 'features/news/news_screen.dart';
 import 'features/shop/cart_controller.dart';
-import 'features/teams/teams_screen.dart';
+import 'features/shop/shop_screen.dart';
 
 /// Root widget: installs the global dark theme for legacy and pushed screens,
 /// provides the app-lifetime dependencies, and hosts the five-tab shell.
@@ -80,7 +80,7 @@ class _HomeShellState extends State<HomeShell> {
     _tabs = [
       HomeScreen(onViewAllNews: _showNews),
       const MatchesScreen(),
-      const TeamsScreen(),
+      const ShopScreen(),
       const NewsScreen(),
       const ClubScreen(),
     ];
@@ -142,15 +142,15 @@ class _HomeShellState extends State<HomeShell> {
             ),
             BottomNavigationBarItem(
               icon: _BottomTabIcon(
-                icon: Icons.groups_outlined,
-                semanticLabel: 'Équipe',
+                icon: Icons.storefront_outlined,
+                semanticLabel: 'Boutique',
               ),
               activeIcon: _BottomTabIcon(
-                icon: Icons.groups,
-                semanticLabel: 'Équipe',
+                icon: Icons.storefront,
+                semanticLabel: 'Boutique',
                 selected: true,
               ),
-              label: 'Équipe',
+              label: 'Boutique',
             ),
             BottomNavigationBarItem(
               icon: _BottomTabIcon(
