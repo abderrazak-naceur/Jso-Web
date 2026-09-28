@@ -9,44 +9,53 @@ content the web frontend consumes: club info, matches, news and media.
 
 ## What the app does
 
-Five public tabs behind a bottom-navigation shell (JSO navy bar, gold active
-state):
+The UI follows the JSO brand reference: **paper/light content surfaces**, a
+**navy gradient home header** with the official crest, gold accents, and a
+fixed **light bottom-navigation bar** with five French destinations —
+**Accueil, Matchs, Équipe, Actualités, Plus**. All copy is in **French**.
 
-- **Home** — club header/crest, next match, recent matches and a latest-news
-  preview, from `GET /api/home`.
-- **Matches (Match Center)** — fixtures/results list from `GET /api/matches`;
-  tapping a match opens a detail view with two tabs:
-  - **Timeline** — score, status, venue and the event timeline from
-    `GET /api/matches/{id}` and `GET /api/matches/{id}/events`.
-  - **Live** — the match **live blog** feed from
+- **Accueil (Home)** — navy header with the JSO crest, a greeting
+  (`Bonjour, supporters`) and a tagline; a prominent gold **Prochain match**
+  card (JSO vs opponent, date/time/venue), an image-led **Actualités** list
+  with a *Voir tout* shortcut, and recent results — all from `GET /api/home`.
+- **Matchs (Match Center)** — fixtures/results from `GET /api/matches`; tapping
+  a match opens a detail view with four French tabs:
+  - **Résumé** — score, status, venue and the event timeline from
+    `GET /api/matches/{id}` and `GET /api/matches/{id}/events`, an optional
+    **Météo du match** card (`GET /api/matches/{id}/reminder`, hidden when
+    unavailable), and a **Billetterie** button (see [Ticketing](#ticketing-billetterie)).
+  - **Direct** — the match **live blog** feed from
     `GET /api/matches/{id}/liveblog`, polled lightly while the tab is open
     (see [Live blog polling](#live-blog-polling)).
+  - **Compos** — lineup and officials from `GET /api/matches/{id}/lineup` and
+    `.../officials`.
+  - **Stats** — match statistics from `GET /api/matches/{id}/stats`.
+- **Équipe (Teams & Roster)** — the squads list from `GET /api/teams`; tapping a
+  team opens its roster (players with shirt number, position and photo) from
+  `GET /api/teams/{id}/players`.
+- **Actualités (News)** — article list from `GET /api/news`; tapping opens the
+  article from `GET /api/news/{slug}` (news detail is keyed by **slug**, not id).
+- **Plus** — a hub linking every secondary area: **Mon compte**, **Boutique**,
+  **Agenda du club**, **Médias**, **Sponsors**, **Documents**, **Questions
+  fréquentes**, **Musée du club** and **Écoles & partenaires**. Each opens its
+  own screen backed by the matching public endpoint.
 
-  The timeline tab also exposes a **Billetterie** button that opens the match
-  ticketing screen (see [Ticketing](#ticketing-billetterie)).
-- **News** — article list from `GET /api/news`; tapping opens the article from
-  `GET /api/news/{slug}` (news detail is keyed by **slug**, not id).
-- **Media** — a gallery grid from `GET /api/media`, using `thumbnailUrl` (with a
-  fallback to `url`) and an Image/Video type badge.
-- **Club** — a small landing screen linking to two areas:
-  - **Teams & Roster** — the squads list from `GET /api/teams`; tapping a team
-    opens its roster (players with shirt number, position and photo) from
-    `GET /api/teams/{id}/players`.
-  - **Sponsors** — the partners list from `GET /api/sponsors`, showing each
-    sponsor's logo and tier; sponsors with a `websiteUrl` expose a **Visit
-    website** action that opens the link in the external browser.
+Authenticated fans additionally get the **Boutique** checkout with **Mes
+commandes**, the **Billetterie** with **Mes billets**, and full account
+management (see [Fan accounts](#fan-accounts-login-registration-profile)).
 
 Every screen renders three explicit states:
 
 - **Loading** — a JSO-gold spinner (`LoadingView`).
-- **Error** — a message with a **Retry** button (`ErrorView`) when the API call
-  fails (network error, timeout, non-2xx, 404).
+- **Error** — a message with a **Réessayer** button (`ErrorView`) when the API
+  call fails (network error, timeout, non-2xx, 404).
 - **Empty** — a friendly placeholder (`EmptyView`) when the endpoint returns no
   items.
 
 All remote images use `Image.network` with `loadingBuilder`/`errorBuilder`
-(via the shared `RemoteImage` widget), so missing or broken media URLs degrade
-gracefully to a placeholder instead of crashing the screen.
+(via the shared `RemoteImage` widget, which also resolves root-relative
+`/uploads/...` URLs against the API host), so missing or broken media URLs
+degrade gracefully to a placeholder instead of crashing the screen.
 
 ## Installing Flutter
 
@@ -72,38 +81,51 @@ gracefully to a placeholder instead of crashing the screen.
 ```
 lib/
   core/
-    config/   api_config.dart (base URL), jso_theme.dart (JSO design system)
-    api/      api_client.dart (http wrapper, 15s timeout), api_exception.dart
+    config/   api_config.dart (base URL + resolveUrl), jso_theme.dart (dark + paper)
+    api/      api_client.dart (http wrapper, 15s timeout, GET/POST/PUT),
+              api_exception.dart, error_text.dart (French error copy)
   data/
-    models/   club, match, match_event, live_blog_entry, article,
-              media_asset, sponsor, team, player, home_data, json_utils
-    repositories/  public_api_repository.dart  (methods -> real /api routes)
-  data/
+    models/   club, match, match_event, live_blog_entry, article, media_asset,
+              sponsor, team, player, home_data, fan_user, ticket_type,
+              ticket_order, product, shop_order, club_event, club_document,
+              faq_entry, archive_item, community_program, match_lineup_entry,
+              match_official, match_stat, match_reminder, json_utils
+    repositories/  public_api_repository, tickets_repository, shop_repository,
+                   club_content_repository, match_center_repository, auth_repository
     auth/     token_store.dart (secure JWT storage interface + impl)
   features/
-    home/     home_screen.dart
-    matches/  matches_screen.dart, match_detail_screen.dart
-    news/     news_screen.dart, news_detail_screen.dart
-    media/    media_screen.dart
-    teams/    teams_screen.dart, team_roster_screen.dart
-    sponsors/ sponsors_screen.dart
-    tickets/  tickets_screen.dart (reserve), my_tickets_screen.dart
-    club/     club_screen.dart (landing for the Club tab)
-    auth/     auth_controller.dart (session state), login_screen.dart,
-              register_screen.dart, profile_screen.dart
+    home/     home_screen.dart (brand-reference redesign)
+    matches/  matches_screen, match_detail_screen (Résumé/Direct/Compos/Stats),
+              match_lineup_tab, match_stats_tab, match_weather_card
+    news/     news_screen, news_detail_screen
+    media/    media_screen
+    teams/    teams_screen, team_roster_screen
+    sponsors/ sponsors_screen
+    tickets/  tickets_screen (reserve), my_tickets_screen
+    shop/     shop_screen, product_detail_screen, cart_controller, cart_screen,
+              order_confirmation_screen, my_orders_screen, order_detail_screen
+    events/ documents/ faq/ archive/ community/   (Plus hub screens)
+    club/     club_screen.dart (the "Plus" hub)
+    auth/     auth_controller, login_screen, register_screen, profile_screen,
+              edit_profile_screen, change_password_screen, privacy_screen,
+              login_prompt
   shared/
-    format.dart              date / score / fixture formatting (intl)
+    format.dart              French date / score / fixture / money formatting
+    snackbars.dart           shared JSO snackbar helper
     widgets/  loading_view, empty_view, error_view,
-              remote_image (resilient Image.network), jso_crest (bundled SVG)
-  app.dart    root widget: theme + Provider + bottom-navigation shell
+              remote_image (resilient Image.network), jso_crest (bundled PNG)
+  app.dart    root widget: providers + paper/dark theme + 5-tab shell
   main.dart   entry point
 assets/
-  jso-club-mark.svg          bundled copy of frontend/public/jso-club-mark.svg
+  jso-crest.png              official crest, copied from frontend/public
+  jso-club-mark.svg          legacy abstract mark (kept for reference)
 test/
   models_parsing_test.dart   JSON parsing for the real DTO shapes
-  match_liveblog_test.dart   Live blog tab LOADING / EMPTY / ERROR / populated
+  account_profile_test.dart  profile edit / password / RGPD flows
+  plus_screen_test.dart      the Plus hub entries and routing
+  match_center_test.dart     lineup / stats / weather tabs
   *_screen_test.dart         screen LOADING / EMPTY / ERROR / populated states
-  support/                   fake repository + pump harness (no network)
+  support/                   fakes + pump harness (no network)
 ```
 
 ## Configuring the API base URL
@@ -154,38 +176,59 @@ flutter build ios  --dart-define=JSO_API_BASE_URL=https://jso.example.tn/api   #
 ## State management: Provider
 
 The app uses **Provider** to expose its dependencies to the widget tree via a
-`MultiProvider` in `app.dart`: a single `PublicApiRepository` (plain `Provider`)
-plus the fan `AuthController` (a `ChangeNotifierProvider`, since session state
-changes over time). Provider was chosen over Riverpod/Bloc because the surface
-is small and mostly read-only (fetch-and-render): each public screen owns a
-`Future` and drives its own loading/error/empty state with a `FutureBuilder`,
-while the account screens `watch` the `AuthController`. This keeps the codebase
+`MultiProvider` in `app.dart`. Plain `Provider`s hold the stateless repositories
+(`PublicApiRepository`, `TicketsRepository`, `ShopRepository`,
+`ClubContentRepository`, `MatchCenterRepository`), while `ChangeNotifierProvider`s
+hold the stateful pieces (`AuthController` for the session and `CartController`
+for the shop cart). Provider was chosen over Riverpod/Bloc because the surface
+is small and mostly read-only (fetch-and-render): each screen owns a `Future`
+and drives its own loading/error/empty state with a `FutureBuilder`, while the
+account/cart widgets `watch` their controller. This keeps the codebase
 approachable and avoids extra boilerplate, while still making the repository and
-auth layer easy to swap for fakes in tests (see `test/support/fake_repository.dart`
-and `test/support/fake_auth.dart`).
+auth layer easy to swap for fakes in tests (see `test/support/`).
 
 ## Fan accounts (login, registration, profile)
 
 Supporters can create an account, sign in and view their profile. This is the
 one authenticated area of the app; every other screen stays anonymous.
 
-- **Endpoints** (`backend/src/JSO.Api/Controllers/AccountController.cs`):
+- **Endpoints** (`backend/src/JSO.Api/Controllers/AccountController.cs`,
+  `FanPrivacyController.cs`):
 
-  | Method call (AuthRepository) | Route                       | Auth               |
-  | ---------------------------- | --------------------------- | ------------------ |
-  | `register(...)`              | `POST /api/account/register` | none (returns JWT) |
-  | `login(...)`                 | `POST /api/account/login`    | none (returns JWT) |
-  | `getMe(token)`               | `GET /api/account/me`        | `Bearer <jwt>`     |
+  | Method call (AuthRepository) | Route                            | Auth               |
+  | ---------------------------- | -------------------------------- | ------------------ |
+  | `register(...)`              | `POST /api/account/register`     | none (returns JWT) |
+  | `login(...)`                 | `POST /api/account/login`        | none (returns JWT) |
+  | `getMe(token)`               | `GET /api/account/me`            | `Bearer <jwt>`     |
+  | `updateProfile(token, ...)`  | `PUT /api/account/me`            | `Bearer <jwt>`     |
+  | `changePassword(token, ...)` | `POST /api/account/change-password` | `Bearer <jwt>`  |
+  | `exportMyData(token)`        | `GET /api/fan/data-export`       | `Bearer <jwt>`     |
+  | `deleteMyAccount(token)`     | `POST /api/fan/account-deletion` | `Bearer <jwt>`     |
 
 - **Response shape.** `register` (201) and `login` (200) return
-  `{accessToken: <jwt>, user: {id, email, displayName}}`. `GET /account/me`
-  returns `{id, email, displayName, emailVerified}`. The token field is
-  **`accessToken`**.
+  `{accessToken: <jwt>, user: {id, email, displayName}}`. `GET`/`PUT
+  /account/me` return `{id, email, displayName, emailVerified, birthDate?,
+  anniversaryOptIn, memberSince?}`. The token field is **`accessToken`**.
 
-- **Bearer only on `/me`.** The `Authorization: Bearer <jwt>` header is attached
-  **only** to `GET /account/me` (and any future fan-only endpoint). All public
-  calls (home, matches, news, media, club) keep going out anonymously exactly as
-  before, so the five public tabs work with or without an account.
+- **Profile management.** From **Mon compte**, an authenticated fan can:
+  - **Modifier le profil** — update the display name and an optional birthday.
+    The birthday is personal data kept only while the *anniversary* opt-in is
+    on; turning it off clears the stored date server-side (data minimisation).
+    `birthDate` is sent as `yyyy-MM-dd` (the API's `DateOnly`).
+  - **Changer le mot de passe** — the form mirrors the backend rule (new
+    password ≥ 12 characters) and surfaces server messages (e.g. a wrong
+    current password) in French.
+  - **Confidentialité (RGPD)** — export a summary of the personal data the club
+    holds (`GET /fan/data-export`) and request account deletion
+    (`POST /fan/account-deletion`), which anonymises the account and signs out.
+    Deletion is guarded by an explicit confirmation dialog.
+
+- **Bearer only on fan endpoints.** The `Authorization: Bearer <jwt>` header is
+  attached **only** to the fan-only calls (`/account/me`, profile update,
+  password change, RGPD, tickets, shop orders). All public calls (home, matches,
+  news, media, teams, sponsors, events, documents, FAQ, archive, community, shop
+  catalogue) keep going out anonymously, so the public areas work with or
+  without an account.
 
 - **Token storage — `flutter_secure_storage`.** The JWT is persisted through the
   `TokenStore` interface (`lib/data/auth/token_store.dart`). The production
@@ -205,21 +248,19 @@ one authenticated area of the app; every other screen stays anonymous.
   controller exposes an `AuthStatus.unknown` state while this resolves so the
   profile shows a spinner instead of flashing the login form.
 
-- **Navigation entry point (why no sixth tab).** The account is reached from a
-  person icon in the top-right of the shell (`lib/app.dart`), which
-  `Navigator.push`es the `ProfileScreen`. It is deliberately **not** a sixth
-  bottom tab: the fixed `BottomNavigationBar` already holds the five public
-  destinations (Home / Matches / News / Media / Club) and Flutter recommends
-  3–5 items for a fixed bar. The profile screen branches on the auth state —
-  authenticated fans see their profile plus **Se déconnecter**, anonymous
+- **Navigation entry point.** The account lives under the **Plus** tab as
+  **Mon compte**, which `Navigator.push`es the `ProfileScreen`. The profile
+  branches on the auth state — authenticated fans see their profile plus
+  **Mes billets**, **Mes commandes**, **Modifier le profil**, **Changer le mot
+  de passe**, **Confidentialité (RGPD)** and **Se déconnecter**; anonymous
   visitors see a **Se connecter / Créer un compte** call to action.
 
 - **UI copy is in French**, consistent with the JSO design system
-  (`jso_theme.dart`): gold `ElevatedButton`s on dark navy surfaces. Forms
-  validate locally (email format, required fields, password ≥ 12 characters to
-  mirror the backend rule) and surface server errors as French text — e.g. a 401
-  shows *« Identifiants invalides. »* and a 409 shows
-  *« Un compte existe déjà avec cet email. »*.
+  (`jso_theme.dart`). Forms validate locally (email format, required fields,
+  password ≥ 12 characters to mirror the backend rule) and surface server errors
+  as French text — e.g. a 401 shows *« Identifiants invalides. »* and a 409 shows
+  *« Un compte existe déjà avec cet email. »*. A shared `describeApiError` helper
+  maps every API failure (and known backend messages) to French copy.
 
 ## Ticketing (Billetterie)
 
@@ -281,9 +322,24 @@ endpoints above are the exception (register/login return a JWT; `/me` needs it).
 | `getTeamPlayers(id)`            | `GET /api/teams/{id}/players`     |
 | `getSponsors({placement})`      | `GET /api/sponsors[?placement=]`  |
 
-The screens use `getHome`, `getMatches`, `getMatch`, `getMatchEvents`,
-`getMatchLiveBlog`, `getNews`, `getNewsArticle` and `getMedia`, plus `getTeams`,
-`getTeamPlayers` and `getSponsors` behind the **Club** tab.
+The match-detail tabs additionally consume the Match Center endpoints
+(`MatchCenterRepository`):
+
+| Method call            | Route                              |
+| ---------------------- | ---------------------------------- |
+| `getLineup(id)`        | `GET /api/matches/{id}/lineup`     |
+| `getOfficials(id)`     | `GET /api/matches/{id}/officials`  |
+| `getStats(id)`         | `GET /api/matches/{id}/stats`      |
+| `getReminder(id)`      | `GET /api/matches/{id}/reminder`   |
+
+The **Plus** hub consumes the "club life" endpoints
+(`ClubContentRepository`): `GET /api/events`, `/api/events/{slug}`,
+`/api/documents`, `/api/faq`, `/api/archive`, `/api/community-programs`.
+
+The **Boutique** consumes the shop endpoints (`ShopRepository`):
+`GET /api/shop/products[?category=]`, `GET /api/shop/products/{slug}` (public),
+plus fan-only `POST /api/shop/orders`, `GET /api/shop/orders` and
+`GET /api/shop/orders/{id}`.
 
 Ticketing adds one public and two fan-only calls (see [Ticketing](#ticketing-billetterie)):
 
@@ -323,16 +379,19 @@ feed on a timer while it is mounted:
   or the **Actualiser** button; both reuse the same initial-load path and
   surface errors.
 
-## Navigation: why a "Club" tab
+## Navigation: the "Plus" hub
 
-Adding Team/Roster and Sponsors as two more top-level tabs would push the fixed
-`BottomNavigationBar` to six items, which crowds the bar and hurts legibility on
-narrow phones (Flutter also recommends 3–5 destinations for a fixed bar). To
-keep the bar usable, both areas live behind a single fifth **Club** tab
-(`Icons.shield_outlined` / `Icons.shield`) whose landing screen
-(`lib/features/club/club_screen.dart`) shows two large cards — **Teams &
-Roster** and **Sponsors** — that each `Navigator.push` to the respective screen.
-Home / Matches / News / Media remain the first four tabs.
+The fixed `BottomNavigationBar` keeps five destinations — **Accueil, Matchs,
+Équipe, Actualités, Plus** — because Flutter recommends 3–5 items for a fixed
+bar. Everything that isn't a primary destination lives behind the fifth **Plus**
+tab (`lib/features/club/club_screen.dart`): a **Mon compte** header card plus a
+responsive grid of entries (Boutique, Agenda du club, Médias, Sponsors,
+Documents, Questions fréquentes, Musée du club, Écoles & partenaires). This keeps
+the bar readable on narrow phones while still surfacing every area one tap away.
+
+The primary tabs use a light **paper** theme (`JsoTheme.paper()`), while pushed
+detail/secondary screens keep the darker `JsoTheme.dark()` surface; both are
+defined in `lib/core/config/jso_theme.dart`.
 
 ## External links: url_launcher
 
@@ -346,12 +405,13 @@ a non-empty `websiteUrl`.
 
 ## Brand assets
 
-The JSO crest is bundled at `assets/jso-club-mark.svg` — a **copy** of
-`frontend/public/jso-club-mark.svg` (the frontend original is left untouched) —
-and rendered with `flutter_svg`. If the asset ever fails to load, `JsoCrest`
-falls back to a gold "JSO" monogram badge. Typography (Manrope headings, Inter
-body) is documented in `jso_theme.dart` but not yet bundled; the theme falls
-back to the platform default sans-serif.
+The official JSO crest is bundled at `assets/jso-crest.png` — a **copy** of
+`frontend/public/JSO-crest-regenerated-ok.png` (the frontend original is left
+untouched) — and rendered with `Image.asset` via the shared `JsoCrest` widget.
+If the asset ever fails to load, `JsoCrest` falls back to a gold "JSO" monogram
+badge. Typography (Manrope headings, Inter body) is documented in
+`jso_theme.dart` but not yet bundled; the theme falls back to the platform
+default sans-serif.
 
 ## Verifying in this repository
 
@@ -380,8 +440,16 @@ validated via `flutter analyze`, `flutter test` and `dart format`.
 Intentionally **not** included in this iteration:
 
 - **Push notifications (Firebase Cloud Messaging / FCM).** No Firebase,
-  Crashlytics or Firestore code is wired in. Planned for a later iteration (see
-  `docs/ROADMAP.md`).
+  Crashlytics or Firestore code is wired in. The home bell is a non-interactive
+  placeholder (tooltip *« Notifications bientôt disponibles »*). Planned for a
+  later iteration (see `docs/ROADMAP.md`).
+- **Real payments.** Both the shop and ticketing use the **manual gateway**
+  (a club admin confirms; no card payment in the app), matching the web app.
+- **Store publishing & on-device QA.** Building signed APK/AAB and iOS archives
+  and testing on real Android/iOS devices needs the platform SDKs and developer
+  accounts, which are outside this repository.
 
-Fan accounts (login, registration and profile against `/api/account/*`) are
-**now implemented** — see the *Fan accounts* section above.
+Now implemented (previously listed as future work): fan accounts with full
+profile management and RGPD self-service, the Boutique with orders, the
+Billetterie, the Match Center (lineup/stats/weather), the "club life" section,
+and the brand-reference redesign.

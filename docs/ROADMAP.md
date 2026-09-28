@@ -27,7 +27,8 @@ PostgreSQL non richiede una licenza a pagamento. L'obiettivo di costo infrastrut
 - [x] Script di backup PostgreSQL/media e procedura di recovery predisposti; non ancora eseguiti su dati reali.
 - [ ] URL API, CORS e HTTPS verificati sul dominio reale.
 - [ ] Ambiente Oracle reale, HTTPS, backup e restore verificati.
-- [ ] App Flutter implementata; le immagini attuali sono concept visivi.
+- [x] App Flutter implementata: Home, Match Center (Résumé/Direct/Compos/Stats), Actualités, Équipe, Médias, account tifoso completo (profilo, password, RGPD), Boutique e Biglietteria, hub Plus, design allineato al brand. Vedi [`mobile/README.md`](../mobile/README.md).
+- [ ] App Flutter collaudata su dispositivi Android/iOS reali e pubblicata sugli store; notifiche push (FCM) da valutare.
 
 Le caselle completate attestano la presenza delle funzioni nel codice, non un collaudo end-to-end o il go-live.
 
