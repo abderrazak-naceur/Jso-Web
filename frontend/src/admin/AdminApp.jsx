@@ -457,54 +457,72 @@ function AdminDashboard({ user, onLogout }) {
   const [stats, setStats] = useState(null)
   const [error, setError] = useState('')
 
+  // Menu items grouped into premium categories. Format:
+  // [id, label, Icon, [roles], category]. The sidebar renders one section per
+  // category (in CATEGORY_ORDER) with a heading, instead of a long flat list.
+  // Revenue-first: "Billetterie & Abonnements" and "Boutique" sit near the top.
+  // Note: the former duplicate id 'events' is split into 'match-events'
+  // (match calendar) and 'club-events' (club agenda) to avoid double rendering.
   const items = [
-    ['dashboard', 'Dashboard', LayoutDashboard, ['SuperAdmin','ClubAdmin','Editor','MatchManager','CommunityManager','ShopManager']],
-    ['club', 'Club Settings', ShieldCheck, ['SuperAdmin','ClubAdmin']],
-    ['matches', 'Match Center', Trophy, ['SuperAdmin','ClubAdmin','MatchManager']],
-    ['seasons-competitions', 'Saisons & compétitions', CalendarDays, ['SuperAdmin','ClubAdmin']],
-    ['events', 'Événements', Trophy, ['SuperAdmin','ClubAdmin','MatchManager']],
-    ['formations', 'Formations', Users, ['SuperAdmin','ClubAdmin','MatchManager']],
-    ['match-sheet', 'Feuille de match', ClipboardList, ['SuperAdmin','ClubAdmin','MatchManager']],
-    ['teams', 'Équipes & joueurs', Users, ['SuperAdmin','ClubAdmin']],
-    ['news', 'News CMS', Newspaper, ['SuperAdmin','ClubAdmin','Editor']],
-    ['editorial', 'Calendrier éditorial', CalendarClock, ['Editor','ClubAdmin']],
-    ['security', 'Sécurité', ShieldCheck, ['SuperAdmin']],
-    ['media', 'Médias', Images, ['SuperAdmin','ClubAdmin','Editor']],
-    ['content', 'Contenus', Pencil, ['SuperAdmin','ClubAdmin','Editor']],
-    ['homepage', 'Page d\u2019accueil & menus', LayoutTemplate, ['ClubAdmin','Editor']],
-    ['sponsors', 'Sponsors', Handshake, ['SuperAdmin','ClubAdmin']],
-    ['sponsorqr', 'QR Sponsors', QrCode, ['SuperAdmin','ClubAdmin']],
-    ['shop', 'Boutique', ShoppingBag, ['SuperAdmin','ClubAdmin','ShopManager']],
-    ['orders', 'Commandes', Receipt, ['SuperAdmin','ClubAdmin','ShopManager']],
-    ['tickets', 'Billetterie', Ticket, ['SuperAdmin','ClubAdmin','MatchManager']],
-    ['memberships', 'Abonnements', CreditCard, ['SuperAdmin','ClubAdmin']],
-    ['match-streams', 'Diffusion en direct', Radio, ['ClubAdmin','MatchManager']],
-    ['analytics', 'Analytics joueurs', BarChart3, ['SuperAdmin','ClubAdmin','MatchManager']],
-    ['finance', 'Finances', Wallet, ['SuperAdmin','ClubAdmin','FinanceManager']],
-    ['volunteers', 'Bénévoles', ClipboardList, ['ClubAdmin','MatchManager']],
-    ['newsletter', 'Newsletter', Mail, ['Editor','CommunityManager']],
-    ['archive', 'Musée · Archives', Landmark, ['SuperAdmin','ClubAdmin','Editor']],
-    ['injuries', 'Infirmerie', HeartPulse, ['ClubAdmin','MatchManager']],
-    ['supporters', 'Mur des supporters', BrickWall, ['ClubAdmin','CommunityManager']],
-    ['anniversaries', 'Anniversaires', PartyPopper, ['ClubAdmin','CommunityManager']],
-    ['checklist', 'Check-list match', ListChecks, ['ClubAdmin','MatchManager']],
-    ['classifieds', 'Petites annonces', Megaphone, ['ClubAdmin','CommunityManager']],
-    ['fan-photos', 'Photos supporters', Images, ['CommunityManager','Editor']],
-    ['community-moderation', 'Communauté · Modération', MessageSquare, ['ClubAdmin','CommunityManager']],
-    ['facilities', 'Installations', CalendarRange, ['ClubAdmin','MatchManager']],
-    ['scouting', 'Scouting', ScanSearch, ['ClubAdmin','MatchManager']],
-    ['community', 'Écoles & partenaires', GraduationCap, ['ClubAdmin','CommunityManager']],
-    ['featureflags', 'Feature flags', Flag, ['SuperAdmin','ClubAdmin']],
-    ['apiusage', 'Utilisation API', Gauge, ['SuperAdmin','ClubAdmin']],
-    ['gdpr', 'RGPD', ShieldAlert, ['SuperAdmin','ClubAdmin']],
-    ['events', 'Événements', PartyPopper, ['SuperAdmin','ClubAdmin','Editor']],
-    ['documents', 'Documents', FileText, ['SuperAdmin','ClubAdmin','Editor']],
-    ['faq', 'FAQ', HelpCircle, ['SuperAdmin','ClubAdmin','Editor']],
-    ['settings', 'Configuration', Server, ['SuperAdmin','ClubAdmin']],
+    ['dashboard', 'Dashboard', LayoutDashboard, ['SuperAdmin','ClubAdmin','Editor','MatchManager','CommunityManager','ShopManager'], 'Tableau de bord'],
+
+    ['tickets', 'Billetterie', Ticket, ['SuperAdmin','ClubAdmin','MatchManager'], 'Billetterie & Abonnements'],
+    ['memberships', 'Abonnements', CreditCard, ['SuperAdmin','ClubAdmin'], 'Billetterie & Abonnements'],
+    ['finance', 'Finances', Wallet, ['SuperAdmin','ClubAdmin','FinanceManager'], 'Billetterie & Abonnements'],
+
+    ['shop', 'Boutique', ShoppingBag, ['SuperAdmin','ClubAdmin','ShopManager'], 'Boutique'],
+    ['orders', 'Commandes', Receipt, ['SuperAdmin','ClubAdmin','ShopManager'], 'Boutique'],
+    ['sponsors', 'Sponsors', Handshake, ['SuperAdmin','ClubAdmin'], 'Boutique'],
+    ['sponsorqr', 'QR Sponsors', QrCode, ['SuperAdmin','ClubAdmin'], 'Boutique'],
+
+    ['matches', 'Match Center', Trophy, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
+    ['match-events', 'Événements de match', Trophy, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
+    ['match-sheet', 'Feuille de match', ClipboardList, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
+    ['formations', 'Formations', Users, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
+    ['teams', 'Équipes & joueurs', Users, ['SuperAdmin','ClubAdmin'], 'Équipe & Matchs'],
+    ['seasons-competitions', 'Saisons & compétitions', CalendarDays, ['SuperAdmin','ClubAdmin'], 'Équipe & Matchs'],
+    ['match-streams', 'Diffusion en direct', Radio, ['ClubAdmin','MatchManager'], 'Équipe & Matchs'],
+    ['analytics', 'Analytics joueurs', BarChart3, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
+    ['injuries', 'Infirmerie', HeartPulse, ['ClubAdmin','MatchManager'], 'Équipe & Matchs'],
+    ['scouting', 'Scouting', ScanSearch, ['ClubAdmin','MatchManager'], 'Équipe & Matchs'],
+    ['checklist', 'Check-list match', ListChecks, ['ClubAdmin','MatchManager'], 'Équipe & Matchs'],
+
+    ['news', 'News CMS', Newspaper, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
+    ['editorial', 'Calendrier éditorial', CalendarClock, ['Editor','ClubAdmin'], 'Contenu & Site'],
+    ['media', 'Médias', Images, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
+    ['content', 'Contenus', Pencil, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
+    ['homepage', 'Page d\u2019accueil & menus', LayoutTemplate, ['ClubAdmin','Editor'], 'Contenu & Site'],
+    ['club-events', 'Agenda du club', PartyPopper, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
+    ['documents', 'Documents', FileText, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
+    ['faq', 'FAQ', HelpCircle, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
+    ['archive', 'Musée · Archives', Landmark, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
+
+    ['community-moderation', 'Communauté · Modération', MessageSquare, ['ClubAdmin','CommunityManager'], 'Communauté'],
+    ['fan-photos', 'Photos supporters', Images, ['CommunityManager','Editor'], 'Communauté'],
+    ['supporters', 'Mur des supporters', BrickWall, ['ClubAdmin','CommunityManager'], 'Communauté'],
+    ['classifieds', 'Petites annonces', Megaphone, ['ClubAdmin','CommunityManager'], 'Communauté'],
+    ['anniversaries', 'Anniversaires', PartyPopper, ['ClubAdmin','CommunityManager'], 'Communauté'],
+    ['newsletter', 'Newsletter', Mail, ['Editor','CommunityManager'], 'Communauté'],
+    ['volunteers', 'Bénévoles', ClipboardList, ['ClubAdmin','MatchManager'], 'Communauté'],
+    ['community', 'Écoles & partenaires', GraduationCap, ['ClubAdmin','CommunityManager'], 'Communauté'],
+    ['facilities', 'Installations', CalendarRange, ['ClubAdmin','MatchManager'], 'Communauté'],
+
+    ['club', 'Club Settings', ShieldCheck, ['SuperAdmin','ClubAdmin'], 'Système'],
+    ['security', 'Sécurité', ShieldCheck, ['SuperAdmin'], 'Système'],
+    ['featureflags', 'Feature flags', Flag, ['SuperAdmin','ClubAdmin'], 'Système'],
+    ['apiusage', 'Utilisation API', Gauge, ['SuperAdmin','ClubAdmin'], 'Système'],
+    ['gdpr', 'RGPD', ShieldAlert, ['SuperAdmin','ClubAdmin'], 'Système'],
+    ['settings', 'Configuration', Server, ['SuperAdmin','ClubAdmin'], 'Système'],
   ]
+  const CATEGORY_ORDER = ['Tableau de bord', 'Billetterie & Abonnements', 'Boutique', 'Équipe & Matchs', 'Contenu & Site', 'Communauté', 'Système']
   const role = user.role ?? user.Role
   const displayName = user.displayName ?? user.DisplayName
   const visibleItems = items.filter(([, , , roles]) => roles.includes(role))
+  // Group the visible items by category, preserving CATEGORY_ORDER and dropping
+  // empty groups (e.g. a role with no items in a category).
+  const groupedItems = CATEGORY_ORDER
+    .map((category) => [category, visibleItems.filter((item) => item[4] === category)])
+    .filter(([, list]) => list.length > 0)
 
   async function loadDashboard() {
     try { setStats(await api('/admin/dashboard')); setError('') } catch (e) { setError(e.message) }
@@ -522,7 +540,7 @@ function AdminDashboard({ user, onLogout }) {
   return <main className="min-h-screen bg-jso-paper text-jso-ink">
     <aside className={'fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-slate-200 bg-white transition-transform ' + (open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0')}>
       <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-jso-navy font-black text-jso-gold">JSO</span><div><p className="font-black">JSO Admin</p><p className="text-xs text-slate-400">{role}</p></div></div><button className="lg:hidden" onClick={() => setOpen(false)}><X /></button></div>
-      <nav className="jso-scroll flex-1 space-y-1 overflow-y-auto overscroll-contain px-4 py-4">{visibleItems.map(([id,label,Icon]) => <button key={id} onClick={() => navigate(id)} className={'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold transition-colors ' + (section === id ? 'bg-jso-navy text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100')}><Icon size={18}/>{label}</button>)}</nav>
+      <nav className="jso-scroll flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4">{groupedItems.map(([category, list]) => <div key={category} className="space-y-1"><p className="px-4 pb-1 pt-2 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">{category}</p>{list.map(([id,label,Icon]) => <button key={id} onClick={() => navigate(id)} className={'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold transition-colors ' + (section === id ? 'bg-jso-navy text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100')}><Icon size={18}/>{label}</button>)}</div>)}</nav>
       <div className="border-t border-slate-100 px-4 py-4"><button onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 transition-colors hover:bg-red-50 hover:text-red-700"><LogOut size={18}/>Déconnexion</button></div>
     </aside>
     <div className="lg:pl-72">
@@ -538,7 +556,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'teams' && <TeamsModule onError={setError}/>}
         {section === 'matches' && <MatchesModule onError={setError}/>}
         {section === 'seasons-competitions' && <SeasonsCompetitionsModule onError={setError}/>}
-        {section === 'events' && <EventsModule onError={setError}/>}
+        {section === 'match-events' && <EventsModule onError={setError}/>}
         {section === 'formations' && <FormationsModule onError={setError}/>}
         {section === 'match-sheet' && <MatchSheetModule onError={setError}/>}
         {section === 'news' && <NewsModule onError={setError}/>}
@@ -572,7 +590,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'featureflags' && <FeatureFlagsModule onError={setError}/>}
         {section === 'apiusage' && <ApiUsageModule onError={setError}/>}
         {section === 'gdpr' && <GdprModule onError={setError}/>}
-        {section === 'events' && <ClubEventsModule onError={setError}/>}
+        {section === 'club-events' && <ClubEventsModule onError={setError}/>}
         {section === 'documents' && <DocumentsModule onError={setError}/>}
         {section === 'faq' && <FaqModule onError={setError}/>}
         {section === 'settings' && <SettingsModule/>}
