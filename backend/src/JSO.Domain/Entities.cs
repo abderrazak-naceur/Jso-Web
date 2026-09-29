@@ -14,7 +14,7 @@ public sealed class Article { public Guid Id { get; set; } = Guid.NewGuid(); pub
 // When set, it is unique and powers the public tracked landing
 // GET /api/sponsors/activation/{slug} that records an anonymous scan and
 // redirects to WebsiteUrl. No personal data is involved: only the slug.
-public sealed class Sponsor { public Guid Id { get; set; } = Guid.NewGuid(); public string Name { get; set; } = null!; public string? LogoUrl { get; set; } public string? WebsiteUrl { get; set; } public string Tier { get; set; } = "Partner"; public string Placement { get; set; } = "Footer"; public DateTimeOffset? StartDate { get; set; } public DateTimeOffset? EndDate { get; set; } public bool IsActive { get; set; } = true; public int Priority { get; set; } public string? ActivationSlug { get; set; } }
+public sealed class Sponsor { public Guid Id { get; set; } = Guid.NewGuid(); public string Name { get; set; } = null!; public string? LogoUrl { get; set; } public string? WebsiteUrl { get; set; } public string Tier { get; set; } = "Partner"; public string Placement { get; set; } = "Footer"; public DateTimeOffset? StartDate { get; set; } public DateTimeOffset? EndDate { get; set; } public bool IsActive { get; set; } = true; public int Priority { get; set; } public string? ActivationSlug { get; set; } public string? BannerImageUrl { get; set; } }
 // SponsorActivation records a single anonymous QR scan for idea B5.
 // Privacy by design: it stores only the sponsor reference, an optional coarse
 // Channel bucket ("Stadium"/"Program") and the scan timestamp. No IP address,

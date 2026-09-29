@@ -308,9 +308,30 @@ export function MobileSection({ section }) {
 }
 
 export function SponsorsSection({ section, sponsors }) {
+  // Sponsors that provide a wide advertising banner are featured on top as
+  // clickable banners; the rest keep the compact logo grid below.
+  const banners = sponsors.filter((sponsor) => pick(sponsor, 'bannerImageUrl', 'BannerImageUrl'))
+
   return (
     <section id="sponsors" aria-labelledby="sponsors-title" className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
       <SectionHeading section={section} title="Ils soutiennent" muted="le club." />
+
+      {banners.length > 0 && (
+        <div className="mt-10 space-y-4">
+          {banners.map((sponsor) => {
+            const id = pick(sponsor, 'id', 'Id')
+            const name = pick(sponsor, 'name', 'Name') || 'Partenaire JSO'
+            const bannerUrl = pick(sponsor, 'bannerImageUrl', 'BannerImageUrl')
+            const websiteUrl = pick(sponsor, 'websiteUrl', 'WebsiteUrl')
+            const banner = <img src={bannerUrl} alt={`Bannière ${name}`} loading="lazy" className="w-full object-cover" />
+            const bannerClass = 'block overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl'
+            return websiteUrl
+              ? <a key={`banner-${id || name}`} href={websiteUrl} target="_blank" rel="noopener noreferrer" aria-label={`${name} (nouvel onglet)`} className={bannerClass}>{banner}</a>
+              : <div key={`banner-${id || name}`} className={bannerClass}>{banner}</div>
+          })}
+        </div>
+      )}
+
       <div className="mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
         {sponsors.map((sponsor) => {
           const id = pick(sponsor, 'id', 'Id')
