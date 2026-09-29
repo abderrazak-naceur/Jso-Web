@@ -28,6 +28,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<OrderItem> OrderItems => Set<OrderItem>();
  public DbSet<TicketType> TicketTypes => Set<TicketType>();
  public DbSet<TicketOrder> TicketOrders => Set<TicketOrder>();
+ public DbSet<TicketCheckIn> TicketCheckIns => Set<TicketCheckIn>();
  public DbSet<Volunteer> Volunteers => Set<Volunteer>();
  public DbSet<MatchAssignment> MatchAssignments => Set<MatchAssignment>();
  public DbSet<NewsletterSubscription> NewsletterSubscriptions => Set<NewsletterSubscription>();
@@ -123,6 +124,14 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<TicketOrder>().Property(x=>x.Country).HasMaxLength(64);
   modelBuilder.Entity<TicketOrder>().Property(x=>x.ChargedAmount).HasPrecision(14,2);
   modelBuilder.Entity<TicketOrder>().Property(x=>x.ChargedCurrency).HasMaxLength(8);
+  modelBuilder.Entity<TicketOrder>().Property(x=>x.PublicTicketToken).HasMaxLength(64);
+  modelBuilder.Entity<TicketOrder>().Property(x=>x.CheckedInByAdminId).HasMaxLength(64);
+  modelBuilder.Entity<TicketOrder>().HasIndex(x=>x.PublicTicketToken).IsUnique().HasFilter("\"PublicTicketToken\" IS NOT NULL");
+  modelBuilder.Entity<TicketCheckIn>().HasIndex(x=>x.TicketOrderId);
+  modelBuilder.Entity<TicketCheckIn>().HasIndex(x=>new{x.MatchId,x.CheckedInAt});
+  modelBuilder.Entity<TicketCheckIn>().Property(x=>x.Result).HasMaxLength(32);
+  modelBuilder.Entity<TicketCheckIn>().Property(x=>x.CheckedInByAdminId).HasMaxLength(64);
+  modelBuilder.Entity<TicketCheckIn>().Property(x=>x.DeviceId).HasMaxLength(128);
   modelBuilder.Entity<OrderItem>().Property(x=>x.LineTotal).HasPrecision(14,2);
   modelBuilder.Entity<Volunteer>().HasIndex(x=>new{x.IsActive,x.Role});
   modelBuilder.Entity<MatchAssignment>().HasIndex(x=>x.MatchId);

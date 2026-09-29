@@ -1,7 +1,23 @@
 # JSO Mobile — Piano Biglietteria Digitale QR
 
-**Aggiornato:** 28 settembre 2026  
-**Stato:** analisi completata; implementazione QR/check-in **non ancora eseguita**.
+**Aggiornato:** 29 settembre 2026  
+**Stato:** TICKET-QR-001..006 **implementati** (backend + mobile). TICKET-QR-007
+coperto lato mobile (test widget/repository) e come build/verifica logica lato
+backend (il repo backend non ha progetti di test). TICKET-QR-008 (go-live su
+dispositivi reali) resta **fuori ambito** di questa iterazione.
+
+## Stato di implementazione
+
+| Task | Stato | Note |
+| --- | --- | --- |
+| TICKET-QR-001 Modello dati | ✅ Fatto | `TicketOrder.PublicTicketToken/IssuedAt/CheckedInAt/CheckedInByAdminId`, stato `CheckedIn`, entità `TicketCheckIn`, indice UNICO filtrato sul token, migration Postgres `AddTicketQrCheckIn` (additiva). |
+| TICKET-QR-002 Emissione token | ✅ Fatto | Token emesso in `TicketOrderCompletion` alla transizione Pending→Confirmed (idempotente). Endpoint fan `GET /api/tickets/{id}/digital`. |
+| TICKET-QR-003 Digital Ticket Flutter | ✅ Fatto | `TicketDetailScreen` con QR grande (`qr_flutter`), payload `JSO1.<token>`, collegato da `MyTicketsScreen` solo per Confirmed/CheckedIn. |
+| TICKET-QR-004 Validazione/check-in | ✅ Fatto | `POST /api/admin/tickets/validate`, `POST /api/admin/tickets/check-in` (atomico, condizionale), `GET /api/admin/tickets/check-ins`, audit completo. |
+| TICKET-QR-005 Scanner staff | ✅ Fatto | `StaffScannerScreen` (mobile_scanner) con fallback inserimento manuale, feedback colore + vibrazione, storico. Il pacchetto camera non è compilabile in sandbox (limite d'ambiente, non un difetto): il flusso resta usabile via inserimento manuale. |
+| TICKET-QR-006 Sicurezza/anti-abuso | ✅ Fatto | Token 32 byte via `RandomNumberGenerator` Base64URL, indice unico, rate limiting `ticket-scan`, ruoli staff separati dai Fan, nessun JWT/PII nel QR, log senza token completo, transizione atomica anti-replay. |
+| TICKET-QR-007 Test E2E | ◑ Parziale | Test mobile (modelli/repository/flow scan) verdi. Backend: nessun progetto di test nel repo → verifica via build + logica. |
+| TICKET-QR-008 Go-live | ☐ Fuori ambito | Test dispositivi reali/produzione. |
 
 ## Obiettivo
 

@@ -56,6 +56,16 @@ dependencies:
   # clear text. Used by SecureTokenStore in lib/data/auth/token_store.dart.
   flutter_secure_storage: ^9.2.2
 
+  # Renders the digital ticket QR code (fan TicketDetailScreen) from the opaque
+  # public ticket token. The QR carries only the "JSO1.<token>" payload — never
+  # any PII or auth token.
+  qr_flutter: ^4.1.0
+
+  # Camera-based QR scanner for the staff check-in screen. Kept isolated to the
+  # admin StaffScannerScreen; the screen also offers a manual code-entry
+  # fallback so the flow works even where the camera plugin is unavailable.
+  mobile_scanner: ^5.2.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

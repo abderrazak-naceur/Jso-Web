@@ -103,6 +103,21 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0,
             AutoReplenishment = true
         }));
+    // Anti-abuse limiter for the staff ticket scanner (validate/check-in).
+    // Partitioned per staff identity when available (falling back to IP) so a
+    // stolen/leaked token cannot be brute-forced against the lookup endpoint,
+    // while still allowing a steady stream of legitimate gate scans.
+    options.AddPolicy("ticket-scan", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User?.FindFirst("sub")?.Value
+            ?? context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 60,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        }));
     // Anti-spam limiter for authenticated fan community writes (comments,
     // reactions, reports). Partitioned per fan identity when available so a
     // single account cannot flood the moderation queue, falling back to IP.

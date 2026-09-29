@@ -10,7 +10,7 @@ namespace JSO.Infrastructure.Payments;
 // webhook can never increment SoldCount twice. If the ticket type no longer has
 // remaining capacity the order is left Pending (Unavailable) rather than
 // oversold.
-public sealed class TicketOrderCompletion(JsoDbContext db) : IPayableCompletion
+public sealed class TicketOrderCompletion(JsoDbContext db, AuditService audit) : IPayableCompletion
 {
     public string PayableType => PayableTypes.TicketOrder;
 
@@ -51,8 +51,30 @@ public sealed class TicketOrderCompletion(JsoDbContext db) : IPayableCompletion
         if (!string.IsNullOrWhiteSpace(providerRef))
             order.ProviderRef = providerRef;
 
+        // Issue the opaque QR token exactly at the Pending -> Confirmed
+        // transition, inside the same transaction. Idempotent by construction:
+        // this branch only runs for a Pending order, and a re-run finds the
+        // order already Confirmed (handled above), so the token is never
+        // regenerated once emitted.
+        if (string.IsNullOrEmpty(order.PublicTicketToken))
+        {
+            order.PublicTicketToken = TicketTokenGenerator.Generate();
+            order.IssuedAt = DateTimeOffset.UtcNow;
+        }
+
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
+
+        // Audit the issuance without ever logging the full token (only a short,
+        // non-reversible prefix for correlation).
+        await audit.LogAsync("TICKET_ISSUED", "TicketOrder", order.Id.ToString(),
+            paymentProvider, null, null,
+            new { order.MatchId, tokenPrefix = TokenPrefix(order.PublicTicketToken) }, ct);
         return PayableCompletionResult.Completed;
     }
+
+    // Never log the full token: only a short prefix so entries can be correlated
+    // without exposing a usable credential.
+    private static string? TokenPrefix(string? token) =>
+        string.IsNullOrEmpty(token) ? null : token[..Math.Min(6, token.Length)] + "\u2026";
 }

@@ -1,9 +1,11 @@
 namespace JSO.Domain;
 
 // A fan's ticket reservation for a match ticket type. Price/name are snapshotted
-// at reservation time. Status flow: Pending -> Confirmed -> Cancelled. Capacity
-// (SoldCount on the TicketType) is incremented when the admin confirms payment
-// (manual gateway), mirroring the shop orders pattern.
+// at reservation time. Status flow: Pending -> Confirmed -> CheckedIn, with
+// Pending -> Cancelled as the terminal reject path. Capacity (SoldCount on the
+// TicketType) is incremented when payment is confirmed (webhook / manual
+// gateway), mirroring the shop orders pattern. Once Confirmed the order carries
+// an opaque QR token used at stadium check-in.
 public sealed class TicketOrder
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -39,4 +41,22 @@ public sealed class TicketOrder
     public decimal? ChargedAmount { get; set; }
     public string? ChargedCurrency { get; set; }
     public DateTimeOffset? PaidAt { get; set; }
+
+    // Digital ticket / QR check-in (additive, nullable). The QR is only a
+    // representation of the ticket: the backend stays the source of truth. All
+    // three fields stay null while the order is Pending/Cancelled.
+    //
+    // Opaque, high-entropy public token (32 random bytes, Base64URL) issued once
+    // when the order transitions Pending -> Confirmed (idempotent: never
+    // regenerated). It is NOT a credential and carries no PII/JWT: it is only a
+    // lookup key the staff scanner presents so the server can resolve the ticket
+    // and verify its state. A unique index guards against collisions.
+    public string? PublicTicketToken { get; set; }
+    // When the token was issued (i.e. when the order was confirmed).
+    public DateTimeOffset? IssuedAt { get; set; }
+    // Set atomically on the first successful staff check-in. A non-null value
+    // means the ticket has already entered and must be rejected on re-scan.
+    public DateTimeOffset? CheckedInAt { get; set; }
+    // Admin/staff identity (sub claim) that performed the check-in, for audit.
+    public string? CheckedInByAdminId { get; set; }
 }
