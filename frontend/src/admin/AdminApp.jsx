@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, EyeOff, Upload, Server, Handshake, BarChart3, ShoppingBag, TrendingUp, Package, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap, Receipt, FileText, HelpCircle, Ticket, MessageSquare, LayoutTemplate, CalendarDays, CreditCard, Radio, Link2, Facebook, Send, Wallet } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, EyeOff, Upload, Server, Handshake, BarChart3, ShoppingBag, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap, Receipt, FileText, HelpCircle, Ticket, MessageSquare, LayoutTemplate, CalendarDays, CreditCard, Radio, Link2, Facebook, Send, Wallet } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
@@ -599,10 +599,49 @@ function AdminDashboard({ user, onLogout }) {
   </main>
 }
 
+// Premium admin command center: a revenue hero, three sales KPIs
+// (Billetterie / Abonnements / Boutique), quick on/off toggles for the public
+// home sections, plus today's activity and the recent audit feed.
 function DashboardStats({ stats }) {
+  const [sections, setSections] = useState([])
+  const [toggleError, setToggleError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    api('/admin/home-visibility')
+      .then((v) => { if (active) setSections(v) })
+      .catch(() => { if (active) setSections([]) })
+    return () => { active = false }
+  }, [])
+
+  async function toggleSection(id) {
+    const next = sections.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
+    setSections(next)
+    try {
+      await api('/admin/home-visibility', { method: 'PUT', body: JSON.stringify({ hidden: next.filter((s) => !s.enabled).map((s) => s.id) }) })
+      setToggleError('')
+    } catch (e) {
+      setToggleError(e.message)
+      try { setSections(await api('/admin/home-visibility')) } catch { /* keep optimistic state */ }
+    }
+  }
+
   if (!stats) return <div className="rounded-[1.5rem] bg-white p-8 text-slate-500">Chargement du dashboard…</div>
 
-  const cards = [
+  const sales = stats.sales || { enabled: false, currency: 'TND', revenue: 0, orders: 0, activeProducts: 0, productsSold: 0 }
+  const tickets = stats.tickets || { currency: 'TND', revenue: 0, orders: 0, ticketsSold: 0, pending: 0 }
+  const memberships = stats.memberships || { currency: 'TND', revenue: 0, active: 0, total: 0 }
+  const money = (n, c = 'TND') => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: c || 'TND', maximumFractionDigits: 0 }).format(n || 0)
+  const totalRevenue = (tickets.revenue || 0) + (memberships.revenue || 0) + (sales.revenue || 0)
+
+  // The three revenue engines, revenue-first.
+  const revenueCards = [
+    { key: 'tickets', label: 'Billetterie', Icon: Ticket, revenue: tickets.revenue, sub: `${tickets.ticketsSold ?? 0} billets · ${tickets.pending ?? 0} en attente`, cls: 'bg-jso-navy text-white', accent: 'text-jso-gold' },
+    { key: 'memberships', label: 'Abonnements', Icon: CreditCard, revenue: memberships.revenue, sub: `${memberships.active ?? 0} abonnés actifs`, cls: 'bg-jso-blue text-white', accent: 'text-white/85' },
+    { key: 'shop', label: 'Boutique', Icon: ShoppingBag, revenue: sales.revenue, sub: `${sales.orders ?? 0} commandes · ${sales.productsSold ?? 0} produits`, cls: 'bg-jso-gold text-jso-navy', accent: 'text-jso-navy/70' },
+  ]
+
+  const clubCards = [
     ['Parties à venir', stats.matches.upcoming, Trophy], ['Résultats', stats.matches.finished, Trophy],
     ['News publiées', stats.news.published, Newspaper], ['Brouillons', stats.news.drafts, Newspaper],
     ['Équipes', stats.teams, Users], ['Joueurs actifs', stats.players, Users],
@@ -613,34 +652,57 @@ function DashboardStats({ stats }) {
     ['Médias ajoutés', today.mediaUploaded], ['Actions d’audit', today.auditActions],
   ] : []
   const recent = stats.recentActivity ?? []
-  const sales = stats.sales || { enabled: false, currency: 'TND', revenue: 0, orders: 0, activeProducts: 0, productsSold: 0, conversionRate: 0 }
-  const money = (n) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: sales.currency || 'TND', maximumFractionDigits: 0 }).format(n || 0)
-  const salesCards = [
-    ['Produits au catalogue', sales.activeProducts ?? 0, Package],
-    ['Chiffre d’affaires', money(sales.revenue), TrendingUp],
-    ['Commandes', sales.orders ?? 0, ShoppingBag],
-    ['Taux de conversion', ((sales.conversionRate ?? 0) * 100).toFixed(1) + ' %', BarChart3],
-  ]
 
   return <div className="space-y-8">
+    {/* Revenue hero */}
+    <div className="flex flex-col justify-between gap-4 rounded-[1.5rem] bg-jso-navy p-6 text-white sm:flex-row sm:items-center">
+      <div>
+        <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-jso-gold">Revenus</p>
+        <p className="mt-1 text-sm text-white/60">Billetterie + Abonnements + Boutique</p>
+      </div>
+      <p className="text-4xl font-black">{money(totalRevenue)}</p>
+    </div>
+
+    {/* Three revenue engines */}
+    <div>
+      <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.15em] text-jso-blue">Analytics des ventes</p>
+      <div className="grid gap-4 sm:grid-cols-3">
+        {revenueCards.map(({ key, label, Icon, revenue, sub, cls, accent }) => (
+          <div key={key} className={'relative overflow-hidden rounded-[1.5rem] p-6 shadow-sm ' + cls}>
+            <Icon className="absolute right-5 top-5 opacity-30" size={40} aria-hidden="true" />
+            <p className="text-xs font-black uppercase tracking-[0.15em] opacity-80">{label}</p>
+            <p className="mt-6 text-3xl font-black">{money(revenue)}</p>
+            <p className={'mt-1 text-sm font-semibold ' + accent}>{sub}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Home section quick toggles */}
+    {sections.length > 0 && (
+      <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-black">Sections de la page d’accueil</h2>
+        <p className="mt-1 text-sm text-slate-500">Activez ou masquez chaque section du site public.</p>
+        {toggleError && <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{toggleError}</p>}
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          {sections.map((s) => (
+            <button key={s.id} type="button" onClick={() => toggleSection(s.id)} aria-pressed={s.enabled} className={'flex items-center justify-between rounded-xl border p-3 text-left transition ' + (s.enabled ? 'border-jso-blue/40 bg-jso-blue/5' : 'border-slate-200 bg-slate-50')}>
+              <span className="flex items-center gap-2 font-bold text-jso-ink">{s.enabled ? <Eye size={16} className="text-jso-blue"/> : <EyeOff size={16} className="text-slate-400"/>}{s.label}</span>
+              <span className={'relative h-6 w-11 shrink-0 rounded-full transition ' + (s.enabled ? 'bg-jso-blue' : 'bg-slate-300')}><span className={'absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ' + (s.enabled ? 'left-[22px]' : 'left-0.5')} /></span>
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* Club figures */}
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {cards.map(([label,value,Icon]) => <div key={label} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm"><Icon className="text-jso-blue" size={22}/><p className="mt-7 text-sm font-semibold text-slate-500">{label}</p><p className="mt-1 text-4xl font-black">{value}</p></div>)}
+      {clubCards.map(([label,value,Icon]) => <div key={label} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm"><Icon className="text-jso-blue" size={22}/><p className="mt-7 text-sm font-semibold text-slate-500">{label}</p><p className="mt-1 text-4xl font-black">{value}</p></div>)}
     </div>
 
     {today && <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-black">Activité du jour</h2><div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{todayFigures.map(([label,value]) => <div key={label} className="rounded-xl bg-slate-50 p-3 text-sm"><p className="font-semibold text-slate-500">{label}</p><p className="mt-1 text-3xl font-black">{value ?? 0}</p></div>)}</div></div>}
 
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-xl font-black">Activité récente</h2><div className="mt-4 space-y-2">{recent.length ? recent.map(a => <div key={a.id} className="rounded-xl bg-slate-50 p-3 text-sm"><div className="flex justify-between gap-3"><b>{a.action} · {a.entityType}</b><span className="text-xs text-slate-400">{new Date(a.createdAt).toLocaleString('fr-FR')}</span></div><p className="mt-1 text-xs text-slate-500">{a.userEmail || 'Système'}{a.entityId ? ' · ' + a.entityId : ''}</p></div>) : <p className="text-sm text-slate-500">Aucune activité récente.</p>}</div></div>
-
-    <div>
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2"><ShoppingBag className="text-jso-blue" size={20}/><h2 className="text-lg font-black">Ventes &amp; Boutique</h2></div>
-        <span className={'rounded-full px-3 py-1 text-xs font-extrabold ' + (sales.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500')}>{sales.enabled ? 'BOUTIQUE ACTIVE' : 'BOUTIQUE NON ACTIVE'}</span>
-      </div>
-      <div className="relative grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {salesCards.map(([label,value,Icon]) => <div key={label} className={'rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm ' + (sales.enabled ? '' : 'opacity-60')}><Icon className="text-jso-blue" size={22}/><p className="mt-7 text-sm font-semibold text-slate-500">{label}</p><p className="mt-1 text-3xl font-black">{value}</p></div>)}
-      </div>
-      <p className="mt-3 text-sm text-slate-500">{sales.enabled ? 'Catalogue actif. Le chiffre d’affaires et les commandes se rempliront une fois le paiement en ligne activé.' : 'Aucun produit actif. Ajoutez des produits dans la section Boutique pour démarrer le catalogue.'}</p>
-    </div>
   </div>
 }
 
