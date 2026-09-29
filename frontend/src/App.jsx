@@ -31,6 +31,7 @@ import HighlightsCarousel from './features/home/HighlightsCarousel'
 import SellingBand from './features/home/SellingBand'
 import CartDrawer from './features/shop/CartDrawer'
 import { useCart } from './features/shop/useCart'
+import Reveal from './features/site/Reveal'
 import SiteFooter from './features/site/SiteFooter'
 import SiteHeader from './features/site/SiteHeader'
 import { visibleSections } from './features/site/navigation'
@@ -220,9 +221,12 @@ function App() {
 
       <main id="main-content" tabIndex={-1}>
         <HeroSection content={data.content} club={data.club} />
-        <SellingBand nextMatch={data.nextMatch} onOpenMatch={setSelectedMatch} />
-        <HighlightsCarousel items={buildHighlights({ data, onOpenMatch: setSelectedMatch, onOpenArticle: openArticle })} />
-        {orderedSections.map((key) => sectionRenderers[key]?.())}
+        <Reveal><SellingBand nextMatch={data.nextMatch} onOpenMatch={setSelectedMatch} /></Reveal>
+        <Reveal><HighlightsCarousel items={buildHighlights({ data, onOpenMatch: setSelectedMatch, onOpenArticle: openArticle })} /></Reveal>
+        {orderedSections.map((key) => {
+          const rendered = sectionRenderers[key]?.()
+          return rendered ? <Reveal key={key}>{rendered}</Reveal> : null
+        })}
       </main>
 
       <SiteFooter sections={sections} extraLinks={footerLinks} />

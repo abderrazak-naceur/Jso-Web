@@ -247,8 +247,25 @@ html.jso-high-contrast .jso-a11y-panel {
   border-width: 2px;
 }
 
+/* On-scroll reveal for cards/sections. Elements start slightly down and faded,
+   then ease into place when the Reveal component adds `.is-visible`. Reduced
+   motion (OS or manual toggle) neutralises the transition below, and as a
+   safety net elements are shown even if JS never runs (no-js fallback via the
+   .is-visible default is handled in the component). */
+.jso-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  will-change: opacity, transform;
+}
+.jso-reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
 /* Reduced motion: honour both the OS setting and the manual toggle. */
 @media (prefers-reduced-motion: reduce) {
+  .jso-reveal { opacity: 1; transform: none; }
   html {
     scroll-behavior: auto;
   }
@@ -264,6 +281,7 @@ html.jso-high-contrast .jso-a11y-panel {
 html.jso-reduce-motion {
   scroll-behavior: auto;
 }
+html.jso-reduce-motion .jso-reveal { opacity: 1; transform: none; }
 html.jso-reduce-motion *,
 html.jso-reduce-motion *::before,
 html.jso-reduce-motion *::after {
