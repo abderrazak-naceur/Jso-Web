@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jso_mobile/app.dart';
 import 'package:jso_mobile/core/api/api_client.dart';
 import 'package:jso_mobile/core/config/jso_theme.dart';
+import 'package:jso_mobile/data/repositories/admin_tickets_repository.dart';
 import 'package:jso_mobile/data/repositories/match_center_repository.dart';
 import 'package:jso_mobile/data/repositories/tickets_repository.dart';
 import 'package:jso_mobile/features/shop/cart_controller.dart';
@@ -31,6 +32,7 @@ void main() {
       JsoApp(
         repository: FakeRepository(homeData: Sample.home()),
         ticketsRepository: TicketsRepository(apiClient),
+        adminTicketsRepository: AdminTicketsRepository(apiClient),
         clubContentRepository: FakeClubContentRepository(),
         shopRepository: FakeShopRepository(),
         matchCenterRepository: MatchCenterRepository(apiClient),

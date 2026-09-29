@@ -32,6 +32,11 @@ class TicketOrder {
   bool get isPending => status == 'Pending';
   bool get isConfirmed => status == 'Confirmed';
   bool get isCancelled => status == 'Cancelled';
+  bool get isCheckedIn => status == 'CheckedIn';
+
+  /// Whether a digital ticket / QR can be shown: only a confirmed or already
+  /// checked-in order carries an issued token server-side.
+  bool get hasDigitalTicket => isConfirmed || isCheckedIn;
 
   factory TicketOrder.fromJson(Map<String, dynamic> json) => TicketOrder(
     id: asString(json['id']),

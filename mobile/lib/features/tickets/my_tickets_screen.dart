@@ -9,6 +9,7 @@ import '../../shared/widgets/empty_view.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../auth/auth_controller.dart';
+import 'ticket_detail_screen.dart';
 
 /// "Mes billets" — the current fan's reservations from `GET /api/tickets/mine`,
 /// most recent first, with a status chip (Pending / Confirmed / Cancelled).
@@ -89,43 +90,63 @@ class _OrderCard extends StatelessWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(JsoSpacing.md),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    order.ticketTypeName,
-                    style: const TextStyle(
-                      color: JsoColors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: JsoSpacing.xs),
-                  Text(
-                    '${order.quantity} × · ${JsoFormat.money(order.total, order.currency)}',
-                    style: const TextStyle(
-                      color: JsoColors.gold,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (order.createdAt != null) ...[
-                    const SizedBox(height: JsoSpacing.xs),
-                    Text(
-                      JsoFormat.date(order.createdAt!),
-                      style: const TextStyle(
-                        color: JsoColors.muted2,
-                        fontSize: 12,
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        order.ticketTypeName,
+                        style: const TextStyle(
+                          color: JsoColors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
-                  ],
-                ],
-              ),
+                      const SizedBox(height: JsoSpacing.xs),
+                      Text(
+                        '${order.quantity} × · ${JsoFormat.money(order.total, order.currency)}',
+                        style: const TextStyle(
+                          color: JsoColors.gold,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (order.createdAt != null) ...[
+                        const SizedBox(height: JsoSpacing.xs),
+                        Text(
+                          JsoFormat.date(order.createdAt!),
+                          style: const TextStyle(
+                            color: JsoColors.muted2,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: JsoSpacing.md),
+                _StatusChip(status: order.status),
+              ],
             ),
-            const SizedBox(width: JsoSpacing.md),
-            _StatusChip(status: order.status),
+            // A digital ticket / QR only exists for confirmed (or already
+            // checked-in) orders; Pending/Cancelled show no action.
+            if (order.hasDigitalTicket) ...[
+              const SizedBox(height: JsoSpacing.md),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    Navigator.of(context).push(TicketDetailScreen.route(order)),
+                icon: const Icon(Icons.qr_code_2_rounded),
+                label: const Text('Voir le billet'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: JsoColors.white,
+                  side: const BorderSide(color: JsoColors.borderHover),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -144,6 +165,7 @@ class _StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (Color color, String label) = switch (status) {
       'Confirmed' => (JsoColors.cyan, 'Confirmé'),
+      'CheckedIn' => (JsoColors.blueBright, 'Utilisé'),
       'Cancelled' => (JsoColors.muted, 'Annulé'),
       _ => (JsoColors.gold, 'En attente'),
     };

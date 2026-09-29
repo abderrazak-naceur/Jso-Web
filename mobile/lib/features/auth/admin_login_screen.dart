@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/config/jso_theme.dart';
 import '../../shared/widgets/jso_crest.dart';
+import '../tickets/staff_scanner_screen.dart';
 import 'admin_auth_controller.dart';
 import 'login_screen.dart' show validateEmail;
 
@@ -244,6 +245,16 @@ class _AdminConnectedView extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: JsoSpacing.md),
+          // Staff ticket scanner: available to any authenticated admin; the
+          // backend endpoints enforce the SuperAdmin/ClubAdmin/MatchManager
+          // roles, so a lower-privileged token simply gets a 403 there.
+          ElevatedButton.icon(
+            onPressed: () =>
+                Navigator.of(context).push(StaffScannerScreen.route()),
+            icon: const Icon(Icons.qr_code_scanner_rounded),
+            label: const Text('Contrôle des billets (scanner)'),
           ),
           const SizedBox(height: JsoSpacing.md),
           const Text(

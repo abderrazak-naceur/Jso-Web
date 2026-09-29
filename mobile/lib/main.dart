@@ -4,6 +4,7 @@ import 'app.dart';
 import 'core/api/api_client.dart';
 import 'data/auth/token_store.dart';
 import 'data/repositories/admin_auth_repository.dart';
+import 'data/repositories/admin_tickets_repository.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/club_content_repository.dart';
 import 'data/repositories/match_center_repository.dart';
@@ -21,6 +22,7 @@ void main() {
   final apiClient = ApiClient();
   final repository = PublicApiRepository(apiClient);
   final ticketsRepository = TicketsRepository(apiClient);
+  final adminTicketsRepository = AdminTicketsRepository(apiClient);
   final clubContentRepository = ClubContentRepository(apiClient);
   final shopRepository = ShopRepository(apiClient);
   final matchCenterRepository = MatchCenterRepository(apiClient);
@@ -41,6 +43,7 @@ void main() {
     JsoApp(
       repository: repository,
       ticketsRepository: ticketsRepository,
+      adminTicketsRepository: adminTicketsRepository,
       clubContentRepository: clubContentRepository,
       shopRepository: shopRepository,
       matchCenterRepository: matchCenterRepository,

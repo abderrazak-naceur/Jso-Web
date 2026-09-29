@@ -1,4 +1,5 @@
 import '../../core/api/api_client.dart';
+import '../models/digital_ticket.dart';
 import '../models/ticket_order.dart';
 import '../models/ticket_type.dart';
 
@@ -41,6 +42,21 @@ class TicketsRepository {
       bearerToken: token,
     );
     return TicketOrder.fromJson(_asMap(json));
+  }
+
+  /// `GET /api/tickets/{id}/digital` — the digital ticket (QR token + minimal
+  /// match/type metadata) for the fan's own confirmed order. Requires a fan
+  /// [token]. The backend rejects Pending/Cancelled orders, so callers should
+  /// only offer this for confirmed/checked-in tickets.
+  Future<DigitalTicket> getDigitalTicket({
+    required String token,
+    required String ticketId,
+  }) async {
+    final json = await _client.getJson(
+      '/tickets/$ticketId/digital',
+      bearerToken: token,
+    );
+    return DigitalTicket.fromJson(_asMap(json));
   }
 
   Map<String, dynamic> _asMap(Object? json) =>
