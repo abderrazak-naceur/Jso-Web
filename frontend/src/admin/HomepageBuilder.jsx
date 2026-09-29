@@ -36,6 +36,7 @@ const emptyNav = { label: '', url: '', position: 'Header', displayOrder: 0, isAc
 export default function HomepageBuilderModule({ onError }) {
   const [sections, setSections] = useState([])
   const [navItems, setNavItems] = useState([])
+  const [visibility, setVisibility] = useState([])
   const [sectionForm, setSectionForm] = useState(emptySection)
   const [navForm, setNavForm] = useState(emptyNav)
   const [editingSection, setEditingSection] = useState(null)
@@ -45,14 +46,32 @@ export default function HomepageBuilderModule({ onError }) {
   async function load() {
     setLoading(true)
     try {
-      const [s, n] = await Promise.all([api('/admin/home-sections'), api('/admin/navigation')])
+      const [s, n, v] = await Promise.all([
+        api('/admin/home-sections'),
+        api('/admin/navigation'),
+        api('/admin/home-visibility'),
+      ])
       setSections(s)
       setNavItems(n)
+      setVisibility(v)
       onError('')
     } catch (e) { onError(e.message) }
     finally { setLoading(false) }
   }
   useEffect(() => { load() }, [])
+
+  // --- Section visibility toggles (on/off) ---
+  // Optimistic flip, then persist the full hidden-id list. On failure we reload
+  // to resync with the server.
+  async function toggleVisibility(id) {
+    const next = visibility.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
+    setVisibility(next)
+    try {
+      const hidden = next.filter((s) => !s.enabled).map((s) => s.id)
+      await api('/admin/home-visibility', { method: 'PUT', body: JSON.stringify({ hidden }) })
+      onError('')
+    } catch (e) { onError(e.message); await load() }
+  }
 
   // --- Home sections ---
   function resetSection() { setSectionForm(emptySection); setEditingSection(null) }
@@ -157,6 +176,31 @@ export default function HomepageBuilderModule({ onError }) {
   if (loading) return <p className="text-sm text-slate-400">Chargement\u2026</p>
 
   return <div className="space-y-6">
+    {/* Section visibility on/off */}
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+      <h2 className="text-xl font-black">Sections visibles</h2>
+      <p className="mt-2 text-xs text-slate-400">Activez ou masquez chaque section de la page d\u2019accueil. Les sections masqu\u00e9es disparaissent aussi du menu.</p>
+      <div className="mt-5 grid gap-2 sm:grid-cols-2">
+        {visibility.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => toggleVisibility(s.id)}
+            aria-pressed={s.enabled}
+            className={`flex items-center justify-between rounded-xl border p-3 text-left transition ${s.enabled ? 'border-jso-blue/40 bg-jso-blue/5' : 'border-slate-200 bg-slate-50'}`}
+          >
+            <span className="flex items-center gap-2 font-bold text-jso-ink">
+              {s.enabled ? <Eye size={16} className="text-jso-blue"/> : <EyeOff size={16} className="text-slate-400"/>}
+              {s.label}
+            </span>
+            <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${s.enabled ? 'bg-jso-blue' : 'bg-slate-300'}`}>
+              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${s.enabled ? 'left-[22px]' : 'left-0.5'}`} />
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+
     {/* Home sections */}
     <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
       <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
