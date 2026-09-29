@@ -21,3 +21,8 @@ Il limite operativo è di tre sottoagenti contemporanei oltre all'agente princip
 1. Ogni agente consegna file modificati, verifica eseguita e limite rimasto.
 2. Build, lint, configurazione Compose e CI pertinenti devono passare prima di considerare conclusa un'area.
 3. Il README riporta solo risultati osservati. Restano aperti finché non verificati sulla VM: DNS/HTTPS, deploy reale, backup eseguito e restore riuscito.
+
+
+## Governance 2026-09-30
+
+Il repository adotta inoltre [AGENT_ORGANIZATION.md](AGENT_ORGANIZATION.md) come mappa dei ruoli enterprise. L'agente principale agisce come Product Lead/Architect; gli altri ruoli lavorano per ownership e confini chiari. Per nuove feature usare la pipeline Product → Architecture/UX → Task owner → Implementation → QA/Security → CI → Release → Production verification → Documentation.
