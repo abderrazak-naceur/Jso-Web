@@ -28,6 +28,7 @@ import MatchCenterModal from './features/matches/MatchCenterModal'
 import ArticleModal from './features/news/ArticleModal'
 import { pushArticleUrl, restoreHomeUrl, slugFromPath } from './features/news/articleUrl'
 import HighlightsCarousel from './features/home/HighlightsCarousel'
+import SellingBand from './features/home/SellingBand'
 import CartDrawer from './features/shop/CartDrawer'
 import { useCart } from './features/shop/useCart'
 import SiteFooter from './features/site/SiteFooter'
@@ -215,6 +216,7 @@ function App() {
 
       <main id="main-content" tabIndex={-1}>
         <HeroSection content={data.content} club={data.club} />
+        <SellingBand nextMatch={data.nextMatch} onOpenMatch={setSelectedMatch} />
         <HighlightsCarousel items={buildHighlights({ data, onOpenMatch: setSelectedMatch, onOpenArticle: openArticle })} />
         {orderedSections.map((key) => sectionRenderers[key]?.())}
       </main>
