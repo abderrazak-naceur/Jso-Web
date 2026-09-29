@@ -100,6 +100,9 @@ export const shopOrderApi = {
 // the verified provider webhook (Pending -> Confirmed + capacity incremented);
 // the browser redirect only lands on an "en cours de vérification" page.
 export const ticketApi = {
+  // Public billetterie: published matches on sale, each with cheapest price,
+  // currency and remaining availability. Powers the /billetterie page.
+  matchesOnSale: (signal) => request('/tickets/matches', signal),
   forMatch: (matchId, signal) => request('/tickets/match/' + matchId, signal),
   mine: (token) => requestJson('/tickets/mine', 'GET', null, token),
   myTicket: (id, token) => requestJson('/tickets/' + id, 'GET', null, token),

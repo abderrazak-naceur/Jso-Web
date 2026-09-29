@@ -22,6 +22,33 @@ public sealed class TicketsController(
     PaymentLinkBuilder paymentLinks,
     Microsoft.Extensions.Configuration.IConfiguration configuration) : ControllerBase
 {
+    // Public billetterie listing: published matches that have at least one
+    // active ticket type, with the cheapest price and total remaining places.
+    // Powers the public "Billetterie" page so fans see every match on sale.
+    [HttpGet("matches")]
+    public async Task<IActionResult> GetMatchesOnSale(CancellationToken ct)
+    {
+        var activeTypes = db.TicketTypes.AsNoTracking().Where(x => x.IsActive);
+        var matches = await db.Matches.AsNoTracking()
+            .Where(x => x.IsPublished && activeTypes.Any(t => t.MatchId == x.Id))
+            .OrderBy(x => x.KickoffAt)
+            .Select(x => new
+            {
+                x.Id,
+                x.OpponentName,
+                x.KickoffAt,
+                x.Venue,
+                x.IsHome,
+                x.Status,
+                fromPrice = activeTypes.Where(t => t.MatchId == x.Id).Min(t => (decimal?)t.Price),
+                currency = activeTypes.Where(t => t.MatchId == x.Id).Select(t => t.Currency).FirstOrDefault(),
+                available = activeTypes.Where(t => t.MatchId == x.Id).Sum(t => (int?)(t.Capacity - t.SoldCount)) ?? 0
+            })
+            .ToListAsync(ct);
+
+        return Ok(matches);
+    }
+
     [HttpGet("match/{matchId:guid}")]
     public async Task<IActionResult> GetForMatch(Guid matchId, CancellationToken ct)
     {

@@ -1,11 +1,12 @@
 import { ArrowUpRight, CreditCard, ShoppingBag, Ticket } from 'lucide-react'
 import { formatDate } from '../../lib/format'
+import { BILLETTERIE_PATH } from '../tickets/ticketsUrl'
 
 // Revenue-first band shown right under the hero: three large premium cards for
 // the club's paid offers — match tickets, season memberships and the boutique.
-// Tickets open the next match's Match Center (existing purchase flow); the
+// Tickets go to the dedicated billetterie page (buy directly online); the
 // others jump to their home section. Each card is a big, photo-friendly panel.
-export default function SellingBand({ nextMatch, onOpenMatch }) {
+export default function SellingBand({ nextMatch }) {
   const opponent = nextMatch ? (nextMatch.opponentName || nextMatch.OpponentName || 'À venir') : null
   const kickoff = nextMatch ? formatDate(nextMatch.kickoffAt || nextMatch.KickoffAt) : null
 
@@ -30,19 +31,9 @@ export default function SellingBand({ nextMatch, onOpenMatch }) {
             ) : (
               <p className="mt-1 text-white/70">Réservez votre place au stade.</p>
             )}
-            {nextMatch ? (
-              <button
-                type="button"
-                onClick={() => onOpenMatch(nextMatch)}
-                className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                Réserver ma place <ArrowUpRight size={16} aria-hidden="true" />
-              </button>
-            ) : (
-              <a href="#matches" className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-white">
-                Voir les matchs <ArrowUpRight size={16} aria-hidden="true" />
-              </a>
-            )}
+            <a href={BILLETTERIE_PATH} className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-white">
+              {nextMatch ? 'Réserver ma place' : 'Voir la billetterie'} <ArrowUpRight size={16} aria-hidden="true" />
+            </a>
           </div>
         </article>
 

@@ -221,7 +221,7 @@ function App() {
 
       <main id="main-content" tabIndex={-1}>
         <HeroSection content={data.content} club={data.club} />
-        <Reveal><SellingBand nextMatch={data.nextMatch} onOpenMatch={setSelectedMatch} /></Reveal>
+        <Reveal><SellingBand nextMatch={data.nextMatch} /></Reveal>
         <Reveal><HighlightsCarousel items={buildHighlights({ data, onOpenMatch: setSelectedMatch, onOpenArticle: openArticle })} /></Reveal>
         {orderedSections.map((key) => {
           const rendered = sectionRenderers[key]?.()

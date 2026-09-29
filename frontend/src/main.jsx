@@ -10,6 +10,7 @@ import App from './App.jsx'
 const AdminApp = lazy(() => import('./admin/AdminApp.jsx'))
 const PaymentReturn = lazy(() => import('./features/shop/PaymentReturn.jsx'))
 const NewsListPage = lazy(() => import('./features/news/NewsListPage.jsx'))
+const BilletteriePage = lazy(() => import('./features/tickets/BilletteriePage.jsx'))
 
 // Minimal, framework-free fallback shown while a lazy chunk loads. Kept inline
 // so it needs no extra chunk and matches the JSO paper background.
@@ -34,6 +35,8 @@ function Root() {
   // ?page= query). A deeper /actualites/{slug} path is a single article and is
   // handled by App (opens the article view over the home page).
   if (path === '/actualites' || path === '/actualites/') return <NewsListPage />
+  // Standalone public billetterie page: list matches on sale and buy directly.
+  if (path === '/billetterie' || path === '/billetterie/') return <BilletteriePage />
   return <App />
 }
 
