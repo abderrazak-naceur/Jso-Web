@@ -127,11 +127,19 @@ function App() {
 
   // Data-driven sections disappear from both the page and the navigation when
   // empty. Core sections remain visible with an explicit loading/empty state.
-  const sections = visibleSections({
+  // Admin can also switch off any section via the Homepage Builder: the hidden
+  // ids arrive in the home content bag under `home_hidden_sections` (CSV).
+  const hiddenSections = String(data.content?.home_hidden_sections || '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean)
+  const visibility = {
     community: data.community.length > 0,
     archive: data.archive.length > 0,
     sponsors: data.sponsors.length > 0,
-  })
+  }
+  for (const id of hiddenSections) visibility[id] = false
+  const sections = visibleSections(visibility)
   const sectionById = Object.fromEntries(sections.map((section) => [section.id, section]))
   const activeSection = useActiveSection(['home', ...sections.map((section) => section.id)]) || 'home'
 
@@ -178,7 +186,9 @@ function App() {
   // returns this unchanged when the layout is empty/failed, or reorders the
   // mappable sections (news/matches/media/sponsors) when the admin published one.
   const defaultSectionOrder = ['matches', 'news', 'team', 'club', 'shop', 'memberships', 'media', 'events', 'community', 'archive', 'mobile', 'sponsors', 'infos']
+  // Drop admin-disabled sections from the rendered page too (not just the menu).
   const orderedSections = orderHomeSections(defaultSectionOrder, homeLayout)
+    .filter((key) => !hiddenSections.includes(key))
 
   function openAuth(mode) {
     setAuthMode(mode)
