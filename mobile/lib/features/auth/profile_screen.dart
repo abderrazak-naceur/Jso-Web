@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/config/avatar_url.dart';
 import '../../core/config/jso_theme.dart';
 import '../../data/models/fan_user.dart';
 import '../shop/my_orders_screen.dart';
@@ -59,6 +60,10 @@ class _AuthenticatedView extends StatelessWidget {
           child: CircleAvatar(
             radius: 40,
             backgroundColor: JsoColors.navy3,
+            foregroundImage: NetworkImage(AvatarUrl.forSeed(fan.displayName)),
+            // If the avatar fails to load (offline / unreachable host), fall
+            // back to the initials shown in [child] instead of throwing.
+            onForegroundImageError: (_, _) {},
             child: Text(
               _initials(fan.displayName),
               style: const TextStyle(

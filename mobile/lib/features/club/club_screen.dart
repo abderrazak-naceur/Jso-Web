@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/config/avatar_url.dart';
 import '../../core/config/jso_theme.dart';
 import '../../shared/widgets/jso_crest.dart';
 import '../archive/archive_screen.dart';
@@ -220,10 +221,16 @@ class _AccountCard extends StatelessWidget {
               padding: const EdgeInsets.all(JsoSpacing.lg),
               child: Row(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 28,
                     backgroundColor: JsoColors.gold,
-                    child: Icon(
+                    foregroundImage: signedIn
+                        ? NetworkImage(AvatarUrl.forSeed(displayName))
+                        : null,
+                    // Fall back to the person icon if the avatar can't load
+                    // (offline / unreachable host) instead of throwing.
+                    onForegroundImageError: signedIn ? (_, _) {} : null,
+                    child: const Icon(
                       Icons.person_outline_rounded,
                       color: JsoColors.navy,
                       size: 30,

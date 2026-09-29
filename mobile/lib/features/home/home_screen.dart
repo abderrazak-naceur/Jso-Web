@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -454,9 +456,9 @@ class _HomeContent extends StatelessWidget {
               actionLabel: onViewAllNews == null ? null : 'Voir tout',
               onAction: onViewAllNews,
             ),
-            _FeaturedNewsCard(article: home.news.first),
+            _HomeHeroSlider(articles: home.news.take(5).toList()),
             ...home.news
-                .skip(1)
+                .skip(5)
                 .take(3)
                 .map((article) => _NewsPreviewCard(article: article)),
           ],
@@ -765,12 +767,53 @@ class _MatchInfo extends StatelessWidget {
 
 /// Large hero-style card for the lead article: full-width cover image with a
 /// navy gradient scrim and the title overlaid, for a richer, editorial look.
-class _FeaturedNewsCard extends StatelessWidget {
-  const _FeaturedNewsCard({required this.article});
+/// Full-width hero slider with autoplay: the lead articles as immersive
+/// slides (cover image, scrim, "À la une" tag, title, date), auto-advancing
+/// every few seconds, with a page indicator. Swipe pauses autoplay briefly.
+class _HomeHeroSlider extends StatefulWidget {
+  const _HomeHeroSlider({required this.articles});
 
-  final Article article;
+  final List<Article> articles;
 
-  void _openArticle(BuildContext context) {
+  @override
+  State<_HomeHeroSlider> createState() => _HomeHeroSliderState();
+}
+
+class _HomeHeroSliderState extends State<_HomeHeroSlider> {
+  static const Duration _interval = Duration(seconds: 6);
+
+  final PageController _controller = PageController();
+  Timer? _timer;
+  int _page = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _startAutoplay();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _startAutoplay() {
+    _timer?.cancel();
+    if (widget.articles.length < 2) return;
+    _timer = Timer.periodic(_interval, (_) {
+      if (!mounted || !_controller.hasClients) return;
+      final next = (_page + 1) % widget.articles.length;
+      _controller.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  void _openArticle(Article article) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => NewsDetailScreen(slug: article.slug),
@@ -780,108 +823,167 @@ class _FeaturedNewsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final articles = widget.articles;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(JsoRadius.largeCard),
+        boxShadow: const [
+          BoxShadow(
+            color: JsoColors.shadow,
+            blurRadius: 22,
+            offset: Offset(0, 12),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(JsoRadius.largeCard),
+        child: AspectRatio(
+          aspectRatio: 16 / 9,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Pause autoplay while the user is actively dragging.
+              Listener(
+                onPointerDown: (_) => _timer?.cancel(),
+                onPointerUp: (_) => _startAutoplay(),
+                child: PageView.builder(
+                  controller: _controller,
+                  onPageChanged: (i) => setState(() => _page = i),
+                  itemCount: articles.length,
+                  itemBuilder: (context, i) =>
+                      _HeroSlide(article: articles[i], onTap: _openArticle),
+                ),
+              ),
+              // Page indicator bullets.
+              Positioned(
+                right: JsoSpacing.md,
+                bottom: JsoSpacing.md,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var i = 0; i < articles.length; i++)
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        margin: const EdgeInsets.only(left: 5),
+                        width: i == _page ? 20 : 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: i == _page
+                              ? JsoColors.gold
+                              : const Color(0x80FFFFFF),
+                          borderRadius: BorderRadius.circular(JsoRadius.pill),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A single hero slide inside [_HomeHeroSlider].
+class _HeroSlide extends StatelessWidget {
+  const _HeroSlide({required this.article, required this.onTap});
+
+  final Article article;
+  final ValueChanged<Article> onTap;
+
+  @override
+  Widget build(BuildContext context) {
     return Semantics(
       button: true,
       label: 'Lire l’actualité à la une : ${article.title}',
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(JsoRadius.largeCard),
-          boxShadow: const [
-            BoxShadow(
-              color: JsoColors.shadow,
-              blurRadius: 22,
-              offset: Offset(0, 12),
-            ),
-          ],
-        ),
-        child: Material(
-          color: JsoColors.navy,
-          borderRadius: BorderRadius.circular(JsoRadius.largeCard),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => _openArticle(context),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  ExcludeSemantics(
-                    child: RemoteImage(
-                      url: article.coverImageUrl,
-                      fit: BoxFit.cover,
-                      placeholderIcon: Icons.photo_outlined,
-                    ),
+      child: Material(
+        color: JsoColors.navy,
+        child: InkWell(
+          onTap: () => onTap(article),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ExcludeSemantics(
+                child: RemoteImage(
+                  url: article.coverImageUrl,
+                  fit: BoxFit.cover,
+                  placeholderIcon: Icons.photo_outlined,
+                ),
+              ),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0x00071A3A),
+                      Color(0x66071A3A),
+                      Color(0xF2071A3A),
+                    ],
+                    stops: [0.25, 0.6, 1],
                   ),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Color(0x00071A3A),
-                          Color(0x66071A3A),
-                          Color(0xF2071A3A),
-                        ],
-                        stops: [0.25, 0.6, 1],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  JsoSpacing.md,
+                  JsoSpacing.md,
+                  JsoSpacing.md,
+                  JsoSpacing.lg + JsoSpacing.sm,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: JsoColors.gold,
+                        borderRadius: BorderRadius.circular(JsoRadius.pill),
+                      ),
+                      child: const Text(
+                        'À la une',
+                        style: TextStyle(
+                          color: JsoColors.navy,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.3,
+                        ),
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(JsoSpacing.md),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: JsoColors.gold,
-                            borderRadius: BorderRadius.circular(JsoRadius.pill),
-                          ),
-                          child: const Text(
-                            'À la une',
-                            style: TextStyle(
-                              color: JsoColors.navy,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: JsoSpacing.sm),
-                        Text(
-                          article.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: JsoColors.white,
-                            fontSize: 21,
-                            height: 1.15,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.4,
-                          ),
-                        ),
-                        if (article.publishedAt != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            JsoFormat.date(article.publishedAt!),
-                            style: const TextStyle(
-                              color: JsoColors.gold2,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ],
+                    const SizedBox(height: JsoSpacing.sm),
+                    Text(
+                      article.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: JsoColors.white,
+                        fontSize: 21,
+                        height: 1.15,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.4,
+                      ),
                     ),
-                  ),
-                ],
+                    if (article.publishedAt != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        JsoFormat.date(article.publishedAt!),
+                        style: const TextStyle(
+                          color: JsoColors.gold2,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),

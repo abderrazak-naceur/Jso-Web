@@ -121,6 +121,15 @@ class _ShopScreenState extends State<ShopScreen> {
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
+                // Featured products carousel (Swiper-style): the first items
+                // shown as horizontally scrollable cards with pagination.
+                if (selected == null && products.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: _ProductsCarousel(
+                      products: products.take(7).toList(),
+                      onOpen: _open,
+                    ),
+                  ),
                 if (categories.isNotEmpty)
                   SliverToBoxAdapter(
                     child: _CategoryFilter(
@@ -150,6 +159,217 @@ class _ShopScreenState extends State<ShopScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Swiper-style horizontal carousel of featured product cards: ~2.2 cards are
+/// visible at once and swipe/scroll horizontally, with pagination bullets.
+class _ProductsCarousel extends StatefulWidget {
+  const _ProductsCarousel({required this.products, required this.onOpen});
+
+  final List<Product> products;
+  final ValueChanged<Product> onOpen;
+
+  @override
+  State<_ProductsCarousel> createState() => _ProductsCarouselState();
+}
+
+class _ProductsCarouselState extends State<_ProductsCarousel> {
+  late final PageController _controller;
+  int _page = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PageController(viewportFraction: 0.62);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final products = widget.products;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(
+            JsoSpacing.md,
+            JsoSpacing.md,
+            JsoSpacing.md,
+            0,
+          ),
+          child: Text(
+            'Nouveautés',
+            style: TextStyle(
+              color: JsoColors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.3,
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 320,
+          child: PageView.builder(
+            controller: _controller,
+            physics: const BouncingScrollPhysics(),
+            padEnds: false,
+            onPageChanged: (i) => setState(() => _page = i),
+            itemCount: products.length,
+            itemBuilder: (context, i) => Padding(
+              padding: const EdgeInsets.fromLTRB(
+                JsoSpacing.md,
+                JsoSpacing.sm,
+                0,
+                JsoSpacing.sm,
+              ),
+              child: _ProductCarouselCard(
+                product: products[i],
+                onTap: () => widget.onOpen(products[i]),
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 4, bottom: JsoSpacing.sm),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var i = 0; i < products.length; i++)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: i == _page ? 20 : 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: i == _page ? JsoColors.gold : JsoColors.muted2,
+                    borderRadius: BorderRadius.circular(JsoRadius.pill),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A featured product slide: image on a light panel, name, price and a
+/// "Découvrir" button — mirroring the reference product tile.
+class _ProductCarouselCard extends StatelessWidget {
+  const _ProductCarouselCard({required this.product, required this.onTap});
+
+  final Product product;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: JsoColors.surface,
+      borderRadius: BorderRadius.circular(JsoRadius.largeCard),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              flex: 5,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(
+                    color: JsoColors.surfaceMuted,
+                    padding: const EdgeInsets.all(JsoSpacing.md),
+                    child: RemoteImage(
+                      url: product.imageUrl,
+                      fit: BoxFit.contain,
+                      placeholderIcon: Icons.checkroom_outlined,
+                    ),
+                  ),
+                  if (product.isOutOfStock)
+                    const Positioned(
+                      top: JsoSpacing.sm,
+                      left: JsoSpacing.sm,
+                      child: OutOfStockBadge(),
+                    ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(JsoSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if ((product.category ?? '').isNotEmpty)
+                      Text(
+                        product.category!.toUpperCase(),
+                        style: const TextStyle(
+                          color: JsoColors.inkMuted,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    const SizedBox(height: 2),
+                    Text(
+                      product.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: JsoColors.inkText,
+                        fontSize: 15,
+                        height: 1.15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      JsoFormat.money(product.price, product.currency),
+                      style: const TextStyle(
+                        color: JsoColors.navy,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: JsoSpacing.sm),
+                    SizedBox(
+                      width: double.infinity,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: JsoColors.navy,
+                          borderRadius: BorderRadius.circular(JsoRadius.pill),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 10),
+                          child: Text(
+                            'Découvrir',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: JsoColors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

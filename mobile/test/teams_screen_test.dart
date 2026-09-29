@@ -23,7 +23,9 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('renders team names and category on success', (tester) async {
+    testWidgets('renders the active team name and category on success', (
+      tester,
+    ) async {
       final repo = FakeRepository(
         teams: [
           Sample.team(name: 'Séniors', category: 'Senior'),
@@ -34,10 +36,10 @@ void main() {
       await pumpScreen(tester, repository: repo, child: const TeamsScreen());
       await tester.pumpAndSettle();
 
+      // Teams are shown in a swipeable carousel: only the active slide is
+      // mounted, and the card shows the category in upper case.
       expect(find.text('Séniors'), findsOneWidget);
-      expect(find.text('U19'), findsOneWidget);
-      expect(find.text('Senior'), findsOneWidget);
-      expect(find.text('Youth'), findsOneWidget);
+      expect(find.text('SENIOR'), findsOneWidget);
     });
 
     testWidgets('shows EmptyView when there are no teams', (tester) async {
