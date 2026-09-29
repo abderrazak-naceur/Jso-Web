@@ -153,10 +153,17 @@ public sealed class AdminTicketsController(JsoDbContext db, AuditService audit) 
         return Ok(BuildScanResponse(result, message, order));
     }
 
-    // Staff scanner: atomic entry. Transitions Confirmed -> CheckedIn inside a
-    // transaction using a conditional check so two concurrent scanners (or a
-    // replayed request) can never both succeed: the second observes CheckedInAt
-    // set and reports AlreadyUsed rather than performing a second check-in.
+    // Staff scanner: atomic entry. The Confirmed -> CheckedIn transition is a
+    // single conditional UPDATE (ExecuteUpdateAsync with WHERE Status =
+    // 'Confirmed'), so the check-in DECISION is derived exclusively from the
+    // number of rows the database actually transitioned, never from an
+    // in-memory read. Under PostgreSQL READ COMMITTED two concurrent scans of
+    // the same ticket both target the same row, but only ONE UPDATE matches the
+    // Status = 'Confirmed' predicate and returns 1 affected row; the loser
+    // matches 0 rows and is mapped to AlreadyUsed. This closes the double-entry
+    // race without a row lock or migration. A preliminary read is used ONLY to
+    // build messages and to short-circuit non-transitionable states (wrong
+    // match, cancelled, invalid, already used); it never authorises the entry.
     [HttpPost("check-in")]
     [EnableRateLimiting("ticket-scan")]
     public async Task<IActionResult> CheckIn(TicketScanRequest request, CancellationToken ct)
@@ -166,32 +173,66 @@ public sealed class AdminTicketsController(JsoDbContext db, AuditService audit) 
             return BadRequest(new { message = "Token requis." });
 
         var adminId = User.FindFirst("sub")?.Value;
+        var deviceId = string.IsNullOrWhiteSpace(request.DeviceId) ? null : request.DeviceId!.Trim();
 
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
-        var order = await db.TicketOrders.SingleOrDefaultAsync(x => x.PublicTicketToken == token, ct);
+        // Preliminary read for messages/response and to reject states that must
+        // never transition (invalid token, cancelled, wrong match, or an
+        // already-used ticket). This read does NOT authorise a check-in.
+        var order = await db.TicketOrders.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.PublicTicketToken == token, ct);
 
-        var (result, message) = Evaluate(order, request.MatchId);
+        var (preResult, preMessage) = Evaluate(order, request.MatchId);
+        if (preResult != "Valid")
+            return await FinishCheckInAsync(preResult, preMessage, order, request.MatchId, token, adminId, deviceId, ct);
 
-        // Only a still-Confirmed ticket flips to CheckedIn. Everything else
-        // (already used, cancelled, wrong match, invalid) is reported as-is with
-        // no state change.
-        if (result == "Valid" && order is not null)
+        // The order looked Confirmed for the right match. Attempt the atomic
+        // transition: only rows still in status Confirmed (and matching the
+        // gate's match when supplied) flip. The affected-row count is the single
+        // source of truth for who wins the race.
+        var checkedInAt = DateTimeOffset.UtcNow;
+        var affected = await db.TicketOrders
+            .Where(x => x.PublicTicketToken == token
+                && x.Status == "Confirmed"
+                && (request.MatchId == null || x.MatchId == request.MatchId))
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(x => x.Status, "CheckedIn")
+                .SetProperty(x => x.CheckedInAt, checkedInAt)
+                .SetProperty(x => x.CheckedInByAdminId, adminId), ct);
+
+        if (affected == 1)
         {
-            order.Status = "CheckedIn";
-            order.CheckedInAt = DateTimeOffset.UtcNow;
-            order.CheckedInByAdminId = adminId;
+            // We are the first and only scan to transition this ticket. Re-read
+            // so the response reflects the committed CheckedIn state/timestamp.
+            var updated = await db.TicketOrders.AsNoTracking()
+                .SingleOrDefaultAsync(x => x.PublicTicketToken == token, ct) ?? order;
+            return await FinishCheckInAsync("Valid", preMessage, updated, request.MatchId, token, adminId, deviceId, ct);
         }
 
+        // 0 rows: another scan (concurrent or prior) already transitioned the
+        // ticket, or its state changed between the read and the update. Re-read
+        // to report the true current outcome; a lost race maps to AlreadyUsed.
+        var current = await db.TicketOrders.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.PublicTicketToken == token, ct);
+        var (result, message) = Evaluate(current, request.MatchId);
+        return await FinishCheckInAsync(result, message, current, request.MatchId, token, adminId, deviceId, ct);
+    }
+
+    // Records the check-in attempt (audit entity + audit log) with the resolved
+    // outcome and returns the scan response. Only a "Valid" result here means an
+    // actual entry was granted.
+    private async Task<IActionResult> FinishCheckInAsync(
+        string result, string message, TicketOrder? order, Guid? matchId, string token,
+        string? adminId, string? deviceId, CancellationToken ct)
+    {
         db.TicketCheckIns.Add(new TicketCheckIn
         {
             TicketOrderId = order?.Id,
-            MatchId = order?.MatchId,
+            MatchId = order?.MatchId ?? matchId,
             CheckedInByAdminId = adminId,
-            DeviceId = string.IsNullOrWhiteSpace(request.DeviceId) ? null : request.DeviceId!.Trim(),
+            DeviceId = deviceId,
             Result = result
         });
         await db.SaveChangesAsync(ct);
-        await tx.CommitAsync(ct);
 
         await audit.LogAsync(
             result == "Valid" ? "TICKET_CHECKED_IN"
@@ -199,7 +240,7 @@ public sealed class AdminTicketsController(JsoDbContext db, AuditService audit) 
                 : result == "Cancelled" ? "TICKET_CANCELLED" : "TICKET_INVALID",
             "TicketOrder", order?.Id.ToString(), adminId, User.FindFirst("email")?.Value,
             HttpContext.Connection.RemoteIpAddress?.ToString(),
-            new { matchId = order?.MatchId, tokenPrefix = TokenPrefix(token), result }, ct);
+            new { matchId = order?.MatchId ?? matchId, tokenPrefix = TokenPrefix(token), result }, ct);
 
         return Ok(BuildScanResponse(result, message, order));
     }
