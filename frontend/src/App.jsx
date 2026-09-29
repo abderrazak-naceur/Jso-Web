@@ -186,7 +186,11 @@ function App() {
   // Default page order (matches the built-in layout). `orderHomeSections`
   // returns this unchanged when the layout is empty/failed, or reorders the
   // mappable sections (news/matches/media/sponsors) when the admin published one.
-  const defaultSectionOrder = ['matches', 'news', 'team', 'club', 'shop', 'memberships', 'media', 'events', 'community', 'archive', 'mobile', 'sponsors', 'infos']
+  // Editorial/live content first (matches, news, team, media, club, agenda);
+  // the paid offers (shop, memberships) sit lower since the hero selling band
+  // and the "À la une" carousel already surface them at the top; community,
+  // heritage and secondary blocks close the page.
+  const defaultSectionOrder = ['matches', 'news', 'team', 'media', 'club', 'events', 'shop', 'memberships', 'community', 'sponsors', 'archive', 'mobile', 'infos']
   // Drop admin-disabled sections from the rendered page too (not just the menu).
   const orderedSections = orderHomeSections(defaultSectionOrder, homeLayout)
     .filter((key) => !hiddenSections.includes(key))
