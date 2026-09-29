@@ -1,7 +1,7 @@
 # JSO Web — piano aggiornato
 
-**Aggiornato:** 28 settembre 2026
-**Stato:** prodotto web e app mobile completi nel codice; resta il go-live su ambiente reale. La biglietteria QR/check-in è ora pianificata come estensione successiva della biglietteria esistente.
+**Aggiornato:** 30 settembre 2026
+**Stato:** prodotto web e app mobile completi nel codice; resta il go-live su ambiente reale. La biglietteria QR/check-in è implementata nel codice; restano test E2E completi e collaudo reale.
 
 ## Cosa manca (sintesi)
 
@@ -10,8 +10,8 @@ Il lavoro realizzabile via codice è completo per il perimetro attuale. Restano 
 - **Priorità 0 — Go-live (bloccato dall'ambiente):** VM Oracle, dominio + HTTPS, CORS verificati sul dominio reale; backup e restore eseguiti e verificati su dati reali; smoke test admin → API → PostgreSQL → sito nel browser di produzione. **Checklist operativa passo-passo: [Go-live](GO_LIVE.md).**
 - **Priorità 1 — Prodotto web:** completo nel codice (contenuti+stati, editor admin, sicurezza/audit, SEO, accessibilità, prestazioni). Resta solo il collaudo manuale su ambiente reale (lettore di schermo per WCAG, Lighthouse).
 - **Priorità 2 — App mobile:** completa nel codice per il perimetro attuale. Resta il collaudo su dispositivi Android/iOS fisici, la firma e la pubblicazione sugli store, e le eventuali notifiche push FCM.
-- **Priorità 2.5 — Biglietteria digitale QR:** analizzata e pianificata, ma **non ancora implementata**. La biglietteria attuale supporta prenotazione, pagamento predisposto e conferma; manca il biglietto digitale QR e il check-in staff. Piano dettagliato: [MOBILE_TICKETING_QR_PLAN.md](MOBILE_TICKETING_QR_PLAN.md).
-- **Priorità 3 — Funzioni successive:** community/moderazione, analytics avanzati e altre estensioni dopo il go-live.
+- **Priorità 2.5 — Biglietteria digitale QR:** implementata nel codice (token opaco, QR Flutter, scanner staff, check-in atomico, audit e rate limit). Restano TICKET-QR-007 (E2E backend completo) e TICKET-QR-008 (collaudo su dispositivi/reale). Piano: [MOBILE_TICKETING_QR_PLAN.md](MOBILE_TICKETING_QR_PLAN.md).
+- **Priorità 3 — Funzioni successive:** Season Pass, RBAC staff avanzato, analytics avanzati e community evoluta dopo i blocchi P0.
 
 ## Decisione architetturale per l'MVP
 
@@ -38,8 +38,8 @@ PostgreSQL non richiede una licenza a pagamento. L'obiettivo di costo infrastrut
 - [ ] URL API, CORS e HTTPS verificati sul dominio reale.
 - [ ] Ambiente Oracle reale, HTTPS, backup e restore verificati.
 - [x] App Flutter implementata: Home, Match Center (Résumé/Direct/Compos/Stats), Actualités, Équipe, Médias, account tifoso completo (profilo, password, RGPD), Boutique e Biglietteria, hub Plus, design allineato al brand. Vedi [`mobile/README.md`](../mobile/README.md).
-- [x] Analisi e piano della biglietteria digitale QR/check-in aggiunti in [`MOBILE_TICKETING_QR_PLAN.md`](MOBILE_TICKETING_QR_PLAN.md).
-- [ ] Biglietto digitale QR/check-in staff implementato (task TICKET-QR-001…008).
+- [x] Biglietteria digitale QR/check-in implementata in codice; vedi [`MOBILE_TICKETING_QR_PLAN.md`](MOBILE_TICKETING_QR_PLAN.md).
+- [x] Biglietto digitale QR/check-in staff implementato nel codice (TICKET-QR-001…006); E2E e go-live restano aperti.
 - [ ] App Flutter collaudata su dispositivi Android/iOS reali e pubblicata sugli store; notifiche push (FCM) da valutare.
 
 Le caselle completate attestano la presenza delle funzioni nel codice, non un collaudo end-to-end o il go-live.
@@ -122,3 +122,8 @@ Per la prima versione il formato raccomandato è un payload minimo tipo `JSO1.<o
 - [Piano deploy Oracle](DEPLOY_ORACLE_CLOUD.md)
 - [Analisi mobile](MOBILE_ANALYSIS.md)
 - [Piano Biglietteria QR/check-in](MOBILE_TICKETING_QR_PLAN.md)
+
+
+## Governance e qualità prodotto
+
+Per il lavoro multi-agente e la struttura enterprise vedere [AGENT_ORGANIZATION.md](AGENT_ORGANIZATION.md).
