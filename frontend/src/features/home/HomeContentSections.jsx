@@ -1,3 +1,5 @@
+export { default as TeamSection } from '../team/TeamSection'
+
 import {
   ArrowUpRight,
   CalendarDays,
@@ -13,47 +15,12 @@ import {
   Smartphone,
   Sparkles,
   Sprout,
-  Users,
 } from 'lucide-react'
 import { formatDate, formatMoney, formatTime, pick } from '../../lib/format'
 import { CLUB_FOUNDED, CLUB_NAME } from '../site/brand'
 import { eyebrowText } from '../site/navigation'
 import SectionHeading from './SectionHeading'
 import { SectionError, SectionLoading } from './SectionState'
-
-export function TeamSection({ section, players, status = 'ready' }) {
-  return (
-    <section id="team" aria-labelledby="team-title" className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
-      <SectionHeading section={section} title="Les visages" muted="de la JSO." description="Découvrez les joueurs de l’équipe première et ceux qui portent les couleurs d’Oudhref." />
-      {status === 'loading' ? (
-        <div className="mt-10"><SectionLoading message="Chargement de l’effectif…" /></div>
-      ) : status === 'error' ? (
-        <div className="mt-10"><SectionError message="L’effectif est momentanément indisponible." /></div>
-      ) : (
-      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {players.length > 0 ? players.slice(0, 10).map((player) => (
-          <article key={player.id} className="group overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-4 shadow-lg shadow-slate-200/35 transition hover:-translate-y-1 hover:shadow-xl">
-            <div className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-[1.4rem] bg-jso-navy">
-              {player.photoUrl
-                ? <img src={player.photoUrl} alt={`${player.firstName} ${player.lastName}`} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-                : <span className="text-5xl font-black text-jso-gold">{player.shirtNumber ?? '—'}</span>}
-              {player.photoUrl && player.shirtNumber != null && <span className="absolute bottom-3 right-3 grid h-10 w-10 place-items-center rounded-full bg-jso-gold font-black text-jso-navy">{player.shirtNumber}</span>}
-            </div>
-            <h3 className="mt-4 text-lg font-black leading-tight">{player.firstName} {player.lastName}</h3>
-            <p className="mt-1 text-sm font-semibold text-slate-500">{player.position || 'Joueur'}</p>
-          </article>
-        )) : (
-          <div className="rounded-[2rem] bg-jso-navy p-8 text-white sm:col-span-2 lg:col-span-5">
-            <Users size={32} className="text-jso-gold" aria-hidden="true" />
-            <h3 className="mt-10 text-3xl font-black">Équipe première</h3>
-            <p className="mt-2 max-w-lg text-white/65">Les profils des joueurs seront publiés prochainement.</p>
-          </div>
-        )}
-      </div>
-      )}
-    </section>
-  )
-}
 
 export function ClubSection({ section, club, content }) {
   const city = pick(club, 'city', 'City') || 'Oudhref'
