@@ -60,6 +60,8 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<Membership> Memberships => Set<Membership>();
  public DbSet<MatchStream> MatchStreams => Set<MatchStream>();
  public DbSet<MatchStreamAccess> MatchStreamAccesses => Set<MatchStreamAccess>();
+ public DbSet<FinanceCategory> FinanceCategories => Set<FinanceCategory>();
+ public DbSet<FinanceTransaction> FinanceTransactions => Set<FinanceTransaction>();
  // PostgreSQL 'timestamp with time zone' only accepts DateTimeOffset values at
  // offset 0 (UTC). Any value produced in a non-UTC timezone (e.g. a server or
  // seeder running at UTC+2) would otherwise throw at write time. This global
@@ -226,6 +228,16 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.Country).HasMaxLength(64);
   modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.ChargedAmount).HasPrecision(14,2);
   modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.ChargedCurrency).HasMaxLength(8);
+  // Finance ledger (Area B). Money uses numeric(14,2) like Product.Price / SupporterBrick.Amount; never double.
+  modelBuilder.Entity<FinanceCategory>().HasIndex(x=>new{x.Type,x.IsActive});
+  modelBuilder.Entity<FinanceCategory>().Property(x=>x.IsActive).HasDefaultValue(true);
+  modelBuilder.Entity<FinanceCategory>().Property(x=>x.Type).HasMaxLength(16);
+  modelBuilder.Entity<FinanceTransaction>().HasIndex(x=>x.Date);
+  modelBuilder.Entity<FinanceTransaction>().HasIndex(x=>x.CategoryId);
+  modelBuilder.Entity<FinanceTransaction>().HasIndex(x=>x.MatchId);
+  modelBuilder.Entity<FinanceTransaction>().Property(x=>x.Type).HasMaxLength(16);
+  modelBuilder.Entity<FinanceTransaction>().Property(x=>x.Currency).HasMaxLength(8).HasDefaultValue("TND");
+  modelBuilder.Entity<FinanceTransaction>().Property(x=>x.Amount).HasPrecision(14,2);
   modelBuilder.Entity<Club>().HasData(new Club { Id=Guid.Parse("8d8c1ef6-1c9d-4d1c-9a0f-8a5b6b5c1001"), Name="Jeunesse Sportive de Oudhref", ShortName="JSO", Country="Tunisie", City="Oudhref" });
  }
 }
