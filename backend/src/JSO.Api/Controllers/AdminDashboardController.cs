@@ -62,17 +62,51 @@ public sealed class AdminDashboardController(JsoDbContext db) : ControllerBase
             players = await db.Players.CountAsync(x => x.IsActive, ct),
             todayActivity,
             recentActivity,
-            // Sales analytics are pre-wired for the future Shop (Horizon 2).
-            // No Product/Order entities exist yet, so values stay zero and
-            // "enabled" is false until the shop domain and a payment provider
-            // are implemented. The dashboard renders a clear "not active" state.
-            // Real sales metrics from paid orders (Paid/Shipped/Delivered count
-            // as revenue). "enabled" reflects that there is at least one active
-            // product to sell; revenue/orders stay 0 until real orders are paid.
-            sales = await BuildSalesAsync(db, ct)
+            // Real sales metrics from paid boutique orders (Paid/Shipped/
+            // Delivered count as revenue). "enabled" reflects that there is at
+            // least one active product to sell; revenue/orders stay 0 until real
+            // orders are paid.
+            sales = await BuildSalesAsync(db, ct),
+            // Ticketing revenue: an order counts as sold once Confirmed (and
+            // stays counted after check-in). Pending/Cancelled are excluded.
+            tickets = await BuildTicketsAsync(db, ct),
+            // Membership revenue: paid subscriptions; "active" uses the same
+            // rule as entitlement reads (Active status within its window).
+            memberships = await BuildMembershipsAsync(db, now, ct)
         };
 
         return Ok(result);
+    }
+
+    private static readonly string[] SoldTicketStatuses = ["Confirmed", "CheckedIn"];
+
+    private static async Task<object> BuildTicketsAsync(JsoDbContext db, CancellationToken ct)
+    {
+        var sold = db.TicketOrders.AsNoTracking().Where(x => SoldTicketStatuses.Contains(x.Status));
+        return new
+        {
+            currency = "TND",
+            revenue = await sold.SumAsync(x => (decimal?)x.Total, ct) ?? 0m,
+            orders = await sold.CountAsync(ct),
+            ticketsSold = await sold.SumAsync(x => (int?)x.Quantity, ct) ?? 0,
+            pending = await db.TicketOrders.AsNoTracking().CountAsync(x => x.Status == "Pending", ct)
+        };
+    }
+
+    private static async Task<object> BuildMembershipsAsync(JsoDbContext db, DateTimeOffset now, CancellationToken ct)
+    {
+        var paid = db.Memberships.AsNoTracking().Where(x => x.PaymentStatus == "Paid");
+        // Currently-active = Active status whose window has not elapsed (mirrors
+        // MembershipStatus.IsCurrentlyActive, expressed so EF can translate it).
+        var active = await db.Memberships.AsNoTracking()
+            .CountAsync(x => x.Status == "Active" && (x.EndsAt == null || x.EndsAt > now), ct);
+        return new
+        {
+            currency = "TND",
+            revenue = await paid.SumAsync(x => (decimal?)x.Price, ct) ?? 0m,
+            active,
+            total = await db.Memberships.AsNoTracking().CountAsync(ct)
+        };
     }
 
     private static readonly string[] PaidStatuses = ["Paid", "Shipped", "Delivered"];
