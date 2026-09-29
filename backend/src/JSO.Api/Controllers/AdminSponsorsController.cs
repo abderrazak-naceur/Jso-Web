@@ -36,7 +36,8 @@ public sealed class AdminSponsorsController(JsoDbContext db, AuditService audit)
             StartDate = request.StartDate,
             EndDate = request.EndDate,
             IsActive = request.IsActive,
-            Priority = request.Priority
+            Priority = request.Priority,
+            BannerImageUrl = request.BannerImageUrl?.Trim()
         };
         db.Sponsors.Add(sponsor);
         await db.SaveChangesAsync(ct);
@@ -64,6 +65,7 @@ public sealed class AdminSponsorsController(JsoDbContext db, AuditService audit)
         sponsor.EndDate = request.EndDate;
         sponsor.IsActive = request.IsActive;
         sponsor.Priority = request.Priority;
+        sponsor.BannerImageUrl = request.BannerImageUrl?.Trim();
         await db.SaveChangesAsync(ct);
         await audit.LogAsync("UPDATE", "Sponsor", sponsor.Id.ToString(), User.FindFirst("sub")?.Value,
             User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(),
@@ -175,4 +177,5 @@ public sealed record SponsorRequest(
     DateTimeOffset? StartDate,
     DateTimeOffset? EndDate,
     bool IsActive = true,
-    int Priority = 0);
+    int Priority = 0,
+    string? BannerImageUrl = null);

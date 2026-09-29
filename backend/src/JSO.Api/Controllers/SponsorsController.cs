@@ -37,7 +37,8 @@ public sealed class SponsorsController(JsoDbContext db) : ControllerBase
                 x.LogoUrl,
                 x.WebsiteUrl,
                 x.Tier,
-                x.Placement
+                x.Placement,
+                x.BannerImageUrl
             })
             .ToListAsync(ct);
 

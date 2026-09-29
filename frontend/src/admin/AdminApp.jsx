@@ -83,7 +83,7 @@ function Login({ onLogin }) {
 const emptyTeam = { name: '', category: 'Équipe première', isActive: true }
 const emptyPlayer = { firstName: '', lastName: '', shirtNumber: '', position: '', photoUrl: '', isActive: true }
 const emptyNews = { title: '', slug: '', excerpt: '', body: '', status: 'Draft', publishedAt: '', coverImageUrl: '' }
-const emptySponsor = { name: '', logoUrl: '', websiteUrl: '', tier: 'Partner', placement: 'Footer', startDate: '', endDate: '', isActive: true, priority: 0 }
+const emptySponsor = { name: '', logoUrl: '', websiteUrl: '', bannerImageUrl: '', tier: 'Partner', placement: 'Footer', startDate: '', endDate: '', isActive: true, priority: 0 }
 const SPONSOR_TIERS = ['Title', 'Gold', 'Silver', 'Partner']
 const SPONSOR_PLACEMENTS = ['Home', 'Footer', 'Matchday']
 const emptyProduct = { name: '', slug: '', description: '', price: '', currency: 'TND', imageUrl: '', category: '', stock: 0, isActive: true }
@@ -794,6 +794,7 @@ function SponsorsModule({ onError }) {
     setEditing(s.id)
     setForm({
       name: s.name || '', logoUrl: s.logoUrl || '', websiteUrl: s.websiteUrl || '',
+      bannerImageUrl: s.bannerImageUrl || '',
       tier: s.tier || 'Partner', placement: s.placement || 'Footer',
       startDate: s.startDate ? s.startDate.slice(0, 10) : '',
       endDate: s.endDate ? s.endDate.slice(0, 10) : '',
@@ -809,6 +810,7 @@ function SponsorsModule({ onError }) {
         name: form.name.trim(),
         logoUrl: form.logoUrl.trim() || null,
         websiteUrl: form.websiteUrl.trim() || null,
+        bannerImageUrl: form.bannerImageUrl.trim() || null,
         tier: form.tier,
         placement: form.placement,
         startDate: form.startDate ? new Date(form.startDate).toISOString() : null,
@@ -843,6 +845,7 @@ function SponsorsModule({ onError }) {
         <Field label="Nom" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required/>
         <Field label="Logo URL" value={form.logoUrl} onChange={e => setForm({ ...form, logoUrl: e.target.value })}/>
         <Field label="Site web" value={form.websiteUrl} onChange={e => setForm({ ...form, websiteUrl: e.target.value })}/>
+        <Field label="Banner publicitaire (image large) URL" value={form.bannerImageUrl} onChange={e => setForm({ ...form, bannerImageUrl: e.target.value })}/>
         <label className="block text-sm font-bold">Tier<select value={form.tier} onChange={e => setForm({ ...form, tier: e.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-jso-blue">{SPONSOR_TIERS.map(t => <option key={t} value={t}>{t}</option>)}</select></label>
         <label className="block text-sm font-bold">Emplacement<select value={form.placement} onChange={e => setForm({ ...form, placement: e.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-jso-blue">{SPONSOR_PLACEMENTS.map(p => <option key={p} value={p}>{p}</option>)}</select></label>
         <Field label="Début" type="date" value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })}/>
