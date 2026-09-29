@@ -74,6 +74,38 @@ public sealed class TicketsController(
         return Ok(order);
     }
 
+    // Digital ticket payload for the fan's own confirmed ticket. Returns only
+    // what the QR/ticket UI needs: the opaque public token (the QR content),
+    // match/type/quantity/status. Rejected for Pending/Cancelled orders so no
+    // token is ever exposed before the ticket is valid. The token is not a
+    // credential: it only lets the staff scanner resolve this ticket server-side.
+    [HttpGet("{id:guid}/digital")]
+    [Authorize(Roles = "Fan")]
+    public async Task<IActionResult> DigitalTicket(Guid id, CancellationToken ct)
+    {
+        var fanId = CurrentFanId();
+        if (fanId is null) return Unauthorized();
+        var order = await db.TicketOrders.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == id && x.FanUserId == fanId, ct);
+        if (order is null) return NotFound();
+        if (order.Status is not ("Confirmed" or "CheckedIn") || string.IsNullOrEmpty(order.PublicTicketToken))
+            return BadRequest(new { message = "Ce billet n'a pas encore de billet numérique." });
+
+        return Ok(new
+        {
+            order.Id,
+            order.MatchId,
+            order.TicketTypeName,
+            order.Quantity,
+            order.Currency,
+            order.Total,
+            order.Status,
+            token = order.PublicTicketToken,
+            order.IssuedAt,
+            order.CheckedInAt
+        });
+    }
+
     [HttpPost("reserve")]
     [Authorize(Roles = "Fan")]
     [EnableRateLimiting("auth-login")]

@@ -2,6 +2,7 @@ using JSO.Domain;
 using JSO.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace JSO.Api.Controllers;
@@ -127,6 +128,135 @@ public sealed class AdminTicketsController(JsoDbContext db, AuditService audit) 
         return Ok(new { order.Id, order.Status, order.ConfirmedAt });
     }
 
+    // Staff scanner: verify a scanned QR token WITHOUT changing state. Resolves
+    // the opaque token to a ticket and reports a structured outcome the scanner
+    // can render immediately. An optional matchId lets a gate reject tickets for
+    // a different match. This is a read-only pre-check; the actual entry is the
+    // atomic check-in below. Rate limited to blunt token brute-forcing.
+    [HttpPost("validate")]
+    [EnableRateLimiting("ticket-scan")]
+    public async Task<IActionResult> Validate(TicketScanRequest request, CancellationToken ct)
+    {
+        var token = request.Token?.Trim();
+        if (string.IsNullOrEmpty(token))
+            return BadRequest(new { message = "Token requis." });
+
+        var order = await db.TicketOrders.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.PublicTicketToken == token, ct);
+
+        var (result, message) = Evaluate(order, request.MatchId);
+        await LogScanAsync(result == "Valid" ? "TICKET_VALIDATED"
+            : result == "AlreadyUsed" ? "TICKET_ALREADY_USED"
+            : result == "Cancelled" ? "TICKET_CANCELLED" : "TICKET_INVALID",
+            order, request.MatchId, token, ct);
+
+        return Ok(BuildScanResponse(result, message, order));
+    }
+
+    // Staff scanner: atomic entry. Transitions Confirmed -> CheckedIn inside a
+    // transaction using a conditional check so two concurrent scanners (or a
+    // replayed request) can never both succeed: the second observes CheckedInAt
+    // set and reports AlreadyUsed rather than performing a second check-in.
+    [HttpPost("check-in")]
+    [EnableRateLimiting("ticket-scan")]
+    public async Task<IActionResult> CheckIn(TicketScanRequest request, CancellationToken ct)
+    {
+        var token = request.Token?.Trim();
+        if (string.IsNullOrEmpty(token))
+            return BadRequest(new { message = "Token requis." });
+
+        var adminId = User.FindFirst("sub")?.Value;
+
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var order = await db.TicketOrders.SingleOrDefaultAsync(x => x.PublicTicketToken == token, ct);
+
+        var (result, message) = Evaluate(order, request.MatchId);
+
+        // Only a still-Confirmed ticket flips to CheckedIn. Everything else
+        // (already used, cancelled, wrong match, invalid) is reported as-is with
+        // no state change.
+        if (result == "Valid" && order is not null)
+        {
+            order.Status = "CheckedIn";
+            order.CheckedInAt = DateTimeOffset.UtcNow;
+            order.CheckedInByAdminId = adminId;
+        }
+
+        db.TicketCheckIns.Add(new TicketCheckIn
+        {
+            TicketOrderId = order?.Id,
+            MatchId = order?.MatchId,
+            CheckedInByAdminId = adminId,
+            DeviceId = string.IsNullOrWhiteSpace(request.DeviceId) ? null : request.DeviceId!.Trim(),
+            Result = result
+        });
+        await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+
+        await audit.LogAsync(
+            result == "Valid" ? "TICKET_CHECKED_IN"
+                : result == "AlreadyUsed" ? "TICKET_ALREADY_USED"
+                : result == "Cancelled" ? "TICKET_CANCELLED" : "TICKET_INVALID",
+            "TicketOrder", order?.Id.ToString(), adminId, User.FindFirst("email")?.Value,
+            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            new { matchId = order?.MatchId, tokenPrefix = TokenPrefix(token), result }, ct);
+
+        return Ok(BuildScanResponse(result, message, order));
+    }
+
+    // Recent check-in history (audit trail) for the scanner and back office.
+    [HttpGet("check-ins")]
+    public async Task<IActionResult> GetCheckIns([FromQuery] Guid? matchId, [FromQuery] int take, CancellationToken ct)
+    {
+        var limit = take is < 1 or > 200 ? 50 : take;
+        var query = db.TicketCheckIns.AsNoTracking();
+        if (matchId is not null) query = query.Where(x => x.MatchId == matchId);
+        var items = await query
+            .OrderByDescending(x => x.CheckedInAt)
+            .Take(limit)
+            .Select(x => new { x.Id, x.TicketOrderId, x.MatchId, x.Result, x.CheckedInAt, x.CheckedInByAdminId, x.DeviceId })
+            .ToListAsync(ct);
+        return Ok(items);
+    }
+
+    // Pure evaluation of a scanned ticket. Kept side-effect free so validate and
+    // check-in share identical outcome rules.
+    private static (string Result, string Message) Evaluate(TicketOrder? order, Guid? matchId)
+    {
+        if (order is null) return ("Invalid", "Billet introuvable.");
+        if (order.Status == "CheckedIn") return ("AlreadyUsed", "Billet déjà utilisé.");
+        if (order.Status == "Cancelled") return ("Cancelled", "Billet annulé.");
+        if (order.Status != "Confirmed") return ("Invalid", "Billet non valide.");
+        if (matchId is not null && matchId != order.MatchId) return ("WrongMatch", "Billet pour un autre match.");
+        return ("Valid", "Billet valide.");
+    }
+
+    private static object BuildScanResponse(string result, string message, TicketOrder? order) => new
+    {
+        result,
+        message,
+        ticket = order is null ? null : new
+        {
+            order.Id,
+            order.MatchId,
+            order.TicketTypeName,
+            order.Quantity,
+            order.Status,
+            order.CheckedInAt
+        }
+    };
+
+    private async Task LogScanAsync(string action, TicketOrder? order, Guid? matchId, string token, CancellationToken ct)
+    {
+        await audit.LogAsync(action, "TicketOrder", order?.Id.ToString(), User.FindFirst("sub")?.Value,
+            User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(),
+            new { matchId = matchId ?? order?.MatchId, tokenPrefix = TokenPrefix(token) }, ct);
+    }
+
+    // Never log the full token: only a short prefix for correlation.
+    private static string TokenPrefix(string token) =>
+        token[..Math.Min(6, token.Length)] + "\u2026";
+
     private static string? Validate(TicketTypeRequest r)
     {
         if (string.IsNullOrWhiteSpace(r.Name)) return "Name is required.";
@@ -135,6 +265,8 @@ public sealed class AdminTicketsController(JsoDbContext db, AuditService audit) 
         return null;
     }
 }
+
+public sealed record TicketScanRequest(string? Token, Guid? MatchId, string? DeviceId);
 
 public sealed record TicketTypeRequest(
     Guid MatchId,
