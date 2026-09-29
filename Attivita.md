@@ -112,7 +112,7 @@ Dalla [visione 2030](docs/PLATFORM_VISION_2030.md) e dal README:
 - ✅ **Community & moderazione** — fatto (commenti/reazioni/segnalazioni, code di moderazione admin, commenti sul sito pubblico)
 - ✅ **Membership / abbonamenti tifosi** — fatto (piani admin + acquisto fan + attivazione via pagamento verificato)
 - ✅ **Pagamenti reali** — integrati (Flouci per Tunisia / Stripe per estero, scelta per Paese) su shop, biglietti, muro sostenitori, membership, streaming. 🔒 Manca solo: creare account provider, mettere le chiavi nell'ambiente, puntare i webhook, collaudo end-to-end (post-deploy)
-- ⛔ **Finanze del club** (entrate/uscite, reportistica) — vedi [piano dedicato](docs/ADMIN_SQUAD_FINANCE_ANALYTICS_PLAN.md)
+- ✅ **Finanze del club** (entrate/uscite con categorie, transazioni, riepilogo con netto/perdite) — Area B del [piano dedicato](docs/ADMIN_SQUAD_FINANCE_ANALYTICS_PLAN.md), modulo admin in francese, accesso ristretto (ruolo `FinanceManager` oltre a SuperAdmin/ClubAdmin), importi `numeric(14,2)`, audit su ogni scrittura
 - 🔒 **Notifiche & messaging** (push FCM / email) — richiede provider esterno
 - 🟡 **Frontend web lato tifoso**: molte UI ci sono (account, shop/carrello, commenti, abbonamenti, streaming); resta da completare qualche superficie (es. UI GDPR per il tifoso, pagine dedicate biglietti/muro).
 

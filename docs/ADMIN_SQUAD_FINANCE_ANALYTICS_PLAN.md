@@ -1,6 +1,6 @@
 # Piano PRO — Admin: gestione squadra, finanze del club e analytics per giocatore
 
-**Stato:** proposta (solo piano, nessuna implementazione). Da approvare prima di scrivere codice.
+**Stato:** proposta. **Area B (Finanze del club) — FATTA** (branch `feat/club-finance`); Area A e Area C restano da fare.
 
 **Obiettivo:** aggiungere al pannello admin tre aree nuove:
 1. **Gestione squadra** più completa (rosa, contratti, disponibilità) — estende l'attuale "Équipes & joueurs".
@@ -48,7 +48,17 @@
 
 ---
 
-## 4. Area B — Finanze del club ("soldi persi")
+## 4. Area B — Finanze del club ("soldi persi") — ✅ FATTA
+
+> **Implementato** su branch `feat/club-finance`. Riepilogo di cosa è stato realizzato e delle decisioni adottate (dalla sez. 10):
+>
+> - **Entità** (`backend/src/JSO.Domain/Finance.cs`): `FinanceCategory` (Id, Name, Type `Income`|`Expense`, IsActive default true, CreatedAt) e `FinanceTransaction` (Id, Date, CategoryId, Type, Amount `decimal`→`numeric(14,2)` ≥ 0, Currency default `TND`, Description?, MatchId? nullable, CreatedByAdminId?, CreatedAt). Indici: `FinanceCategory(Type,IsActive)`; `FinanceTransaction` su `Date`, `CategoryId`, `MatchId`. DbSet + config in `JsoDbContext`. Migration additiva PostgreSQL `AddFinance` (solo nuove tabelle, nessun impatto sui dati esistenti).
+> - **API** `AdminFinanceController` (`/api/admin/finance/*`) sotto `[Authorize(Roles="SuperAdmin,ClubAdmin,FinanceManager")]`, nessun endpoint pubblico, audit `CREATE/UPDATE/DELETE` su ogni scrittura (senza dati sensibili nei log): categorie e transazioni CRUD (filtri `from/to/categoryId/type/matchId`) e `GET summary?from=&to=` → `{ totalIncome, totalExpense, net, currency, byCategory[], byMonth[] }` con `net = totalIncome − totalExpense` (net < 0 = **perdita**), aggregazione server-side EF (`GroupBy`/`Sum`).
+> - **Frontend** (`frontend/src/admin/Finance.jsx`, in francese) + voce nav **« Finances »** (icona `Wallet`, ruoli SuperAdmin/ClubAdmin/FinanceManager): gestione categorie, tabella transazioni con filtri periodo/categoria/tipo, card riepilogo Entrées/Dépenses/**Net (in rosso se perdita)**, ripartizioni per mese e per categoria con barre CSS leggere (nessuna dipendenza di charting), stati loading/vuoto/errore, export CSV client-side.
+> - **Decisioni adottate:** valuta **unica** di club, default **`TND`** (campo `Currency` sulle transazioni). **Ruolo `FinanceManager`** creato/usato oltre a SuperAdmin/ClubAdmin: è un valore della stringa `AdminUser.Role`, quindi va assegnato a un admin (nessun enum). **Delete categoria**: rifiutato con `409` se ha transazioni (niente cascata silenziosa; disattivarla o riassegnare/eliminare le sue transazioni). **Export CSV** implementato lato client (leggero, non bloccante).
+> - **Precisione monetaria:** sempre `decimal` + `numeric(14,2)`; mai `double`.
+> - **Nota operativa:** per usare il ruolo finanze, creare/assegnare un `AdminUser` con `Role = "FinanceManager"` (oppure usare SuperAdmin/ClubAdmin).
+
 
 ### 4.1 Modello (nuovo — registro entrate/uscite)
 - Entità `FinanceCategory`: `Id`, `Name`, `Type` (`Income` | `Expense`). Es. uscite: stipendi, trasferte, attrezzatura, arbitraggio, sanzioni; entrate: biglietti, sponsor, merchandising.
