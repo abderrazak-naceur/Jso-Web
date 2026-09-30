@@ -21,7 +21,15 @@ public static class DependencyInjection
             {
                 case "postgres":
                 case "postgresql":
-                    options.UseNpgsql(cs);
+                    // Render PostgreSQL requires TLS. Normalize the connection
+                    // string here so production cannot accidentally inherit a
+                    // local/development SSL setting (e.g. SSL Mode=Disable).
+                    var postgresCs = new Npgsql.NpgsqlConnectionStringBuilder(cs)
+                    {
+                        SslMode = Npgsql.SslMode.Require,
+                        TrustServerCertificate = true
+                    }.ConnectionString;
+                    options.UseNpgsql(postgresCs);
                     break;
                 case "sqlserver":
                     options.UseSqlServer(cs);
