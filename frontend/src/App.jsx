@@ -6,84 +6,19 @@ import AuthModal from './features/account/AuthModal'
 import ChangePasswordModal from './features/account/ChangePasswordModal'
 import ProfileModal from './features/account/ProfileModal'
 import { useFanSession } from './features/account/useFanSession'
-import {
-  AgendaSection,
-  ArchiveSection,
-  ClubSection,
-  CommunitySection,
-  InfoSection,
-  MediaSection,
-  MobileSection,
-  ShopSection,
-  SponsorsSection,
-  TeamSection,
-} from './features/home/HomeContentSections'
-import HeroSection from './features/home/HeroSection'
-import MembershipsSection from './features/memberships/MembershipsSection'
-import MatchdaySection from './features/home/MatchdaySection'
-import NewsSection from './features/home/NewsSection'
+import HomePage from './features/home/HomePage'
 import { useHomeData } from './features/home/useHomeData'
-import { orderHomeSections, useHomeLayout } from './features/home/useHomeLayout'
 import MatchCenterModal from './features/matches/MatchCenterModal'
 import ArticleModal from './features/news/ArticleModal'
 import { pushArticleUrl, restoreHomeUrl, slugFromPath } from './features/news/articleUrl'
-import HighlightsCarousel from './features/home/HighlightsCarousel'
-import SellingBand from './features/home/SellingBand'
 import CartDrawer from './features/shop/CartDrawer'
 import { useCart } from './features/shop/useCart'
-import Reveal from './features/site/Reveal'
 import SiteFooter from './features/site/SiteFooter'
 import SiteHeader from './features/site/SiteHeader'
 import { visibleSections } from './features/site/navigation'
 import { useActiveSection } from './features/site/useActiveSection'
 import { useNavigation } from './features/site/useNavigation'
-import { formatDate } from './lib/format'
-
-// Builds the "À la une" carousel cards from real home data. Every card links to
-// an existing destination; cards without data are omitted (1–4 cards shown).
-function buildHighlights({ data, onOpenMatch, onOpenArticle }) {
-  const items = []
-  const nextMatch = data.nextMatch
-  if (nextMatch) {
-    items.push({
-      key: 'match',
-      badge: 'Prochain match',
-      title: `JSO — ${nextMatch.opponentName || nextMatch.OpponentName || 'À venir'}`,
-      subtitle: formatDate(nextMatch.kickoffAt || nextMatch.KickoffAt) || 'Bientôt',
-      cta: 'Voir le match',
-      onSelect: () => onOpenMatch(nextMatch),
-    })
-  }
-  const lead = data.news?.[0]
-  if (lead) {
-    items.push({
-      key: 'news',
-      badge: 'Actualité',
-      title: lead.title,
-      subtitle: lead.publishedAt ? formatDate(lead.publishedAt) : 'Dernière actualité',
-      cta: 'Lire l’article',
-      imageUrl: lead.coverImageUrl || undefined,
-      onSelect: () => onOpenArticle(lead),
-    })
-  }
-  items.push({
-    key: 'shop',
-    badge: 'Boutique',
-    title: 'Maillots & articles officiels',
-    subtitle: 'La boutique du club',
-    cta: 'Découvrir',
-    onSelect: () => { window.location.hash = '#shop' },
-  })
-  items.push({
-    key: 'memberships',
-    badge: 'Abonnements',
-    title: 'Rejoignez les abonnés',
-    subtitle: 'Soutenez la JSO toute la saison',
-    cta: 'S’abonner',
-    onSelect: () => { window.location.hash = '#memberships' },
-  })
-  return items
-}
+import { useHomeLayout } from './features/home/useHomeLayout'
 
 function App() {
   const data = useHomeData()
@@ -127,74 +62,25 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [passwordOpen, setPasswordOpen] = useState(false)
 
-  // Data-driven sections disappear from both the page and the navigation when
-  // empty. Core sections remain visible with an explicit loading/empty state.
-  // Admin can also switch off any section via the Homepage Builder: the hidden
-  // ids arrive in the home content bag under `home_hidden_sections` (CSV).
+  // Data-driven navigation is kept in the shell so header/footer and the
+  // homepage composition share exactly the same visibility rules.
   const hiddenSections = String(data.content?.home_hidden_sections || '')
     .split(',')
     .map((id) => id.trim())
     .filter(Boolean)
+
   const visibility = {
     community: data.community.length > 0,
     archive: data.archive.length > 0,
     sponsors: data.sponsors.length > 0,
   }
   for (const id of hiddenSections) visibility[id] = false
-  const sections = visibleSections(visibility)
-  const sectionById = Object.fromEntries(sections.map((section) => [section.id, section]))
-  const activeSection = useActiveSection(['home', ...sections.map((section) => section.id)]) || 'home'
 
-  // Extra links configured by the admin (Homepage Builder). Additive: shown
-  // alongside the built-in section navigation; empty (or failed) => nothing extra.
+  const sections = visibleSections(visibility)
+  const activeSection = useActiveSection(['home', ...sections.map((section) => section.id)]) || 'home'
   const headerLinks = useNavigation('Header')
   const footerLinks = useNavigation('Footer')
-
-  // Published homepage layout (Homepage Builder). When present it drives the
-  // order/visibility of the mappable sections; empty or failed => the built-in
-  // order below is used unchanged (total fallback, identical to today).
   const homeLayout = useHomeLayout()
-
-  // Renderers for every home section, keyed by section id. Hero is always first
-  // and is rendered outside the ordered list.
-  const sectionRenderers = {
-    matches: () => (
-      <MatchdaySection key="matches" section={sectionById.matches} status={data.status} nextMatch={data.nextMatch} recentMatches={data.recentMatches} onOpenMatch={setSelectedMatch} />
-    ),
-    news: () => (
-      <NewsSection key="news" section={sectionById.news} status={data.status} articles={data.news} content={data.content} onOpenArticle={openArticle} />
-    ),
-    team: () => <TeamSection key="team" section={sectionById.team} players={data.players} status={data.sectionStatus.players} />,
-    club: () => <ClubSection key="club" section={sectionById.club} club={data.club} content={data.content} />,
-    shop: () => <ShopSection key="shop" section={sectionById.shop} products={data.products} status={data.sectionStatus.products} cart={cart} onOpenCart={() => setCartOpen(true)} />,
-    memberships: () => (
-      <MembershipsSection
-        key="memberships"
-        section={sectionById.memberships}
-        token={fan.token}
-        onRequireLogin={() => openAuth('login')}
-      />
-    ),
-    media: () => <MediaSection key="media" section={sectionById.media} media={data.media} status={data.sectionStatus.media} />,
-    events: () => <AgendaSection key="events" section={sectionById.events} events={data.events} status={data.sectionStatus.events} />,
-    community: () => (sectionById.community ? <CommunitySection key="community" section={sectionById.community} programs={data.community} /> : null),
-    archive: () => (sectionById.archive ? <ArchiveSection key="archive" section={sectionById.archive} archive={data.archive} /> : null),
-    mobile: () => <MobileSection key="mobile" section={sectionById.mobile} />,
-    sponsors: () => (sectionById.sponsors ? <SponsorsSection key="sponsors" section={sectionById.sponsors} sponsors={data.sponsors} /> : null),
-    infos: () => <InfoSection key="infos" section={sectionById.infos} club={data.club} documents={data.documents} faq={data.faq} documentsStatus={data.sectionStatus.documents} faqStatus={data.sectionStatus.faq} />,
-  }
-
-  // Default page order (matches the built-in layout). `orderHomeSections`
-  // returns this unchanged when the layout is empty/failed, or reorders the
-  // mappable sections (news/matches/media/sponsors) when the admin published one.
-  // Editorial/live content first (matches, news, team, media, club, agenda);
-  // the paid offers (shop, memberships) sit lower since the hero selling band
-  // and the "À la une" carousel already surface them at the top; community,
-  // heritage and secondary blocks close the page.
-  const defaultSectionOrder = ['matches', 'news', 'team', 'media', 'club', 'events', 'shop', 'memberships', 'community', 'sponsors', 'archive', 'mobile', 'infos']
-  // Drop admin-disabled sections from the rendered page too (not just the menu).
-  const orderedSections = orderHomeSections(defaultSectionOrder, homeLayout)
-    .filter((key) => !hiddenSections.includes(key))
 
   function openAuth(mode) {
     setAuthMode(mode)
@@ -219,15 +105,18 @@ function App() {
         onLogout={fan.signOut}
       />
 
-      <main id="main-content" tabIndex={-1}>
-        <HeroSection content={data.content} club={data.club} />
-        <Reveal><SellingBand nextMatch={data.nextMatch} /></Reveal>
-        <Reveal><HighlightsCarousel items={buildHighlights({ data, onOpenMatch: setSelectedMatch, onOpenArticle: openArticle })} /></Reveal>
-        {orderedSections.map((key) => {
-          const rendered = sectionRenderers[key]?.()
-          return rendered ? <Reveal key={key}>{rendered}</Reveal> : null
-        })}
-      </main>
+      <HomePage
+        data={data}
+        cart={cart}
+        fan={fan}
+        onOpenCart={() => setCartOpen(true)}
+        onOpenAuth={openAuth}
+        onOpenMatch={setSelectedMatch}
+        onOpenArticle={openArticle}
+        sections={sections}
+        hiddenSections={hiddenSections}
+        homeLayout={homeLayout}
+      />
 
       <SiteFooter sections={sections} extraLinks={footerLinks} />
 
