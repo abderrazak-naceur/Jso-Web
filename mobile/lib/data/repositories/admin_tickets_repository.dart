@@ -48,6 +48,16 @@ class AdminTicketsRepository {
     return TicketScanResult.fromJson(_asMap(json));
   }
 
+  Future<ScannerConfiguration> configuration({
+    required String adminToken,
+  }) async {
+    final json = await _client.getJson(
+      '/admin/tickets/scan/configuration',
+      bearerToken: adminToken,
+    );
+    return ScannerConfiguration.fromJson(_asMap(json));
+  }
+
   /// `GET /api/admin/tickets/check-ins` — recent scan history.
   Future<List<TicketCheckInEntry>> recentCheckIns({
     required String adminToken,
@@ -93,4 +103,73 @@ class AdminTicketsRepository {
 
   Map<String, dynamic> _asMap(Object? json) =>
       json is Map ? Map<String, dynamic>.from(json) : <String, dynamic>{};
+}
+
+
+class ScannerConfiguration {
+  const ScannerConfiguration({
+    required this.gates,
+    required this.devices,
+  });
+
+  final List<ScannerGate> gates;
+  final List<ScannerDevice> devices;
+
+  factory ScannerConfiguration.fromJson(Map<String, dynamic> json) {
+    final gates = json['gates'] is List
+        ? (json['gates'] as List)
+            .whereType<Map>()
+            .map((e) => ScannerGate.fromJson(Map<String, dynamic>.from(e)))
+            .toList(growable: false)
+        : const <ScannerGate>[];
+    final devices = json['devices'] is List
+        ? (json['devices'] as List)
+            .whereType<Map>()
+            .map((e) => ScannerDevice.fromJson(Map<String, dynamic>.from(e)))
+            .toList(growable: false)
+        : const <ScannerDevice>[];
+    return ScannerConfiguration(gates: gates, devices: devices);
+  }
+}
+
+class ScannerGate {
+  const ScannerGate({
+    required this.id,
+    required this.code,
+    required this.name,
+    this.facilityId,
+  });
+
+  final String id;
+  final String code;
+  final String name;
+  final String? facilityId;
+
+  factory ScannerGate.fromJson(Map<String, dynamic> json) => ScannerGate(
+        id: '\${json['id'] ?? ''}',
+        code: '\${json['code'] ?? ''}',
+        name: '\${json['name'] ?? ''}',
+        facilityId: json['facilityId']?.toString(),
+      );
+}
+
+class ScannerDevice {
+  const ScannerDevice({
+    required this.id,
+    required this.deviceCode,
+    required this.name,
+    this.gateId,
+  });
+
+  final String id;
+  final String deviceCode;
+  final String name;
+  final String? gateId;
+
+  factory ScannerDevice.fromJson(Map<String, dynamic> json) => ScannerDevice(
+        id: '\${json['id'] ?? ''}',
+        deviceCode: '\${json['deviceCode'] ?? ''}',
+        name: '\${json['name'] ?? ''}',
+        gateId: json['gateId']?.toString(),
+      );
 }
