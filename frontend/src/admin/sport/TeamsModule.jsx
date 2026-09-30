@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { adminApi } from '../api'
+import { emptyTeam, emptyPlayer } from '../constants'
 export default function TeamsModule({ onError }) {
   const [teams,setTeams]=useState([]); const [team,setTeam]=useState(emptyTeam); const [editing,setEditing]=useState(null)
   const [players,setPlayers]=useState([]); const [selected,setSelected]=useState(''); const [player,setPlayer]=useState(emptyPlayer); const [editingPlayer,setEditingPlayer]=useState(null)
