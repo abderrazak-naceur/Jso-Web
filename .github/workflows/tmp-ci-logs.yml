@@ -1,0 +1,35 @@
+name: tmp-ci-logs
+on:
+  push:
+    branches: [fix/ci-all]
+permissions:
+  actions: read
+  contents: write
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for JSO CI and save failed-job logs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          for i in $(seq 1 80); do
+            id=$(gh run list --workflow ci.yml --commit "$SHA" --json databaseId,status --jq '.[0] | select(.status=="completed") | .databaseId')
+            [ -n "$id" ] && break
+            sleep 20
+          done
+          echo "run id: $id"
+          mkdir -p /tmp/out
+          gh run view "$id" --json jobs --jq '.jobs[] | "\(.name): \(.conclusion)"' > /tmp/out/summary.txt || true
+          gh run view "$id" --log-failed > /tmp/out/failed.log 2>&1 || true
+          tail -n 400 /tmp/out/failed.log > /tmp/out/failed-tail.log
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan ci-logs
+          git rm -rf . -q
+          cp /tmp/out/summary.txt /tmp/out/failed-tail.log .
+          git add summary.txt failed-tail.log
+          git commit -q -m "ci logs for $SHA"
+          git push -f origin ci-logs
