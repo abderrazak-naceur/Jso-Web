@@ -23,7 +23,7 @@ class AdminTicketsRepository {
     String? deviceId,
   }) async {
     final json = await _client.postJson(
-      '/admin/tickets/validate',
+      '/admin/tickets/scan/validate',
       body: _body(scannedValue, matchId, deviceId),
       bearerToken: adminToken,
     );
@@ -39,7 +39,7 @@ class AdminTicketsRepository {
     String? deviceId,
   }) async {
     final json = await _client.postJson(
-      '/admin/tickets/check-in',
+      '/admin/tickets/scan/check-in',
       body: _body(scannedValue, matchId, deviceId),
       bearerToken: adminToken,
     );
