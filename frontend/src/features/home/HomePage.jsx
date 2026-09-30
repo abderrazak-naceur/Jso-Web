@@ -1,21 +1,17 @@
 import {
   AgendaSection,
   ArchiveSection,
-  ClubSection,
   CommunitySection,
   InfoSection,
-  MediaSection,
   MobileSection,
   ShopSection,
   SponsorsSection,
   TeamSection,
 } from './HomeContentSections'
 import HeroSection from './HeroSection'
-import ClubSection from '../club/ClubSection'
 import MembershipsSection from '../memberships/MembershipsSection'
 import MatchdaySection from './MatchdaySection'
 import NewsSection from './NewsSection'
-import MediaSection from '../media/MediaSection'
 import HighlightsCarousel from './HighlightsCarousel'
 import SellingBand from './SellingBand'
 import Reveal from '../site/Reveal'
