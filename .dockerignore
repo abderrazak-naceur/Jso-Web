@@ -6,4 +6,3 @@ frontend/dist
 node_modules
 dist
 .git
-backend
