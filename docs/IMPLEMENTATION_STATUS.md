@@ -63,7 +63,7 @@ Questo documento è il punto sintetico di verità per lo stato implementativo. L
 
 ### P1 — Frontend architecture
 
-**Avanzamento 30 settembre:** [x] Homepage composition estratta da `App.jsx` in `features/home/HomePage.jsx`; [x] shell mantiene navigation/header/footer e modal state; [x] Media estratto in `features/media/MediaSection.jsx`; [x] `HomeContentSections.jsx` alleggerito; [x] comportamento API invariato.
+**Avanzamento 30 settembre:** [x] Homepage composition estratta da `App.jsx` in `features/home/HomePage.jsx`; [x] shell mantiene navigation/header/footer e modal state; [x] Media estratto in `features/media/MediaSection.jsx`; [x] Club estratto in `features/club/ClubSection.jsx`; [x] `HomeContentSections.jsx` alleggerito; [x] contratti API invariati.
 
 Refactoring incrementale senza modificare i contratti API:
 
