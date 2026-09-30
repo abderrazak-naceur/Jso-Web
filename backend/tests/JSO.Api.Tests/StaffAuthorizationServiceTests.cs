@@ -11,6 +11,8 @@ public sealed class StaffAuthorizationServiceTests
     {
         Id = Guid.NewGuid(),
         Email = "staff@jso.test",
+        DisplayName = "Staff Test",
+        PasswordHash = "test",
         Role = "TicketValidator",
         IsActive = active
     };
