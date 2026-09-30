@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../core/api/api_exception.dart';
 import '../../core/config/jso_theme.dart';
@@ -32,6 +33,9 @@ class StaffScannerScreen extends StatefulWidget {
 }
 
 class _StaffScannerScreenState extends State<StaffScannerScreen> {
+  static const String _gateStorageKey = 'staff_scanner_gate_id';
+  static const String _deviceStorageKey = 'staff_scanner_device_id';
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   final MobileScannerController _scanner = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
   );
@@ -47,7 +51,26 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
   @override
   void initState() {
     super.initState();
+    _loadScannerConfiguration();
     _loadHistory();
+  }
+
+  Future<void> _loadScannerConfiguration() async {
+    try {
+      final values = await Future.wait<String?>([
+        _secureStorage.read(key: _gateStorageKey),
+        _secureStorage.read(key: _deviceStorageKey),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _gateId = values[0];
+        _deviceId = values[1];
+      });
+    } on Exception {
+      // Secure storage is best-effort for device configuration. The scanner
+      // remains usable with manual configuration if the platform keystore is
+      // temporarily unavailable.
+    }
   }
 
   @override
@@ -144,10 +167,24 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
     gate.dispose();
     device.dispose();
     if (!mounted || result == null) return;
-    setState(() {
-      _gateId = result.$1;
-      _deviceId = result.$2;
-    });
+    try {
+      await Future.wait([
+        _secureStorage.write(key: _gateStorageKey, value: result.$1),
+        _secureStorage.write(key: _deviceStorageKey, value: result.$2),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _gateId = result.$1;
+        _deviceId = result.$2;
+      });
+    } on Exception {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Impossibile salvare la configurazione sul dispositivo.'),
+        ),
+      );
+    }
   }
   @override
   Widget build(BuildContext context) {
