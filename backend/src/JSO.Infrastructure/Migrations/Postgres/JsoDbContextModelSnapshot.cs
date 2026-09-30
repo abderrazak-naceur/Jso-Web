@@ -974,6 +974,39 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.ToTable("FinanceTransactions");
                 });
 
+            modelBuilder.Entity("JSO.Domain.Gate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("FacilityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FacilityId", "Code")
+                        .IsUnique();
+
+                    b.HasIndex("IsActive", "Code");
+
+                    b.ToTable("Gates");
+                });
+
             modelBuilder.Entity("JSO.Domain.HomeSection", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1968,6 +2001,39 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.HasIndex("SubjectType", "CreatedAt");
 
                     b.ToTable("ScoutingNotes");
+                });
+
+            modelBuilder.Entity("JSO.Domain.ScannerDevice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeviceCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("GateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceCode")
+                        .IsUnique();
+
+                    b.HasIndex("GateId", "IsActive");
+
+                    b.ToTable("ScannerDevices");
                 });
 
             modelBuilder.Entity("JSO.Domain.Season", b =>

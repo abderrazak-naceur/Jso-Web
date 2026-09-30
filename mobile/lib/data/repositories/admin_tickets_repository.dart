@@ -48,9 +48,7 @@ class AdminTicketsRepository {
     return TicketScanResult.fromJson(_asMap(json));
   }
 
-  Future<List<ScannerMatch>> matches({
-    required String adminToken,
-  }) async {
+  Future<List<ScannerMatch>> matches({required String adminToken}) async {
     final json = await _client.getJson(
       '/admin/tickets/scan/matches',
       bearerToken: adminToken,
@@ -120,10 +118,7 @@ class AdminTicketsRepository {
 }
 
 class ScannerConfiguration {
-  const ScannerConfiguration({
-    required this.gates,
-    required this.devices,
-  });
+  const ScannerConfiguration({required this.gates, required this.devices});
 
   final List<ScannerGate> gates;
   final List<ScannerDevice> devices;
@@ -131,15 +126,15 @@ class ScannerConfiguration {
   factory ScannerConfiguration.fromJson(Map<String, dynamic> json) {
     final gates = json['gates'] is List
         ? (json['gates'] as List)
-            .whereType<Map>()
-            .map((e) => ScannerGate.fromJson(Map<String, dynamic>.from(e)))
-            .toList(growable: false)
+              .whereType<Map>()
+              .map((e) => ScannerGate.fromJson(Map<String, dynamic>.from(e)))
+              .toList(growable: false)
         : const <ScannerGate>[];
     final devices = json['devices'] is List
         ? (json['devices'] as List)
-            .whereType<Map>()
-            .map((e) => ScannerDevice.fromJson(Map<String, dynamic>.from(e)))
-            .toList(growable: false)
+              .whereType<Map>()
+              .map((e) => ScannerDevice.fromJson(Map<String, dynamic>.from(e)))
+              .toList(growable: false)
         : const <ScannerDevice>[];
     return ScannerConfiguration(gates: gates, devices: devices);
   }
@@ -159,11 +154,11 @@ class ScannerGate {
   final String? facilityId;
 
   factory ScannerGate.fromJson(Map<String, dynamic> json) => ScannerGate(
-        id: '${json['id'] ?? ''}',
-        code: '${json['code'] ?? ''}',
-        name: '${json['name'] ?? ''}',
-        facilityId: json['facilityId']?.toString(),
-      );
+    id: '${json['id'] ?? ''}',
+    code: '${json['code'] ?? ''}',
+    name: '${json['name'] ?? ''}',
+    facilityId: json['facilityId']?.toString(),
+  );
 }
 
 class ScannerDevice {
@@ -180,11 +175,11 @@ class ScannerDevice {
   final String? gateId;
 
   factory ScannerDevice.fromJson(Map<String, dynamic> json) => ScannerDevice(
-        id: '${json['id'] ?? ''}',
-        deviceCode: '${json['deviceCode'] ?? ''}',
-        name: '${json['name'] ?? ''}',
-        gateId: json['gateId']?.toString(),
-      );
+    id: '${json['id'] ?? ''}',
+    deviceCode: '${json['deviceCode'] ?? ''}',
+    name: '${json['name'] ?? ''}',
+    gateId: json['gateId']?.toString(),
+  );
 }
 
 class ScannerMatch {
@@ -205,12 +200,13 @@ class ScannerMatch {
   final String status;
 
   factory ScannerMatch.fromJson(Map<String, dynamic> json) => ScannerMatch(
-        id: '${json['id'] ?? ''}',
-        kickoffAt: DateTime.tryParse('${json['kickoffAt'] ?? ''}') ??
-            DateTime.fromMillisecondsSinceEpoch(0),
-        opponentName: '${json['opponentName'] ?? ''}',
-        venue: json['venue']?.toString(),
-        isHome: json['isHome'] == true,
-        status: '${json['status'] ?? ''}',
-      );
+    id: '${json['id'] ?? ''}',
+    kickoffAt:
+        DateTime.tryParse('${json['kickoffAt'] ?? ''}') ??
+        DateTime.fromMillisecondsSinceEpoch(0),
+    opponentName: '${json['opponentName'] ?? ''}',
+    venue: json['venue']?.toString(),
+    isHome: json['isHome'] == true,
+    status: '${json['status'] ?? ''}',
+  );
 }

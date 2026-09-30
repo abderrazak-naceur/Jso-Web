@@ -1,0 +1,8 @@
+{
+  "name": "jso-web-render",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd frontend && npm ci && npm run build"
+  }
+}

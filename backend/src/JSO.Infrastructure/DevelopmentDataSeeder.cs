@@ -68,12 +68,6 @@ public static class DevelopmentDataSeeder
 
         if (!await db.Players.AnyAsync(x => x.TeamId == team.Id, ct))
         {
-            // DEMO ONLY: realistic male portrait placeholders from randomuser.me
-            // (free for demo use), one distinct male photo per player. These are
-            // NOT the real players and depend on an external host — they exist
-            // just to make the squad look realistic while testing. The club
-            // uploads the real player photos into Player.PhotoUrl from the admin,
-            // which replaces these.
             // Real player portraits (background removed) served by the frontend
             // from frontend/public/players/<slug>.webp.
             static string LocalPhoto(string slug) => $"/players/{slug}.webp";
