@@ -21,14 +21,25 @@ public static class DependencyInjection
             {
                 case "postgres":
                 case "postgresql":
-                    // Render PostgreSQL requires TLS. Normalize the connection
-                    // string here so production cannot accidentally inherit a
-                    // local/development SSL setting (e.g. SSL Mode=Disable).
-                    var postgresCs = new Npgsql.NpgsqlConnectionStringBuilder(cs)
+                    var postgresBuilder = new Npgsql.NpgsqlConnectionStringBuilder(cs);
+
+                    // Render services in the same region/workspace should use the
+                    // private Postgres endpoint. When Database:Host is supplied
+                    // (Render production), override the public host and disable
+                    // TLS because private-network connections do not require it.
+                    var renderInternalHost = configuration["Database:Host"]?.Trim();
+                    if (!string.IsNullOrWhiteSpace(renderInternalHost))
                     {
-                        SslMode = Npgsql.SslMode.Require,
-                    }.ConnectionString;
-                    options.UseNpgsql(postgresCs);
+                        postgresBuilder.Host = renderInternalHost;
+                        postgresBuilder.SslMode = Npgsql.SslMode.Disable;
+                    }
+                    else
+                    {
+                        // External Postgres connections require TLS.
+                        postgresBuilder.SslMode = Npgsql.SslMode.Require;
+                    }
+
+                    options.UseNpgsql(postgresBuilder.ConnectionString);
                     break;
                 case "sqlserver":
                     options.UseSqlServer(cs);
