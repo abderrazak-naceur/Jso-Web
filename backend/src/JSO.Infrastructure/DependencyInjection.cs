@@ -27,7 +27,6 @@ public static class DependencyInjection
                     var postgresCs = new Npgsql.NpgsqlConnectionStringBuilder(cs)
                     {
                         SslMode = Npgsql.SslMode.Require,
-                        TrustServerCertificate = true
                     }.ConnectionString;
                     options.UseNpgsql(postgresCs);
                     break;
