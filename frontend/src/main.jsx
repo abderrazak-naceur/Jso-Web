@@ -1,4 +1,4 @@
-import { StrictMode, Suspense, lazy } from 'react'
+import { Component, StrictMode, Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
@@ -14,6 +14,29 @@ const BilletteriePage = lazy(() => import('./features/tickets/BilletteriePage.js
 
 // Minimal, framework-free fallback shown while a lazy chunk loads. Kept inline
 // so it needs no extra chunk and matches the JSO paper background.
+class RootErrorBoundary extends Component {
+  state = { error: null }
+
+  static getDerivedStateFromError(error) {
+    return { error }
+  }
+
+  render() {
+    if (!this.state.error) return this.props.children
+
+    const error = this.state.error
+    return (
+      <main style={{ minHeight: '100vh', padding: '32px', fontFamily: 'system-ui, sans-serif', background: '#f6f8fc', color: '#0b1730' }}>
+        <h1 style={{ marginBottom: '12px' }}>JSO — Errore di avvio</h1>
+        <p style={{ marginBottom: '16px' }}>L'applicazione ha incontrato un errore JavaScript durante l'avvio.</p>
+        <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', padding: '16px', borderRadius: '12px', background: '#fff', border: '1px solid #dbe3f0' }}>
+          {String(error?.stack || error?.message || error)}
+        </pre>
+      </main>
+    )
+  }
+}
+
 function RouteFallback() {
   return (
     <div
