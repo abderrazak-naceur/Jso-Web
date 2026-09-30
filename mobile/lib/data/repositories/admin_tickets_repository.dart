@@ -21,10 +21,11 @@ class AdminTicketsRepository {
     required String scannedValue,
     String? matchId,
     String? deviceId,
+    String? gateId,
   }) async {
     final json = await _client.postJson(
       '/admin/tickets/scan/validate',
-      body: _body(scannedValue, matchId, deviceId),
+      body: _body(scannedValue, matchId, deviceId, gateId),
       bearerToken: adminToken,
     );
     return TicketScanResult.fromJson(_asMap(json));
@@ -37,10 +38,11 @@ class AdminTicketsRepository {
     required String scannedValue,
     String? matchId,
     String? deviceId,
+    String? gateId,
   }) async {
     final json = await _client.postJson(
       '/admin/tickets/scan/check-in',
-      body: _body(scannedValue, matchId, deviceId),
+      body: _body(scannedValue, matchId, deviceId, gateId),
       bearerToken: adminToken,
     );
     return TicketScanResult.fromJson(_asMap(json));
@@ -68,10 +70,12 @@ class AdminTicketsRepository {
     String scannedValue,
     String? matchId,
     String? deviceId,
+    String? gateId,
   ) => {
     'token': extractToken(scannedValue),
     'matchId': ?matchId,
     'deviceId': ?deviceId,
+    'gateId': ?gateId,
   };
 
   /// Strips the compact `JSO1.` prefix (or a full ticket URL) from a scanned QR
