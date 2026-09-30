@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Pencil, X, Save } from 'lucide-react'
+import Field from '../components/Field'
 import { adminApi } from '../api'
 import { emptySponsor, SPONSOR_TIERS, SPONSOR_PLACEMENTS } from '../constants'
 export default function SponsorsModule({ onError }) {
