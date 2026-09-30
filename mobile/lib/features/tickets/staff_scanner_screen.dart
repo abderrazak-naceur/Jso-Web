@@ -39,6 +39,8 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
 
   bool _busy = false;
   bool _cameraEnabled = true;
+  String? _gateId;
+  String? _deviceId;
   TicketScanResult? _last;
   List<TicketCheckInEntry> _history = const <TicketCheckInEntry>[];
 
@@ -93,6 +95,8 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
       final result = await _repo.checkIn(
         adminToken: token,
         scannedValue: scannedValue,
+        gateId: _gateId,
+        deviceId: _deviceId,
       );
       if (result.isValid) {
         await HapticFeedback.mediumImpact();
@@ -112,12 +116,50 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
     }
   }
 
+
+
+  Future<void> _configureScanner() async {
+    final gate = TextEditingController(text: _gateId ?? '');
+    final device = TextEditingController(text: _deviceId ?? '');
+    final result = await showDialog<(String?, String?)>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Configurazione scanner'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: gate, decoration: const InputDecoration(labelText: 'Gate ID / codice')),
+            TextField(controller: device, decoration: const InputDecoration(labelText: 'Device ID / codice')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annulla')),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, (gate.text.trim().isEmpty ? null : gate.text.trim(), device.text.trim().isEmpty ? null : device.text.trim())),
+            child: const Text('Salva'),
+          ),
+        ],
+      ),
+    );
+    gate.dispose();
+    device.dispose();
+    if (!mounted || result == null) return;
+    setState(() {
+      _gateId = result.$1;
+      _deviceId = result.$2;
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Contrôle des billets'),
         actions: [
+          IconButton(
+            tooltip: 'Configuration scanner',
+            icon: const Icon(Icons.tune_rounded),
+            onPressed: _configureScanner,
+          ),
           IconButton(
             tooltip: _cameraEnabled
                 ? 'Masquer la caméra'
