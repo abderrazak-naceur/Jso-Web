@@ -21,7 +21,7 @@ export default function SecurityModule({ onError }) {
   const [users,setUsers] = useState([])
   const [logs,setLogs] = useState([])
   const [assignments,setAssignments] = useState([])
-  const [references,setReferences] = useState({matches:[],teams:[],facilities:[]})
+  const [references,setReferences] = useState({matches:[],teams:[],facilities:[],gates:[],devices:[]})
   const [form,setForm] = useState(empty)
   const [saving,setSaving] = useState(false)
 
@@ -84,11 +84,11 @@ export default function SecurityModule({ onError }) {
           : form.scopeType === 'Team' ? <select value={form.scopeId} onChange={e=>setForm({...form,scopeId:e.target.value})} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"><option value="">Seleziona squadra</option>{references.teams.map(x=><option key={x.id} value={x.id}>{x.name} · {x.category}</option>)}</select>
           : form.scopeType === 'Venue' ? <select value={form.scopeId} onChange={e=>setForm({...form,scopeId:e.target.value})} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"><option value="">Seleziona struttura</option>{references.facilities.map(x=><option key={x.id} value={x.id}>{x.name}{x.type ? ' · '+x.type : ''}</option>)}</select>
           : form.scopeType === 'Club' ? <input value={form.scopeId} onChange={e=>setForm({...form,scopeId:e.target.value})} placeholder="ID Club" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"/>
-          : form.scopeType === 'Gate' ? <input value={form.scopeId} onChange={e=>setForm({...form,scopeId:e.target.value})} placeholder="GATE-01" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"/>
+          : form.scopeType === 'Gate' ? <select value={form.scopeId} onChange={e=>setForm({...form,scopeId:e.target.value})} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"><option value="">Seleziona gate</option>{references.gates.map(x=><option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}</select>
           : <input value={form.scopeId} onChange={e=>setForm({...form,scopeId:e.target.value})} disabled={form.scopeType === 'Global'} placeholder="Nessuna risorsa" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"/>}
         </label>
-        <label className="text-sm font-bold">Gate ID<input value={form.gateId} onChange={e=>setForm({...form,gateId:e.target.value})} placeholder="GATE-01" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"/></label>
-        <label className="text-sm font-bold">Device ID<input value={form.deviceId} onChange={e=>setForm({...form,deviceId:e.target.value})} placeholder="SCANNER-01" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"/></label>
+        <label className="text-sm font-bold">Gate<input value={form.gateId} onChange={e=>setForm({...form,gateId:e.target.value})} placeholder="ID gate" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"/></label>
+        <label className="text-sm font-bold">Scanner Device<select value={form.deviceId} onChange={e=>setForm({...form,deviceId:e.target.value})} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"><option value="">Nessun device</option>{references.devices.map(x=><option key={x.id} value={x.id}>{x.deviceCode} · {x.name}</option>)}</select></label>
         <label className="text-sm font-bold">Valide du<input type="datetime-local" value={form.validFrom} onChange={e=>setForm({...form,validFrom:e.target.value})} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"/></label>
         <label className="text-sm font-bold">Valide jusqu'au<input type="datetime-local" value={form.validTo} onChange={e=>setForm({...form,validTo:e.target.value})} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"/></label>
         <div className="flex items-end xl:col-span-4"><button disabled={saving || !form.adminUserId} className="inline-flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white disabled:opacity-50"><Plus size={16}/> {saving?'Salvataggio…':'Aggiungi affectation'}</button></div>
