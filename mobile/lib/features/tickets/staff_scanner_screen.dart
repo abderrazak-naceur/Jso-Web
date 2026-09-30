@@ -150,50 +150,166 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
   }
 
   Future<void> _configureScanner() async {
-    final gate = TextEditingController(text: _gateId ?? '');
-    final device = TextEditingController(text: _deviceId ?? '');
-    final result = await showDialog<(String?, String?)>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Configurazione scanner'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: gate, decoration: const InputDecoration(labelText: 'Gate ID / codice')),
-            TextField(controller: device, decoration: const InputDecoration(labelText: 'Device ID / codice')),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annulla')),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, (gate.text.trim().isEmpty ? null : gate.text.trim(), device.text.trim().isEmpty ? null : device.text.trim())),
-            child: const Text('Salva'),
-          ),
-        ],
-      ),
-    );
-    gate.dispose();
-    device.dispose();
-    if (!mounted || result == null) return;
+    final token = _adminToken;
+    if (token == null) return;
+
+    ScannerConfiguration configuration;
     try {
-      await Future.wait([
-        _persistValue(_gateStorageKey, result.$1),
-        _persistValue(_deviceStorageKey, result.$2),
-      ]);
-      if (!mounted) return;
-      setState(() {
-        _gateId = result.$1;
-        _deviceId = result.$2;
-      });
-    } on Exception {
+      configuration = await _repo.configuration(adminToken: token);
+    } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Impossibile salvare la configurazione sul dispositivo.'),
-        ),
+        SnackBar(content: Text(e.message)),
       );
+      return;
     }
+
+    if (!mounted) return;
+
+    String? selectedGate = _gateId;
+    String? selectedDevice = _deviceId;
+
+    if (selectedGate != null &&
+        !configuration.gates.any((gate) => gate.code == selectedGate)) {
+      selectedGate = null;
+    }
+    if (selectedDevice != null &&
+        !configuration.devices.any((device) => device.deviceCode == selectedDevice)) {
+      selectedDevice = null;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final devices = selectedGate == null
+              ? configuration.devices
+              : configuration.devices
+                  .where((device) =>
+                      device.gateId == null ||
+                      configuration.gates
+                          .where((gate) => gate.code == selectedGate)
+                          .map((gate) => gate.id)
+                          .contains(device.gateId))
+                  .toList(growable: false);
+
+          if (selectedDevice != null &&
+              !devices.any((device) => device.deviceCode == selectedDevice)) {
+            selectedDevice = null;
+          }
+
+          return AlertDialog(
+            title: const Text('Configurazione scanner'),
+            content: SizedBox(
+              width: 420,
+              child: configuration.gates.isEmpty &&
+                      configuration.devices.isEmpty
+                  ? const Text(
+                      'Nessun Gate o dispositivo scanner è stato assegnato al tuo account.',
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (configuration.gates.isNotEmpty)
+                          DropdownButtonFormField<String?>(
+                            value: selectedGate,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Gate autorizzato',
+                            ),
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text('Qualsiasi Gate'),
+                              ),
+                              ...configuration.gates.map(
+                                (gate) => DropdownMenuItem<String?>(
+                                  value: gate.code,
+                                  child: Text('${gate.code} · ${gate.name}'),
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedGate = value;
+                              });
+                            },
+                          ),
+                        if (configuration.gates.isNotEmpty &&
+                            configuration.devices.isNotEmpty)
+                          const SizedBox(height: JsoSpacing.md),
+                        if (configuration.devices.isNotEmpty)
+                          DropdownButtonFormField<String?>(
+                            value: selectedDevice,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Scanner autorizzato',
+                            ),
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text('Qualsiasi dispositivo'),
+                              ),
+                              ...devices.map(
+                                (device) => DropdownMenuItem<String?>(
+                                  value: device.deviceCode,
+                                  child: Text(
+                                    '${device.deviceCode} · ${device.name}',
+                                  ),
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedDevice = value;
+                              });
+                            },
+                          ),
+                      ],
+                    ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Annulla'),
+              ),
+              if (configuration.gates.isNotEmpty ||
+                  configuration.devices.isNotEmpty)
+                FilledButton(
+                  onPressed: () async {
+                    try {
+                      await Future.wait([
+                        _persistValue(_gateStorageKey, selectedGate),
+                        _persistValue(_deviceStorageKey, selectedDevice),
+                      ]);
+                      if (!mounted) return;
+                      setState(() {
+                        _gateId = selectedGate;
+                        _deviceId = selectedDevice;
+                      });
+                      if (dialogContext.mounted) {
+                        Navigator.pop(dialogContext);
+                      }
+                    } on Exception {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(this.context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Impossibile salvare la configurazione sul dispositivo.',
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Salva'),
+                ),
+            ],
+          );
+        },
+      ),
+    );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
