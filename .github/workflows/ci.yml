@@ -129,6 +129,7 @@ jobs:
           ADMIN_BOOTSTRAP_EMAIL: admin@jso.test
           ADMIN_BOOTSTRAP_PASSWORD: ci-only-initial-admin-password
         run: |
+          trap 'status=$?; echo "=== SMOKE ERR: status=$status command=$BASH_COMMAND line=$LINENO ===" >&2; exit $status' ERR
           dotnet run --project src/JSO.Api --configuration Release --no-build --no-launch-profile > /tmp/jso-api.log 2>&1 &
           api_pid=$!
           trap 'kill "$api_pid" || true; echo "=== JSO API LOG ==="; cat /tmp/jso-api.log || true' EXIT
