@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { adminApi } from '../api'
+import { emptyEvent } from '../constants'
 export default function EventsModule({ onError }) {
   const [matches,setMatches]=useState([]); const [selected,setSelected]=useState(''); const [events,setEvents]=useState([]); const [form,setForm]=useState(emptyEvent); const [editingId,setEditingId]=useState(null)
   async function load(){try{const data=await adminApi('/admin/matches');setMatches(data);if(!selected&&data[0])loadEvents(data[0].id)}catch(e){onError(e.message)}}
