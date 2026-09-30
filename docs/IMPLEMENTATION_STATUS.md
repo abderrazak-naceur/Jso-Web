@@ -131,3 +131,11 @@ Una modifica è considerata completata quando:
 - integrazione verificata.
 
 Una funzione è **Production Ready** solo dopo verifica sull'ambiente reale.
+
+
+### Staff / scanner resources
+- Gestione StaffAssignment hardenizzata con ruoli/scope ammessi e verifica delle risorse reali.
+- Registry PostgreSQL aggiunto per Gate e ScannerDevice, con API Admin sotto security:manage.
+- Staff assignment references espone match, team, facility, gate e scanner device reali.
+- UI Admin Security usa selezioni reali per Match/Team/Venue/Gate e salva gate/device tramite i codici operativi usati dal QR scanner.
+- Migrazione 20260930170000_AddGatesAndScannerDevices aggiunta; la generazione EF locale non è stata eseguita nel workspace, quindi la verifica autorevole resta CI PostgreSQL.
