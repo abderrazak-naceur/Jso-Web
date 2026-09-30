@@ -37,13 +37,13 @@ L'obiettivo è creare un ecosistema unico per:
 - 🛍️ preparare una futura area shop
 - 📱 estendere successivamente l'esperienza a iOS e Android
 
-## 📍 Stato dell'attività — 26 settembre 2026
+## 📍 Stato dell'attività — 30 settembre 2026
 
 **Fase attuale: preparazione dell'MVP web per la produzione.** Il sito e il backend sono nel repository; un deploy pubblico sul dominio reale non risulta ancora verificato.
 
 | Area | Raggiunto e verificato | Ancora da completare |
 |---|---|---|
-| Sito e admin | Logo JSO, interfaccia responsive e concept Flutter; frontend e pannello admin usano `/api`. Build (Vite) e lint (oxlint) passano in CI e in locale. Quando l'API risponde ma non ci sono articoli, il sito mostra uno stato vuoto/errore invece di notizie dimostrative. | Verificare URL API, CORS e HTTPS sul dominio reale; collaudare i flussi completi nel browser. |
+| Sito e admin | Logo JSO, interfaccia responsive, section Équipe professionale « Les visages de la JSO », concept Flutter; frontend e pannello admin usano `/api`. Build (Vite) e lint (oxlint) risultano verificati nei workflow disponibili. Quando l'API risponde ma non ci sono articoli, il sito mostra uno stato vuoto/errore invece di notizie dimostrative. | Verificare URL API, CORS e HTTPS sul dominio reale; collaudare i flussi completi nel browser. |
 | Backend e dati | API .NET 10, migration PostgreSQL 17 applicata in CI, primo admin creato da credenziali d'ambiente e login verificato. La CI ora esegue il percorso critico stagione → competizione → squadra → partita → API pubblica → sito, verifica che le rotte admin rifiutino le chiamate anonime (401), verifica pubblicazione/lettura notizie, upload e lettura media, e il rifiuto di un file camuffato da PNG (400). Gli endpoint admin per creare stagioni e competizioni sono autorizzati e validati. | Ripetere avvio e migration sull'ambiente Oracle; eseguire un backup reale e provare il ripristino di database e media. |
 | Infrastruttura | Docker Compose production predisposto con attesa di PostgreSQL pronto; Nginx accetta il limite upload dell'API. Build Docker di frontend e backend ARM64 e controllo Nginx riusciti in CI. Script di backup, verifica, retention (dry-run di default) e procedura di restore disponibili in [deploy/oracle](deploy/oracle/README.md); tutti gli script superano il controllo di sintassi in CI. Script di collaudo `check-config.sh`, `check-local.sh` e `check-domain.sh` pronti. | Preparare VM Oracle, dominio, certificato HTTPS, backup automatico con copia esterna e monitoraggio; eseguire il deploy reale. |
 | App mobile | Due immagini concept nel README; Flutter è la scelta tecnica. | Creare l'app Android/iOS e collegarla alle API. |
@@ -60,9 +60,52 @@ Il lavoro verificabile del [piano agenti](docs/AGENT_EXECUTION_PLAN.md) (A1–A5
 
 Verifiche: [CI frontend, backend e PostgreSQL con flussi notizie/media](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/36239006026) · [build Docker frontend/backend ARM64 e controllo Nginx](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/36239006058). La priorità operativa e i criteri di uscita sono nel [piano aggiornato](docs/ROADMAP.md).
 
+## 🆕 Attività completate recentemente
+
+### Équipe — « Les visages de la JSO »
+
+La sezione squadra è stata portata verso una presentazione da club professionistico, con una direzione visiva coerente con l'identità JSO.
+
+- [x] Nuovo hero **« Les visages de la JSO »**
+- [x] Filtri per ruolo: Gardiens, Défenseurs, Milieux, Attaquants
+- [x] Ricerca giocatore per nome o numero
+- [x] Indicazione della stagione **2026/2027**
+- [x] Card giocatore responsive con numéro, poste, nom et interaction
+- [x] Portrait con rapporto e cadrage uniformi
+- [x] Placeholder professionale quando la foto ufficiale non è ancora disponibile
+- [x] Separazione del modulo in `frontend/src/features/team/`
+- [x] Workflow admin per upload, anteprima, sostituzione e rimozione del portrait
+- [x] Upload JPG / PNG / WebP con limite 10 MB
+- [x] Riutilizzo dell'URL del média come `PhotoUrl`
+- [x] PR #90 mergiata in `main`
+
+> Les photos officielles des joueurs doivent être fournies par le club. Le système est prêt à les intégrer sans modifier le contrat public de l'API.
+
+### 🏗️ Architecture Frontend & organisation des agents
+
+L'organisation du projet a également été structurée pour évoluer comme un produit digital d'entreprise.
+
+- [x] Organisation des agents définie dans `docs/AGENT_ORGANIZATION.md`
+- [x] Product Lead / Architect
+- [x] Product Manager
+- [x] UX/UI & Design System
+- [x] Frontend Web
+- [x] Backend / API
+- [x] Mobile
+- [x] Data / Database
+- [x] Payments & Commerce
+- [x] QA / E2E
+- [x] Security
+- [x] DevOps / Release
+- [x] Content / CRM
+- [x] Gouvernance et pipeline Idea → Product → Architecture → Development → QA → Release → Production
+- [x] Roadmap alignée avec cette organisation
+
+Documentation de référence : [docs/AGENT_ORGANIZATION.md](docs/AGENT_ORGANIZATION.md) · [docs/AGENT_EXECUTION_PLAN.md](docs/AGENT_EXECUTION_PLAN.md)
+
 ## 🧭 Cosa manca da sviluppare
 
-Questa sezione riflette lo **stato reale del codice** (non solo i piani), aggiornata al 26 settembre 2026. Legenda: ✅ fatto · 🟡 parziale · ⛔ da fare.
+Questa sezione riflette lo **stato reale del codice** (non solo i piani), aggiornata al 30 settembre 2026. Legenda: ✅ fatto · 🟡 parziale · ⛔ da fare.
 
 ### Riepilogo per feature
 
@@ -226,7 +269,7 @@ Le caselle completate indicano funzioni presenti nel codice; la verifica end-to-
 - [x] Dashboard
 - [x] Club Settings
 - [x] Team management
-- [x] Player management
+- [x] Player management — professional portrait upload / preview
 - [x] Match Center administration
 - [x] Match events
 - [x] Lineups
