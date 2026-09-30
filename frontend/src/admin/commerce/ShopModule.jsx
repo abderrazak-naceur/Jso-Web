@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { adminApi } from '../api'
+import { emptyProduct } from '../constants'
 export default function ShopModule({ onError }) {
   const [products, setProducts] = useState([])
   const [form, setForm] = useState(emptyProduct)
