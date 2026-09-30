@@ -18,10 +18,7 @@ import HighlightsCarousel from './HighlightsCarousel'
 import SellingBand from './SellingBand'
 import Reveal from '../site/Reveal'
 import { formatDate } from '../../lib/format'
-import { visibleSections } from '../site/navigation'
-import { useActiveSection } from '../site/useActiveSection'
-import { useNavigation } from '../site/useNavigation'
-import { orderHomeSections, useHomeLayout } from './useHomeLayout'
+import { orderHomeSections } from './useHomeLayout'
 
 function buildHighlights({ data, onOpenMatch, onOpenArticle }) {
   const items = []
@@ -78,26 +75,11 @@ export default function HomePage({
   onOpenAuth,
   onOpenMatch,
   onOpenArticle,
+  sections,
+  hiddenSections,
+  homeLayout,
 }) {
-  const hiddenSections = String(data.content?.home_hidden_sections || '')
-    .split(',')
-    .map((id) => id.trim())
-    .filter(Boolean)
-
-  const visibility = {
-    community: data.community.length > 0,
-    archive: data.archive.length > 0,
-    sponsors: data.sponsors.length > 0,
-  }
-
-  for (const id of hiddenSections) visibility[id] = false
-
-  const sections = visibleSections(visibility)
   const sectionById = Object.fromEntries(sections.map((section) => [section.id, section]))
-  const activeSection = useActiveSection(['home', ...sections.map((section) => section.id)]) || 'home'
-  const headerLinks = useNavigation('Header')
-  const footerLinks = useNavigation('Footer')
-  const homeLayout = useHomeLayout()
 
   const sectionRenderers = {
     matches: () => (
