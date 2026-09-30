@@ -1,9 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using JSO.Infrastructure;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace JSO.Infrastructure.Migrations.Postgres;
 
+[DbContext(typeof(JsoDbContext))]
+[Migration("20260930170000_AddGatesAndScannerDevices")]
 public partial class AddGatesAndScannerDevices : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
@@ -38,9 +42,6 @@ public partial class AddGatesAndScannerDevices : Migration
         migrationBuilder.CreateIndex(name: "IX_Gates_IsActive_Code", table: "Gates", columns: new[] { "IsActive", "Code" });
         migrationBuilder.CreateIndex(name: "IX_ScannerDevices_DeviceCode", table: "ScannerDevices", column: "DeviceCode", unique: true);
         migrationBuilder.CreateIndex(name: "IX_ScannerDevices_GateId_IsActive", table: "ScannerDevices", columns: new[] { "GateId", "IsActive" });
-
-        migrationBuilder.AddForeignKey(name: "FK_Gates_Facilities_FacilityId", table: "Gates", column: "FacilityId", principalTable: "Facilities", principalColumn: "Id", onDelete: ReferentialAction.SetNull);
-        migrationBuilder.AddForeignKey(name: "FK_ScannerDevices_Gates_GateId", table: "ScannerDevices", column: "GateId", principalTable: "Gates", principalColumn: "Id", onDelete: ReferentialAction.SetNull);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
