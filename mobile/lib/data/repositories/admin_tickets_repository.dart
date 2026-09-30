@@ -146,9 +146,9 @@ class ScannerGate {
   final String? facilityId;
 
   factory ScannerGate.fromJson(Map<String, dynamic> json) => ScannerGate(
-        id: '\${json['id'] ?? ''}',
-        code: '\${json['code'] ?? ''}',
-        name: '\${json['name'] ?? ''}',
+        id: '${json['id'] ?? ''}',
+        code: '${json['code'] ?? ''}',
+        name: '${json['name'] ?? ''}',
         facilityId: json['facilityId']?.toString(),
       );
 }
@@ -167,9 +167,9 @@ class ScannerDevice {
   final String? gateId;
 
   factory ScannerDevice.fromJson(Map<String, dynamic> json) => ScannerDevice(
-        id: '\${json['id'] ?? ''}',
-        deviceCode: '\${json['deviceCode'] ?? ''}',
-        name: '\${json['name'] ?? ''}',
+        id: '${json['id'] ?? ''}',
+        deviceCode: '${json['deviceCode'] ?? ''}',
+        name: '${json['name'] ?? ''}',
         gateId: json['gateId']?.toString(),
       );
 }
