@@ -12,7 +12,7 @@ namespace JSO.Api.Controllers;
 // orders (manual gateway). Confirming a Pending order increments the ticket
 // type's SoldCount inside a transaction and is idempotent.
 [ApiController]
-[Authorize(Policy = AdminPermissions.TicketsManage)]
+[Authorize(Policy = AdminPermissions.TicketsAdmin)]
 [Route("api/admin/tickets")]
 public sealed class AdminTicketsController(JsoDbContext db, AuditService audit) : ControllerBase
 {
