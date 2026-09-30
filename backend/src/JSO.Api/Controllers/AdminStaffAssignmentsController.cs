@@ -97,6 +97,21 @@ public sealed class AdminStaffAssignmentsController(JsoDbContext db, AuditServic
         if (scopeType.Equals("Gate", StringComparison.OrdinalIgnoreCase) && gateId is null)
             return BadRequest(new { message = "GateId is required for Gate assignments." });
 
+        if (scopeId is not null && Guid.TryParse(scopeId, out var scopeGuid))
+        {
+            var scopeExists = scopeType.ToLowerInvariant() switch
+            {
+                "club" => await db.Clubs.AnyAsync(x => x.Id == scopeGuid, ct),
+                "team" => await db.Teams.AnyAsync(x => x.Id == scopeGuid && x.IsActive, ct),
+                "match" => await db.Matches.AnyAsync(x => x.Id == scopeGuid, ct),
+                "venue" => await db.Facilities.AnyAsync(x => x.Id == scopeGuid && x.IsActive, ct),
+                _ => true
+            };
+
+            if (!scopeExists)
+                return BadRequest(new { message = $"Scope resource not found or inactive for {scopeType}." });
+        }
+
         var adminExists = await db.AdminUsers.AnyAsync(x => x.Id == request.AdminUserId, ct);
         if (!adminExists)
             return BadRequest(new { message = "Admin user not found." });
