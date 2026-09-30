@@ -119,7 +119,6 @@ class AdminTicketsRepository {
       json is Map ? Map<String, dynamic>.from(json) : <String, dynamic>{};
 }
 
-
 class ScannerConfiguration {
   const ScannerConfiguration({
     required this.gates,
@@ -187,6 +186,7 @@ class ScannerDevice {
         gateId: json['gateId']?.toString(),
       );
 }
+
 class ScannerMatch {
   const ScannerMatch({
     required this.id,
@@ -206,7 +206,8 @@ class ScannerMatch {
 
   factory ScannerMatch.fromJson(Map<String, dynamic> json) => ScannerMatch(
         id: '${json['id'] ?? ''}',
-        kickoffAt: DateTime.tryParse('${json['kickoffAt'] ?? ''}') ?? DateTime.fromMillisecondsSinceEpoch(0),
+        kickoffAt: DateTime.tryParse('${json['kickoffAt'] ?? ''}') ??
+            DateTime.fromMillisecondsSinceEpoch(0),
         opponentName: '${json['opponentName'] ?? ''}',
         venue: json['venue']?.toString(),
         isHome: json['isHome'] == true,
