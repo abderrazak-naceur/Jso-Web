@@ -21,17 +21,19 @@ export default function SecurityModule({ onError }) {
   const [users,setUsers] = useState([])
   const [logs,setLogs] = useState([])
   const [assignments,setAssignments] = useState([])
+  const [references,setReferences] = useState({matches:[],teams:[],facilities:[]})
   const [form,setForm] = useState(empty)
   const [saving,setSaving] = useState(false)
 
   async function load() {
     try {
-      const [u,l,a] = await Promise.all([
+      const [u,l,a,refs] = await Promise.all([
         adminApi('/admin/security/users'),
         adminApi('/admin/audit?take=50'),
-        adminApi('/admin/security/staff-assignments?activeOnly=false')
+        adminApi('/admin/security/staff-assignments?activeOnly=false'),
+        adminApi('/admin/security/staff-assignments/references')
       ])
-      setUsers(u); setLogs(l); setAssignments(a)
+      setUsers(u); setLogs(l); setAssignments(a); setReferences(refs)
       if (!form.adminUserId && u[0]) setForm(x => ({...x, adminUserId:u[0].id}))
     } catch(e) { onError(e.message) }
   }
@@ -77,7 +79,14 @@ export default function SecurityModule({ onError }) {
         <label className="text-sm font-bold">Utilisateur<select value={form.adminUserId} onChange={e=>setForm({...form,adminUserId:e.target.value})} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2">{users.map(u=><option key={u.id} value={u.id}>{u.displayName} — {u.email}</option>)}</select></label>
         <label className="text-sm font-bold">Rôle<select value={form.role} onChange={e=>setForm({...form,role:e.target.value})} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2">{ROLES.map(x=><option key={x}>{x}</option>)}</select></label>
         <label className="text-sm font-bold">Scope<select value={form.scopeType} onChange={e=>setForm({...form,scopeType:e.target.value})} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2">{SCOPES.map(x=><option key={x}>{x}</option>)}</select></label>
-        <label className="text-sm font-bold">Scope ID<input value={form.scopeId} onChange={e=>setForm({...form,scopeId:e.target.value})} placeholder="Match / Club / Venue..." className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"/></label>
+        <label className="text-sm font-bold">Risorsa
+          {form.scopeType === 'Match' ? <select value={form.scopeId} onChange={e=>setForm({...form,scopeId:e.target.value})} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"><option value="">Seleziona match</option>{references.matches.map(x=><option key={x.id} value={x.id}>{new Date(x.kickoffAt).toLocaleString('it-IT')} · {x.isHome ? 'vs' : '@'} {x.opponentName}</option>)}</select>
+          : form.scopeType === 'Team' ? <select value={form.scopeId} onChange={e=>setForm({...form,scopeId:e.target.value})} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"><option value="">Seleziona squadra</option>{references.teams.map(x=><option key={x.id} value={x.id}>{x.name} · {x.category}</option>)}</select>
+          : form.scopeType === 'Venue' ? <select value={form.scopeId} onChange={e=>setForm({...form,scopeId:e.target.value})} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"><option value="">Seleziona struttura</option>{references.facilities.map(x=><option key={x.id} value={x.id}>{x.name}{x.type ? ' · '+x.type : ''}</option>)}</select>
+          : form.scopeType === 'Club' ? <input value={form.scopeId} onChange={e=>setForm({...form,scopeId:e.target.value})} placeholder="ID Club" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"/>
+          : form.scopeType === 'Gate' ? <input value={form.scopeId} onChange={e=>setForm({...form,scopeId:e.target.value})} placeholder="GATE-01" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"/>
+          : <input value={form.scopeId} onChange={e=>setForm({...form,scopeId:e.target.value})} disabled={form.scopeType === 'Global'} placeholder="Nessuna risorsa" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"/>}
+        </label>
         <label className="text-sm font-bold">Gate ID<input value={form.gateId} onChange={e=>setForm({...form,gateId:e.target.value})} placeholder="GATE-01" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"/></label>
         <label className="text-sm font-bold">Device ID<input value={form.deviceId} onChange={e=>setForm({...form,deviceId:e.target.value})} placeholder="SCANNER-01" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"/></label>
         <label className="text-sm font-bold">Valide du<input type="datetime-local" value={form.validFrom} onChange={e=>setForm({...form,validFrom:e.target.value})} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2"/></label>
