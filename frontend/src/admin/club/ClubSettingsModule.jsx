@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Save } from 'lucide-react'
+import Field from '../components/Field'
 import { adminApi } from '../api'
 export default function ClubSettingsModule({ onError }) {
   const [form, setForm] = useState({ name: '', shortName: '', country: '', city: '', description: '', logoUrl: '' })
