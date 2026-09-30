@@ -31,7 +31,7 @@ import MatchStreamsModule from './MatchStreams'
 import FinanceModule from './Finance'
 import { adminApi } from './api'
 import ContentModule from './content/ContentModule'
-import { ADMIN_NAVIGATION, ADMIN_CATEGORY_ORDER } from './navigation'
+import { ADMIN_NAVIGATION, ADMIN_CATEGORY_ORDER, ADMIN_PERMISSION_BY_ID } from './navigation'
 import ClubSettingsModule from './club/ClubSettingsModule'
 import SecurityModule from './system/SecurityModule'
 import MediaModule from './content/MediaModule'
@@ -90,7 +90,7 @@ function AdminDashboard({ user, onLogout }) {
   // (match calendar) and 'club-events' (club agenda) to avoid double rendering.
   const role = user.role ?? user.Role
   const displayName = user.displayName ?? user.DisplayName
-  const visibleItems = ADMIN_NAVIGATION.filter(([, , , roles]) => roles.includes(role))
+  const visibleItems = ADMIN_NAVIGATION.filter(([id, , , roles]) => roles.includes(role) && Boolean(ADMIN_PERMISSION_BY_ID[id]))
   // Group the visible items by category, preserving CATEGORY_ORDER and dropping
   // empty groups (e.g. a role with no items in a category).
   const groupedItems = ADMIN_CATEGORY_ORDER
