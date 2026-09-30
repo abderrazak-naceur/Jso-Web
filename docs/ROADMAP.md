@@ -3,6 +3,8 @@
 **Aggiornato:** 30 settembre 2026
 **Stato:** prodotto web e app mobile completi nel codice; resta il go-live su ambiente reale. La biglietteria QR/check-in è implementata nel codice; restano test E2E completi e collaudo reale.
 
+> **Implementation truth:** lo stato sintetico e aggiornato del codice è in [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md). La roadmap resta il piano operativo e non sostituisce la verifica reale.
+
 ## Cosa manca (sintesi)
 
 Il lavoro realizzabile via codice è completo per il perimetro attuale. Restano il go-live e alcune estensioni successive:

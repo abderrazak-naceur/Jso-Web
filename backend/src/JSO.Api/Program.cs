@@ -1,4 +1,5 @@
 using JSO.Api;
+using JSO.Api.Security;
 using JSO.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
@@ -16,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuditService>();
+builder.Services.AddScoped<StaffAuthorizationService>();
 builder.Services.AddScoped<DatabaseInitializer>();
 // Shared resolver for payment provider return/cancel base URLs (shop, tickets,
 // supporters' wall). Keeps the Host-header policy in one place.
@@ -51,7 +53,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.FromMinutes(1)
         };
     });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options => options.AddAdminPermissionPolicies());
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

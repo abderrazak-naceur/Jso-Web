@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../core/api/api_exception.dart';
 import '../../core/config/jso_theme.dart';
@@ -32,6 +33,9 @@ class StaffScannerScreen extends StatefulWidget {
 }
 
 class _StaffScannerScreenState extends State<StaffScannerScreen> {
+  static const String _gateStorageKey = 'staff_scanner_gate_id';
+  static const String _deviceStorageKey = 'staff_scanner_device_id';
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   final MobileScannerController _scanner = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
   );
@@ -39,13 +43,37 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
 
   bool _busy = false;
   bool _cameraEnabled = true;
+  String? _gateId;
+  String? _deviceId;
+  String? _matchId;
+  List<ScannerMatch> _matches = const <ScannerMatch>[];
   TicketScanResult? _last;
   List<TicketCheckInEntry> _history = const <TicketCheckInEntry>[];
 
   @override
   void initState() {
     super.initState();
+    _loadScannerConfiguration();
+    _loadMatches();
     _loadHistory();
+  }
+
+  Future<void> _loadScannerConfiguration() async {
+    try {
+      final values = await Future.wait<String?>([
+        _secureStorage.read(key: _gateStorageKey),
+        _secureStorage.read(key: _deviceStorageKey),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _gateId = values[0];
+        _deviceId = values[1];
+      });
+    } on Exception {
+      // Secure storage is best-effort for device configuration. The scanner
+      // remains usable with manual configuration if the platform keystore is
+      // temporarily unavailable.
+    }
   }
 
   @override
@@ -57,6 +85,23 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
 
   AdminTicketsRepository get _repo => context.read<AdminTicketsRepository>();
   String? get _adminToken => context.read<AdminAuthController>().accessToken;
+
+  Future<void> _loadMatches() async {
+    final token = _adminToken;
+    if (token == null) return;
+    try {
+      final items = await _repo.matches(adminToken: token);
+      if (!mounted) return;
+      setState(() {
+        _matches = items;
+        if (_matchId != null && !items.any((match) => match.id == _matchId)) {
+          _matchId = null;
+        }
+      });
+    } on ApiException {
+      // Match configuration is best-effort; scanning can still be configured manually.
+    }
+  }
 
   Future<void> _loadHistory() async {
     final token = _adminToken;
@@ -93,6 +138,9 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
       final result = await _repo.checkIn(
         adminToken: token,
         scannedValue: scannedValue,
+        matchId: _matchId,
+        gateId: _gateId,
+        deviceId: _deviceId,
       );
       if (result.isValid) {
         await HapticFeedback.mediumImpact();
@@ -112,12 +160,236 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
     }
   }
 
+
+
+  Future<void> _persistValue(String key, String? value) async {
+    if (value == null || value.isEmpty) {
+      await _secureStorage.delete(key: key);
+      return;
+    }
+    await _secureStorage.write(key: key, value: value);
+  }
+
+  Future<void> _configureScanner() async {
+    final token = _adminToken;
+    if (token == null) return;
+
+    ScannerConfiguration configuration;
+    try {
+      configuration = await _repo.configuration(adminToken: token);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    String? selectedGate = _gateId;
+    String? selectedDevice = _deviceId;
+    String? selectedMatch = _matchId;
+
+    if (selectedGate != null &&
+        !configuration.gates.any((gate) => gate.code == selectedGate)) {
+      selectedGate = null;
+    }
+    if (selectedDevice != null &&
+        !configuration.devices.any((device) => device.deviceCode == selectedDevice)) {
+      selectedDevice = null;
+    }
+    if (selectedMatch != null &&
+        !_matches.any((match) => match.id == selectedMatch)) {
+      selectedMatch = null;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final devices = selectedGate == null
+              ? configuration.devices
+              : configuration.devices
+                  .where((device) =>
+                      device.gateId == null ||
+                      configuration.gates
+                          .where((gate) => gate.code == selectedGate)
+                          .map((gate) => gate.id)
+                          .contains(device.gateId))
+                  .toList(growable: false);
+
+          if (selectedDevice != null &&
+              !devices.any((device) => device.deviceCode == selectedDevice)) {
+            selectedDevice = null;
+          }
+
+          return AlertDialog(
+            title: const Text('Configurazione scanner'),
+            content: SizedBox(
+              width: 420,
+              child: configuration.gates.isEmpty &&
+                      configuration.devices.isEmpty
+                  ? const Text(
+                      'Nessun Gate o dispositivo scanner è stato assegnato al tuo account.',
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_matches.isNotEmpty)
+                          DropdownButtonFormField<String?>(
+                            value: selectedMatch,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Partita operativa',
+                            ),
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text('Seleziona automaticamente'),
+                              ),
+                              ..._matches.map(
+                                (match) => DropdownMenuItem<String?>(
+                                  value: match.id,
+                                  child: Text(
+                                    'vs ${match.opponentName} · ${_formatMatchDate(match.kickoffAt)}',
+                                  ),
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedMatch = value;
+                              });
+                            },
+                          ),
+                        if (_matches.isNotEmpty &&
+                            (configuration.gates.isNotEmpty ||
+                                configuration.devices.isNotEmpty))
+                          const SizedBox(height: JsoSpacing.md),
+
+                        if (configuration.gates.isNotEmpty)
+                          DropdownButtonFormField<String?>(
+                            value: selectedGate,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Gate autorizzato',
+                            ),
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text('Qualsiasi Gate'),
+                              ),
+                              ...configuration.gates.map(
+                                (gate) => DropdownMenuItem<String?>(
+                                  value: gate.code,
+                                  child: Text('${gate.code} · ${gate.name}'),
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedGate = value;
+                              });
+                            },
+                          ),
+                        if (configuration.gates.isNotEmpty &&
+                            configuration.devices.isNotEmpty)
+                          const SizedBox(height: JsoSpacing.md),
+                        if (configuration.devices.isNotEmpty)
+                          DropdownButtonFormField<String?>(
+                            value: selectedDevice,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Scanner autorizzato',
+                            ),
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text('Qualsiasi dispositivo'),
+                              ),
+                              ...devices.map(
+                                (device) => DropdownMenuItem<String?>(
+                                  value: device.deviceCode,
+                                  child: Text(
+                                    '${device.deviceCode} · ${device.name}',
+                                  ),
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedDevice = value;
+                              });
+                            },
+                          ),
+                      ],
+                    ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Annulla'),
+              ),
+              if (configuration.gates.isNotEmpty ||
+                  configuration.devices.isNotEmpty ||
+                  _matches.isNotEmpty)
+                FilledButton(
+                  onPressed: () async {
+                    try {
+                      await Future.wait([
+                        _persistValue(_gateStorageKey, selectedGate),
+                        _persistValue(_deviceStorageKey, selectedDevice),
+                      ]);
+                      if (!mounted) return;
+                      setState(() {
+                        _gateId = selectedGate;
+                        _deviceId = selectedDevice;
+                        _matchId = selectedMatch;
+                      });
+                      if (dialogContext.mounted) {
+                        Navigator.pop(dialogContext);
+                      }
+                    } on Exception {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(this.context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Impossibile salvare la configurazione sul dispositivo.',
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Salva'),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  String _formatMatchDate(DateTime value) {
+    final local = value.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$day/$month $hour:$minute';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Contrôle des billets'),
         actions: [
+          IconButton(
+            tooltip: 'Configuration scanner',
+            icon: const Icon(Icons.tune_rounded),
+            onPressed: _configureScanner,
+          ),
           IconButton(
             tooltip: _cameraEnabled
                 ? 'Masquer la caméra'

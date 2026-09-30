@@ -17,6 +17,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<Article> Articles => Set<Article>();
  public DbSet<ArticleMetadata> ArticleMetadata => Set<ArticleMetadata>();
  public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
+ public DbSet<StaffAssignment> StaffAssignments => Set<StaffAssignment>();
  public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
  public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
  public DbSet<SiteContent> SiteContents => Set<SiteContent>();
@@ -43,6 +44,8 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<MatchdayChecklistTemplateItem> MatchdayChecklistTemplateItems => Set<MatchdayChecklistTemplateItem>();
  public DbSet<MatchdayChecklistItem> MatchdayChecklistItems => Set<MatchdayChecklistItem>();
  public DbSet<Facility> Facilities => Set<Facility>();
+ public DbSet<Gate> Gates => Set<Gate>();
+ public DbSet<ScannerDevice> ScannerDevices => Set<ScannerDevice>();
  public DbSet<FacilityBooking> FacilityBookings => Set<FacilityBooking>();
  public DbSet<MaintenanceLog> MaintenanceLogs => Set<MaintenanceLog>();
  public DbSet<ScoutingNote> ScoutingNotes => Set<ScoutingNote>();
@@ -86,6 +89,9 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<Match>().HasIndex(x=>new{x.KickoffAt,x.Status});
   modelBuilder.Entity<Player>().HasIndex(x=>new{x.TeamId,x.ShirtNumber});
   modelBuilder.Entity<AdminUser>().HasIndex(x=>x.Email).IsUnique();
+  modelBuilder.Entity<StaffAssignment>().HasIndex(x=>new{x.AdminUserId,x.IsActive});
+  modelBuilder.Entity<StaffAssignment>().HasIndex(x=>new{x.Role,x.ScopeType,x.ScopeId,x.IsActive});
+  modelBuilder.Entity<StaffAssignment>().HasIndex(x=>new{x.GateId,x.DeviceId,x.IsActive});
   modelBuilder.Entity<AuditLog>().HasIndex(x=>x.CreatedAt);
   modelBuilder.Entity<AuditLog>().HasIndex(x=>new{x.EntityType,x.EntityId});
   modelBuilder.Entity<MediaAsset>().HasIndex(x=>x.CreatedAt);
@@ -178,6 +184,10 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<MatchdayChecklistItem>().HasIndex(x=>new{x.MatchId,x.Label}).IsUnique();
   modelBuilder.Entity<MatchdayChecklistItem>().Property(x=>x.Done).HasDefaultValue(false);
   modelBuilder.Entity<Facility>().HasIndex(x=>new{x.IsActive,x.Name});
+  modelBuilder.Entity<Gate>().HasIndex(x=>new{x.FacilityId,x.Code}).IsUnique();
+  modelBuilder.Entity<Gate>().HasIndex(x=>new{x.IsActive,x.Code});
+  modelBuilder.Entity<ScannerDevice>().HasIndex(x=>x.DeviceCode).IsUnique();
+  modelBuilder.Entity<ScannerDevice>().HasIndex(x=>new{x.GateId,x.IsActive});
   modelBuilder.Entity<Facility>().Property(x=>x.IsActive).HasDefaultValue(true);
   modelBuilder.Entity<FacilityBooking>().HasIndex(x=>new{x.FacilityId,x.StartsAt});
   modelBuilder.Entity<MaintenanceLog>().HasIndex(x=>new{x.FacilityId,x.Date});

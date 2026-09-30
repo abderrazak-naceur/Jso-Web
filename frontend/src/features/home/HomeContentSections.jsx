@@ -1,3 +1,5 @@
+export { default as TeamSection } from '../team/TeamSection'
+
 import {
   ArrowUpRight,
   CalendarDays,
@@ -8,90 +10,13 @@ import {
   HeartHandshake,
   Landmark,
   MapPin,
-  Play,
   ShoppingBag,
   Smartphone,
-  Sparkles,
-  Sprout,
-  Users,
 } from 'lucide-react'
 import { formatDate, formatMoney, formatTime, pick } from '../../lib/format'
 import { CLUB_FOUNDED, CLUB_NAME } from '../site/brand'
-import { eyebrowText } from '../site/navigation'
 import SectionHeading from './SectionHeading'
 import { SectionError, SectionLoading } from './SectionState'
-
-export function TeamSection({ section, players, status = 'ready' }) {
-  return (
-    <section id="team" aria-labelledby="team-title" className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
-      <SectionHeading section={section} title="Les visages" muted="de la JSO." description="Découvrez les joueurs de l’équipe première et ceux qui portent les couleurs d’Oudhref." />
-      {status === 'loading' ? (
-        <div className="mt-10"><SectionLoading message="Chargement de l’effectif…" /></div>
-      ) : status === 'error' ? (
-        <div className="mt-10"><SectionError message="L’effectif est momentanément indisponible." /></div>
-      ) : (
-      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {players.length > 0 ? players.slice(0, 10).map((player) => (
-          <article key={player.id} className="group overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-4 shadow-lg shadow-slate-200/35 transition hover:-translate-y-1 hover:shadow-xl">
-            <div className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-[1.4rem] bg-jso-navy">
-              {player.photoUrl
-                ? <img src={player.photoUrl} alt={`${player.firstName} ${player.lastName}`} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-                : <span className="text-5xl font-black text-jso-gold">{player.shirtNumber ?? '—'}</span>}
-              {player.photoUrl && player.shirtNumber != null && <span className="absolute bottom-3 right-3 grid h-10 w-10 place-items-center rounded-full bg-jso-gold font-black text-jso-navy">{player.shirtNumber}</span>}
-            </div>
-            <h3 className="mt-4 text-lg font-black leading-tight">{player.firstName} {player.lastName}</h3>
-            <p className="mt-1 text-sm font-semibold text-slate-500">{player.position || 'Joueur'}</p>
-          </article>
-        )) : (
-          <div className="rounded-[2rem] bg-jso-navy p-8 text-white sm:col-span-2 lg:col-span-5">
-            <Users size={32} className="text-jso-gold" aria-hidden="true" />
-            <h3 className="mt-10 text-3xl font-black">Équipe première</h3>
-            <p className="mt-2 max-w-lg text-white/65">Les profils des joueurs seront publiés prochainement.</p>
-          </div>
-        )}
-      </div>
-      )}
-    </section>
-  )
-}
-
-export function ClubSection({ section, club, content }) {
-  const city = pick(club, 'city', 'City') || 'Oudhref'
-  const description = pick(club, 'description', 'Description')
-
-  return (
-    <section id="club" aria-labelledby="club-title" className="relative overflow-hidden bg-jso-navy text-white">
-      <div className="absolute -right-20 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full border-[70px] border-white/[0.025]" aria-hidden="true" />
-      <div className="relative mx-auto max-w-7xl px-5 py-20 lg:px-8">
-        <SectionHeading
-          section={section}
-          eyebrow={eyebrowText(content.club_eyebrow, section.eyebrow)}
-          title={content.club_title || 'Une histoire.'}
-          muted={content.club_muted || 'Une ville. Une passion.'}
-          description={description || 'La JSO est une identité collective, un lien entre les générations et une ambition pour l’avenir du football à Oudhref.'}
-          light
-        />
-        <div className="mt-12 grid gap-4 md:grid-cols-3">
-          <article className="rounded-[2rem] border border-white/10 bg-white/5 p-7 backdrop-blur-sm">
-            <p className="text-5xl font-black text-jso-gold">{CLUB_FOUNDED}</p>
-            <h3 className="mt-8 text-xl font-black">Nos racines</h3>
-            <p className="mt-2 text-sm leading-6 text-white/60">Une histoire sportive qui se transmet de génération en génération.</p>
-          </article>
-          <article className="rounded-[2rem] border border-white/10 bg-white/5 p-7 backdrop-blur-sm">
-            <Landmark size={38} className="text-jso-gold" aria-hidden="true" />
-            <h3 className="mt-8 text-xl font-black">{city}</h3>
-            <p className="mt-2 text-sm leading-6 text-white/60">Un club ancré dans sa ville et porté par toute une communauté.</p>
-          </article>
-          <article className="rounded-[2rem] border border-white/10 bg-white/5 p-7 backdrop-blur-sm">
-            <Sprout size={38} className="text-jso-gold" aria-hidden="true" />
-            <h3 className="mt-8 text-xl font-black">La relève</h3>
-            <p className="mt-2 text-sm leading-6 text-white/60">Former, accompagner et faire grandir les talents de demain.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-  )
-}
 
 export function ShopSection({ section, products, cart, onOpenCart, status = 'ready' }) {
   return (
@@ -153,55 +78,6 @@ export function ShopSection({ section, products, cart, onOpenCart, status = 'rea
             </div>
           )}
         </div>
-      </div>
-    </section>
-  )
-}
-
-export function MediaSection({ section, media, status = 'ready' }) {
-  const featured = media.slice(0, 3)
-
-  return (
-    <section id="media" aria-labelledby="media-title" className="border-y border-slate-200 bg-white/45">
-      <div className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
-        <SectionHeading section={section} title="Voir, vivre," muted="partager." description="Photos, vidéos et moments forts de la communauté JSO." />
-        {status === 'loading' ? (
-          <div className="mt-10"><SectionLoading message="Chargement des médias…" /></div>
-        ) : status === 'error' ? (
-          <div className="mt-10"><SectionError message="Les médias sont momentanément indisponibles." /></div>
-        ) : (
-        <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {featured.length > 0 ? featured.map((item, index) => {
-            const url = pick(item, 'url', 'Url')
-            const thumbnail = pick(item, 'thumbnailUrl', 'ThumbnailUrl')
-            const title = pick(item, 'title', 'Title') || 'Média JSO'
-            const caption = pick(item, 'caption', 'Caption')
-            const type = pick(item, 'type', 'Type') || 'Image'
-            const isVideo = /video/i.test(type)
-            return (
-              <article key={pick(item, 'id', 'Id') || url || title} className={`group overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-lg shadow-slate-200/40 ${index === 0 ? 'md:col-span-2 lg:col-span-2' : ''}`}>
-                <div className={`relative overflow-hidden bg-jso-navy ${index === 0 ? 'h-72' : 'h-60'}`}>
-                  {(thumbnail || (!isVideo && url))
-                    ? <img src={thumbnail || url} alt={caption || title} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-                    : <div className="grid h-full place-items-center"><span className="text-5xl font-black text-jso-gold">JSO</span></div>}
-                  {isVideo && <span className="absolute left-5 top-5 grid h-12 w-12 place-items-center rounded-full bg-jso-gold text-jso-navy"><Play size={20} fill="currentColor" aria-hidden="true" /></span>}
-                </div>
-                <div className="p-6">
-                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-jso-blue">{type}</p>
-                  <h3 className="mt-2 text-2xl font-black">{title}</h3>
-                  {caption && <p className="mt-2 text-sm leading-6 text-slate-500">{caption}</p>}
-                  {url && <a href={url} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-2 text-sm font-extrabold text-jso-blue">Ouvrir<span className="sr-only"> (nouvel onglet)</span> <ArrowUpRight size={15} aria-hidden="true" /></a>}
-                </div>
-              </article>
-            )
-          }) : (
-            <div className="relative flex min-h-72 items-end overflow-hidden rounded-[2rem] bg-gradient-to-br from-jso-navy to-jso-blue p-8 text-white md:col-span-2 lg:col-span-3">
-              <Sparkles className="absolute right-10 top-10 text-jso-gold/30" size={80} aria-hidden="true" />
-              <div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">GALERIE JSO</p><h3 className="mt-3 text-3xl font-black">Les couleurs du club.</h3><p className="mt-2 text-white/65">Les prochains contenus photo et vidéo seront publiés ici.</p></div>
-            </div>
-          )}
-        </div>
-        )}
       </div>
     </section>
   )
