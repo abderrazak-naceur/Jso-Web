@@ -109,7 +109,7 @@ export default function TeamsModule({ onError }) {
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {players.map(p=><button key={p.id} type="button" onClick={()=>editPlayer(p)} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white text-left transition hover:-translate-y-0.5 hover:border-jso-gold hover:shadow-lg">
-          <div className="aspect-[4/3] overflow-hidden bg-slate-100">{p.photoUrl?<img src={p.photoUrl} alt="" className="h-full w-full object-cover object-[50%_18%]" loading="lazy"/>:<div className="grid h-full place-items-center text-sm font-black text-slate-300">PHOTO JSO</div>}</div>
+          <div className="aspect-[4/3] overflow-hidden bg-slate-100">{p.photoUrl?<img src={p.photoUrl} alt="" className={`h-full w-full ${String(p.photoUrl).startsWith('/players/')?'object-contain object-bottom':'object-cover object-[50%_18%]'}`} loading="lazy"/>:<div className="grid h-full place-items-center text-sm font-black text-slate-300">PHOTO JSO</div>}</div>
           <div className="p-3"><div className="flex items-center justify-between gap-2"><b className="truncate">{p.firstName} {p.lastName}</b><span className="rounded-lg bg-jso-navy px-2 py-1 text-xs font-black text-jso-gold">{p.shirtNumber??'—'}</span></div><p className="mt-1 text-xs text-slate-500">{p.position||'Poste non renseigné'}</p></div>
         </button>)}
       </div>

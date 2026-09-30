@@ -74,20 +74,21 @@ public static class DevelopmentDataSeeder
             // just to make the squad look realistic while testing. The club
             // uploads the real player photos into Player.PhotoUrl from the admin,
             // which replaces these.
-            static string PlayerPhoto(int menIndex) =>
-                $"https://randomuser.me/api/portraits/men/{menIndex}.jpg";
+            // Real player portraits (background removed) served by the frontend
+            // from frontend/public/players/<slug>.webp.
+            static string LocalPhoto(string slug) => $"/players/{slug}.webp";
 
             db.Players.AddRange(
-                new Player { TeamId = team.Id, FirstName = "Aymen", LastName = "Ben Saïd", ShirtNumber = 1, Position = "Gardien", PhotoUrl = PlayerPhoto(11) },
-                new Player { TeamId = team.Id, FirstName = "Hamza", LastName = "Trabelsi", ShirtNumber = 2, Position = "Défenseur", PhotoUrl = PlayerPhoto(32) },
-                new Player { TeamId = team.Id, FirstName = "Mohamed", LastName = "Hachani", ShirtNumber = 4, Position = "Défenseur", PhotoUrl = PlayerPhoto(45) },
-                new Player { TeamId = team.Id, FirstName = "Oussama", LastName = "Belhadj", ShirtNumber = 5, Position = "Défenseur", PhotoUrl = PlayerPhoto(51) },
-                new Player { TeamId = team.Id, FirstName = "Yassine", LastName = "Dridi", ShirtNumber = 8, Position = "Milieu", PhotoUrl = PlayerPhoto(64) },
-                new Player { TeamId = team.Id, FirstName = "Nidhal", LastName = "Gharbi", ShirtNumber = 6, Position = "Milieu", PhotoUrl = PlayerPhoto(72) },
-                new Player { TeamId = team.Id, FirstName = "Firas", LastName = "Ayari", ShirtNumber = 7, Position = "Milieu", PhotoUrl = PlayerPhoto(83) },
-                new Player { TeamId = team.Id, FirstName = "Khalil", LastName = "Jebali", ShirtNumber = 10, Position = "Attaquant", PhotoUrl = PlayerPhoto(90) },
-                new Player { TeamId = team.Id, FirstName = "Seif", LastName = "Mansouri", ShirtNumber = 11, Position = "Attaquant", PhotoUrl = PlayerPhoto(15) },
-                new Player { TeamId = team.Id, FirstName = "Wassim", LastName = "Ferchichi", ShirtNumber = 9, Position = "Attaquant", PhotoUrl = PlayerPhoto(78) }
+                new Player { TeamId = team.Id, FirstName = "Aymen", LastName = "Ben Saïd", ShirtNumber = 1, Position = "Gardien", PhotoUrl = LocalPhoto("aymen-ben-said") },
+                new Player { TeamId = team.Id, FirstName = "Hamza", LastName = "Trabelsi", ShirtNumber = 2, Position = "Défenseur", PhotoUrl = LocalPhoto("hamza-trabelsi") },
+                new Player { TeamId = team.Id, FirstName = "Mohamed", LastName = "Hachani", ShirtNumber = 4, Position = "Défenseur", PhotoUrl = LocalPhoto("mohamed-hachani") },
+                new Player { TeamId = team.Id, FirstName = "Oussama", LastName = "Belhadj", ShirtNumber = 5, Position = "Défenseur", PhotoUrl = LocalPhoto("oussama-belhadj") },
+                new Player { TeamId = team.Id, FirstName = "Yassine", LastName = "Dridi", ShirtNumber = 8, Position = "Milieu", PhotoUrl = LocalPhoto("yassine-dridi") },
+                new Player { TeamId = team.Id, FirstName = "Nidhal", LastName = "Gharbi", ShirtNumber = 6, Position = "Milieu", PhotoUrl = LocalPhoto("nidhal-gharbi") },
+                new Player { TeamId = team.Id, FirstName = "Firas", LastName = "Ayari", ShirtNumber = 7, Position = "Milieu", PhotoUrl = LocalPhoto("firas-ayari") },
+                new Player { TeamId = team.Id, FirstName = "Khalil", LastName = "Jebali", ShirtNumber = 10, Position = "Attaquant", PhotoUrl = LocalPhoto("khalil-jebali") },
+                new Player { TeamId = team.Id, FirstName = "Seif", LastName = "Mansouri", ShirtNumber = 11, Position = "Attaquant", PhotoUrl = LocalPhoto("seif-mansouri") },
+                new Player { TeamId = team.Id, FirstName = "Wassim", LastName = "Ferchichi", ShirtNumber = 9, Position = "Attaquant", PhotoUrl = LocalPhoto("wassim-ferchichi") }
             );
         }
 
