@@ -10,6 +10,8 @@ import {
 } from './HomeContentSections'
 import HeroSection from './HeroSection'
 import MembershipsSection from '../memberships/MembershipsSection'
+import ClubSection from '../club/ClubSection'
+import MediaSection from '../media/MediaSection'
 import MatchdaySection from './MatchdaySection'
 import NewsSection from './NewsSection'
 import HighlightsCarousel from './HighlightsCarousel'
