@@ -118,6 +118,12 @@ public sealed class AdminTicketsController(JsoDbContext db, AuditService audit) 
                 return BadRequest(new { message = "Not enough remaining capacity." });
             type.SoldCount += order.Quantity;
             order.ConfirmedAt = DateTimeOffset.UtcNow;
+            order.PaidAt = DateTimeOffset.UtcNow;
+            if (string.IsNullOrEmpty(order.PublicTicketToken))
+            {
+                order.PublicTicketToken = TicketTokenGenerator.Generate();
+                order.IssuedAt = DateTimeOffset.UtcNow;
+            }
         }
 
         order.Status = target;
