@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { adminApi } from '../api'
+import { emptySponsor, SPONSOR_TIERS, SPONSOR_PLACEMENTS } from '../constants'
 export default function SponsorsModule({ onError }) {
   const [sponsors, setSponsors] = useState([])
   const [form, setForm] = useState(emptySponsor)
