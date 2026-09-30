@@ -31,6 +31,7 @@ import MatchStreamsModule from './MatchStreams'
 import FinanceModule from './Finance'
 import { adminApi } from './api'
 import ContentModule from './content/ContentModule'
+import { ADMIN_NAVIGATION, ADMIN_CATEGORY_ORDER } from './navigation'
 import ClubSettingsModule from './club/ClubSettingsModule'
 import SecurityModule from './system/SecurityModule'
 import MediaModule from './content/MediaModule'
@@ -87,64 +88,12 @@ function AdminDashboard({ user, onLogout }) {
   // Revenue-first: "Billetterie & Abonnements" and "Boutique" sit near the top.
   // Note: the former duplicate id 'events' is split into 'match-events'
   // (match calendar) and 'club-events' (club agenda) to avoid double rendering.
-  const items = [
-    ['dashboard', 'Dashboard', LayoutDashboard, ['SuperAdmin','ClubAdmin','Editor','MatchManager','CommunityManager','ShopManager'], 'Tableau de bord'],
-
-    ['tickets', 'Billetterie', Ticket, ['SuperAdmin','ClubAdmin','MatchManager'], 'Billetterie & Abonnements'],
-    ['memberships', 'Abonnements', CreditCard, ['SuperAdmin','ClubAdmin'], 'Billetterie & Abonnements'],
-    ['finance', 'Finances', Wallet, ['SuperAdmin','ClubAdmin','FinanceManager'], 'Billetterie & Abonnements'],
-
-    ['shop', 'Boutique', ShoppingBag, ['SuperAdmin','ClubAdmin','ShopManager'], 'Boutique'],
-    ['orders', 'Commandes', Receipt, ['SuperAdmin','ClubAdmin','ShopManager'], 'Boutique'],
-    ['sponsors', 'Sponsors', Handshake, ['SuperAdmin','ClubAdmin'], 'Boutique'],
-    ['sponsorqr', 'QR Sponsors', QrCode, ['SuperAdmin','ClubAdmin'], 'Boutique'],
-
-    ['matches', 'Match Center', Trophy, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
-    ['match-events', 'Événements de match', Trophy, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
-    ['match-sheet', 'Feuille de match', ClipboardList, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
-    ['formations', 'Formations', Users, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
-    ['teams', 'Équipes & joueurs', Users, ['SuperAdmin','ClubAdmin'], 'Équipe & Matchs'],
-    ['seasons-competitions', 'Saisons & compétitions', CalendarDays, ['SuperAdmin','ClubAdmin'], 'Équipe & Matchs'],
-    ['match-streams', 'Diffusion en direct', Radio, ['ClubAdmin','MatchManager'], 'Équipe & Matchs'],
-    ['analytics', 'Analytics joueurs', BarChart3, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
-    ['injuries', 'Infirmerie', HeartPulse, ['ClubAdmin','MatchManager'], 'Équipe & Matchs'],
-    ['scouting', 'Scouting', ScanSearch, ['ClubAdmin','MatchManager'], 'Équipe & Matchs'],
-    ['checklist', 'Check-list match', ListChecks, ['ClubAdmin','MatchManager'], 'Équipe & Matchs'],
-
-    ['news', 'News CMS', Newspaper, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
-    ['editorial', 'Calendrier éditorial', CalendarClock, ['Editor','ClubAdmin'], 'Contenu & Site'],
-    ['media', 'Médias', Images, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
-    ['content', 'Contenus', Pencil, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
-    ['homepage', 'Page d\u2019accueil & menus', LayoutTemplate, ['ClubAdmin','Editor'], 'Contenu & Site'],
-    ['club-events', 'Agenda du club', PartyPopper, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
-    ['documents', 'Documents', FileText, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
-    ['faq', 'FAQ', HelpCircle, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
-    ['archive', 'Musée · Archives', Landmark, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
-
-    ['community-moderation', 'Communauté · Modération', MessageSquare, ['ClubAdmin','CommunityManager'], 'Communauté'],
-    ['fan-photos', 'Photos supporters', Images, ['CommunityManager','Editor'], 'Communauté'],
-    ['supporters', 'Mur des supporters', BrickWall, ['ClubAdmin','CommunityManager'], 'Communauté'],
-    ['classifieds', 'Petites annonces', Megaphone, ['ClubAdmin','CommunityManager'], 'Communauté'],
-    ['anniversaries', 'Anniversaires', PartyPopper, ['ClubAdmin','CommunityManager'], 'Communauté'],
-    ['newsletter', 'Newsletter', Mail, ['Editor','CommunityManager'], 'Communauté'],
-    ['volunteers', 'Bénévoles', ClipboardList, ['ClubAdmin','MatchManager'], 'Communauté'],
-    ['community', 'Écoles & partenaires', GraduationCap, ['ClubAdmin','CommunityManager'], 'Communauté'],
-    ['facilities', 'Installations', CalendarRange, ['ClubAdmin','MatchManager'], 'Communauté'],
-
-    ['club', 'Club Settings', ShieldCheck, ['SuperAdmin','ClubAdmin'], 'Système'],
-    ['security', 'Sécurité', ShieldCheck, ['SuperAdmin'], 'Système'],
-    ['featureflags', 'Feature flags', Flag, ['SuperAdmin','ClubAdmin'], 'Système'],
-    ['apiusage', 'Utilisation API', Gauge, ['SuperAdmin','ClubAdmin'], 'Système'],
-    ['gdpr', 'RGPD', ShieldAlert, ['SuperAdmin','ClubAdmin'], 'Système'],
-    ['settings', 'Configuration', Server, ['SuperAdmin','ClubAdmin'], 'Système'],
-  ]
-  const CATEGORY_ORDER = ['Tableau de bord', 'Billetterie & Abonnements', 'Boutique', 'Équipe & Matchs', 'Contenu & Site', 'Communauté', 'Système']
   const role = user.role ?? user.Role
   const displayName = user.displayName ?? user.DisplayName
-  const visibleItems = items.filter(([, , , roles]) => roles.includes(role))
+  const visibleItems = ADMIN_NAVIGATION.filter(([, , , roles]) => roles.includes(role))
   // Group the visible items by category, preserving CATEGORY_ORDER and dropping
   // empty groups (e.g. a role with no items in a category).
-  const groupedItems = CATEGORY_ORDER
+  const groupedItems = ADMIN_CATEGORY_ORDER
     .map((category) => [category, visibleItems.filter((item) => item[4] === category)])
     .filter(([, list]) => list.length > 0)
 
