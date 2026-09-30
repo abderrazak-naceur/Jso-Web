@@ -70,14 +70,16 @@ public static class AdminPermissionCatalog
             ? permissions
             : Array.Empty<string>();
 
+    public static bool HasPermission(string role, string permission)
+        => RolePermissions.TryGetValue(role, out var permissions)
+            && permissions.Contains(permission, StringComparer.OrdinalIgnoreCase);
+
     public static bool HasPermission(ClaimsPrincipal user, string permission)
     {
         if (user.Identity?.IsAuthenticated != true)
             return false;
 
         var role = user.FindFirstValue(ClaimTypes.Role) ?? user.FindFirstValue("role");
-        return role is not null
-            && RolePermissions.TryGetValue(role, out var permissions)
-            && permissions.Contains(permission, StringComparer.OrdinalIgnoreCase);
+        return role is not null && HasPermission(role, permission);
     }
 }
