@@ -169,7 +169,7 @@ public sealed class AdminTicketScanController(
         if (!authorization.Allowed)
             return authorization.Response!;
 
-        var (result, message) = Evaluate(order, request.MatchId);
+        var (result, message) = TicketScanEvaluator.Evaluate(order, request.MatchId);
         await LogScanAsync("TICKET_VALIDATED", result, order, request, ct);
         return Ok(BuildResponse(result, message, order));
     }
@@ -189,7 +189,7 @@ public sealed class AdminTicketScanController(
         if (!authorization.Allowed)
             return authorization.Response!;
 
-        var (preResult, preMessage) = Evaluate(order, request.MatchId);
+        var (preResult, preMessage) = TicketScanEvaluator.Evaluate(order, request.MatchId);
         if (preResult != "Valid")
             return await FinishAsync(preResult, preMessage, order, request, ct);
 
@@ -214,7 +214,7 @@ public sealed class AdminTicketScanController(
 
         var current = await db.TicketOrders.AsNoTracking()
             .SingleOrDefaultAsync(x => x.PublicTicketToken == token, ct);
-        var (result, message) = Evaluate(current, request.MatchId);
+        var (result, message) = TicketScanEvaluator.Evaluate(current, request.MatchId);
         return await FinishAsync(result, message, current, request, ct);
     }
 
@@ -311,16 +311,6 @@ public sealed class AdminTicketScanController(
     {
         var sub = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return Guid.TryParse(sub, out var id) ? id : null;
-    }
-
-    private static (string Result, string Message) Evaluate(TicketOrder? order, Guid? matchId)
-    {
-        if (order is null) return ("Invalid", "Billet introuvable.");
-        if (order.Status == "CheckedIn") return ("AlreadyUsed", "Billet déjà utilisé.");
-        if (order.Status == "Cancelled") return ("Cancelled", "Billet annulé.");
-        if (order.Status != "Confirmed") return ("Invalid", "Billet non valide.");
-        if (matchId is not null && matchId != order.MatchId) return ("WrongMatch", "Billet pour un autre match.");
-        return ("Valid", "Billet valide.");
     }
 
     private static object BuildResponse(string result, string message, TicketOrder? order) => new
