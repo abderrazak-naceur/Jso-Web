@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { adminApi } from '../api'
+import { emptyNews } from '../constants'
 export default function NewsModule({ onError }) {
   const [items,setItems]=useState([]); const [editing,setEditing]=useState(null); const [form,setForm]=useState(emptyNews)
   const [copiedId,setCopiedId]=useState(null); const [fbBusyId,setFbBusyId]=useState(null); const [notice,setNotice]=useState('')
