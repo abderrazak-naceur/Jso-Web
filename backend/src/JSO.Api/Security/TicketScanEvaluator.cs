@@ -8,7 +8,7 @@ public static class TicketScanEvaluator
     {
         if (order is null) return ("Invalid", "Billet introuvable.");
         if (matchId is not null && matchId != order.MatchId)
-            return ("WrongMatch", "Billet pour un altro match.");
+            return ("WrongMatch", "Billet pour un autre match.");
         if (order.Status == "CheckedIn") return ("AlreadyUsed", "Billet déjà utilisé.");
         if (order.Status == "Cancelled") return ("Cancelled", "Billet annulé.");
         if (order.Status != "Confirmed") return ("Invalid", "Billet non valide.");
