@@ -12,7 +12,6 @@ import {
   MapPin,
   ShoppingBag,
   Smartphone,
-  Sparkles,
   Sprout,
 } from 'lucide-react'
 import { formatDate, formatMoney, formatTime, pick } from '../../lib/format'
