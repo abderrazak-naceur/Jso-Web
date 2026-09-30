@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Plus, Pencil, Save, Eye, EyeOff, Upload, Server, Handshake, BarChart3, ShoppingBag, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap, Receipt, FileText, HelpCircle, Ticket, MessageSquare, LayoutTemplate, CalendarDays, CreditCard, Radio, Link2, Facebook, Send, Wallet } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Pencil, Eye, EyeOff, Server, Handshake, BarChart3, ShoppingBag, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap, Receipt, FileText, HelpCircle, Ticket, MessageSquare, LayoutTemplate, CalendarDays, CreditCard, Radio, Wallet } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
@@ -72,18 +72,6 @@ function Login({ onLogin }) {
       <button className="mt-6 w-full rounded-xl bg-jso-navy px-4 py-3 font-extrabold text-white hover:bg-jso-blue">Se connecter</button>
     </form>
   </main>
-}
-
-const emptyTeam = { name: '', category: 'Équipe première', isActive: true }
-const emptyPlayer = { firstName: '', lastName: '', shirtNumber: '', position: '', photoUrl: '', isActive: true }
-const emptyNews = { title: '', slug: '', excerpt: '', body: '', status: 'Draft', publishedAt: '', coverImageUrl: '' }
-const emptySponsor = { name: '', logoUrl: '', websiteUrl: '', bannerImageUrl: '', tier: 'Partner', placement: 'Footer', startDate: '', endDate: '', isActive: true, priority: 0 }
-const SPONSOR_TIERS = ['Title', 'Gold', 'Silver', 'Partner']
-const SPONSOR_PLACEMENTS = ['Home', 'Footer', 'Matchday']
-const emptyProduct = { name: '', slug: '', description: '', price: '', currency: 'TND', imageUrl: '', category: '', stock: 0, isActive: true }
-
-function Field({ label, ...props }) {
-  return <label className="block text-sm font-bold">{label}<input {...props} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-jso-blue" /></label>
 }
 
 
