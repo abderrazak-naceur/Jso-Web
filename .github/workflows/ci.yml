@@ -177,6 +177,28 @@ jobs:
               '{seasonId:$seasonId,competitionId:$competitionId,teamId:$teamId,opponentName:"CI smoke opponent",kickoffAt:"2030-06-01T15:00:00Z",venue:"CI stadium",isHome:true,homeScore:null,awayScore:null,status:"Scheduled",isPublished:true}')")
           match_id=$(jq -r '.id // empty' <<< "$match_response")
           test -n "$match_id"
+
+          # Staff security resources: provision a gate + scanner device and bind the
+          # bootstrapped admin to the CI match. This verifies the production wiring
+          # used by the staff scanner without inventing database state outside the API.
+          gate_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/security/gates             -H "Authorization: Bearer $token"             -H 'Content-Type: application/json'             -d '{"code":"CI-GATE-01","name":"CI Gate 01","isActive":true}')
+          gate_id=$(jq -r '.id // empty' <<< "$gate_response")
+          test -n "$gate_id"
+          gate_code=$(jq -r '.code // empty' <<< "$gate_response")
+          test "$gate_code" = "CI-GATE-01"
+
+          device_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/security/devices             -H "Authorization: Bearer $token"             -H 'Content-Type: application/json'             -d "$(jq -nc --arg gateId "$gate_id" '{gateId:$gateId,deviceCode:"CI-SCANNER-01",name:"CI Scanner 01",isActive:true}')")
+          device_id=$(jq -r '.id // empty' <<< "$device_response")
+          test -n "$device_id"
+          device_code=$(jq -r '.deviceCode // empty' <<< "$device_response")
+          test "$device_code" = "CI-SCANNER-01"
+
+          assignment_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/security/staff-assignments             -H "Authorization: Bearer $token"             -H 'Content-Type: application/json'             -d "$(jq -nc --arg adminId "$(jq -r '.id' <<< "$season_response")" --arg matchId "$match_id" --arg gateCode "$gate_code" --arg deviceCode "$device_code"               '{adminUserId:$adminId,role:"TicketValidator",scopeType:"Match",scopeId:$matchId,gateId:$gateCode,deviceId:$deviceCode,isActive:true}')")
+          assignment_id=$(jq -r '.id // empty' <<< "$assignment_response")
+          test -n "$assignment_id"
+          jq -e --arg matchId "$match_id" --arg gateCode "$gate_code" --arg deviceCode "$device_code"             '.scopeType == "Match" and .scopeId == $matchId and .gateId == $gateCode and .deviceId == $deviceCode and .role == "TicketValidator"'             <<< "$assignment_response"
+
+          curl -fsS "http://127.0.0.1:5080/api/admin/security/staff-assignments/references"             -H "Authorization: Bearer $token"             | jq -e --arg matchId "$match_id" --arg gateId "$gate_id" --arg deviceId "$device_id"               'any(.matches[]; .id == $matchId) and any(.gates[]; .id == $gateId) and any(.devices[]; .id == $deviceId)'
           curl -fsS http://127.0.0.1:5080/api/matches \
             | jq -e --arg id "$match_id" 'any(.[]; .id == $id and .opponentName == "CI smoke opponent" and .isPublished == true)'
 
