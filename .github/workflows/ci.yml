@@ -111,7 +111,7 @@ jobs:
             Volunteers MatchAssignments PlayerInjuries ArchiveItems \
             NewsletterSubscriptions MatchdayChecklistItems MatchdayChecklistTemplateItems \
             SupporterBricks ScoutingNotes Facilities FacilityBookings MaintenanceLogs \
-            ClassifiedAds; do
+            ClassifiedAds TicketTypes TicketOrders TicketCheckIns StaffAssignments Gates ScannerDevices; do
             psql -tA -c "SELECT to_regclass('public.\"$table\"');" \
               | grep -q "$table" || { echo "Missing expected table: $table"; exit 1; }
           done
@@ -268,6 +268,108 @@ jobs:
           curl -fsS http://127.0.0.1:5080/api/account/me \
             -H "Authorization: Bearer $fan_token" \
             | jq -e --arg e "$fan_email" '.email == $e'
+
+          # Ticketing + staff scanner E2E: reserve -> confirm -> digital token -> validate/check-in.
+          ticket_type_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/tickets/types \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg matchId "$match_id" '{matchId:$matchId,name:"CI General Admission",price:10,currency:"TND",capacity:20,isActive:true}')")
+          ticket_type_id=$(jq -r '.id // empty' <<< "$ticket_type_response")
+          test -n "$ticket_type_id"
+
+          reserve_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/tickets/reserve \
+            -H "Authorization: Bearer $fan_token" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg ticketTypeId "$ticket_type_id" '{ticketTypeId:$ticketTypeId,quantity:1}')")
+          ticket_order_id=$(jq -r '.id // empty' <<< "$reserve_response")
+          test -n "$ticket_order_id"
+
+          curl -fsS -X PUT "http://127.0.0.1:5080/api/admin/tickets/orders/$ticket_order_id/status" \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d '{"status":"Confirmed"}' \
+            | jq -e '.status == "Confirmed"'
+
+          digital_response=$(curl -fsS "http://127.0.0.1:5080/api/tickets/$ticket_order_id/digital" \
+            -H "Authorization: Bearer $fan_token")
+          ticket_token=$(jq -r '.token // empty' <<< "$digital_response")
+          test -n "$ticket_token"
+          jq -e --arg matchId "$match_id" '.matchId == $matchId and .status == "Confirmed"' <<< "$digital_response"
+
+          # Correct match/gate/device: validation succeeds, then the first check-in succeeds.
+          validate_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/tickets/scan/validate \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg token "$ticket_token" --arg matchId "$match_id" --arg gateId "$gate_code" --arg deviceId "$device_code"               '{token:$token,matchId:$matchId,gateId:$gateId,deviceId:$deviceId}')")
+          jq -e '.result == "Valid"' <<< "$validate_response"
+
+          checkin_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/tickets/scan/check-in \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg token "$ticket_token" --arg matchId "$match_id" --arg gateId "$gate_code" --arg deviceId "$device_code"               '{token:$token,matchId:$matchId,gateId:$gateId,deviceId:$deviceId}')")
+          jq -e '.result == "Valid" and .ticket.status == "CheckedIn"' <<< "$checkin_response"
+
+          # Second scan must never grant entry again.
+          second_checkin=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/tickets/scan/check-in \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg token "$ticket_token" --arg matchId "$match_id" --arg gateId "$gate_code" --arg deviceId "$device_code"               '{token:$token,matchId:$matchId,gateId:$gateId,deviceId:$deviceId}')")
+          jq -e '.result == "AlreadyUsed"' <<< "$second_checkin"
+
+          # Wrong match is a ticket outcome, while wrong gate/device are authorization failures.
+          wrong_match_status=$(curl -sS -o /tmp/jso-wrong-match.json -w '%{http_code}' \
+            -X POST http://127.0.0.1:5080/api/admin/tickets/scan/validate \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg token "$ticket_token" --arg gateId "$gate_code" --arg deviceId "$device_code"               '{token:$token,matchId:"00000000-0000-0000-0000-000000000001",gateId:$gateId,deviceId:$deviceId}')")
+          test "$wrong_match_status" = 200
+          jq -e '.result == "WrongMatch"' /tmp/jso-wrong-match.json
+
+          wrong_gate_status=$(curl -sS -o /tmp/jso-wrong-gate.json -w '%{http_code}' \
+            -X POST http://127.0.0.1:5080/api/admin/tickets/scan/validate \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg token "$ticket_token" --arg matchId "$match_id" --arg deviceId "$device_code"               '{token:$token,matchId:$matchId,gateId:"CI-WRONG-GATE",deviceId:$deviceId}')")
+          test "$wrong_gate_status" = 403
+
+          wrong_device_status=$(curl -sS -o /tmp/jso-wrong-device.json -w '%{http_code}' \
+            -X POST http://127.0.0.1:5080/api/admin/tickets/scan/validate \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg token "$ticket_token" --arg matchId "$match_id" --arg gateId "$gate_code"               '{token:$token,matchId:$matchId,gateId:$gateId,deviceId:"CI-WRONG-DEVICE"}')")
+          test "$wrong_device_status" = 403
+
+          # Remove the live assignment, then verify expired and inactive assignments are denied.
+          curl -fsS -X DELETE "http://127.0.0.1:5080/api/admin/security/staff-assignments/$assignment_id" \
+            -H "Authorization: Bearer $token" >/dev/null
+
+          expired_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/security/staff-assignments \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg adminId "$admin_id" --arg matchId "$match_id" --arg gateCode "$gate_code" --arg deviceCode "$device_code"               '{adminUserId:$adminId,role:"TicketValidator",scopeType:"Match",scopeId:$matchId,gateId:$gateCode,deviceId:$deviceCode,isActive:true,validTo:"2020-01-01T00:00:00Z"}')")
+          expired_assignment_id=$(jq -r '.id // empty' <<< "$expired_response")
+          test -n "$expired_assignment_id"
+          expired_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            -X POST http://127.0.0.1:5080/api/admin/tickets/scan/validate \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg token "$ticket_token" --arg matchId "$match_id" --arg gateId "$gate_code" --arg deviceId "$device_code"               '{token:$token,matchId:$matchId,gateId:$gateId,deviceId:$deviceId}')")
+          test "$expired_status" = 403
+
+          curl -fsS -X DELETE "http://127.0.0.1:5080/api/admin/security/staff-assignments/$expired_assignment_id" \
+            -H "Authorization: Bearer $token" >/dev/null
+          inactive_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/security/staff-assignments \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg adminId "$admin_id" --arg matchId "$match_id" --arg gateCode "$gate_code" --arg deviceCode "$device_code"               '{adminUserId:$adminId,role:"TicketValidator",scopeType:"Match",scopeId:$matchId,gateId:$gateCode,deviceId:$deviceCode,isActive:false}')")
+          inactive_assignment_id=$(jq -r '.id // empty' <<< "$inactive_response")
+          test -n "$inactive_assignment_id"
+          inactive_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            -X POST http://127.0.0.1:5080/api/admin/tickets/scan/validate \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg token "$ticket_token" --arg matchId "$match_id" --arg gateId "$gate_code" --arg deviceId "$device_code"               '{token:$token,matchId:$matchId,gateId:$gateId,deviceId:$deviceId}')")
+          test "$inactive_status" = 403
 
           # Anti-escalation: a Fan token is rejected (401/403) on an admin route.
           fan_admin_status=$(curl -sS -o /dev/null -w '%{http_code}' \
