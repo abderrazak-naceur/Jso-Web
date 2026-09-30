@@ -183,9 +183,8 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
       configuration = await _repo.configuration(adminToken: token);
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
       return;
     }
 
@@ -200,7 +199,9 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
       selectedGate = null;
     }
     if (selectedDevice != null &&
-        !configuration.devices.any((device) => device.deviceCode == selectedDevice)) {
+        !configuration.devices.any(
+          (device) => device.deviceCode == selectedDevice,
+        )) {
       selectedDevice = null;
     }
     if (selectedMatch != null &&
@@ -215,13 +216,15 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
           final devices = selectedGate == null
               ? configuration.devices
               : configuration.devices
-                  .where((device) =>
-                      device.gateId == null ||
-                      configuration.gates
-                          .where((gate) => gate.code == selectedGate)
-                          .map((gate) => gate.id)
-                          .contains(device.gateId))
-                  .toList(growable: false);
+                    .where(
+                      (device) =>
+                          device.gateId == null ||
+                          configuration.gates
+                              .where((gate) => gate.code == selectedGate)
+                              .map((gate) => gate.id)
+                              .contains(device.gateId),
+                    )
+                    .toList(growable: false);
 
           if (selectedDevice != null &&
               !devices.any((device) => device.deviceCode == selectedDevice)) {
@@ -232,8 +235,8 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
             title: const Text('Configurazione scanner'),
             content: SizedBox(
               width: 420,
-              child: configuration.gates.isEmpty &&
-                      configuration.devices.isEmpty
+              child:
+                  configuration.gates.isEmpty && configuration.devices.isEmpty
                   ? const Text(
                       'Nessun Gate o dispositivo scanner è stato assegnato al tuo account.',
                     )
@@ -242,7 +245,7 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
                       children: [
                         if (_matches.isNotEmpty)
                           DropdownButtonFormField<String?>(
-                            value: selectedMatch,
+                            initialValue: selectedMatch,
                             isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Partita operativa',
@@ -274,7 +277,7 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
 
                         if (configuration.gates.isNotEmpty)
                           DropdownButtonFormField<String?>(
-                            value: selectedGate,
+                            initialValue: selectedGate,
                             isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Gate autorizzato',
@@ -302,7 +305,7 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
                           const SizedBox(height: JsoSpacing.md),
                         if (configuration.devices.isNotEmpty)
                           DropdownButtonFormField<String?>(
-                            value: selectedDevice,
+                            initialValue: selectedDevice,
                             isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Scanner autorizzato',
@@ -470,7 +473,8 @@ class _ScannerContextCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ready = !configurationRequired &&
+    final ready =
+        !configurationRequired &&
         match != null &&
         gateId != null &&
         deviceId != null;
