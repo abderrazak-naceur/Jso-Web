@@ -11,6 +11,7 @@ import {
   TeamSection,
 } from './HomeContentSections'
 import HeroSection from './HeroSection'
+import ClubSection from '../club/ClubSection'
 import MembershipsSection from '../memberships/MembershipsSection'
 import MatchdaySection from './MatchdaySection'
 import NewsSection from './NewsSection'
