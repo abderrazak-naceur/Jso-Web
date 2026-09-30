@@ -3,11 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using JSO.Domain;
 using JSO.Infrastructure;
+using JSO.Api.Security;
 
 namespace JSO.Api.Controllers;
 
 [ApiController]
-[Authorize(Roles = "SuperAdmin")]
+[Authorize(Policy = AdminPermissions.SecurityManage)]
 [Route("api/admin/audit")]
 public sealed class AdminAuditController(JsoDbContext db) : ControllerBase
 {
@@ -24,7 +25,7 @@ public sealed class AdminAuditController(JsoDbContext db) : ControllerBase
 }
 
 [ApiController]
-[Authorize(Roles = "SuperAdmin")]
+[Authorize(Policy = AdminPermissions.SecurityManage)]
 [Route("api/admin/security")]
 public sealed class AdminSecurityController(JsoDbContext db) : ControllerBase
 {
