@@ -245,7 +245,7 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
                       children: [
                         if (_matches.isNotEmpty)
                           DropdownButtonFormField<String?>(
-                            value: selectedMatch,
+                            initialValue: selectedMatch,
                             isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Partita operativa',
@@ -277,7 +277,7 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
 
                         if (configuration.gates.isNotEmpty)
                           DropdownButtonFormField<String?>(
-                            value: selectedGate,
+                            initialValue: selectedGate,
                             isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Gate autorizzato',
@@ -305,7 +305,7 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
                           const SizedBox(height: JsoSpacing.md),
                         if (configuration.devices.isNotEmpty)
                           DropdownButtonFormField<String?>(
-                            value: selectedDevice,
+                            initialValue: selectedDevice,
                             isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Scanner autorizzato',
