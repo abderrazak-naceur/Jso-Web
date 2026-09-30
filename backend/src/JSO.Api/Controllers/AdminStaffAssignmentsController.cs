@@ -23,6 +23,18 @@ public sealed record StaffAssignmentRequest(
 [Route("api/admin/security/staff-assignments")]
 public sealed class AdminStaffAssignmentsController(JsoDbContext db, AuditService audit) : ControllerBase
 {
+    private static readonly HashSet<string> AllowedRoles = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "SuperAdmin", "ClubAdmin", "MatchManager", "FinanceManager", "ShopManager",
+        "Editor", "CommunityManager", "TicketSeller", "TicketValidator",
+        "TicketSupervisor", "SeasonManager"
+    };
+
+    private static readonly HashSet<string> AllowedScopes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Global", "Club", "Team", "Match", "Venue", "Gate"
+    };
+
     [HttpGet]
     public async Task<IActionResult> Get([FromQuery] Guid? adminUserId, CancellationToken ct)
     {
@@ -39,6 +51,28 @@ public sealed class AdminStaffAssignmentsController(JsoDbContext db, AuditServic
         if (request.ValidFrom.HasValue && request.ValidTo.HasValue && request.ValidTo < request.ValidFrom)
             return BadRequest(new { message = "ValidTo must be greater than or equal to ValidFrom." });
 
+        var role = request.Role?.Trim() ?? string.Empty;
+        var scopeType = string.IsNullOrWhiteSpace(request.ScopeType) ? "Global" : request.ScopeType.Trim();
+        var scopeId = string.IsNullOrWhiteSpace(request.ScopeId) ? null : request.ScopeId.Trim();
+        var gateId = string.IsNullOrWhiteSpace(request.GateId) ? null : request.GateId.Trim();
+        var deviceId = string.IsNullOrWhiteSpace(request.DeviceId) ? null : request.DeviceId.Trim();
+
+        if (!AllowedRoles.Contains(role))
+            return BadRequest(new { message = $"Unsupported staff role: {role}." });
+
+        if (!AllowedScopes.Contains(scopeType))
+            return BadRequest(new { message = $"Unsupported scope type: {scopeType}." });
+
+        if (scopeType.Equals("Global", StringComparison.OrdinalIgnoreCase) &&
+            (scopeId is not null || gateId is not null || deviceId is not null))
+            return BadRequest(new { message = "Global assignments cannot specify scope, gate, or device." });
+
+        if (!scopeType.Equals("Global", StringComparison.OrdinalIgnoreCase) && scopeId is null)
+            return BadRequest(new { message = $"ScopeId is required for {scopeType} assignments." });
+
+        if (scopeType.Equals("Gate", StringComparison.OrdinalIgnoreCase) && gateId is null)
+            return BadRequest(new { message = "GateId is required for Gate assignments." });
+
         var adminExists = await db.AdminUsers.AnyAsync(x => x.Id == request.AdminUserId, ct);
         if (!adminExists)
             return BadRequest(new { message = "Admin user not found." });
@@ -46,11 +80,11 @@ public sealed class AdminStaffAssignmentsController(JsoDbContext db, AuditServic
         var assignment = new StaffAssignment
         {
             AdminUserId = request.AdminUserId,
-            Role = request.Role.Trim(),
-            ScopeType = string.IsNullOrWhiteSpace(request.ScopeType) ? "Global" : request.ScopeType.Trim(),
-            ScopeId = string.IsNullOrWhiteSpace(request.ScopeId) ? null : request.ScopeId.Trim(),
-            GateId = string.IsNullOrWhiteSpace(request.GateId) ? null : request.GateId.Trim(),
-            DeviceId = string.IsNullOrWhiteSpace(request.DeviceId) ? null : request.DeviceId.Trim(),
+            Role = role,
+            ScopeType = scopeType,
+            ScopeId = scopeId,
+            GateId = gateId,
+            DeviceId = deviceId,
             IsActive = request.IsActive,
             ValidFrom = request.ValidFrom,
             ValidTo = request.ValidTo
