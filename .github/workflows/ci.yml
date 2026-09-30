@@ -274,3 +274,20 @@ jobs:
             -H "Authorization: Bearer $fan_token" \
             http://127.0.0.1:5080/api/admin/sponsors)
           test "$fan_admin_status" = 401 -o "$fan_admin_status" = 403
+
+  mobile:
+    name: Mobile Flutter validation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed lib
+      - run: flutter analyze
+      - run: flutter test
