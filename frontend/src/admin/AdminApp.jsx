@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, Trophy, Users, Newspaper, Images, X, Pencil, Eye, EyeOff, Server, Handshake, BarChart3, ShoppingBag, ClipboardList, Mail, Landmark, HeartPulse, BrickWall, CalendarClock, ListChecks, Megaphone, CalendarRange, ScanSearch, Flag, Gauge, ShieldAlert, PartyPopper, QrCode, GraduationCap, Receipt, FileText, HelpCircle, Ticket, MessageSquare, LayoutTemplate, CalendarDays, CreditCard, Radio, Wallet } from 'lucide-react'
+import { LogOut, Menu, X } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
