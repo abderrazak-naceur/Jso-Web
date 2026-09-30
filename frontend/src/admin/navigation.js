@@ -1,4 +1,4 @@
-import { LayoutDashboard, Trophy, CreditCard, Wallet, ShoppingBag, Receipt, Handshake, QrCode, Users, CalendarDays, Radio, BarChart3, HeartPulse, ScanSearch, ListChecks, Newspaper, CalendarClock, Images, Pencil, LayoutTemplate, PartyPopper, FileText, HelpCircle, MessageSquare, BrickWall, Megaphone, Mail, ClipboardList, GraduationCap, CalendarRange, ShieldCheck, Flag, Gauge, ShieldAlert, Server, Ticket } from 'lucide-react'
+import { LayoutDashboard, Trophy, CreditCard, Wallet, ShoppingBag, Receipt, Handshake, QrCode, Users, CalendarDays, Radio, BarChart3, HeartPulse, ScanSearch, ListChecks, Newspaper, CalendarClock, Images, Pencil, LayoutTemplate, PartyPopper, FileText, HelpCircle, MessageSquare, BrickWall, Megaphone, Mail, ClipboardList, GraduationCap, CalendarRange, ShieldCheck, Flag, Gauge, ShieldAlert, Server, Ticket, Landmark } from 'lucide-react'
 export const ADMIN_NAVIGATION = [
     ['dashboard', 'Dashboard', LayoutDashboard, ['SuperAdmin','ClubAdmin','Editor','MatchManager','CommunityManager','ShopManager'], 'Tableau de bord'],
 
@@ -50,4 +50,50 @@ export const ADMIN_NAVIGATION = [
     ['gdpr', 'RGPD', ShieldAlert, ['SuperAdmin','ClubAdmin'], 'Système'],
     ['settings', 'Configuration', Server, ['SuperAdmin','ClubAdmin'], 'Système'],
 ]
+export const ADMIN_PERMISSION_BY_ID = Object.freeze({
+  dashboard: 'dashboard:view',
+  tickets: 'tickets:manage',
+  memberships: 'memberships:manage',
+  finance: 'finance:view',
+  shop: 'shop:manage',
+  orders: 'orders:manage',
+  sponsors: 'sponsors:manage',
+  sponsorqr: 'sponsors:qr',
+  matches: 'matches:manage',
+  'match-events': 'matches:events',
+  'match-sheet': 'matches:sheet',
+  formations: 'matches:formations',
+  teams: 'teams:manage',
+  'seasons-competitions': 'competitions:manage',
+  'match-streams': 'matches:stream',
+  analytics: 'analytics:view',
+  injuries: 'medical:manage',
+  scouting: 'scouting:manage',
+  checklist: 'matches:checklist',
+  news: 'content:news',
+  editorial: 'content:calendar',
+  media: 'content:media',
+  content: 'content:manage',
+  homepage: 'content:homepage',
+  'club-events': 'content:events',
+  documents: 'content:documents',
+  faq: 'content:faq',
+  archive: 'content:archive',
+  'community-moderation': 'community:moderate',
+  'fan-photos': 'community:photos',
+  supporters: 'community:supporters',
+  classifieds: 'community:classifieds',
+  anniversaries: 'community:anniversaries',
+  newsletter: 'community:newsletter',
+  volunteers: 'community:volunteers',
+  community: 'community:programs',
+  facilities: 'facilities:manage',
+  club: 'club:manage',
+  security: 'security:manage',
+  featureflags: 'system:feature-flags',
+  apiusage: 'system:api-usage',
+  gdpr: 'system:gdpr',
+  settings: 'system:settings',
+})
+
 export const ADMIN_CATEGORY_ORDER = ['Tableau de bord', 'Billetterie & Abonnements', 'Boutique', 'Équipe & Matchs', 'Contenu & Site', 'Communauté', 'Système']
