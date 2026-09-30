@@ -45,6 +45,8 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
   bool _cameraEnabled = true;
   String? _gateId;
   String? _deviceId;
+  String? _matchId;
+  List<ScannerMatch> _matches = const <ScannerMatch>[];
   TicketScanResult? _last;
   List<TicketCheckInEntry> _history = const <TicketCheckInEntry>[];
 
@@ -52,6 +54,7 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
   void initState() {
     super.initState();
     _loadScannerConfiguration();
+    _loadMatches();
     _loadHistory();
   }
 
@@ -82,6 +85,23 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
 
   AdminTicketsRepository get _repo => context.read<AdminTicketsRepository>();
   String? get _adminToken => context.read<AdminAuthController>().accessToken;
+
+  Future<void> _loadMatches() async {
+    final token = _adminToken;
+    if (token == null) return;
+    try {
+      final items = await _repo.matches(adminToken: token);
+      if (!mounted) return;
+      setState(() {
+        _matches = items;
+        if (_matchId != null && !items.any((match) => match.id == _matchId)) {
+          _matchId = null;
+        }
+      });
+    } on ApiException {
+      // Match configuration is best-effort; scanning can still be configured manually.
+    }
+  }
 
   Future<void> _loadHistory() async {
     final token = _adminToken;
@@ -118,6 +138,7 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
       final result = await _repo.checkIn(
         adminToken: token,
         scannedValue: scannedValue,
+        matchId: _matchId,
         gateId: _gateId,
         deviceId: _deviceId,
       );
@@ -168,6 +189,7 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
 
     String? selectedGate = _gateId;
     String? selectedDevice = _deviceId;
+    String? selectedMatch = _matchId;
 
     if (selectedGate != null &&
         !configuration.gates.any((gate) => gate.code == selectedGate)) {
@@ -176,6 +198,10 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
     if (selectedDevice != null &&
         !configuration.devices.any((device) => device.deviceCode == selectedDevice)) {
       selectedDevice = null;
+    }
+    if (selectedMatch != null &&
+        !_matches.any((match) => match.id == selectedMatch)) {
+      selectedMatch = null;
     }
 
     await showDialog<void>(
@@ -210,6 +236,38 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
                   : Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (_matches.isNotEmpty)
+                          DropdownButtonFormField<String?>(
+                            value: selectedMatch,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Partita operativa',
+                            ),
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text('Seleziona automaticamente'),
+                              ),
+                              ..._matches.map(
+                                (match) => DropdownMenuItem<String?>(
+                                  value: match.id,
+                                  child: Text(
+                                    'vs ${match.opponentName} · ${_formatMatchDate(match.kickoffAt)}',
+                                  ),
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedMatch = value;
+                              });
+                            },
+                          ),
+                        if (_matches.isNotEmpty &&
+                            (configuration.gates.isNotEmpty ||
+                                configuration.devices.isNotEmpty))
+                          const SizedBox(height: JsoSpacing.md),
+
                         if (configuration.gates.isNotEmpty)
                           DropdownButtonFormField<String?>(
                             value: selectedGate,
@@ -274,7 +332,8 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
                 child: const Text('Annulla'),
               ),
               if (configuration.gates.isNotEmpty ||
-                  configuration.devices.isNotEmpty)
+                  configuration.devices.isNotEmpty ||
+                  _matches.isNotEmpty)
                 FilledButton(
                   onPressed: () async {
                     try {
@@ -286,6 +345,7 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
                       setState(() {
                         _gateId = selectedGate;
                         _deviceId = selectedDevice;
+                        _matchId = selectedMatch;
                       });
                       if (dialogContext.mounted) {
                         Navigator.pop(dialogContext);
@@ -308,6 +368,15 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
         },
       ),
     );
+  }
+
+  String _formatMatchDate(DateTime value) {
+    final local = value.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$day/$month $hour:$minute';
   }
 
   @override
