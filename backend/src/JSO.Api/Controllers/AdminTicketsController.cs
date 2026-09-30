@@ -1,5 +1,6 @@
 using JSO.Domain;
 using JSO.Infrastructure;
+using JSO.Api.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -11,7 +12,7 @@ namespace JSO.Api.Controllers;
 // orders (manual gateway). Confirming a Pending order increments the ticket
 // type's SoldCount inside a transaction and is idempotent.
 [ApiController]
-[Authorize(Roles = "SuperAdmin,ClubAdmin,MatchManager")]
+[Authorize(Policy = AdminPermissions.TicketsManage)]
 [Route("api/admin/tickets")]
 public sealed class AdminTicketsController(JsoDbContext db, AuditService audit) : ControllerBase
 {
