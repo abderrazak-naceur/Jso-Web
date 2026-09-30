@@ -141,6 +141,14 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
 
 
 
+  Future<void> _persistValue(String key, String? value) async {
+    if (value == null || value.isEmpty) {
+      await _secureStorage.delete(key: key);
+      return;
+    }
+    await _secureStorage.write(key: key, value: value);
+  }
+
   Future<void> _configureScanner() async {
     final gate = TextEditingController(text: _gateId ?? '');
     final device = TextEditingController(text: _deviceId ?? '');
@@ -169,8 +177,8 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
     if (!mounted || result == null) return;
     try {
       await Future.wait([
-        _secureStorage.write(key: _gateStorageKey, value: result.$1),
-        _secureStorage.write(key: _deviceStorageKey, value: result.$2),
+        _persistValue(_gateStorageKey, result.$1),
+        _persistValue(_deviceStorageKey, result.$2),
       ]);
       if (!mounted) return;
       setState(() {
