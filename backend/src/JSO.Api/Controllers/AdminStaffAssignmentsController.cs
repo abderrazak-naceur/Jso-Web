@@ -109,6 +109,12 @@ public sealed class AdminStaffAssignmentsController(JsoDbContext db, AuditServic
         if (scopeType.Equals("Gate", StringComparison.OrdinalIgnoreCase) && gateId is null)
             return BadRequest(new { message = "GateId is required for Gate assignments." });
 
+        if (gateId is not null && !await db.Gates.AnyAsync(x => x.Code == gateId && x.IsActive, ct))
+            return BadRequest(new { message = "GateId must reference an active gate code." });
+
+        if (deviceId is not null && !await db.ScannerDevices.AnyAsync(x => x.DeviceCode == deviceId && x.IsActive, ct))
+            return BadRequest(new { message = "DeviceId must reference an active scanner device code." });
+
         if (scopeId is not null && Guid.TryParse(scopeId, out var scopeGuid))
         {
             var scopeExists = scopeType.ToLowerInvariant() switch
