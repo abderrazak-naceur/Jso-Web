@@ -1,6 +1,14 @@
+import { useState } from 'react'
+import { isCutoutPhoto, resolvePlayerPhoto } from './playerPhoto'
+
 export default function PlayerPortrait({ player }) {
+  const [failed, setFailed] = useState(false)
   const name = [player.firstName, player.lastName].filter(Boolean).join(' ') || 'Joueur JSO'
-  const hasPhoto = Boolean(player.photoUrl)
+  const photoUrl = resolvePlayerPhoto(player)
+  const hasPhoto = Boolean(photoUrl) && !failed
+  // Local portraits (/players/*.webp) are background-removed cutouts: show them whole,
+  // anchored to the bottom, instead of cropping them like a regular photo.
+  const isCutout = isCutoutPhoto(photoUrl)
   const position = String(player.position || 'Équipe première')
 
   return (
@@ -9,11 +17,12 @@ export default function PlayerPortrait({ player }) {
 
       {hasPhoto ? (
         <img
-          src={player.photoUrl}
+          src={photoUrl}
+          onError={() => setFailed(true)}
           alt={name}
           loading="lazy"
           decoding="async"
-          className="relative z-10 h-full w-full object-cover object-[50%_18%] transition duration-700 group-hover:scale-[1.025]"
+          className={`relative z-10 h-full w-full transition duration-700 group-hover:scale-[1.025] ${isCutout ? 'object-contain object-bottom' : 'object-cover object-[50%_18%]'}`}
         />
       ) : (
         <div className="relative z-10 grid h-full place-items-center bg-gradient-to-br from-slate-100 via-white to-slate-200 px-6 text-center">
