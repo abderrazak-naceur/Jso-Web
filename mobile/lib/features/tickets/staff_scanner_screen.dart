@@ -43,6 +43,7 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
 
   bool _busy = false;
   bool _cameraEnabled = true;
+  bool _configurationRequired = false;
   String? _gateId;
   String? _deviceId;
   String? _matchId;
@@ -94,6 +95,7 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
       if (!mounted) return;
       setState(() {
         _matches = items;
+        _configurationRequired = items.isNotEmpty && _matchId == null;
         if (_matchId != null && !items.any((match) => match.id == _matchId)) {
           _matchId = null;
         }
@@ -133,6 +135,10 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
   Future<void> _checkIn(String scannedValue) async {
     final token = _adminToken;
     if (token == null || _busy) return;
+    if (_configurationRequired) {
+      await _configureScanner();
+      return;
+    }
     setState(() => _busy = true);
     try {
       final result = await _repo.checkIn(
@@ -407,6 +413,14 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
         child: ListView(
           padding: const EdgeInsets.all(JsoSpacing.md),
           children: [
+            _ScannerContextCard(
+              match: _matches.where((m) => m.id == _matchId).firstOrNull,
+              gateId: _gateId,
+              deviceId: _deviceId,
+              configurationRequired: _configurationRequired,
+              onConfigure: _configureScanner,
+            ),
+            const SizedBox(height: JsoSpacing.md),
             if (_cameraEnabled)
               _CameraBox(controller: _scanner, onDetect: _onDetect),
             const SizedBox(height: JsoSpacing.md),
@@ -434,6 +448,69 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
               )
             else
               ..._history.map((e) => _HistoryTile(entry: e)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ScannerContextCard extends StatelessWidget {
+  const _ScannerContextCard({
+    required this.match,
+    required this.gateId,
+    required this.deviceId,
+    required this.configurationRequired,
+    required this.onConfigure,
+  });
+
+  final ScannerMatch? match;
+  final String? gateId;
+  final String? deviceId;
+  final bool configurationRequired;
+  final VoidCallback onConfigure;
+
+  @override
+  Widget build(BuildContext context) {
+    final ready = !configurationRequired && match != null && gateId != null && deviceId != null;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(JsoSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  ready ? Icons.verified_rounded : Icons.warning_amber_rounded,
+                  color: ready ? JsoColors.cyan : JsoColors.gold,
+                ),
+                const SizedBox(width: JsoSpacing.sm),
+                Expanded(
+                  child: Text(
+                    ready ? 'Scanner operativo' : 'Configurazione richiesta',
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+                TextButton(
+                  onPressed: onConfigure,
+                  child: const Text('Modifica'),
+                ),
+              ],
+            ),
+            const SizedBox(height: JsoSpacing.sm),
+            Text(match == null
+                ? 'Partita: non selezionata'
+                : 'Partita: ${match!.opponentName}'),
+            Text('Gate: ${gateId ?? 'non configurato'}'),
+            Text('Device: ${deviceId ?? 'non configurato'}'),
+            if (!ready) ...[
+              const SizedBox(height: JsoSpacing.sm),
+              const Text(
+                'Seleziona partita, Gate e dispositivo autorizzati prima di effettuare il check-in.',
+                style: TextStyle(color: JsoColors.muted),
+              ),
+            ],
           ],
         ),
       ),
