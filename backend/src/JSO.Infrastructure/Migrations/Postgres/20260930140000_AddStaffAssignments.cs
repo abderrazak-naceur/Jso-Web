@@ -1,10 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using JSO.Infrastructure;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace JSO.Infrastructure.Migrations.Postgres
 {
-    /// <inheritdoc />
+    [DbContext(typeof(JsoDbContext))]
+    [Migration("20260930140000_AddStaffAssignments")]
     public partial class AddStaffAssignments : Migration
     {
         /// <inheritdoc />
