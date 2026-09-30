@@ -96,6 +96,64 @@ public sealed class AdminTicketScanController(
         return Ok(new { gates, devices });
     }
 
+    [HttpGet("matches")]
+    public async Task<IActionResult> Matches(CancellationToken ct)
+    {
+        var adminId = CurrentAdminId();
+        if (adminId is null) return Unauthorized();
+
+        var user = await db.AdminUsers.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == adminId.Value && x.IsActive, ct);
+        if (user is null) return Forbid();
+
+        var now = DateTimeOffset.UtcNow;
+        var assignments = await db.StaffAssignments.AsNoTracking()
+            .Where(x => x.AdminUserId == adminId.Value && x.IsActive)
+            .ToListAsync(ct);
+
+        var active = assignments.Where(x =>
+            (!x.ValidFrom.HasValue || x.ValidFrom.Value <= now) &&
+            (!x.ValidTo.HasValue || x.ValidTo.Value >= now) &&
+            (AdminPermissionCatalog.HasPermission(x.Role, AdminPermissions.TicketsValidate) ||
+             AdminPermissionCatalog.HasPermission(x.Role, AdminPermissions.TicketsCheckIn)))
+            .ToList();
+
+        var hasGlobal = active.Any(x => x.ScopeType.Equals("Global", StringComparison.OrdinalIgnoreCase));
+        var matchIds = active
+            .Where(x => x.ScopeType.Equals("Match", StringComparison.OrdinalIgnoreCase))
+            .Select(x => x.ScopeId)
+            .Where(x => Guid.TryParse(x, out _))
+            .Select(Guid.Parse)
+            .ToHashSet();
+
+        var query = db.Matches.AsNoTracking()
+            .Where(x => x.KickoffAt >= now.AddHours(-12));
+
+        if (!hasGlobal)
+        {
+            if (matchIds.Count == 0)
+                return Ok(Array.Empty<object>());
+            query = query.Where(x => matchIds.Contains(x.Id));
+        }
+
+        var matches = await query
+            .OrderBy(x => x.KickoffAt)
+            .Take(50)
+            .Select(x => new
+            {
+                x.Id,
+                x.KickoffAt,
+                x.OpponentName,
+                x.Venue,
+                x.IsHome,
+                x.Status,
+                x.IsPublished
+            })
+            .ToListAsync(ct);
+
+        return Ok(matches);
+    }
+
     [HttpPost("validate")]
     [EnableRateLimiting("ticket-scan")]
     public async Task<IActionResult> Validate(StaffTicketScanRequest request, CancellationToken ct)
