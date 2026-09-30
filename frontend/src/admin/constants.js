@@ -1,0 +1,9 @@
+export const emptyTeam = { name: '', category: 'Équipe première', isActive: true }
+export const emptyPlayer = { firstName: '', lastName: '', shirtNumber: '', position: '', photoUrl: '', isActive: true }
+export const emptyNews = { title: '', slug: '', excerpt: '', body: '', status: 'Draft', publishedAt: '', coverImageUrl: '' }
+export const emptySponsor = { name: '', logoUrl: '', websiteUrl: '', bannerImageUrl: '', tier: 'Partner', placement: 'Footer', startDate: '', endDate: '', isActive: true, priority: 0 }
+export const SPONSOR_TIERS = ['Title', 'Gold', 'Silver', 'Partner']
+export const SPONSOR_PLACEMENTS = ['Home', 'Footer', 'Matchday']
+export const emptyProduct = { name: '', slug: '', description: '', price: '', currency: 'TND', imageUrl: '', category: '', stock: 0, isActive: true }
+export const emptyEvent = { minute: 0, type: 'Goal', playerName: '', secondaryPlayerName: '', team: '', notes: '' }
+export const EVENT_TEAM_LABELS = { Home: 'Domicile', Away: 'Extérieur' }
