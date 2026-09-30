@@ -56,7 +56,19 @@ public sealed class AdminStaffAssignmentsController(JsoDbContext db, AuditServic
             .Select(x => new { x.Id, x.Name, x.Type })
             .ToListAsync(ct);
 
-        return Ok(new { matches, teams, facilities });
+        var gates = await db.Gates.AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.Code)
+            .Select(x => new { x.Id, x.Code, x.Name, x.FacilityId })
+            .ToListAsync(ct);
+
+        var devices = await db.ScannerDevices.AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.DeviceCode)
+            .Select(x => new { x.Id, x.DeviceCode, x.Name, x.GateId })
+            .ToListAsync(ct);
+
+        return Ok(new { matches, teams, facilities, gates, devices });
     }
 
     [HttpGet]
