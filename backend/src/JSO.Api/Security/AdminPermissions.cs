@@ -65,6 +65,11 @@ public static class AdminPermissionCatalog
             ["SeasonManager"] = [AdminPermissions.DashboardView, AdminPermissions.MembershipsManage, AdminPermissions.TicketsReports]
         };
 
+    public static IReadOnlyList<string> GetPermissions(string role)
+        => RolePermissions.TryGetValue(role, out var permissions)
+            ? permissions
+            : Array.Empty<string>();
+
     public static bool HasPermission(ClaimsPrincipal user, string permission)
     {
         if (user.Identity?.IsAuthenticated != true)
