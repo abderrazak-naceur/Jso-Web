@@ -139,3 +139,12 @@ Una funzione è **Production Ready** solo dopo verifica sull'ambiente reale.
 - Staff assignment references espone match, team, facility, gate e scanner device reali.
 - UI Admin Security usa selezioni reali per Match/Team/Venue/Gate e salva gate/device tramite i codici operativi usati dal QR scanner.
 - Migrazione 20260930170000_AddGatesAndScannerDevices aggiunta; la generazione EF locale non è stata eseguita nel workspace, quindi la verifica autorevole resta CI PostgreSQL.
+
+
+### Staff scanner E2E hardening
+- `TicketScanEvaluator` estratto in `backend/src/JSO.Api/Security/TicketScanEvaluator.cs` per condividere regole deterministiche tra validate/check-in.
+- Outcome verificati a livello unit test: `Valid`, `WrongMatch`, `AlreadyUsed`, `Cancelled`, `Invalid`.
+- CI smoke test esteso con flusso reale API: ticket type → reservation fan → confirmation admin → digital QR token → scoped validate/check-in.
+- CI verifica esplicitamente seconda scansione (`AlreadyUsed`), match errato (`WrongMatch`), gate/device errati (`403`), assignment scaduto (`403`) e assignment inattivo (`403`).
+- CI schema validation include `TicketTypes`, `TicketOrders`, `TicketCheckIns`, `StaffAssignments`, `Gates` e `ScannerDevices`.
+- I risultati CI dei nuovi commit devono essere verificati prima di dichiarare questo blocco Production Ready.
