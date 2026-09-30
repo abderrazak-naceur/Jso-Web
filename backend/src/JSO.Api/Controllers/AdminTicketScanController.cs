@@ -17,6 +17,85 @@ public sealed class AdminTicketScanController(
     AuditService audit,
     StaffAuthorizationService staffAuthorization) : ControllerBase
 {
+    [HttpGet("configuration")]
+    public async Task<IActionResult> Configuration(CancellationToken ct)
+    {
+        var adminId = CurrentAdminId();
+        if (adminId is null)
+            return Unauthorized();
+
+        var user = await db.AdminUsers.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == adminId.Value && x.IsActive, ct);
+        if (user is null)
+            return Forbid();
+
+        var assignments = await db.StaffAssignments.AsNoTracking()
+            .Where(x => x.AdminUserId == adminId.Value && x.IsActive)
+            .ToListAsync(ct);
+
+        var now = DateTimeOffset.UtcNow;
+        var activeAssignments = assignments.Where(x =>
+            (!x.ValidFrom.HasValue || x.ValidFrom.Value <= now) &&
+            (!x.ValidTo.HasValue || x.ValidTo.Value >= now) &&
+            (AdminPermissionCatalog.HasPermission(x.Role, AdminPermissions.TicketsValidate) ||
+             AdminPermissionCatalog.HasPermission(x.Role, AdminPermissions.TicketsCheckIn)))
+            .ToList();
+
+        var hasGlobal = activeAssignments.Any(x =>
+            x.ScopeType.Equals("Global", StringComparison.OrdinalIgnoreCase));
+
+        var gateCodes = activeAssignments
+            .Where(x => x.GateId is not null)
+            .Select(x => x.GateId!)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var deviceCodes = activeAssignments
+            .Where(x => x.DeviceId is not null)
+            .Select(x => x.DeviceId!)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var gatesQuery = db.Gates.AsNoTracking().Where(x => x.IsActive);
+        var devicesQuery = db.ScannerDevices.AsNoTracking().Where(x => x.IsActive);
+
+        if (!hasGlobal)
+        {
+            if (gateCodes.Count > 0)
+                gatesQuery = gatesQuery.Where(x => gateCodes.Contains(x.Code));
+            else if (deviceCodes.Count > 0)
+            {
+                var allowedGateIds = await db.ScannerDevices.AsNoTracking()
+                    .Where(x => x.IsActive && deviceCodes.Contains(x.DeviceCode) && x.GateId.HasValue)
+                    .Select(x => x.GateId!.Value)
+                    .ToListAsync(ct);
+                gatesQuery = gatesQuery.Where(x => allowedGateIds.Contains(x.Id));
+            }
+            else
+            {
+                return Ok(new { gates = Array.Empty<object>(), devices = Array.Empty<object>() });
+            }
+
+            if (deviceCodes.Count > 0)
+                devicesQuery = devicesQuery.Where(x => deviceCodes.Contains(x.DeviceCode));
+            else if (gateCodes.Count > 0)
+                devicesQuery = devicesQuery.Where(x => x.GateId.HasValue &&
+                    db.Gates.Any(g => g.Id == x.GateId.Value && gateCodes.Contains(g.Code)));
+            else
+                devicesQuery = devicesQuery.Where(x => false);
+        }
+
+        var gates = await gatesQuery
+            .OrderBy(x => x.Code)
+            .Select(x => new { x.Id, x.Code, x.Name, x.FacilityId })
+            .ToListAsync(ct);
+
+        var devices = await devicesQuery
+            .OrderBy(x => x.DeviceCode)
+            .Select(x => new { x.Id, x.DeviceCode, x.Name, x.GateId })
+            .ToListAsync(ct);
+
+        return Ok(new { gates, devices });
+    }
+
     [HttpPost("validate")]
     [EnableRateLimiting("ticket-scan")]
     public async Task<IActionResult> Validate(StaffTicketScanRequest request, CancellationToken ct)
