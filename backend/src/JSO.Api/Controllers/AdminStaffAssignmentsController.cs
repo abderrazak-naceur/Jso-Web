@@ -35,6 +35,30 @@ public sealed class AdminStaffAssignmentsController(JsoDbContext db, AuditServic
         "Global", "Club", "Team", "Match", "Venue", "Gate"
     };
 
+    [HttpGet("references")]
+    public async Task<IActionResult> References(CancellationToken ct)
+    {
+        var matches = await db.Matches.AsNoTracking()
+            .OrderByDescending(x => x.KickoffAt)
+            .Take(100)
+            .Select(x => new { x.Id, x.OpponentName, x.KickoffAt, x.Venue, x.IsHome })
+            .ToListAsync(ct);
+
+        var teams = await db.Teams.AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.Name)
+            .Select(x => new { x.Id, x.Name, x.Category })
+            .ToListAsync(ct);
+
+        var facilities = await db.Facilities.AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.Name)
+            .Select(x => new { x.Id, x.Name, x.Type })
+            .ToListAsync(ct);
+
+        return Ok(new { matches, teams, facilities });
+    }
+
     [HttpGet]
     public async Task<IActionResult> Get([FromQuery] Guid? adminUserId, CancellationToken ct)
     {
