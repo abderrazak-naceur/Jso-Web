@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { adminApi } from '../api'
+import { Save } from 'lucide-react'
+import Field from '../components/Field'
+import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../../lib/apiConfig'
 export default function SettingsModule() {
   const [value, setValue] = useState(getConfiguredApiBaseUrl())
   const [active, setActive] = useState(API_BASE_URL)
