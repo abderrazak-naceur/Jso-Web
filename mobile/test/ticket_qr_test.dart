@@ -150,7 +150,7 @@ void main() {
 
         expect(
           requests.single.url.toString(),
-          '$baseUrl/admin/tickets/check-in',
+          '$baseUrl/admin/tickets/scan/check-in',
         );
         expect(requests.single.headers['Authorization'], 'Bearer ADMIN_JWT');
         final body = jsonDecode(requests.single.body) as Map<String, dynamic>;
