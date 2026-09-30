@@ -2190,6 +2190,55 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.ToTable("SupporterBricks");
                 });
 
+            modelBuilder.Entity("JSO.Domain.StaffAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AdminUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeviceId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GateId")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ScopeId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ScopeType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ValidFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ValidTo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdminUserId", "IsActive");
+
+                    b.HasIndex("GateId", "DeviceId", "IsActive");
+
+                    b.HasIndex("Role", "ScopeType", "ScopeId", "IsActive");
+
+                    b.ToTable("StaffAssignments");
+                });
+
             modelBuilder.Entity("JSO.Domain.Team", b =>
                 {
                     b.Property<Guid>("Id")
