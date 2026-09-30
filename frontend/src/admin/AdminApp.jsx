@@ -29,26 +29,7 @@ import SeasonsCompetitionsModule from './SeasonsCompetitions'
 import MembershipsModule from './Memberships'
 import MatchStreamsModule from './MatchStreams'
 import FinanceModule from './Finance'
-
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch {}
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
+import { adminApi } from './api'
 
 function Login({ onLogin }) {
   const [email, setEmail] = useState('admin@jso.tn')
@@ -59,7 +40,7 @@ function Login({ onLogin }) {
     event.preventDefault()
     setError('')
     try {
-      const result = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
+      const result = await adminApi('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
       localStorage.setItem('jso_admin_token', result.accessToken)
       localStorage.setItem('jso_admin_user', JSON.stringify(result.user))
       onLogin(result.user)
@@ -101,7 +82,7 @@ function ContentModule({ onError }) {
   async function load() {
     try {
       setLoading(true)
-      const data = await api('/admin/content')
+      const data = await adminApi('/admin/content')
       setItems(data)
       if (selected) {
         const current = data.find(x => x.key === selected.key)
@@ -121,7 +102,7 @@ function ContentModule({ onError }) {
     e.preventDefault()
     if (!selected) return
     try {
-      await api('/admin/content/' + encodeURIComponent(selected.key), {
+      await adminApi('/admin/content/' + encodeURIComponent(selected.key), {
         method: 'PUT',
         body: JSON.stringify({ value }),
       })
@@ -158,14 +139,14 @@ function ClubSettingsModule({ onError }) {
   async function load() {
     try {
       setLoading(true)
-      const club = await api('/admin/club')
+      const club = await adminApi('/admin/club')
       setForm({ name: club.name || '', shortName: club.shortName || '', country: club.country || '', city: club.city || '', description: club.description || '', logoUrl: club.logoUrl || '' })
     } catch (e) { onError(e.message) } finally { setLoading(false) }
   }
   useEffect(() => { load() }, [])
   async function save(e) {
     e.preventDefault(); setSaved(false)
-    try { setSaving(true); await api('/admin/club', { method: 'PUT', body: JSON.stringify(form) }); setSaved(true) }
+    try { setSaving(true); await adminApi('/admin/club', { method: 'PUT', body: JSON.stringify(form) }); setSaved(true) }
     catch (e) { onError(e.message) } finally { setSaving(false) }
   }
   if (loading) return <div className="rounded-[1.5rem] border border-slate-200 bg-white p-8 text-slate-500">Chargement des informations du club…</div>
@@ -190,23 +171,23 @@ function ClubSettingsModule({ onError }) {
 
 function SecurityModule({ onError }) {
   const [users,setUsers]=useState([]); const [logs,setLogs]=useState([])
-  useEffect(()=>{ Promise.all([api('/admin/security/users'),api('/admin/audit?take=50')]).then(([u,l])=>{setUsers(u);setLogs(l)}).catch(e=>onError(e.message)) },[])
+  useEffect(()=>{ Promise.all([adminApi('/admin/security/users'),adminApi('/admin/audit?take=50')]).then(([u,l])=>{setUsers(u);setLogs(l)}).catch(e=>onError(e.message)) },[])
   return <div className="space-y-6"><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Utilisateurs administrateurs</h2><div className="mt-4 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Utilisateur</th><th className="p-2">Rôle</th><th className="p-2">Statut</th><th className="p-2">Dernière connexion</th></tr></thead><tbody>{users.map(u=><tr key={u.id} className="border-b last:border-0"><td className="p-2"><b>{u.displayName}</b><div className="text-xs text-slate-500">{u.email}</div></td><td className="p-2 font-semibold">{u.role}</td><td className="p-2">{u.isActive?'Actif':'Désactivé'}</td><td className="p-2">{u.lastLoginAt?new Date(u.lastLoginAt).toLocaleString('fr-FR'):'Jamais'}</td></tr>)}</tbody></table></div></div><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Audit Log</h2><div className="mt-4 space-y-2">{logs.map(l=><div key={l.id} className="rounded-xl bg-slate-50 p-3 text-sm"><div className="flex justify-between gap-3"><b>{l.action} · {l.entityType}</b><span className="text-xs text-slate-400">{new Date(l.createdAt).toLocaleString('fr-FR')}</span></div><p className="mt-1 text-xs text-slate-500">{l.userEmail||'Système'}{l.entityId?' · '+l.entityId:''}</p></div>)}</div></div></div>
 }
 
 function MediaModule({ onError }) {
   const [items,setItems]=useState([]); const [file,setFile]=useState(null); const [title,setTitle]=useState(''); const [caption,setCaption]=useState('')
   const [editing,setEditing]=useState(null); const [editForm,setEditForm]=useState({title:'',caption:'',isPublished:true})
-  async function load(){try{setItems(await api('/admin/media'))}catch(e){onError(e.message)}} useEffect(()=>{load()},[])
-  async function upload(e){e.preventDefault();if(!file)return;try{const fd=new FormData();fd.append('file',file);fd.append('title',title);fd.append('caption',caption);await api('/admin/media/upload',{method:'POST',body:fd,headers:{}});setFile(null);setTitle('');setCaption('');e.target.reset();await load()}catch(e){onError(e.message)}}
-  async function remove(id){if(!confirm('Supprimer ce média ?'))return;try{await api('/admin/media/'+id,{method:'DELETE'});await load()}catch(e){onError(e.message)}}
+  async function load(){try{setItems(await adminApi('/admin/media'))}catch(e){onError(e.message)}} useEffect(()=>{load()},[])
+  async function upload(e){e.preventDefault();if(!file)return;try{const fd=new FormData();fd.append('file',file);fd.append('title',title);fd.append('caption',caption);await adminApi('/admin/media/upload',{method:'POST',body:fd,headers:{}});setFile(null);setTitle('');setCaption('');e.target.reset();await load()}catch(e){onError(e.message)}}
+  async function remove(id){if(!confirm('Supprimer ce média ?'))return;try{await adminApi('/admin/media/'+id,{method:'DELETE'});await load()}catch(e){onError(e.message)}}
   function startEdit(m){setEditing(m.id);setEditForm({title:m.title||'',caption:m.caption||'',isPublished:m.isPublished!==false})}
   function cancelEdit(){setEditing(null)}
   async function saveEdit(m){
     try{
       // The backend PUT replaces the record, so resend the unchanged url/type/thumbnail.
       const body={title:editForm.title.trim(),caption:editForm.caption.trim()||null,url:m.url,type:m.type||'Image',thumbnailUrl:m.thumbnailUrl||null,isPublished:editForm.isPublished}
-      await api('/admin/media/'+m.id,{method:'PUT',body:JSON.stringify(body)})
+      await adminApi('/admin/media/'+m.id,{method:'PUT',body:JSON.stringify(body)})
       setEditing(null);onError('');await load()
     }catch(e){onError(e.message)}
   }
@@ -240,26 +221,26 @@ const EVENT_TEAM_LABELS = { Home: 'Domicile', Away: 'Extérieur' }
 
 function EventsModule({ onError }) {
   const [matches,setMatches]=useState([]); const [selected,setSelected]=useState(''); const [events,setEvents]=useState([]); const [form,setForm]=useState(emptyEvent); const [editingId,setEditingId]=useState(null)
-  async function load(){try{const data=await api('/admin/matches');setMatches(data);if(!selected&&data[0])loadEvents(data[0].id)}catch(e){onError(e.message)}}
-  async function loadEvents(id){try{setSelected(id);setEditingId(null);setForm(emptyEvent);setEvents(await api('/admin/matches/'+id+'/events'))}catch(e){onError(e.message)}}
+  async function load(){try{const data=await adminApi('/admin/matches');setMatches(data);if(!selected&&data[0])loadEvents(data[0].id)}catch(e){onError(e.message)}}
+  async function loadEvents(id){try{setSelected(id);setEditingId(null);setForm(emptyEvent);setEvents(await adminApi('/admin/matches/'+id+'/events'))}catch(e){onError(e.message)}}
   useEffect(()=>{load()},[])
   function edit(ev){setEditingId(ev.id);setForm({minute:ev.minute??0,type:ev.type||'Goal',playerName:ev.playerName||'',secondaryPlayerName:ev.secondaryPlayerName||'',team:ev.team||'',notes:ev.notes||''})}
   function cancelEdit(){setEditingId(null);setForm(emptyEvent)}
-  async function save(e){e.preventDefault();try{const body={...form,minute:Number(form.minute),secondaryPlayerName:form.secondaryPlayerName||null,team:form.team||null};if(editingId)await api('/admin/matches/'+selected+'/events/'+editingId,{method:'PUT',body:JSON.stringify(body)});else await api('/admin/matches/'+selected+'/events',{method:'POST',body:JSON.stringify(body)});setForm(emptyEvent);setEditingId(null);await loadEvents(selected)}catch(e){onError(e.message)}}
-  async function remove(id){try{await api('/admin/matches/'+selected+'/events/'+id,{method:'DELETE'});if(editingId===id)cancelEdit();await loadEvents(selected)}catch(e){onError(e.message)}}
+  async function save(e){e.preventDefault();try{const body={...form,minute:Number(form.minute),secondaryPlayerName:form.secondaryPlayerName||null,team:form.team||null};if(editingId)await adminApi('/admin/matches/'+selected+'/events/'+editingId,{method:'PUT',body:JSON.stringify(body)});else await adminApi('/admin/matches/'+selected+'/events',{method:'POST',body:JSON.stringify(body)});setForm(emptyEvent);setEditingId(null);await loadEvents(selected)}catch(e){onError(e.message)}}
+  async function remove(id){try{await adminApi('/admin/matches/'+selected+'/events/'+id,{method:'DELETE'});if(editingId===id)cancelEdit();await loadEvents(selected)}catch(e){onError(e.message)}}
   const showSecondary=form.type==='Goal'||form.type==='Substitution'
   return <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]"><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Matchs</h2><div className="mt-4 space-y-2">{matches.map(m=><button key={m.id} onClick={()=>loadEvents(m.id)} className={'w-full rounded-xl p-3 text-left '+(selected===m.id?'bg-jso-navy text-white':'bg-slate-50')}><b>JSO — {m.opponentName}</b><span className="block text-xs opacity-70">{new Date(m.kickoffAt).toLocaleString('fr-FR')}</span></button>)}</div></div><div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Événements</h2>{selected?<><form onSubmit={save} className="mt-4 grid gap-3 sm:grid-cols-2"><Field label="Minute" type="number" min="0" max="200" value={form.minute} onChange={e=>setForm({...form,minute:e.target.value})} required/><label className="text-sm font-bold">Type<select value={form.type} onChange={e=>setForm({...form,type:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"><option>Goal</option><option>YellowCard</option><option>RedCard</option><option>Substitution</option><option>VAR</option><option>Other</option></select></label><Field label="Joueur" value={form.playerName} onChange={e=>setForm({...form,playerName:e.target.value})}/><Field label={form.type==='Substitution'?'Joueur entrant':'Passeur'} value={form.secondaryPlayerName} onChange={e=>setForm({...form,secondaryPlayerName:e.target.value})} placeholder={showSecondary?'':'Optionnel'}/><label className="text-sm font-bold">Camp<select value={form.team} onChange={e=>setForm({...form,team:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5"><option value="">Aucun</option><option value="Home">Domicile</option><option value="Away">Extérieur</option></select></label><Field label="Note" value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/><div className="sm:col-span-2 flex gap-2"><button className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white">{editingId?<><Save size={16}/>Mettre à jour</>:<><Plus size={16}/>Ajouter l’événement</>}</button>{editingId&&<button type="button" onClick={cancelEdit} className="rounded-xl px-4 py-2.5 font-bold text-slate-500 hover:bg-slate-100">Annuler</button>}</div></form><div className="mt-6 space-y-2">{events.map(ev=><div key={ev.id} className="flex items-center justify-between rounded-xl bg-slate-50 p-3"><div><b>{ev.minute}' · {ev.type}</b>{ev.team&&<span className="ml-2 rounded-full bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-600">{EVENT_TEAM_LABELS[ev.team]||ev.team}</span>}<span className="ml-2 text-sm text-slate-600">{ev.playerName||''}</span>{ev.secondaryPlayerName&&<span className="ml-1 text-sm text-slate-500">({ev.type==='Substitution'?'entrant : ':'passe : '}{ev.secondaryPlayerName})</span>}{ev.notes&&<p className="text-xs text-slate-500">{ev.notes}</p>}</div><div className="flex gap-2"><button onClick={()=>edit(ev)} className="text-jso-blue"><Pencil size={16}/></button><button onClick={()=>remove(ev.id)} className="text-red-600"><X size={16}/></button></div></div>)}{!events.length&&<p className="text-sm text-slate-500">Aucun événement enregistré.</p>}</div></>:<p className="mt-3 text-sm text-slate-500">Sélectionne un match.</p>}</div></div>
 }
 
 function FormationsModule({ onError }) {
   const [matches,setMatches]=useState([]); const [selected,setSelected]=useState(''); const [roster,setRoster]=useState([]); const [rows,setRows]=useState({}); const [loading,setLoading]=useState(false); const [saving,setSaving]=useState(false); const [saved,setSaved]=useState(false)
-  async function load(){try{const data=await api('/admin/matches');setMatches(data);if(!selected&&data[0])selectMatch(data[0].id)}catch(e){onError(e.message)}}
+  async function load(){try{const data=await adminApi('/admin/matches');setMatches(data);if(!selected&&data[0])selectMatch(data[0].id)}catch(e){onError(e.message)}}
   useEffect(()=>{load()},[])
   async function selectMatch(id){
     setSelected(id);setSaved(false);setLoading(true)
     try{
-      const match=matches.find(m=>m.id===id)||await api('/admin/matches/'+id)
-      const [lineup,players]=await Promise.all([api('/admin/matches/'+id+'/lineup'),match.teamId?api('/admin/teams/'+match.teamId+'/players'):Promise.resolve([])])
+      const match=matches.find(m=>m.id===id)||await adminApi('/admin/matches/'+id)
+      const [lineup,players]=await Promise.all([adminApi('/admin/matches/'+id+'/lineup'),match.teamId?adminApi('/admin/teams/'+match.teamId+'/players'):Promise.resolve([])])
       setRoster(players)
       const next={}
       ;(lineup||[]).forEach(l=>{next[l.playerId]={included:true,role:l.role||'Starter',position:l.position||'',positionOrder:l.positionOrder??'',isCaptain:Boolean(l.isCaptain)}})
@@ -274,7 +255,7 @@ function FormationsModule({ onError }) {
     setSaving(true);setSaved(false)
     try{
       const items=Object.entries(rows).filter(([,r])=>r.included).map(([playerId,r])=>({playerId,role:r.role,positionOrder:r.positionOrder===''?null:Number(r.positionOrder),position:r.position||null,isCaptain:Boolean(r.isCaptain)}))
-      await api('/admin/matches/'+selected+'/lineup',{method:'PUT',body:JSON.stringify({items})})
+      await adminApi('/admin/matches/'+selected+'/lineup',{method:'PUT',body:JSON.stringify({items})})
       setSaved(true)
       await selectMatch(selected)
     }catch(e){onError(e.message)}finally{setSaving(false)}
@@ -306,7 +287,7 @@ function MatchSheetModule({ onError }) {
   const [savedStats, setSavedStats] = useState(false)
 
   async function load() {
-    try { const data = await api('/admin/matches'); setMatches(data); if (!selected && data[0]) selectMatch(data[0].id) }
+    try { const data = await adminApi('/admin/matches'); setMatches(data); if (!selected && data[0]) selectMatch(data[0].id) }
     catch (e) { onError(e.message) }
   }
   useEffect(() => { load() }, [])
@@ -315,8 +296,8 @@ function MatchSheetModule({ onError }) {
     setSelected(id); setLoading(true); setSavedOfficials(false); setSavedStats(false)
     try {
       const [off, st] = await Promise.all([
-        api('/admin/matches/' + id + '/officials'),
-        api('/admin/matches/' + id + '/stats'),
+        adminApi('/admin/matches/' + id + '/officials'),
+        adminApi('/admin/matches/' + id + '/stats'),
       ])
       setOfficials((off || []).map(o => ({ name: o.name || '', role: o.role || 'Referee' })))
       setStats((st || []).map(s => ({ name: s.name || '', homeValue: s.homeValue ?? '', awayValue: s.awayValue ?? '' })))
@@ -334,7 +315,7 @@ function MatchSheetModule({ onError }) {
     if (items.length !== officials.length) { onError('Chaque officiel doit avoir un nom et un rôle.'); return }
     setSavingOfficials(true); setSavedOfficials(false)
     try {
-      await api('/admin/matches/' + selected + '/officials', { method: 'PUT', body: JSON.stringify({ items }) })
+      await adminApi('/admin/matches/' + selected + '/officials', { method: 'PUT', body: JSON.stringify({ items }) })
       setSavedOfficials(true); onError('')
     } catch (e) { onError(e.message) } finally { setSavingOfficials(false) }
   }
@@ -353,7 +334,7 @@ function MatchSheetModule({ onError }) {
     if (items.length !== stats.length) { onError('Chaque statistique doit avoir un nom.'); return }
     setSavingStats(true); setSavedStats(false)
     try {
-      await api('/admin/matches/' + selected + '/stats', { method: 'PUT', body: JSON.stringify({ items }) })
+      await adminApi('/admin/matches/' + selected + '/stats', { method: 'PUT', body: JSON.stringify({ items }) })
       setSavedStats(true); onError('')
     } catch (e) { onError(e.message) } finally { setSavingStats(false) }
   }
@@ -525,7 +506,7 @@ function AdminDashboard({ user, onLogout }) {
     .filter(([, list]) => list.length > 0)
 
   async function loadDashboard() {
-    try { setStats(await api('/admin/dashboard')); setError('') } catch (e) { setError(e.message) }
+    try { setStats(await adminApi('/admin/dashboard')); setError('') } catch (e) { setError(e.message) }
   }
   useEffect(() => { if (section === 'dashboard') loadDashboard() }, [section])
 
@@ -608,7 +589,7 @@ function DashboardStats({ stats }) {
 
   useEffect(() => {
     let active = true
-    api('/admin/home-visibility')
+    adminApi('/admin/home-visibility')
       .then((v) => { if (active) setSections(v) })
       .catch(() => { if (active) setSections([]) })
     return () => { active = false }
@@ -618,11 +599,11 @@ function DashboardStats({ stats }) {
     const next = sections.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
     setSections(next)
     try {
-      await api('/admin/home-visibility', { method: 'PUT', body: JSON.stringify({ hidden: next.filter((s) => !s.enabled).map((s) => s.id) }) })
+      await adminApi('/admin/home-visibility', { method: 'PUT', body: JSON.stringify({ hidden: next.filter((s) => !s.enabled).map((s) => s.id) }) })
       setToggleError('')
     } catch (e) {
       setToggleError(e.message)
-      try { setSections(await api('/admin/home-visibility')) } catch { /* keep optimistic state */ }
+      try { setSections(await adminApi('/admin/home-visibility')) } catch { /* keep optimistic state */ }
     }
   }
 
@@ -713,7 +694,7 @@ function TeamsModule({ onError }) {
 
   async function load() {
     try {
-      const data=await api('/admin/teams')
+      const data=await adminApi('/admin/teams')
       setTeams(data)
       if (!selected && data[0]) selectTeam(data[0].id)
     } catch(e){onError(e.message)}
@@ -721,7 +702,7 @@ function TeamsModule({ onError }) {
 
   async function selectTeam(id) {
     setSelected(id)
-    try { setPlayers(await api('/admin/teams/'+id+'/players')) }
+    try { setPlayers(await adminApi('/admin/teams/'+id+'/players')) }
     catch(e){onError(e.message)}
   }
 
@@ -761,7 +742,7 @@ function TeamsModule({ onError }) {
     fd.append('file',file)
     fd.append('title','Portrait joueur — '+playerName)
     fd.append('caption','Portrait officiel JSO')
-    const media=await api('/admin/media/upload',{method:'POST',body:fd,headers:{}})
+    const media=await adminApi('/admin/media/upload',{method:'POST',body:fd,headers:{}})
     return media?.url || ''
   }
 
@@ -769,8 +750,8 @@ function TeamsModule({ onError }) {
     e.preventDefault()
     try {
       const body={name:team.name,category:team.category,isActive:team.isActive}
-      if(editing) await api('/admin/teams/'+editing,{method:'PUT',body:JSON.stringify(body)})
-      else await api('/admin/teams',{method:'POST',body:JSON.stringify(body)})
+      if(editing) await adminApi('/admin/teams/'+editing,{method:'PUT',body:JSON.stringify(body)})
+      else await adminApi('/admin/teams',{method:'POST',body:JSON.stringify(body)})
       setTeam(emptyTeam);setEditing(null);await load()
     } catch(e){onError(e.message)}
   }
@@ -787,8 +768,8 @@ function TeamsModule({ onError }) {
         if(!photoUrl) throw new Error('Le média a été envoyé mais aucune URL photo n’a été retournée.')
       }
       const body={...player,shirtNumber:player.shirtNumber ? Number(player.shirtNumber):null,photoUrl}
-      if(editingPlayer) await api('/admin/teams/'+selected+'/players/'+editingPlayer,{method:'PUT',body:JSON.stringify(body)})
-      else await api('/admin/teams/'+selected+'/players',{method:'POST',body:JSON.stringify(body)})
+      if(editingPlayer) await adminApi('/admin/teams/'+selected+'/players/'+editingPlayer,{method:'PUT',body:JSON.stringify(body)})
+      else await adminApi('/admin/teams/'+selected+'/players',{method:'POST',body:JSON.stringify(body)})
       resetPlayerForm()
       await selectTeam(selected)
       onError('')
@@ -856,10 +837,10 @@ function TeamsModule({ onError }) {
 function MatchesModule({ onError }) {
   const [matches,setMatches]=useState([]); const [refs,setRefs]=useState({seasons:[],competitions:[],teams:[]}); const [editing,setEditing]=useState(null)
   const [form,setForm]=useState({opponentName:'',kickoffAt:'',venue:'',isHome:true,homeScore:'',awayScore:'',status:'Scheduled',isPublished:false,seasonId:'',competitionId:'',teamId:''})
-  async function load(){try{const [m,r]=await Promise.all([api('/admin/matches'),api('/admin/matches/references')]);setMatches(m);setRefs(r);if(!form.seasonId&&r.seasons[0])setForm(f=>({...f,seasonId:r.seasons[0].id,competitionId:r.competitions[0]?.id||'',teamId:r.teams[0]?.id||''}))}catch(e){onError(e.message)}}
+  async function load(){try{const [m,r]=await Promise.all([adminApi('/admin/matches'),adminApi('/admin/matches/references')]);setMatches(m);setRefs(r);if(!form.seasonId&&r.seasons[0])setForm(f=>({...f,seasonId:r.seasons[0].id,competitionId:r.competitions[0]?.id||'',teamId:r.teams[0]?.id||''}))}catch(e){onError(e.message)}}
   useEffect(()=>{load()},[])
   function startEdit(m){setEditing(m.id);setForm({...m,kickoffAt:m.kickoffAt?.slice(0,16)||'',homeScore:m.homeScore??'',awayScore:m.awayScore??''})}
-  async function save(e){e.preventDefault();try{const body={...form,kickoffAt:new Date(form.kickoffAt).toISOString(),homeScore:form.homeScore===''?null:Number(form.homeScore),awayScore:form.awayScore===''?null:Number(form.awayScore),isPublished:Boolean(form.isPublished)};if(editing)await api('/admin/matches/'+editing,{method:'PUT',body:JSON.stringify(body)});else await api('/admin/matches',{method:'POST',body:JSON.stringify(body)});setEditing(null);setForm(f=>({...f,opponentName:'',venue:'',homeScore:'',awayScore:''}));await load()}catch(e){onError(e.message)}}
+  async function save(e){e.preventDefault();try{const body={...form,kickoffAt:new Date(form.kickoffAt).toISOString(),homeScore:form.homeScore===''?null:Number(form.homeScore),awayScore:form.awayScore===''?null:Number(form.awayScore),isPublished:Boolean(form.isPublished)};if(editing)await adminApi('/admin/matches/'+editing,{method:'PUT',body:JSON.stringify(body)});else await adminApi('/admin/matches',{method:'POST',body:JSON.stringify(body)});setEditing(null);setForm(f=>({...f,opponentName:'',venue:'',homeScore:'',awayScore:''}));await load()}catch(e){onError(e.message)}}
   return <div className="space-y-6">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">{editing?'Modifier le match':'Créer un match'}</h2><form onSubmit={save} className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
       <Field label="Adversaire" value={form.opponentName} onChange={e=>setForm({...form,opponentName:e.target.value})} required/><Field label="Coup d’envoi" type="datetime-local" value={form.kickoffAt} onChange={e=>setForm({...form,kickoffAt:e.target.value})} required/><Field label="Stade" value={form.venue} onChange={e=>setForm({...form,venue:e.target.value})}/>
@@ -876,13 +857,13 @@ function MatchesModule({ onError }) {
 function NewsModule({ onError }) {
   const [items,setItems]=useState([]); const [editing,setEditing]=useState(null); const [form,setForm]=useState(emptyNews)
   const [copiedId,setCopiedId]=useState(null); const [fbBusyId,setFbBusyId]=useState(null); const [notice,setNotice]=useState('')
-  async function load(){try{setItems(await api('/admin/news'))}catch(e){onError(e.message)}}
+  async function load(){try{setItems(await adminApi('/admin/news'))}catch(e){onError(e.message)}}
   useEffect(()=>{load()},[])
   function edit(item){setEditing(item.id);setForm({...item,publishedAt:item.publishedAt?.slice(0,16)||''})}
-  async function save(e){e.preventDefault();try{const body={...form,publishedAt:form.publishedAt?new Date(form.publishedAt).toISOString():null};if(editing)await api('/admin/news/'+editing,{method:'PUT',body:JSON.stringify(body)});else await api('/admin/news',{method:'POST',body:JSON.stringify(body)});setEditing(null);setForm(emptyNews);await load()}catch(e){onError(e.message)}}
-  async function publish(id){try{await api('/admin/news/'+id+'/publish',{method:'POST'});await load()}catch(e){onError(e.message)}}
-  async function unpublish(id){try{await api('/admin/news/'+id+'/unpublish',{method:'POST'});await load()}catch(e){onError(e.message)}}
-  async function remove(id){if(!confirm('Supprimer cet article ?'))return;try{await api('/admin/news/'+id,{method:'DELETE'});if(editing===id){setEditing(null);setForm(emptyNews)}await load()}catch(e){onError(e.message)}}
+  async function save(e){e.preventDefault();try{const body={...form,publishedAt:form.publishedAt?new Date(form.publishedAt).toISOString():null};if(editing)await adminApi('/admin/news/'+editing,{method:'PUT',body:JSON.stringify(body)});else await adminApi('/admin/news',{method:'POST',body:JSON.stringify(body)});setEditing(null);setForm(emptyNews);await load()}catch(e){onError(e.message)}}
+  async function publish(id){try{await adminApi('/admin/news/'+id+'/publish',{method:'POST'});await load()}catch(e){onError(e.message)}}
+  async function unpublish(id){try{await adminApi('/admin/news/'+id+'/unpublish',{method:'POST'});await load()}catch(e){onError(e.message)}}
+  async function remove(id){if(!confirm('Supprimer cet article ?'))return;try{await adminApi('/admin/news/'+id,{method:'DELETE'});if(editing===id){setEditing(null);setForm(emptyNews)}await load()}catch(e){onError(e.message)}}
   // Public shareable link for an article (opens the deep-link on the site).
   function publicUrl(slug){return window.location.origin+'/actualites/'+encodeURIComponent(slug)}
   async function copyLink(n){try{await navigator.clipboard.writeText(publicUrl(n.slug));setCopiedId(n.id);setTimeout(()=>setCopiedId(null),2000)}catch{onError('Impossible de copier le lien. Copiez-le depuis la barre d’adresse du site.')}}
@@ -891,7 +872,7 @@ function NewsModule({ onError }) {
   // Auto-post to the club's Facebook Page via the backend. If no Page token is
   // configured, the backend replies 400 with a clear message and we fall back
   // to the manual sharer so the editor is never blocked.
-  async function publishToFacebook(n){setFbBusyId(n.id);setNotice('');try{const res=await api('/admin/social/facebook/publish',{method:'POST',body:JSON.stringify({articleId:n.id})});setNotice(res?.message||'Publié sur Facebook.')}catch(e){onError(e.message+' — utilisez « Partager » pour publier manuellement.');shareFacebook(n)}finally{setFbBusyId(null)}}
+  async function publishToFacebook(n){setFbBusyId(n.id);setNotice('');try{const res=await adminApi('/admin/social/facebook/publish',{method:'POST',body:JSON.stringify({articleId:n.id})});setNotice(res?.message||'Publié sur Facebook.')}catch(e){onError(e.message+' — utilisez « Partager » pour publier manuellement.');shareFacebook(n)}finally{setFbBusyId(null)}}
   return <div className="grid gap-6 xl:grid-cols-[1fr_1.2fr]">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><div className="flex items-center justify-between"><h2 className="text-xl font-black">News CMS</h2><button onClick={()=>{setEditing(null);setForm(emptyNews)}} className="rounded-xl bg-jso-navy p-2 text-white"><Plus size={18}/></button></div>{notice&&<p className="mt-3 rounded-xl bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">{notice}</p>}<div className="mt-5 space-y-2">{items.map(n=><div key={n.id} className="rounded-xl bg-slate-50 p-4"><div className="flex justify-between gap-3"><div><b>{n.title}</b><p className="text-xs text-slate-500">{n.status} · {n.slug}</p></div><div className="flex gap-2">{n.status==='Published'?<button onClick={()=>unpublish(n.id)} title="Dépublier" className="text-amber-600"><EyeOff size={16}/></button>:<button onClick={()=>publish(n.id)} title="Publier" className="text-emerald-600"><Eye size={16}/></button>}<button onClick={()=>edit(n)} title="Modifier" className="text-jso-blue"><Pencil size={16}/></button><button onClick={()=>remove(n.id)} title="Supprimer" className="text-red-600"><X size={16}/></button></div></div>{n.status==='Published'&&<div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3"><button onClick={()=>copyLink(n)} title="Copier le lien public" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-jso-navy hover:border-jso-blue"><Link2 size={14}/>{copiedId===n.id?'Lien copié':'Copier le lien'}</button><button onClick={()=>shareFacebook(n)} title="Partager sur Facebook" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-jso-navy hover:border-jso-blue"><Facebook size={14}/>Partager</button><button onClick={()=>publishToFacebook(n)} disabled={fbBusyId===n.id} title="Publier automatiquement sur la Page Facebook du club" className="inline-flex items-center gap-1.5 rounded-full bg-jso-navy px-3 py-1.5 text-xs font-bold text-white hover:bg-jso-blue disabled:opacity-50"><Send size={14}/>{fbBusyId===n.id?'Publication…':'Publier sur Facebook'}</button></div>}</div>)}</div></div>
     <form onSubmit={save} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 space-y-3"><h2 className="text-xl font-black">{editing?'Modifier l’article':'Nouvel article'}</h2><Field label="Titre" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required/><Field label="Slug" value={form.slug} onChange={e=>setForm({...form,slug:e.target.value})} required/><Field label="Extrait" value={form.excerpt} onChange={e=>setForm({...form,excerpt:e.target.value})}/><label className="block text-sm font-bold">Contenu<textarea value={form.body} onChange={e=>setForm({...form,body:e.target.value})} rows="9" className="mt-2 w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-jso-blue"/></label><Field label="Cover URL" value={form.coverImageUrl} onChange={e=>setForm({...form,coverImageUrl:e.target.value})}/><button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/>Enregistrer</button></form>
@@ -906,7 +887,7 @@ function ShopModule({ onError }) {
 
   async function load() {
     setLoading(true)
-    try { setProducts(await api('/admin/shop/products')); onError('') }
+    try { setProducts(await adminApi('/admin/shop/products')); onError('') }
     catch (e) { onError(e.message) }
     finally { setLoading(false) }
   }
@@ -933,8 +914,8 @@ function ShopModule({ onError }) {
         stock: Number(form.stock) || 0,
         isActive: form.isActive,
       }
-      if (editing) await api('/admin/shop/products/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/shop/products', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/shop/products/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/shop/products', { method: 'POST', body: JSON.stringify(body) })
       reset()
       await load()
     } catch (e) { onError(e.message) }
@@ -942,7 +923,7 @@ function ShopModule({ onError }) {
 
   async function remove(id) {
     if (!confirm('Supprimer ce produit ?')) return
-    try { await api('/admin/shop/products/' + id, { method: 'DELETE' }); await load() }
+    try { await adminApi('/admin/shop/products/' + id, { method: 'DELETE' }); await load() }
     catch (e) { onError(e.message) }
   }
 
@@ -987,7 +968,7 @@ function SponsorsModule({ onError }) {
 
   async function load() {
     setLoading(true)
-    try { setSponsors(await api('/admin/sponsors')); onError('') }
+    try { setSponsors(await adminApi('/admin/sponsors')); onError('') }
     catch (e) { onError(e.message) }
     finally { setLoading(false) }
   }
@@ -1021,15 +1002,15 @@ function SponsorsModule({ onError }) {
         isActive: form.isActive,
         priority: Number(form.priority) || 0,
       }
-      if (editing) await api('/admin/sponsors/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/sponsors', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/sponsors/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/sponsors', { method: 'POST', body: JSON.stringify(body) })
       reset()
       await load()
     } catch (e) { onError(e.message) }
   }
 
   async function remove(id) {
-    try { await api('/admin/sponsors/' + id, { method: 'DELETE' }); await load() }
+    try { await adminApi('/admin/sponsors/' + id, { method: 'DELETE' }); await load() }
     catch (e) { onError(e.message) }
   }
 
@@ -1069,13 +1050,13 @@ function AnalyticsModule({ onError }) {
   const [loading, setLoading] = useState(false)
 
   async function loadTeams() {
-    try { const data = await api('/admin/teams'); setTeams(data); if (data[0]) select(data[0].id) }
+    try { const data = await adminApi('/admin/teams'); setTeams(data); if (data[0]) select(data[0].id) }
     catch (e) { onError(e.message) }
   }
   async function select(id) {
     setTeamId(id)
     setLoading(true)
-    try { const data = await api('/admin/teams/' + id + '/analytics'); setRows(data.players || []); onError('') }
+    try { const data = await adminApi('/admin/teams/' + id + '/analytics'); setRows(data.players || []); onError('') }
     catch (e) { onError(e.message) }
     finally { setLoading(false) }
   }
