@@ -14,19 +14,14 @@ public sealed class StaffAuthorizationService
         string? deviceId = null,
         DateTimeOffset? at = null)
     {
-        if (!user.IsActive || !AdminPermissionCatalog.HasPermission(
-                new System.Security.Claims.ClaimsPrincipal(
-                    new System.Security.Claims.ClaimsIdentity(
-                    [
-                        new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, user.Role)
-                    ])),
-                permission))
+        if (!user.IsActive)
             return false;
 
         var now = at ?? DateTimeOffset.UtcNow;
 
         return assignments.Any(x =>
             x.AdminUserId == user.Id &&
+            AdminPermissionCatalog.HasPermission(x.Role, permission) &&
             x.IsActive &&
             (x.ValidFrom is null || x.ValidFrom <= now) &&
             (x.ValidTo is null || x.ValidTo >= now) &&
