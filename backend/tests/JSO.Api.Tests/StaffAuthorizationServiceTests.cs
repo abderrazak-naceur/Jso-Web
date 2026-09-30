@@ -143,3 +143,57 @@ public sealed class StaffAuthorizationServiceTests
             "Match", Guid.NewGuid().ToString(), "GATE-99", "SCANNER-99"));
     }
 }
+
+public sealed class TicketScanEvaluatorTests
+{
+    [Fact]
+    public void Returns_valid_for_confirmed_ticket_on_correct_match()
+    {
+        var matchId = Guid.NewGuid();
+        var order = new TicketOrder { MatchId = matchId, Status = "Confirmed" };
+
+        var result = TicketScanEvaluator.Evaluate(order, matchId);
+
+        Assert.Equal("Valid", result.Result);
+    }
+
+    [Fact]
+    public void Returns_wrong_match_before_ticket_status()
+    {
+        var order = new TicketOrder { MatchId = Guid.NewGuid(), Status = "CheckedIn" };
+
+        var result = TicketScanEvaluator.Evaluate(order, Guid.NewGuid());
+
+        Assert.Equal("WrongMatch", result.Result);
+    }
+
+    [Fact]
+    public void Returns_already_used_for_checked_in_ticket_on_correct_match()
+    {
+        var matchId = Guid.NewGuid();
+        var order = new TicketOrder { MatchId = matchId, Status = "CheckedIn" };
+
+        var result = TicketScanEvaluator.Evaluate(order, matchId);
+
+        Assert.Equal("AlreadyUsed", result.Result);
+    }
+
+    [Fact]
+    public void Returns_cancelled_for_cancelled_ticket()
+    {
+        var matchId = Guid.NewGuid();
+        var order = new TicketOrder { MatchId = matchId, Status = "Cancelled" };
+
+        var result = TicketScanEvaluator.Evaluate(order, matchId);
+
+        Assert.Equal("Cancelled", result.Result);
+    }
+
+    [Fact]
+    public void Returns_invalid_for_missing_ticket()
+    {
+        var result = TicketScanEvaluator.Evaluate(null, Guid.NewGuid());
+
+        Assert.Equal("Invalid", result.Result);
+    }
+}
