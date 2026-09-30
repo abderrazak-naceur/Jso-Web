@@ -19,7 +19,7 @@ public sealed class AdminTicketScanController(
 {
     [HttpPost("validate")]
     [EnableRateLimiting("ticket-scan")]
-    public async Task<IActionResult> Validate(TicketScanRequest request, CancellationToken ct)
+    public async Task<IActionResult> Validate(StaffTicketScanRequest request, CancellationToken ct)
     {
         var token = request.Token?.Trim();
         if (string.IsNullOrWhiteSpace(token))
@@ -39,7 +39,7 @@ public sealed class AdminTicketScanController(
 
     [HttpPost("check-in")]
     [EnableRateLimiting("ticket-scan")]
-    public async Task<IActionResult> CheckIn(TicketScanRequest request, CancellationToken ct)
+    public async Task<IActionResult> CheckIn(StaffTicketScanRequest request, CancellationToken ct)
     {
         var token = request.Token?.Trim();
         if (string.IsNullOrWhiteSpace(token))
@@ -83,7 +83,7 @@ public sealed class AdminTicketScanController(
 
     private async Task<(bool Allowed, IActionResult? Response)> AuthorizeScanAsync(
         TicketOrder? order,
-        TicketScanRequest request,
+        StaffTicketScanRequest request,
         string permission,
         CancellationToken ct)
     {
@@ -120,7 +120,7 @@ public sealed class AdminTicketScanController(
         string result,
         string message,
         TicketOrder? order,
-        TicketScanRequest request,
+        StaffTicketScanRequest request,
         CancellationToken ct)
     {
         var adminId = CurrentAdminId()?.ToString();
@@ -149,7 +149,7 @@ public sealed class AdminTicketScanController(
         string action,
         string result,
         TicketOrder? order,
-        TicketScanRequest request,
+        StaffTicketScanRequest request,
         CancellationToken ct)
     {
         await audit.LogAsync(
@@ -205,7 +205,7 @@ public sealed class AdminTicketScanController(
         token[..Math.Min(6, token.Length)] + "…";
 }
 
-public sealed record TicketScanRequest(
+public sealed record StaffTicketScanRequest(
     string? Token,
     Guid? MatchId,
     string? DeviceId,
