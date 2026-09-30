@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Pencil, X, Save } from 'lucide-react'
+import Field from '../components/Field'
 import { adminApi } from '../api'
 import { emptyProduct } from '../constants'
 export default function ShopModule({ onError }) {
