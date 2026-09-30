@@ -95,10 +95,10 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
       if (!mounted) return;
       setState(() {
         _matches = items;
-        _configurationRequired = items.isNotEmpty && _matchId == null;
         if (_matchId != null && !items.any((match) => match.id == _matchId)) {
           _matchId = null;
         }
+        _configurationRequired = items.isNotEmpty && _matchId == null;
       });
     } on ApiException {
       // Match configuration is best-effort; scanning can still be configured manually.
@@ -165,8 +165,6 @@ class _StaffScannerScreenState extends State<StaffScannerScreen> {
       if (mounted) setState(() => _busy = false);
     }
   }
-
-
 
   Future<void> _persistValue(String key, String? value) async {
     if (value == null || value.isEmpty) {
@@ -472,7 +470,10 @@ class _ScannerContextCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ready = !configurationRequired && match != null && gateId != null && deviceId != null;
+    final ready = !configurationRequired &&
+        match != null &&
+        gateId != null &&
+        deviceId != null;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(JsoSpacing.md),
@@ -499,9 +500,11 @@ class _ScannerContextCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: JsoSpacing.sm),
-            Text(match == null
-                ? 'Partita: non selezionata'
-                : 'Partita: ${match!.opponentName}'),
+            Text(
+              match == null
+                  ? 'Partita: non selezionata'
+                  : 'Partita: ${match!.opponentName}',
+            ),
             Text('Gate: ${gateId ?? 'non configurato'}'),
             Text('Device: ${deviceId ?? 'non configurato'}'),
             if (!ready) ...[
