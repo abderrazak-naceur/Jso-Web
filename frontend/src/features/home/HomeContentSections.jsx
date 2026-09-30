@@ -12,11 +12,9 @@ import {
   MapPin,
   ShoppingBag,
   Smartphone,
-  Sprout,
 } from 'lucide-react'
 import { formatDate, formatMoney, formatTime, pick } from '../../lib/format'
 import { CLUB_FOUNDED, CLUB_NAME } from '../site/brand'
-import { eyebrowText } from '../site/navigation'
 import SectionHeading from './SectionHeading'
 import { SectionError, SectionLoading } from './SectionState'
 
