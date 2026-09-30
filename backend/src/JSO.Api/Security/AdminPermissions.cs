@@ -6,6 +6,7 @@ public static class AdminPermissions
 {
     public const string DashboardView = "dashboard:view";
     public const string TicketsManage = "tickets:manage";
+    public const string TicketsAdmin = "tickets:admin";
     public const string TicketsValidate = "tickets:validate";
     public const string TicketsCheckIn = "tickets:checkin";
     public const string TicketsReports = "tickets:reports";
@@ -24,7 +25,7 @@ public static class AdminPermissions
 
     public static readonly IReadOnlyList<string> All =
     [
-        DashboardView, TicketsManage, TicketsValidate, TicketsCheckIn, TicketsReports,
+        DashboardView, TicketsManage, TicketsAdmin, TicketsValidate, TicketsCheckIn, TicketsReports,
         MembershipsManage, FinanceView, ShopManage, OrdersManage, MatchesManage,
         ContentNews, ContentMedia, ContentManage, CommunityModerate, ClubManage,
         SecurityManage, SystemManage
@@ -39,7 +40,7 @@ public static class AdminPermissionCatalog
             ["SuperAdmin"] = AdminPermissions.All.ToArray(),
             ["ClubAdmin"] =
             [
-                AdminPermissions.DashboardView, AdminPermissions.TicketsManage,
+                AdminPermissions.DashboardView, AdminPermissions.TicketsManage, AdminPermissions.TicketsAdmin,
                 AdminPermissions.TicketsValidate, AdminPermissions.TicketsCheckIn,
                 AdminPermissions.TicketsReports, AdminPermissions.MembershipsManage,
                 AdminPermissions.FinanceView, AdminPermissions.ShopManage,
@@ -50,7 +51,7 @@ public static class AdminPermissionCatalog
             ],
             ["MatchManager"] =
             [
-                AdminPermissions.DashboardView, AdminPermissions.TicketsManage,
+                AdminPermissions.DashboardView, AdminPermissions.TicketsManage, AdminPermissions.TicketsAdmin,
                 AdminPermissions.TicketsValidate, AdminPermissions.TicketsCheckIn,
                 AdminPermissions.TicketsReports, AdminPermissions.MatchesManage
             ],
@@ -60,7 +61,7 @@ public static class AdminPermissionCatalog
             ["CommunityManager"] = [AdminPermissions.DashboardView, AdminPermissions.CommunityModerate],
             ["TicketSeller"] = [AdminPermissions.DashboardView, AdminPermissions.TicketsManage, AdminPermissions.TicketsReports],
             ["TicketValidator"] = [AdminPermissions.DashboardView, AdminPermissions.TicketsValidate, AdminPermissions.TicketsCheckIn],
-            ["TicketSupervisor"] = [AdminPermissions.DashboardView, AdminPermissions.TicketsManage, AdminPermissions.TicketsValidate, AdminPermissions.TicketsCheckIn, AdminPermissions.TicketsReports],
+            ["TicketSupervisor"] = [AdminPermissions.DashboardView, AdminPermissions.TicketsManage, AdminPermissions.TicketsAdmin, AdminPermissions.TicketsValidate, AdminPermissions.TicketsCheckIn, AdminPermissions.TicketsReports],
             ["SeasonManager"] = [AdminPermissions.DashboardView, AdminPermissions.MembershipsManage, AdminPermissions.TicketsReports]
         };
 
