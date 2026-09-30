@@ -123,7 +123,7 @@ public sealed class AdminTicketScanController(
             .Where(x => x.ScopeType.Equals("Match", StringComparison.OrdinalIgnoreCase))
             .Select(x => x.ScopeId)
             .Where(x => Guid.TryParse(x, out _))
-            .Select(Guid.Parse)
+            .Select(x => Guid.Parse(x!))
             .ToHashSet();
 
         var query = db.Matches.AsNoTracking()
@@ -202,13 +202,13 @@ public sealed class AdminTicketScanController(
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(x => x.Status, "CheckedIn")
                 .SetProperty(x => x.CheckedInAt, checkedInAt)
-                .SetProperty(x => x.CheckedInByAdminId, adminId), ct);
+                .SetProperty(x => x.CheckedInByAdminId, adminId!.Value.ToString()), ct);
 
         if (affected == 1)
         {
-            order.Status = "CheckedIn";
+            order!.Status = "CheckedIn";
             order.CheckedInAt = checkedInAt;
-            order.CheckedInByAdminId = adminId;
+            order.CheckedInByAdminId = adminId?.ToString();
             return await FinishAsync("Valid", preMessage, order, request, ct);
         }
 
