@@ -48,6 +48,20 @@ class AdminTicketsRepository {
     return TicketScanResult.fromJson(_asMap(json));
   }
 
+  Future<List<ScannerMatch>> matches({
+    required String adminToken,
+  }) async {
+    final json = await _client.getJson(
+      '/admin/tickets/scan/matches',
+      bearerToken: adminToken,
+    );
+    final list = json is List ? json : const <dynamic>[];
+    return list
+        .whereType<Map>()
+        .map((e) => ScannerMatch.fromJson(Map<String, dynamic>.from(e)))
+        .toList(growable: false);
+  }
+
   Future<ScannerConfiguration> configuration({
     required String adminToken,
   }) async {
@@ -171,5 +185,31 @@ class ScannerDevice {
         deviceCode: '${json['deviceCode'] ?? ''}',
         name: '${json['name'] ?? ''}',
         gateId: json['gateId']?.toString(),
+      );
+}
+class ScannerMatch {
+  const ScannerMatch({
+    required this.id,
+    required this.kickoffAt,
+    required this.opponentName,
+    this.venue,
+    required this.isHome,
+    required this.status,
+  });
+
+  final String id;
+  final DateTime kickoffAt;
+  final String opponentName;
+  final String? venue;
+  final bool isHome;
+  final String status;
+
+  factory ScannerMatch.fromJson(Map<String, dynamic> json) => ScannerMatch(
+        id: '${json['id'] ?? ''}',
+        kickoffAt: DateTime.tryParse('${json['kickoffAt'] ?? ''}') ?? DateTime.fromMillisecondsSinceEpoch(0),
+        opponentName: '${json['opponentName'] ?? ''}',
+        venue: json['venue']?.toString(),
+        isHome: json['isHome'] == true,
+        status: '${json['status'] ?? ''}',
       );
 }
