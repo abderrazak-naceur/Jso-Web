@@ -38,6 +38,8 @@ jobs:
           dotnet-version: 10.0.x
       - run: dotnet restore backend/src/JSO.Api/JSO.Api.csproj
       - run: dotnet build backend/src/JSO.Api/JSO.Api.csproj --configuration Release --no-restore
+      - name: Run backend unit tests
+        run: dotnet test backend/tests/JSO.Api.Tests/JSO.Api.Tests.csproj --configuration Release --no-restore
 
   postgres-ef:
     name: PostgreSQL EF validation
