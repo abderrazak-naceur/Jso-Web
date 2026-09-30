@@ -346,7 +346,7 @@ jobs:
           expired_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/security/staff-assignments \
             -H "Authorization: Bearer $token" \
             -H 'Content-Type: application/json' \
-            -d "$(jq -nc --arg adminId "$admin_id" --arg matchId "$match_id" --arg gateCode "$gate_code" --arg deviceCode "$device_code"               '{adminUserId:$adminId,role:"TicketValidator",scopeType:"Match",scopeId:$matchId,gateId:$gateCode,deviceId:$deviceCode,isActive:true,validTo:"2020-01-01T00:00:00Z"}')")
+            -d "$(jq -nc --arg adminId "$admin_id" --arg matchId "$match_id" --arg gateCode "$gate_code" --arg deviceCode "$device_code"               '{adminUserId:$adminId,role:"TicketValidator",scopeType:"Match",scopeId:$matchId,gateId:$gateCode,deviceId:$deviceCode,isActive:true,validFrom:"2019-01-01T00:00:00Z",validTo:"2020-01-01T00:00:00Z"}')")
           expired_assignment_id=$(jq -r '.id // empty' <<< "$expired_response")
           test -n "$expired_assignment_id"
           expired_status=$(curl -sS -o /dev/null -w '%{http_code}' \
