@@ -6,7 +6,7 @@ namespace JSO.Api.Controllers;
 
 [ApiController]
 [Route("api/matches")]
-public sealed class PublicMatchDetailsController(JsoDbContext db) : ControllerBase
+public sealed class PublicMatchDetailsController(JsoDbContext db, ContentTranslationService translations) : ControllerBase
 {
     [HttpGet("{id:guid}/lineup")]
     public async Task<IActionResult> GetLineup(Guid id, CancellationToken ct)
