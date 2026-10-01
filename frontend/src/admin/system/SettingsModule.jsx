@@ -3,7 +3,7 @@ import { Save, LayoutTemplate } from 'lucide-react'
 import Field from '../components/Field'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../../lib/apiConfig'
 import HomepageBuilderModule from '../HomepageBuilder'
-export default function SettingsModule() {
+export default function SettingsModule({ onError = () => {} }) {
   const [value, setValue] = useState(getConfiguredApiBaseUrl())
   const [active, setActive] = useState(API_BASE_URL)
   const [saved, setSaved] = useState(false)
@@ -63,7 +63,7 @@ export default function SettingsModule() {
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-jso-blue/10 text-jso-blue"><LayoutTemplate size={20}/></div>
         <div><h2 className="text-xl font-black">Sections de la page d’accueil</h2><p className="mt-1 text-sm text-slate-500">Configurez l’ordre, la publication, la visibilité et le menu/pied de page de la page d’accueil.</p></div>
       </div>
-      <div className="mt-6"><HomepageBuilderModule onError={() => {}} /></div>
+      <div className="mt-6"><HomepageBuilderModule onError={onError} /></div>
     </div>
   </div>
 }
