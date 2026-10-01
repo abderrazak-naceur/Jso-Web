@@ -6,6 +6,12 @@ export const SUPPORTED_LANGUAGES = [
 ]
 
 const fr = {
+  'common.mainNavigation': 'Navigation principale',
+  'common.footerNavigation': 'Navigation de pied de page',
+  'common.externalLink': 'ouvre dans un nouvel onglet',
+  'common.copyLink': 'Copier le lien',
+  'common.emailPlaceholder': 'votre@email.com',
+  'common.officialSite': 'Le site officiel de la JSO Oudhref.',
   'common.loading': 'Chargement…',
   'common.home': 'Accueil',
   'common.more': 'Plus',
@@ -41,6 +47,12 @@ const fr = {
 }
 
 const en = {
+  'common.mainNavigation': 'Main navigation',
+  'common.footerNavigation': 'Footer navigation',
+  'common.externalLink': 'opens in a new tab',
+  'common.copyLink': 'Copy link',
+  'common.emailPlaceholder': 'your@email.com',
+  'common.officialSite': 'The official JSO Oudhref website.',
   'common.loading': 'Loading…',
   'common.home': 'Home',
   'common.more': 'More',
@@ -76,6 +88,12 @@ const en = {
 }
 
 const it = {
+  'common.mainNavigation': 'Navigazione principale',
+  'common.footerNavigation': 'Navigazione del footer',
+  'common.externalLink': 'apre in una nuova scheda',
+  'common.copyLink': 'Copia il link',
+  'common.emailPlaceholder': 'tua@email.com',
+  'common.officialSite': 'Il sito ufficiale della JSO Oudhref.',
   'common.loading': 'Caricamento…',
   'common.home': 'Home',
   'common.more': 'Altro',
@@ -111,6 +129,12 @@ const it = {
 }
 
 const ar = {
+  'common.mainNavigation': 'التنقل الرئيسي',
+  'common.footerNavigation': 'تنقل التذييل',
+  'common.externalLink': 'يفتح في علامة تبويب جديدة',
+  'common.copyLink': 'نسخ الرابط',
+  'common.emailPlaceholder': 'بريدك@example.com',
+  'common.officialSite': 'الموقع الرسمي لـ JSO Oudhref.',
   'common.loading': 'جارٍ التحميل…',
   'common.home': 'الرئيسية',
   'common.more': 'المزيد',
