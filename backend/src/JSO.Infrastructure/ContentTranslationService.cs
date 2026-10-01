@@ -87,6 +87,44 @@ public sealed class ContentTranslationService(JsoDbContext db)
             .ToDictionary(x => x.Key, x => x.Last().Value, StringComparer.OrdinalIgnoreCase);
     }
 
+    
+    public async Task<IReadOnlyDictionary<string, string>> LoadNamedAsync(
+        string entityType,
+        IEnumerable<string> entityKeys,
+        string field,
+        string language,
+        CancellationToken ct)
+    {
+        var keys = entityKeys.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        if (keys.Length == 0) return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var requested = NormalizeLanguage(language);
+        var storageKeys = keys
+            .SelectMany(key => new[]
+            {
+                Key(entityType, key, requested, field),
+                Key(entityType, key, DefaultLanguage, field)
+            })
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var rows = await db.SiteContents.AsNoTracking()
+            .Where(x => storageKeys.Contains(x.Key))
+            .ToListAsync(ct);
+
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entityKey in keys)
+        {
+            var requestedKey = Key(entityType, entityKey, requested, field);
+            var frenchKey = Key(entityType, entityKey, DefaultLanguage, field);
+            var value = rows.FirstOrDefault(x => string.Equals(x.Key, requestedKey, StringComparison.OrdinalIgnoreCase))?.Value;
+            value ??= rows.FirstOrDefault(x => string.Equals(x.Key, frenchKey, StringComparison.OrdinalIgnoreCase))?.Value;
+            if (!string.IsNullOrWhiteSpace(value))
+                result[entityKey] = value;
+        }
+
+        return result;
+    }
+
     public static string ResolveFromMap(
         IReadOnlyDictionary<string, string> translations,
         string entityType,
