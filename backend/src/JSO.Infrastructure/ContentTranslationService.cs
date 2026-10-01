@@ -70,8 +70,7 @@ public sealed class ContentTranslationService(JsoDbContext db)
         var fieldSet = fields.Select(x => x.Trim().ToLowerInvariant()).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var prefix = $"i18n:{entityType}:";
         var rows = await db.SiteContents.AsNoTracking()
-            .Where(x => x.Key.StartsWith(prefix)
-                        && (x.Key.Contains($":{requested}:") || x.Key.Contains($":{DefaultLanguage}:")))
+            .Where(x => x.Key.StartsWith(prefix))
             .ToListAsync(ct);
 
         var idSet = ids.Select(x => x.ToString()).ToHashSet(StringComparer.OrdinalIgnoreCase);
