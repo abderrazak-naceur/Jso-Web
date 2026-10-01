@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CreditCard, Eye, EyeOff, LogOut, Menu, Newspaper, ShoppingBag, Ticket, Trophy, Users, X } from 'lucide-react'
+import { CreditCard, LogOut, Menu, Newspaper, ShoppingBag, Ticket, Trophy, Users, X } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
@@ -174,29 +174,6 @@ function AdminDashboard({ user, onLogout }) {
 // (Billetterie / Abonnements / Boutique), quick on/off toggles for the public
 // home sections, plus today's activity and the recent audit feed.
 function DashboardStats({ stats }) {
-  const [sections, setSections] = useState([])
-  const [toggleError, setToggleError] = useState('')
-
-  useEffect(() => {
-    let active = true
-    adminApi('/admin/home-visibility')
-      .then((v) => { if (active) setSections(v) })
-      .catch(() => { if (active) setSections([]) })
-    return () => { active = false }
-  }, [])
-
-  async function toggleSection(id) {
-    const next = sections.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
-    setSections(next)
-    try {
-      await adminApi('/admin/home-visibility', { method: 'PUT', body: JSON.stringify({ hidden: next.filter((s) => !s.enabled).map((s) => s.id) }) })
-      setToggleError('')
-    } catch (e) {
-      setToggleError(e.message)
-      try { setSections(await adminApi('/admin/home-visibility')) } catch { /* keep optimistic state */ }
-    }
-  }
-
   if (!stats) return <div className="rounded-[1.5rem] bg-white p-8 text-slate-500">Chargement du dashboard…</div>
 
   const sales = stats.sales || { enabled: false, currency: 'TND', revenue: 0, orders: 0, activeProducts: 0, productsSold: 0 }
@@ -248,23 +225,6 @@ function DashboardStats({ stats }) {
         ))}
       </div>
     </div>
-
-    {/* Home section quick toggles */}
-    {sections.length > 0 && (
-      <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-black">Sections de la page d’accueil</h2>
-        <p className="mt-1 text-sm text-slate-500">Activez ou masquez chaque section du site public.</p>
-        {toggleError && <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{toggleError}</p>}
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          {sections.map((s) => (
-            <button key={s.id} type="button" onClick={() => toggleSection(s.id)} aria-pressed={s.enabled} className={'flex items-center justify-between rounded-xl border p-3 text-left transition ' + (s.enabled ? 'border-jso-blue/40 bg-jso-blue/5' : 'border-slate-200 bg-slate-50')}>
-              <span className="flex items-center gap-2 font-bold text-jso-ink">{s.enabled ? <Eye size={16} className="text-jso-blue"/> : <EyeOff size={16} className="text-slate-400"/>}{s.label}</span>
-              <span className={'relative h-6 w-11 shrink-0 rounded-full transition ' + (s.enabled ? 'bg-jso-blue' : 'bg-slate-300')}><span className={'absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ' + (s.enabled ? 'left-[22px]' : 'left-0.5')} /></span>
-            </button>
-          ))}
-        </div>
-      </div>
-    )}
 
     {/* Club figures */}
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
