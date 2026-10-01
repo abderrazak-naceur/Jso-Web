@@ -54,38 +54,58 @@ public sealed class ApiUsageMiddleware(RequestDelegate next, ILogger<ApiUsageMid
         {
             using var scope = scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<JsoDbContext>();
+            var provider = db.Database.ProviderName ?? string.Empty;
 
-            // Try an atomic in-database increment first (single round-trip and
-            // safe under concurrency). If the row does not exist yet we insert
-            // it and retry the update once on the rare insert race.
-            for (var attempt = 0; attempt < 2; attempt++)
+            // Use a native atomic upsert for the provider used in production.
+            // This avoids the expected-but-noisy duplicate-key race that can
+            // occur when several requests create the first counter row at once.
+            if (provider.Contains("Npgsql", StringComparison.OrdinalIgnoreCase))
             {
-                var updated = await db.ApiUsageDaily
-                    .Where(x => x.Date == day && x.RouteGroup == routeGroup && x.StatusClass == statusClass)
-                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.Count, x => x.Count + 1), ct);
-
-                if (updated > 0)
-                    return;
-
-                try
-                {
-                    db.ApiUsageDaily.Add(new ApiUsageDaily
-                    {
-                        Date = day,
-                        RouteGroup = routeGroup,
-                        StatusClass = statusClass,
-                        Count = 1
-                    });
-                    await db.SaveChangesAsync(ct);
-                    return;
-                }
-                catch (DbUpdateException)
-                {
-                    // Another request inserted the same key concurrently; clear
-                    // the pending add and loop to increment the existing row.
-                    db.ChangeTracker.Clear();
-                }
+                await db.Database.ExecuteSqlInterpolatedAsync($"""
+                    INSERT INTO "ApiUsageDaily" ("Id", "Date", "RouteGroup", "StatusClass", "Count")
+                    VALUES ({Guid.NewGuid()}, {day}, {routeGroup}, {statusClass}, 1)
+                    ON CONFLICT ("Date", "RouteGroup", "StatusClass")
+                    DO UPDATE SET "Count" = "ApiUsageDaily"."Count" + 1;
+                    """, ct);
+                return;
             }
+
+            if (provider.Contains("SqlServer", StringComparison.OrdinalIgnoreCase))
+            {
+                await using var transaction = await db.Database.BeginTransactionAsync(ct);
+                await db.Database.ExecuteSqlInterpolatedAsync($"""
+                    UPDATE [ApiUsageDaily] WITH (UPDLOCK, HOLDLOCK)
+                    SET [Count] = [Count] + 1
+                    WHERE [Date] = {day}
+                      AND [RouteGroup] = {routeGroup}
+                      AND [StatusClass] = {statusClass};
+
+                    IF @@ROWCOUNT = 0
+                    BEGIN
+                        INSERT INTO [ApiUsageDaily] ([Id], [Date], [RouteGroup], [StatusClass], [Count])
+                        VALUES ({Guid.NewGuid()}, {day}, {routeGroup}, {statusClass}, 1);
+                    END
+                    """, ct);
+                await transaction.CommitAsync(ct);
+                return;
+            }
+
+            // Portable fallback for providers not explicitly supported above.
+            var updated = await db.ApiUsageDaily
+                .Where(x => x.Date == day && x.RouteGroup == routeGroup && x.StatusClass == statusClass)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Count, x => x.Count + 1), ct);
+
+            if (updated > 0)
+                return;
+
+            db.ApiUsageDaily.Add(new ApiUsageDaily
+            {
+                Date = day,
+                RouteGroup = routeGroup,
+                StatusClass = statusClass,
+                Count = 1
+            });
+            await db.SaveChangesAsync(ct);
         }
         catch (Exception ex)
         {
