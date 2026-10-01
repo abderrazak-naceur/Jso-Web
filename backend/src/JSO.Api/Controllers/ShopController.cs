@@ -19,7 +19,7 @@ public sealed class ShopController(JsoDbContext db, ContentTranslationService tr
         var entities = await query
             .OrderBy(x => x.Category).ThenBy(x => x.Name)
             .ToListAsync(ct);
-        var language = ContentTranslationService.GetRequestLanguage(Request);
+        var language = RequestLanguage.Get(Request);
         var map = await translations.LoadAsync("Product", entities.Select(x => x.Id), ["name", "description", "category"], language, ct);
         var products = entities.Select(x => new
         {
@@ -46,7 +46,7 @@ public sealed class ShopController(JsoDbContext db, ContentTranslationService tr
             .SingleOrDefaultAsync(ct);
 
         if (product is null) return NotFound();
-        var language = ContentTranslationService.GetRequestLanguage(Request);
+        var language = RequestLanguage.Get(Request);
         var map = await translations.LoadAsync("Product", [product.Id], ["name", "description", "category"], language, ct);
         return Ok(new
         {
