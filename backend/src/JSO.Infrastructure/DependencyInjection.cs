@@ -33,9 +33,11 @@ public static class DependencyInjection
                         postgresBuilder.Host = renderInternalHost;
                         postgresBuilder.SslMode = Npgsql.SslMode.Disable;
                     }
-                    else
+                    else if (postgresBuilder.SslMode == Npgsql.SslMode.Prefer &&
+                             string.Equals(configuration["ASPNETCORE_ENVIRONMENT"], "Production", StringComparison.OrdinalIgnoreCase))
                     {
-                        // External Postgres connections require TLS.
+                        // External production connections default to TLS, while an
+                        // explicit Ssl Mode in the connection string remains authoritative.
                         postgresBuilder.SslMode = Npgsql.SslMode.Require;
                     }
 
