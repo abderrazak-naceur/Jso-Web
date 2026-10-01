@@ -290,3 +290,30 @@ html.jso-reduce-motion *::after {
   transition-duration: 0.001ms !important;
   scroll-behavior: auto !important;
 }
+
+
+/* ==========================================================================
+   Multilingual RTL hardening
+   Arabic uses document-level direction plus these targeted logical overrides.
+   Keep the existing layout structure and only neutralise common LTR utilities.
+   ========================================================================== */
+html[dir="rtl"] .text-left { text-align: right !important; }
+html[dir="rtl"] .text-right { text-align: left !important; }
+html[dir="rtl"] .ml-auto { margin-left: 0 !important; margin-right: auto !important; }
+html[dir="rtl"] .mr-1 { margin-right: 0 !important; margin-left: 0.25rem !important; }
+html[dir="rtl"] .mr-2 { margin-right: 0 !important; margin-left: 0.5rem !important; }
+html[dir="rtl"] .mr-3 { margin-right: 0 !important; margin-left: 0.75rem !important; }
+html[dir="rtl"] .mr-4 { margin-right: 0 !important; margin-left: 1rem !important; }
+html[dir="rtl"] .ml-1 { margin-left: 0 !important; margin-right: 0.25rem !important; }
+html[dir="rtl"] .ml-2 { margin-left: 0 !important; margin-right: 0.5rem !important; }
+html[dir="rtl"] .ml-3 { margin-left: 0 !important; margin-right: 0.75rem !important; }
+html[dir="rtl"] .ml-4 { margin-left: 0 !important; margin-right: 1rem !important; }
+html[dir="rtl"] .ml-8 { margin-left: 0 !important; margin-right: 2rem !important; }
+html[dir="rtl"] .jso-skip-link {
+  left: auto;
+  right: 0.75rem;
+}
+html[dir="rtl"] .jso-a11y-launcher {
+  left: auto;
+  right: 1.25rem;
+}
