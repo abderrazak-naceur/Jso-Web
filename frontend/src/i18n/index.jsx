@@ -227,7 +227,7 @@ function updateSeo(language, t) {
   const pathname = window.location.pathname
   if (pathname.startsWith('/admin')) return
 
-  const normalizedPath = pathname === '/' ? '/' : pathname.replace(/\\/+$/, '')
+  const normalizedPath = pathname === '/' ? '/' : pathname.replace(/\/+$/, '')
   const kind = normalizedPath === '/billetterie'
     ? 'tickets'
     : normalizedPath === '/actualites' || normalizedPath.startsWith('/actualites/')
