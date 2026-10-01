@@ -6,26 +6,26 @@ namespace JSO.Api.Controllers;
 
 [ApiController]
 [Route("api/teams")]
-public sealed class TeamsController(JsoDbContext db) : ControllerBase
+public sealed class TeamsController(JsoDbContext db, ContentTranslationService translations) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetTeams(CancellationToken ct)
     {
-        var teams = await db.Teams.AsNoTracking()
+        var entities = await db.Teams.AsNoTracking()
             .Where(x => x.IsActive)
             .OrderBy(x => x.Category)
             .ThenBy(x => x.Name)
-            .Select(x => new
-            {
-                x.Id,
-                x.Name,
-                x.Category,
-                x.IsActive,
-                PlayersCount = db.Players.Count(p => p.TeamId == x.Id && p.IsActive)
-            })
             .ToListAsync(ct);
-
-        return Ok(teams);
+        var language = RequestLanguage.Get(Request);
+        var map = await translations.LoadAsync("Team", entities.Select(x => x.Id), ["name", "category"], language, ct);
+        return Ok(entities.Select(x => new
+        {
+            x.Id,
+            Name = ContentTranslationService.ResolveFromMap(map, "Team", x.Id, "name", x.Name, language),
+            Category = ContentTranslationService.ResolveFromMap(map, "Team", x.Id, "category", x.Category, language),
+            x.IsActive,
+            PlayersCount = db.Players.Count(p => p.TeamId == x.Id && p.IsActive)
+        }));
     }
 
     [HttpGet("{id:guid}/players")]
