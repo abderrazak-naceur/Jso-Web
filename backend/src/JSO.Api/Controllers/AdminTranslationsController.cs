@@ -14,18 +14,30 @@ public sealed class AdminTranslationsController(JsoDbContext db, AuditService au
     [HttpGet]
     public async Task<IActionResult> Get([FromQuery] string? entityType, [FromQuery] Guid? entityId, [FromQuery] string? language, CancellationToken ct)
     {
-        var query = db.SiteContents.AsNoTracking().Where(x => x.Key.StartsWith("i18n:"));
+        var rows = await db.SiteContents.AsNoTracking()
+            .Where(x => x.Key.StartsWith("i18n:"))
+            .OrderBy(x => x.Key)
+            .ToListAsync(ct);
 
-        if (!string.IsNullOrWhiteSpace(entityType))
-            query = query.Where(x => x.Key.StartsWith("i18n:" + entityType.Trim() + ":", StringComparison.OrdinalIgnoreCase));
+        var normalizedType = entityType?.Trim();
+        var normalizedLanguage = string.IsNullOrWhiteSpace(language)
+            ? null
+            : ContentTranslationService.NormalizeLanguage(language);
+        var idText = entityId?.ToString();
 
-        if (entityId.HasValue)
-            query = query.Where(x => x.Key.Contains(":" + entityId.Value + ":", StringComparison.OrdinalIgnoreCase));
+        rows = rows.Where(x =>
+        {
+            var parts = x.Key.Split(':', 5);
+            if (parts.Length != 5) return false;
+            if (!string.IsNullOrWhiteSpace(normalizedType)
+                && !string.Equals(parts[1], normalizedType, StringComparison.OrdinalIgnoreCase)) return false;
+            if (!string.IsNullOrWhiteSpace(idText)
+                && !string.Equals(parts[2], idText, StringComparison.OrdinalIgnoreCase)) return false;
+            if (!string.IsNullOrWhiteSpace(normalizedLanguage)
+                && !string.Equals(parts[3], normalizedLanguage, StringComparison.OrdinalIgnoreCase)) return false;
+            return true;
+        }).ToList();
 
-        if (!string.IsNullOrWhiteSpace(language))
-            query = query.Where(x => x.Key.Contains(":" + ContentTranslationService.NormalizeLanguage(language) + ":", StringComparison.OrdinalIgnoreCase));
-
-        var rows = await query.OrderBy(x => x.Key).ToListAsync(ct);
         return Ok(rows.Select(x => new { x.Id, x.Key, x.Value, x.UpdatedAt, x.UpdatedBy }));
     }
 
