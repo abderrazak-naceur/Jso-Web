@@ -13,7 +13,7 @@ Supported public languages:
 ### Phase 1 — i18n foundation
 - [x] I18N-001 — Create multilingual architecture and language inventory.
 - [x] I18N-002 — Add lightweight React i18n provider and translation dictionaries.
-- [x] I18N-003 — Persist selected language in localStorage and use browser language as initial fallback.
+- [x] I18N-003 — Persist selected language in localStorage with French as the default.
 - [x] I18N-004 — Add public language selector to the header.
 - [x] I18N-005 — Set document `lang`, `dir`, and `data-language`; Arabic uses RTL.
 
