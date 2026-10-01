@@ -15,6 +15,25 @@ using System.Threading.RateLimiting;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
+
+var dataProtectionKeysPath = builder.Configuration["DataProtection:KeysPath"];
+var dataProtection = builder.Services
+    .AddDataProtection()
+    .SetApplicationName("JSO.Api");
+
+if (string.IsNullOrWhiteSpace(dataProtectionKeysPath))
+{
+    // Render's current free container has no persistent disk configured.
+    // The application uses JWT authentication, so no persistent DataProtection
+    // payload is required today. Make that lifecycle explicit instead of
+    // silently generating keys that disappear on container replacement.
+    dataProtection.UseEphemeralDataProtectionProvider();
+}
+else
+{
+    Directory.CreateDirectory(dataProtectionKeysPath);
+    dataProtection.PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath));
+}
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuditService>();
 builder.Services.AddScoped<StaffAuthorizationService>();
