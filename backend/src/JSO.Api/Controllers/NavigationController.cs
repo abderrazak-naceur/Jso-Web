@@ -11,7 +11,7 @@ namespace JSO.Api.Controllers;
 // clients can fall back to their default menu.
 [ApiController]
 [Route("api/navigation")]
-public sealed class NavigationController(JsoDbContext db) : ControllerBase
+public sealed class NavigationController(JsoDbContext db, ContentTranslationService translations) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> Get([FromQuery] string? position, CancellationToken ct)
@@ -24,19 +24,16 @@ public sealed class NavigationController(JsoDbContext db) : ControllerBase
             query = query.Where(x => x.Position == p);
         }
 
-        var items = await query
+        var entities = await query
             .OrderBy(x => x.DisplayOrder).ThenBy(x => x.Label)
-            .Select(x => new
-            {
-                x.Id,
-                x.Label,
-                x.Url,
-                x.Position,
-                x.DisplayOrder,
-                x.OpensInNewTab
-            })
             .ToListAsync(ct);
-
-        return Ok(items);
+        var language = ContentTranslationService.GetRequestLanguage(Request);
+        var map = await translations.LoadAsync("NavigationItem", entities.Select(x => x.Id), ["label"], language, ct);
+        return Ok(entities.Select(x => new
+        {
+            x.Id,
+            Label = ContentTranslationService.ResolveFromMap(map, "NavigationItem", x.Id, "label", x.Label, language),
+            x.Url, x.Position, x.DisplayOrder, x.OpensInNewTab
+        }));
     }
 }
