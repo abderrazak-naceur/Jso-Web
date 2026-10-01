@@ -1,4 +1,5 @@
 name: Normalize player portraits
+# Generates a canonical PNG copy while keeping the original WebP as source.
 
 on:
   push:
