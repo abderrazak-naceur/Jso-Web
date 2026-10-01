@@ -36,7 +36,7 @@ public sealed class HomeController(JsoDbContext db, ContentTranslationService tr
             .Take(3)
             .ToListAsync(ct);
 
-        var language = ContentTranslationService.GetRequestLanguage(Request);
+        var language = RequestLanguage.Get(Request);
         if (club is not null)
             club.Description = await translations.ResolveAsync("Club", club.Id, "description", club.Description, language, ct);
 
