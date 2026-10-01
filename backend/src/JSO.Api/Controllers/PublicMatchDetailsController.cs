@@ -60,15 +60,17 @@ public sealed class PublicMatchDetailsController(JsoDbContext db, ContentTransla
         if (match is null) return NotFound();
 
         var forecast = await weather.TryGetForecastAsync(match.KickoffAt, ct);
+        var language = RequestLanguage.Get(Request);
+        var map = await translations.LoadAsync("Match", [match.Id], ["opponentname", "venue", "status"], language, ct);
 
         return Ok(new
         {
             match.Id,
-            match.OpponentName,
+            OpponentName = ContentTranslationService.ResolveFromMap(map, "Match", match.Id, "opponentname", match.OpponentName, language),
             match.KickoffAt,
-            match.Venue,
+            Venue = ContentTranslationService.ResolveFromMap(map, "Match", match.Id, "venue", match.Venue, language),
             match.IsHome,
-            match.Status,
+            Status = ContentTranslationService.ResolveFromMap(map, "Match", match.Id, "status", match.Status, language),
             Weather = forecast
         });
     }
