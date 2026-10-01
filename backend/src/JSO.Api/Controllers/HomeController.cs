@@ -48,8 +48,15 @@ public sealed class HomeController(JsoDbContext db, ContentTranslationService tr
             article.Body = ContentTranslationService.ResolveFromMap(articleMap, "Article", article.Id, "body", article.Body, language);
         }
 
-        var content = await db.SiteContents.AsNoTracking()
+        var contentRows = await db.SiteContents.AsNoTracking()
+            .Where(x => !x.Key.StartsWith("i18n:"))
             .ToDictionaryAsync(x => x.Key, x => x.Value, ct);
+        var contentTranslations = await translations.LoadNamedAsync("SiteContent", contentRows.Keys, "value", language, ct);
+        foreach (var key in contentRows.Keys.ToArray())
+        {
+            if (contentTranslations.TryGetValue(key, out var translated) && !string.IsNullOrWhiteSpace(translated))
+                contentRows[key] = translated;
+        }
 
         return Ok(new
         {
@@ -57,7 +64,7 @@ public sealed class HomeController(JsoDbContext db, ContentTranslationService tr
             nextMatch,
             recentMatches,
             news,
-            content
+            content = contentRows
         });
     }
 }
