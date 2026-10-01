@@ -15,7 +15,7 @@ public sealed class PublicController(JsoDbContext db, ContentTranslationService 
             .SingleOrDefaultAsync(x => x.ShortName == "JSO", ct);
 
         if (club is null) return NotFound();
-        var language = ContentTranslationService.GetRequestLanguage(Request);
+        var language = RequestLanguage.Get(Request);
         club.Description = await translations.ResolveAsync("Club", club.Id, "description", club.Description, language, ct);
         return Ok(club);
     }
@@ -47,7 +47,7 @@ public sealed class PublicController(JsoDbContext db, ContentTranslationService 
         if (page is null)
         {
             var recent = await query.Take(20).ToListAsync(ct);
-            await LocalizeArticles(recent, ContentTranslationService.GetRequestLanguage(Request), ct);
+            await LocalizeArticles(recent, RequestLanguage.Get(Request), ct);
             return Ok(recent);
         }
 
@@ -58,7 +58,7 @@ public sealed class PublicController(JsoDbContext db, ContentTranslationService 
             .Skip((currentPage - 1) * size)
             .Take(size)
             .ToListAsync(ct);
-        await LocalizeArticles(items, ContentTranslationService.GetRequestLanguage(Request), ct);
+        await LocalizeArticles(items, RequestLanguage.Get(Request), ct);
 
         return Ok(new { items, page = currentPage, pageSize = size, total });
     }
