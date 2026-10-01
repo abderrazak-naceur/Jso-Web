@@ -21,7 +21,8 @@ public sealed class MembershipsController(
     JsoDbContext db,
     AuditService audit,
     PaymentProviderSelector paymentSelector,
-    PaymentLinkBuilder paymentLinks) : ControllerBase
+    PaymentLinkBuilder paymentLinks,
+    ContentTranslationService translations) : ControllerBase
 {
     // Public catalogue: active plans only, ordered for display.
     [HttpGet("plans")]
@@ -30,9 +31,16 @@ public sealed class MembershipsController(
         var plans = await db.MembershipPlans.AsNoTracking()
             .Where(x => x.IsActive)
             .OrderBy(x => x.DisplayOrder).ThenBy(x => x.Price)
-            .Select(x => new { x.Id, x.Name, x.Description, x.Price, x.Currency, x.DurationDays })
             .ToListAsync(ct);
-        return Ok(plans);
+        var language = RequestLanguage.Get(Request);
+        var map = await translations.LoadAsync("MembershipPlan", plans.Select(x => x.Id), ["name", "description"], language, ct);
+        return Ok(plans.Select(x => new
+        {
+            x.Id,
+            Name = ContentTranslationService.ResolveFromMap(map, "MembershipPlan", x.Id, "name", x.Name, language),
+            Description = ContentTranslationService.ResolveFromMap(map, "MembershipPlan", x.Id, "description", x.Description, language),
+            x.Price, x.Currency, x.DurationDays
+        }));
     }
 
     // Fan: subscribe to an active plan. Creates a Pending membership with the

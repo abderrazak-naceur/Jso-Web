@@ -11,7 +11,7 @@ namespace JSO.Api.Controllers;
 // its published image URL is resolved server-side for convenience.
 [ApiController]
 [Route("api/archive")]
-public sealed class ArchiveController(JsoDbContext db) : ControllerBase
+public sealed class ArchiveController(JsoDbContext db, ContentTranslationService translations) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetArchive([FromQuery] int? year, [FromQuery] string? category, CancellationToken ct)
@@ -25,28 +25,25 @@ public sealed class ArchiveController(JsoDbContext db) : ControllerBase
             query = query.Where(x => x.Category == c);
         }
 
-        var items = await query
+        var entities = await query
             .OrderByDescending(x => x.Year == null)
             .ThenByDescending(x => x.Year)
             .ThenBy(x => x.DisplayOrder)
             .ThenByDescending(x => x.CreatedAt)
-            .Select(x => new
-            {
-                x.Id,
-                x.Year,
-                x.Category,
-                x.Title,
-                x.Body,
-                x.MediaAssetId,
-                MediaUrl = db.MediaAssets
-                    .Where(m => m.Id == x.MediaAssetId && m.IsPublished)
-                    .Select(m => m.Url)
-                    .FirstOrDefault(),
-                x.DisplayOrder,
-                x.CreatedAt
-            })
             .ToListAsync(ct);
-
-        return Ok(items);
+        var mediaIds = entities.Where(x => x.MediaAssetId.HasValue).Select(x => x.MediaAssetId!.Value).ToHashSet();
+        var media = await db.MediaAssets.AsNoTracking().Where(x => mediaIds.Contains(x.Id) && x.IsPublished).ToDictionaryAsync(x => x.Id, x => x.Url, ct);
+        var language = RequestLanguage.Get(Request);
+        var map = await translations.LoadAsync("ArchiveItem", entities.Select(x => x.Id), ["category", "title", "body"], language, ct);
+        return Ok(entities.Select(x => new
+        {
+            x.Id, x.Year,
+            Category = ContentTranslationService.ResolveFromMap(map, "ArchiveItem", x.Id, "category", x.Category, language),
+            Title = ContentTranslationService.ResolveFromMap(map, "ArchiveItem", x.Id, "title", x.Title, language),
+            Body = ContentTranslationService.ResolveFromMap(map, "ArchiveItem", x.Id, "body", x.Body, language),
+            x.MediaAssetId,
+            MediaUrl = x.MediaAssetId.HasValue && media.TryGetValue(x.MediaAssetId.Value, out var mediaUrl) ? mediaUrl : null,
+            x.DisplayOrder, x.CreatedAt
+        }));
     }
 }

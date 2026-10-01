@@ -9,7 +9,7 @@ namespace JSO.Api.Controllers;
 // stable and consumable by web and Flutter clients.
 [ApiController]
 [Route("api/faq")]
-public sealed class FaqController(JsoDbContext db) : ControllerBase
+public sealed class FaqController(JsoDbContext db, ContentTranslationService translations) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetFaq([FromQuery] string? category, CancellationToken ct)
@@ -22,17 +22,19 @@ public sealed class FaqController(JsoDbContext db) : ControllerBase
             query = query.Where(x => x.Category == c);
         }
 
-        var items = await query
+        var entities = await query
             .OrderBy(x => x.SortOrder).ThenBy(x => x.CreatedAt)
-            .Select(x => new
-            {
-                x.Id,
-                x.Question,
-                x.Answer,
-                x.Category,
-                x.SortOrder
-            })
             .ToListAsync(ct);
+        var language = RequestLanguage.Get(Request);
+        var map = await translations.LoadAsync("FaqEntry", entities.Select(x => x.Id), ["question", "answer", "category"], language, ct);
+        var items = entities.Select(x => new
+        {
+            x.Id,
+            Question = ContentTranslationService.ResolveFromMap(map, "FaqEntry", x.Id, "question", x.Question, language),
+            Answer = ContentTranslationService.ResolveFromMap(map, "FaqEntry", x.Id, "answer", x.Answer, language),
+            Category = ContentTranslationService.ResolveFromMap(map, "FaqEntry", x.Id, "category", x.Category, language),
+            x.SortOrder
+        }).ToList();
 
         return Ok(items);
     }

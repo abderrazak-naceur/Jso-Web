@@ -4,6 +4,7 @@ import UserMenu from '../account/UserMenu'
 import { NEWS_LIST_PATH } from '../news/articleUrl'
 import { BILLETTERIE_PATH } from '../tickets/ticketsUrl'
 import { CREST_SRC } from './brand'
+import { useI18n } from '../../i18n/index.jsx'
 
 const desktopLinkClass = (active) =>
   `rounded-full px-3 py-2 text-sm font-bold transition ${active ? 'bg-white/10 text-jso-gold' : 'text-white/75 hover:bg-white/10 hover:text-white'}`
@@ -27,6 +28,7 @@ export default function SiteHeader({
   onOpenSettings,
   onLogout,
 }) {
+  const { t, language, setLanguage, languages } = useI18n()
   const [menuOpen, setMenuOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const moreRef = useRef(null)
@@ -83,7 +85,7 @@ export default function SiteHeader({
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-jso-navy/95 text-white backdrop-blur-xl">
       <div className="mx-auto flex h-18 max-w-7xl items-center gap-3 px-5 lg:px-8">
-        <a href="#home" onClick={closeMenus} aria-label="JSO Oudhref — accueil" className="flex shrink-0 items-center gap-3 rounded-xl">
+        <a href="#home" onClick={closeMenus} aria-label={`JSO Oudhref — ${t('common.home')}`} className="flex shrink-0 items-center gap-3 rounded-xl">
           <img src={CREST_SRC} alt="" className="h-11 w-11 object-contain" />
           <span className="leading-none">
             <span className="block text-lg font-black tracking-tight">JSO</span>
@@ -91,7 +93,7 @@ export default function SiteHeader({
           </span>
         </a>
 
-        <nav aria-label="Navigation principale" className="ml-4 hidden items-center gap-1 lg:flex xl:ml-8">
+        <nav aria-label={t('common.mainNavigation')} className="ml-4 hidden items-center gap-1 lg:flex xl:ml-8">
           {primary.map((section) => (
             <a key={section.id} href={`#${section.id}`} onClick={closeMenus} aria-current={current(section.id)} className={desktopLinkClass(activeId === section.id)}>
               {section.label}
@@ -108,8 +110,7 @@ export default function SiteHeader({
                 onClick={() => setMoreOpen((open) => !open)}
                 className={`inline-flex items-center gap-1 ${desktopLinkClass(moreActive || moreOpen)}`}
               >
-                Plus
-                <ChevronDown size={15} aria-hidden="true" className={`transition ${moreOpen ? 'rotate-180' : ''}`} />
+                {t('common.more')}                <ChevronDown size={15} aria-hidden="true" className={`transition ${moreOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {moreOpen && (
@@ -121,8 +122,7 @@ export default function SiteHeader({
                         onClick={closeMenus}
                         className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold text-jso-ink transition hover:bg-slate-100"
                       >
-                        Billetterie
-                        <Ticket size={15} aria-hidden="true" className="text-slate-300" />
+                        {t('common.ticketing')}                        <Ticket size={15} aria-hidden="true" className="text-slate-300" />
                       </a>
                     </li>
                     <li>
@@ -131,8 +131,7 @@ export default function SiteHeader({
                         onClick={closeMenus}
                         className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold text-jso-ink transition hover:bg-slate-100"
                       >
-                        Toutes les actualités
-                        <Newspaper size={15} aria-hidden="true" className="text-slate-300" />
+                        {t('common.news')}                        <Newspaper size={15} aria-hidden="true" className="text-slate-300" />
                       </a>
                     </li>
                     {secondary.map((section) => (
@@ -170,13 +169,28 @@ export default function SiteHeader({
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <label className="sr-only" htmlFor="jso-language-select">{t('common.language')}</label>
+          <select
+            id="jso-language-select"
+            value={language}
+            onChange={(event) => setLanguage(event.target.value)}
+            aria-label={t('common.language')}
+            className="h-10 rounded-full border border-white/20 bg-white/5 px-3 text-xs font-extrabold text-white outline-none transition hover:bg-white/10"
+          >
+            {languages.map((item) => (
+              <option key={item.code} value={item.code} className="text-jso-ink">
+                {item.flag} {item.shortLabel}
+              </option>
+            ))}
+          </select>
+
           <button
             type="button"
             onClick={() => {
               closeMenus()
               onOpenCart()
             }}
-            aria-label={cartCount > 0 ? `Ouvrir le panier (${cartCount} article${cartCount > 1 ? 's' : ''})` : 'Ouvrir le panier'}
+            aria-label={cartCount > 0 ? `${t('common.cart')} (${cartCount})` : t('common.cart')}
             className="relative grid h-11 w-11 place-items-center rounded-full border border-white/20 text-white transition hover:bg-white/10"
           >
             <ShoppingBag size={18} aria-hidden="true" />
@@ -194,11 +208,11 @@ export default function SiteHeader({
               <button
                 type="button"
                 onClick={onLogin}
-                title="Se connecter ou créer un compte supporter"
+                title={t('common.login')}
                 className="inline-flex h-11 min-w-11 items-center justify-center gap-2 rounded-full border border-white/20 px-3 text-sm font-extrabold text-white transition hover:bg-white/10 xl:px-4"
               >
                 <LogIn size={17} aria-hidden="true" />
-                <span className="sr-only xl:not-sr-only">Connexion</span>
+                <span className="sr-only xl:not-sr-only">{t('common.login')}</span>
               </button>
             )}
           </div>
@@ -208,7 +222,7 @@ export default function SiteHeader({
             onClick={closeMenus}
             className="hidden h-11 items-center gap-2 rounded-full bg-jso-gold px-5 text-sm font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-white xl:inline-flex"
           >
-            Match Center <ArrowUpRight size={16} aria-hidden="true" />
+            {t('common.matchCenter')} <ArrowUpRight size={16} aria-hidden="true" />
           </a>
 
           <button
@@ -220,7 +234,7 @@ export default function SiteHeader({
             }}
             aria-expanded={menuOpen}
             aria-controls="jso-mobile-menu"
-            aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+            aria-label={menuOpen ? t('common.closeMenu') : t('common.openMenu')}
             className="grid h-11 w-11 place-items-center rounded-full border border-white/20 text-white transition hover:bg-white/10 lg:hidden"
           >
             {menuOpen ? <X size={19} aria-hidden="true" /> : <Menu size={19} aria-hidden="true" />}
@@ -231,12 +245,11 @@ export default function SiteHeader({
       {menuOpen && (
         <div id="jso-mobile-menu" className="absolute inset-x-0 top-full h-[calc(100dvh-4.5rem)] overflow-y-auto overscroll-contain border-t border-white/10 bg-jso-navy lg:hidden">
           <div className="mx-auto max-w-3xl px-5 pb-12 pt-2">
-            <nav aria-label="Navigation mobile">
+            <nav aria-label={t('common.mainNavigation')}>
               <ul className="divide-y divide-white/10">
                 <li>
                   <a href="#home" onClick={closeMenus} aria-current={current('home')} className={`flex items-center justify-between py-4 text-xl font-black ${activeId === 'home' ? 'text-jso-gold' : 'text-white'}`}>
-                    Accueil
-                  </a>
+                    {t('common.home')}</a>
                 </li>
                 {primary.map((section) => (
                   <li key={section.id}>
@@ -257,8 +270,7 @@ export default function SiteHeader({
                     onClick={closeMenus}
                     className="flex items-center justify-between py-4 text-xl font-black text-white"
                   >
-                    Billetterie
-                    <Ticket size={18} aria-hidden="true" className="text-white/45" />
+                    {t('common.ticketing')}                    <Ticket size={18} aria-hidden="true" className="text-white/45" />
                   </a>
                 </li>
                 <li>
@@ -267,15 +279,14 @@ export default function SiteHeader({
                     onClick={closeMenus}
                     className="flex items-center justify-between py-4 text-xl font-black text-white"
                   >
-                    Toutes les actualités
-                    <Newspaper size={18} aria-hidden="true" className="text-white/45" />
+                    {t('common.news')}                    <Newspaper size={18} aria-hidden="true" className="text-white/45" />
                   </a>
                 </li>
               </ul>
 
               {(secondary.length > 0 || extraLinks.length > 0) && (
                 <>
-                  <p className="mt-6 text-xs font-extrabold tracking-[0.2em] text-white/45">PLUS</p>
+                  <p className="mt-6 text-xs font-extrabold tracking-[0.2em] text-white/45">{t('common.more').toUpperCase()}</p>
                   <ul className="mt-3 grid grid-cols-2 gap-2">
                     {secondary.map((section) => (
                       <li key={section.id}>
@@ -309,32 +320,32 @@ export default function SiteHeader({
             </nav>
 
             <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5">
-              <p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">ESPACE SUPPORTER</p>
+              <p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">{t('common.supporterSpace')}</p>
               {user ? (
                 <>
                   <p className="mt-2 truncate font-black">{user.displayName}</p>
                   {user.email && <p className="truncate text-sm text-white/55">{user.email}</p>}
                   <div className="mt-3 grid gap-1">
                     <button type="button" onClick={closeThen(onOpenProfile)} className={panelButtonClass}>
-                      <User size={16} aria-hidden="true" /> Mon profil
+                      <User size={16} aria-hidden="true" /> {t('common.profile')}
                     </button>
                     <button type="button" onClick={closeThen(onOpenSettings)} className={panelButtonClass}>
-                      <Settings size={16} aria-hidden="true" /> Paramètres
+                      <Settings size={16} aria-hidden="true" /> {t('common.settings')}
                     </button>
                     <button type="button" onClick={closeThen(onLogout)} className={`${panelButtonClass} text-red-300`}>
-                      <LogOut size={16} aria-hidden="true" /> Se déconnecter
+                      <LogOut size={16} aria-hidden="true" /> {t('common.logout')}
                     </button>
                   </div>
                 </>
               ) : (
                 <>
-                  <p className="mt-2 text-sm leading-6 text-white/65">Suivez vos commandes et gérez votre profil de supporter.</p>
+                  <p className="mt-2 text-sm leading-6 text-white/65">{t('common.supporterDescription')}</p>
                   <div className="mt-4 grid gap-2 sm:grid-cols-2">
                     <button type="button" onClick={closeThen(onLogin)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-extrabold text-jso-navy transition hover:bg-jso-gold">
-                      <LogIn size={16} aria-hidden="true" /> Se connecter
+                      <LogIn size={16} aria-hidden="true" /> {t('common.login')}
                     </button>
                     <button type="button" onClick={closeThen(onRegister)} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 px-4 py-3 text-sm font-extrabold text-white transition hover:bg-white/10">
-                      <UserPlus size={16} aria-hidden="true" /> Créer un compte
+                      <UserPlus size={16} aria-hidden="true" /> {t('common.register')}
                     </button>
                   </div>
                 </>

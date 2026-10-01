@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Save, LayoutTemplate, SlidersHorizontal } from 'lucide-react'
+import { Save, LayoutTemplate, SlidersHorizontal, Languages } from 'lucide-react'
 import Field from '../components/Field'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../../lib/apiConfig'
 import HomepageBuilderModule from '../HomepageBuilder'
+import TranslationsModule from './TranslationsModule'
 
 export default function SettingsModule({ onError = () => {} }) {
   const [activeTab, setActiveTab] = useState('home')
@@ -60,11 +61,17 @@ export default function SettingsModule({ onError = () => {} }) {
       description: 'URL de base utilisée par le site et l’administration.',
       icon: SlidersHorizontal,
     },
+    {
+      id: 'languages',
+      label: 'Langues',
+      description: 'Français, English, Italiano et العربية pour les contenus publics.',
+      icon: Languages,
+    },
   ]
 
   return <div className="space-y-6">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-2 shadow-sm">
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2 sm:grid-cols-3">
         {tabs.map(({ id, label, description, icon: Icon }) => (
           <button
             key={id}
@@ -109,6 +116,12 @@ export default function SettingsModule({ onError = () => {} }) {
             <HomepageBuilderModule onError={onError} />
           </div>
         </div>
+      </section>
+    )}
+
+    {activeTab === 'languages' && (
+      <section aria-labelledby="language-settings-title">
+        <TranslationsModule onError={onError} />
       </section>
     )}
 

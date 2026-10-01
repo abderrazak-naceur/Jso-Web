@@ -6,7 +6,7 @@ namespace JSO.Api.Controllers;
 
 [ApiController]
 [Route("api/home")]
-public sealed class HomeController(JsoDbContext db) : ControllerBase
+public sealed class HomeController(JsoDbContext db, ContentTranslationService translations) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken ct)
@@ -36,8 +36,27 @@ public sealed class HomeController(JsoDbContext db) : ControllerBase
             .Take(3)
             .ToListAsync(ct);
 
-        var content = await db.SiteContents.AsNoTracking()
+        var language = RequestLanguage.Get(Request);
+        if (club is not null)
+            club.Description = await translations.ResolveAsync("Club", club.Id, "description", club.Description, language, ct);
+
+        var articleMap = await translations.LoadAsync("Article", news.Select(x => x.Id), ["title", "excerpt", "body"], language, ct);
+        foreach (var article in news)
+        {
+            article.Title = ContentTranslationService.ResolveFromMap(articleMap, "Article", article.Id, "title", article.Title, language);
+            article.Excerpt = ContentTranslationService.ResolveFromMap(articleMap, "Article", article.Id, "excerpt", article.Excerpt, language);
+            article.Body = ContentTranslationService.ResolveFromMap(articleMap, "Article", article.Id, "body", article.Body, language);
+        }
+
+        var contentRows = await db.SiteContents.AsNoTracking()
+            .Where(x => !x.Key.StartsWith("i18n:"))
             .ToDictionaryAsync(x => x.Key, x => x.Value, ct);
+        var contentTranslations = await translations.LoadNamedAsync("SiteContent", contentRows.Keys, "value", language, ct);
+        foreach (var key in contentRows.Keys.ToArray())
+        {
+            if (contentTranslations.TryGetValue(key, out var translated) && !string.IsNullOrWhiteSpace(translated))
+                contentRows[key] = translated;
+        }
 
         return Ok(new
         {
@@ -45,7 +64,7 @@ public sealed class HomeController(JsoDbContext db) : ControllerBase
             nextMatch,
             recentMatches,
             news,
-            content
+            content = contentRows
         });
     }
 }

@@ -6,7 +6,7 @@ namespace JSO.Api.Controllers;
 
 [ApiController]
 [Route("api")]
-public sealed class PublicController(JsoDbContext db) : ControllerBase
+public sealed class PublicController(JsoDbContext db, ContentTranslationService translations) : ControllerBase
 {
     [HttpGet("club")]
     public async Task<IActionResult> GetClub(CancellationToken ct)
@@ -14,7 +14,10 @@ public sealed class PublicController(JsoDbContext db) : ControllerBase
         var club = await db.Clubs.AsNoTracking()
             .SingleOrDefaultAsync(x => x.ShortName == "JSO", ct);
 
-        return club is null ? NotFound() : Ok(club);
+        if (club is null) return NotFound();
+        var language = RequestLanguage.Get(Request);
+        club.Description = await translations.ResolveAsync("Club", club.Id, "description", club.Description, language, ct);
+        return Ok(club);
     }
 
     [HttpGet("matches")]
@@ -44,6 +47,7 @@ public sealed class PublicController(JsoDbContext db) : ControllerBase
         if (page is null)
         {
             var recent = await query.Take(20).ToListAsync(ct);
+            await LocalizeArticles(recent, RequestLanguage.Get(Request), ct);
             return Ok(recent);
         }
 
@@ -54,7 +58,19 @@ public sealed class PublicController(JsoDbContext db) : ControllerBase
             .Skip((currentPage - 1) * size)
             .Take(size)
             .ToListAsync(ct);
+        await LocalizeArticles(items, RequestLanguage.Get(Request), ct);
 
         return Ok(new { items, page = currentPage, pageSize = size, total });
+    }
+
+    private async Task LocalizeArticles(List<JSO.Domain.Article> items, string language, CancellationToken ct)
+    {
+        var map = await translations.LoadAsync("Article", items.Select(x => x.Id), ["title", "excerpt", "body"], language, ct);
+        foreach (var item in items)
+        {
+            item.Title = ContentTranslationService.ResolveFromMap(map, "Article", item.Id, "title", item.Title, language);
+            item.Excerpt = ContentTranslationService.ResolveFromMap(map, "Article", item.Id, "excerpt", item.Excerpt, language);
+            item.Body = ContentTranslationService.ResolveFromMap(map, "Article", item.Id, "body", item.Body, language);
+        }
     }
 }

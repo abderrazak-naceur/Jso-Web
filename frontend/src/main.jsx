@@ -1,6 +1,7 @@
 import { Component, StrictMode, Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import { I18nProvider } from './i18n/index.jsx'
 
 const App = lazy(() => import('./App.jsx'))
 const AdminApp = lazy(() => import('./admin/AdminApp.jsx'))
@@ -54,9 +55,11 @@ function Root() {
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <RootErrorBoundary>
-      <Suspense fallback={<RouteFallback />}>
-        <Root />
-      </Suspense>
+      <I18nProvider>
+        <Suspense fallback={<RouteFallback />}>
+          <Root />
+        </Suspense>
+      </I18nProvider>
     </RootErrorBoundary>
   </StrictMode>,
 )

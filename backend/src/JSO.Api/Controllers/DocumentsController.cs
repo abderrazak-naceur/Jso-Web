@@ -10,7 +10,7 @@ namespace JSO.Api.Controllers;
 // and Flutter clients.
 [ApiController]
 [Route("api/documents")]
-public sealed class DocumentsController(JsoDbContext db) : ControllerBase
+public sealed class DocumentsController(JsoDbContext db, ContentTranslationService translations) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetDocuments([FromQuery] string? category, CancellationToken ct)
@@ -23,18 +23,15 @@ public sealed class DocumentsController(JsoDbContext db) : ControllerBase
             query = query.Where(x => x.Category == c);
         }
 
-        var items = await query
-            .OrderByDescending(x => x.CreatedAt)
-            .Select(x => new
-            {
-                x.Id,
-                x.Title,
-                x.Category,
-                x.FileUrl,
-                x.CreatedAt
-            })
-            .ToListAsync(ct);
-
-        return Ok(items);
+        var entities = await query.OrderByDescending(x => x.CreatedAt).ToListAsync(ct);
+        var language = RequestLanguage.Get(Request);
+        var map = await translations.LoadAsync("ClubDocument", entities.Select(x => x.Id), ["title", "category"], language, ct);
+        return Ok(entities.Select(x => new
+        {
+            x.Id,
+            Title = ContentTranslationService.ResolveFromMap(map, "ClubDocument", x.Id, "title", x.Title, language),
+            Category = ContentTranslationService.ResolveFromMap(map, "ClubDocument", x.Id, "category", x.Category, language),
+            x.FileUrl, x.CreatedAt
+        }));
     }
 }

@@ -7,7 +7,7 @@ namespace JSO.Api.Controllers;
 
 [ApiController]
 [Route("api/sponsors")]
-public sealed class SponsorsController(JsoDbContext db) : ControllerBase
+public sealed class SponsorsController(JsoDbContext db, ContentTranslationService translations) : ControllerBase
 {
     // Coarse, allow-listed activation channels for idea B5. The public endpoint
     // maps the optional ?c= query to one of these buckets (defaulting to null)
@@ -27,22 +27,21 @@ public sealed class SponsorsController(JsoDbContext db) : ControllerBase
         if (!string.IsNullOrWhiteSpace(placement))
             query = query.Where(x => x.Placement == placement);
 
-        var sponsors = await query
+        var entities = await query
             .OrderByDescending(x => x.Priority)
             .ThenBy(x => x.Name)
-            .Select(x => new
-            {
-                x.Id,
-                x.Name,
-                x.LogoUrl,
-                x.WebsiteUrl,
-                x.Tier,
-                x.Placement,
-                x.BannerImageUrl
-            })
             .ToListAsync(ct);
-
-        return Ok(sponsors);
+        var language = RequestLanguage.Get(Request);
+        var map = await translations.LoadAsync("Sponsor", entities.Select(x => x.Id), ["name", "tier", "placement"], language, ct);
+        return Ok(entities.Select(x => new
+        {
+            x.Id,
+            Name = ContentTranslationService.ResolveFromMap(map, "Sponsor", x.Id, "name", x.Name, language),
+            x.LogoUrl, x.WebsiteUrl,
+            Tier = ContentTranslationService.ResolveFromMap(map, "Sponsor", x.Id, "tier", x.Tier, language),
+            Placement = ContentTranslationService.ResolveFromMap(map, "Sponsor", x.Id, "placement", x.Placement, language),
+            x.BannerImageUrl
+        }));
     }
 
     // Public tracked landing for idea B5 (sponsor QR activation). A physical QR

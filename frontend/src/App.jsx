@@ -19,8 +19,10 @@ import { visibleSections } from './features/site/navigation'
 import { useActiveSection } from './features/site/useActiveSection'
 import { useNavigation } from './features/site/useNavigation'
 import { useHomeLayout } from './features/home/useHomeLayout'
+import { useI18n } from './i18n/index.jsx'
 
 function App() {
+  const { t } = useI18n()
   const data = useHomeData()
   const cart = useCart()
   const fan = useFanSession()
@@ -89,7 +91,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-jso-paper text-jso-ink">
-      <a href="#main-content" className="jso-skip-link">Aller au contenu principal</a>
+      <a href="#main-content" className="jso-skip-link">{t('common.skipToContent')}</a>
 
       <SiteHeader
         sections={sections}

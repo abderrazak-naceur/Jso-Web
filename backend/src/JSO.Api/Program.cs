@@ -5,6 +5,8 @@ using JSO.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Localization;
+using System.Globalization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -76,6 +78,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization(options => options.AddAdminPermissionPolicies());
 builder.Services.AddProblemDetails();
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new[]
+    {
+        new CultureInfo("fr"),
+        new CultureInfo("en"),
+        new CultureInfo("it"),
+        new CultureInfo("ar"),
+    };
+
+    options.DefaultRequestCulture = new RequestCulture("fr");
+    options.SupportedCultures = supportedCultures;
+    options.SupportedUICultures = supportedCultures;
+    options.ApplyCurrentCultureToResponseHeaders = true;
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -190,6 +208,7 @@ app.UseStaticFiles(new StaticFileOptions
     }
 });
 
+app.UseRequestLocalization();
 app.UseExceptionHandler();
 // Aggregate-only API usage metrics (idea E16). Placed right after the
 // exception handler so it observes the final status code of every request

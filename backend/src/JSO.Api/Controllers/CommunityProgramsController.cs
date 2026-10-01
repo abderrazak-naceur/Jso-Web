@@ -12,25 +12,24 @@ namespace JSO.Api.Controllers;
 // shape is stable and consumable by web and Flutter clients.
 [ApiController]
 [Route("api/community-programs")]
-public sealed class CommunityProgramsController(JsoDbContext db) : ControllerBase
+public sealed class CommunityProgramsController(JsoDbContext db, ContentTranslationService translations) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetPrograms(CancellationToken ct)
     {
-        var items = await db.CommunityPrograms.AsNoTracking()
+        var entities = await db.CommunityPrograms.AsNoTracking()
             .Where(x => x.IsPublished)
             .OrderBy(x => x.StartDate)
-            .Select(x => new
-            {
-                x.Id,
-                x.Title,
-                x.PartnerName,
-                x.Description,
-                x.StartDate,
-                x.EndDate
-            })
             .ToListAsync(ct);
-
-        return Ok(items);
+        var language = RequestLanguage.Get(Request);
+        var map = await translations.LoadAsync("CommunityProgram", entities.Select(x => x.Id), ["title", "partnername", "description"], language, ct);
+        return Ok(entities.Select(x => new
+        {
+            x.Id,
+            Title = ContentTranslationService.ResolveFromMap(map, "CommunityProgram", x.Id, "title", x.Title, language),
+            PartnerName = ContentTranslationService.ResolveFromMap(map, "CommunityProgram", x.Id, "partnername", x.PartnerName, language),
+            Description = ContentTranslationService.ResolveFromMap(map, "CommunityProgram", x.Id, "description", x.Description, language),
+            x.StartDate, x.EndDate
+        }));
     }
 }
