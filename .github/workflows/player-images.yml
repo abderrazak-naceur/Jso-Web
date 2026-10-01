@@ -4,6 +4,8 @@ name: Normalize player portraits
 on:
   push:
     branches: [main]
+    paths:
+      - 'frontend/public/players/*.webp'
   workflow_dispatch:
 
 permissions:
