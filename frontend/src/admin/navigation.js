@@ -1,4 +1,4 @@
-import { LayoutDashboard, Trophy, CreditCard, Wallet, ShoppingBag, Receipt, Handshake, QrCode, Users, CalendarDays, Radio, BarChart3, HeartPulse, ScanSearch, ListChecks, Newspaper, CalendarClock, Images, Pencil, LayoutTemplate, PartyPopper, FileText, HelpCircle, MessageSquare, BrickWall, Megaphone, Mail, ClipboardList, GraduationCap, CalendarRange, ShieldCheck, Flag, Gauge, ShieldAlert, Server, Ticket, Landmark } from 'lucide-react'
+import { LayoutDashboard, Trophy, CreditCard, Wallet, ShoppingBag, Receipt, Handshake, QrCode, Users, CalendarDays, Radio, BarChart3, HeartPulse, ScanSearch, ListChecks, Newspaper, CalendarClock, Images, Pencil, PartyPopper, FileText, HelpCircle, MessageSquare, BrickWall, Megaphone, Mail, ClipboardList, GraduationCap, CalendarRange, ShieldCheck, Flag, Gauge, ShieldAlert, Server, Ticket, Landmark } from 'lucide-react'
 export const ADMIN_NAVIGATION = [
     ['dashboard', 'Dashboard', LayoutDashboard, ['SuperAdmin','ClubAdmin','Editor','MatchManager','CommunityManager','ShopManager'], 'Tableau de bord'],
 
@@ -27,7 +27,6 @@ export const ADMIN_NAVIGATION = [
     ['editorial', 'Calendrier éditorial', CalendarClock, ['Editor','ClubAdmin'], 'Contenu & Site'],
     ['media', 'Médias', Images, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
     ['content', 'Contenus', Pencil, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
-    ['homepage', 'Sections de la page d’accueil', LayoutTemplate, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
     ['club-events', 'Agenda du club', PartyPopper, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
     ['documents', 'Documents', FileText, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
     ['faq', 'FAQ', HelpCircle, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
@@ -74,7 +73,6 @@ export const ADMIN_PERMISSION_BY_ID = Object.freeze({
   editorial: 'content:calendar',
   media: 'content:media',
   content: 'content:manage',
-  homepage: 'content:homepage',
   'club-events': 'content:events',
   documents: 'content:documents',
   faq: 'content:faq',
