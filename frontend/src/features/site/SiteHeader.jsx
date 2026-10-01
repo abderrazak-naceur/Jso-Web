@@ -249,7 +249,7 @@ export default function SiteHeader({
               <ul className="divide-y divide-white/10">
                 <li>
                   <a href="#home" onClick={closeMenus} aria-current={current('home')} className={`flex items-center justify-between py-4 text-xl font-black ${activeId === 'home' ? 'text-jso-gold' : 'text-white'}`}>
-                    {t('common.home')}                  </a>
+                    {t('common.home')}</a>
                 </li>
                 {primary.map((section) => (
                   <li key={section.id}>
@@ -270,7 +270,7 @@ export default function SiteHeader({
                     onClick={closeMenus}
                     className="flex items-center justify-between py-4 text-xl font-black text-white"
                   >
-                    {t('common.ticketing')}\n                    <Ticket size={18} aria-hidden="true" className="text-white/45" />
+                    {t('common.ticketing')}                    <Ticket size={18} aria-hidden="true" className="text-white/45" />
                   </a>
                 </li>
                 <li>
@@ -279,7 +279,7 @@ export default function SiteHeader({
                     onClick={closeMenus}
                     className="flex items-center justify-between py-4 text-xl font-black text-white"
                   >
-                    {t('common.news')}\n                    <Newspaper size={18} aria-hidden="true" className="text-white/45" />
+                    {t('common.news')}                    <Newspaper size={18} aria-hidden="true" className="text-white/45" />
                   </a>
                 </li>
               </ul>
