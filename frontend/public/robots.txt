@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin
 
-Sitemap: https://jso-oudhref.tn/sitemap.xml
+Sitemap: https://jso-web.onrender.com/sitemap.xml
