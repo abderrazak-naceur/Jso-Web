@@ -98,6 +98,8 @@ function NewsletterSignup() {
 // links are plain #anchors; on a standalone page (e.g. /actualites) pass '/'
 // so an anchor first navigates back to the home page, then scrolls.
 export default function SiteFooter({ sections, extraLinks = [], homeHref = '' }) {
+  const { t } = useI18n()
+
   return (
     <footer className="bg-jso-navy px-5 py-12 text-white lg:px-8">
       <div className="mx-auto max-w-7xl">
@@ -135,7 +137,7 @@ export default function SiteFooter({ sections, extraLinks = [], homeHref = '' })
         </div>
 
         <div className="flex flex-col justify-between gap-4 pt-6 text-sm text-white/45 sm:flex-row sm:items-center">
-          <p>© {new Date().getFullYear()} JSO. Tous droits réservés.</p>
+          <p>© {new Date().getFullYear()} JSO. {t('common.allRightsReserved')}</p>
           <div className="flex flex-wrap items-center gap-5">
             <a href="/admin" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-1.5 font-semibold transition hover:border-white/40 hover:text-white"><Shield size={15} aria-hidden="true" />{t('common.admin')}</a>
             <a href={`${homeHref}#home`} className="inline-flex items-center gap-2 transition hover:text-white">{t('common.backToTop')} <ArrowUp size={15} aria-hidden="true" /></a>
