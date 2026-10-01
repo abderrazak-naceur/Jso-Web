@@ -25,7 +25,7 @@ public sealed class FaqController(JsoDbContext db, ContentTranslationService tra
         var entities = await query
             .OrderBy(x => x.SortOrder).ThenBy(x => x.CreatedAt)
             .ToListAsync(ct);
-        var language = ContentTranslationService.GetRequestLanguage(Request);
+        var language = RequestLanguage.Get(Request);
         var map = await translations.LoadAsync("FaqEntry", entities.Select(x => x.Id), ["question", "answer", "category"], language, ct);
         var items = entities.Select(x => new
         {
