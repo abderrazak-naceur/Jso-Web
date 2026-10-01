@@ -18,7 +18,7 @@ public sealed class ClubEventsController(JsoDbContext db, ContentTranslationServ
             .Where(x => x.IsPublished)
             .OrderBy(x => x.StartAt)
             .ToListAsync(ct);
-        var language = ContentTranslationService.GetRequestLanguage(Request);
+        var language = RequestLanguage.Get(Request);
         var map = await translations.LoadAsync("ClubEvent", entities.Select(x => x.Id), ["title", "description", "location"], language, ct);
         var items = entities.Select(x => new
         {
