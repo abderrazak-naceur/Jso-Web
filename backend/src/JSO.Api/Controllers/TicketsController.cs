@@ -20,7 +20,8 @@ public sealed class TicketsController(
     AuditService audit,
     PaymentProviderSelector paymentSelector,
     PaymentLinkBuilder paymentLinks,
-    Microsoft.Extensions.Configuration.IConfiguration configuration) : ControllerBase
+    Microsoft.Extensions.Configuration.IConfiguration configuration,
+    ContentTranslationService translations) : ControllerBase
 {
     // Public billetterie listing: published matches that have at least one
     // active ticket type, with the cheapest price and total remaining places.
@@ -55,18 +56,20 @@ public sealed class TicketsController(
         if (!await db.Matches.AsNoTracking().AnyAsync(x => x.Id == matchId && x.IsPublished, ct))
             return NotFound();
 
-        var types = await db.TicketTypes.AsNoTracking()
+        var entities = await db.TicketTypes.AsNoTracking()
             .Where(x => x.MatchId == matchId && x.IsActive)
             .OrderBy(x => x.Price)
-            .Select(x => new
-            {
-                x.Id,
-                x.Name,
-                x.Price,
-                x.Currency,
-                available = x.Capacity - x.SoldCount
-            })
             .ToListAsync(ct);
+        var language = ContentTranslationService.GetRequestLanguage(Request);
+        var map = await translations.LoadAsync("TicketType", entities.Select(x => x.Id), ["name"], language, ct);
+        var types = entities.Select(x => new
+        {
+            x.Id,
+            Name = ContentTranslationService.ResolveFromMap(map, "TicketType", x.Id, "name", x.Name, language),
+            x.Price,
+            x.Currency,
+            available = x.Capacity - x.SoldCount
+        }).ToList();
 
         return Ok(types);
     }
