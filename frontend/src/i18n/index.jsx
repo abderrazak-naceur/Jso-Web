@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { SUPPORTED_LANGUAGES, TRANSLATIONS } from './translations'
+import { LEGACY_TRANSLATIONS, SUPPORTED_LANGUAGES, TRANSLATIONS } from './translations'
 
 const STORAGE_KEY = 'jso_language'
 const DEFAULT_LANGUAGE = 'fr'
+const LOCALIZED_ATTRIBUTES = ['aria-label', 'aria-description', 'placeholder', 'title', 'alt']
 
 function normalizeLanguage(value) {
   const code = String(value || '').toLowerCase().split('-')[0]
@@ -16,6 +17,178 @@ function getInitialLanguage() {
     return DEFAULT_LANGUAGE
   } catch {
     return DEFAULT_LANGUAGE
+  }
+}
+
+function preserveWhitespace(source, translated) {
+  const leading = source.match(/^\s*/)?.[0] ?? ''
+  const trailing = source.match(/\s*$/)?.[0] ?? ''
+  return leading + translated.trim() + trailing
+}
+
+function translateLegacy(source, language) {
+  if (typeof source !== 'string' || !source.trim()) return source
+  const leading = source.match(/^\s*/)?.[0] ?? ''
+  const trailing = source.match(/\s*$/)?.[0] ?? ''
+  const core = source.trim()
+
+  if (language === DEFAULT_LANGUAGE) return source
+
+  const direct = LEGACY_TRANSLATIONS[core]?.[language]
+  if (direct) return leading + direct + trailing
+
+  let match = core.match(/^Réserver (\d+) billet(?:s)?$/)
+  if (match) {
+    const count = Number(match[1])
+    const values = {
+      en: `Reserve ${count} ticket${count === 1 ? '' : 's'}`,
+      it: `Prenota ${count} biglietto${count === 1 ? '' : 'biglietti'}`,
+      ar: `احجز ${count} تذكرة`,
+    }
+    return leading + (values[language] ?? core) + trailing
+  }
+
+  match = core.match(/^(\d+) place(?:s)? disponibles$/)
+  if (match) {
+    const count = Number(match[1])
+    const values = {
+      en: `${count} place${count === 1 ? '' : 's'} available`,
+      it: `${count} post${count === 1 ? 'o disponibile' : 'i disponibili'}`,
+      ar: `${count} مقعد متاح`,
+    }
+    return leading + (values[language] ?? core) + trailing
+  }
+
+  match = core.match(/^Page (\d+) \/ (\d+)$/)
+  if (match) {
+    const values = {
+      en: `Page ${match[1]} / ${match[2]}`,
+      it: `Pagina ${match[1]} / ${match[2]}`,
+      ar: `صفحة ${match[1]} / ${match[2]}`,
+    }
+    return leading + (values[language] ?? core) + trailing
+  }
+
+  if (core.endsWith(' (nouvel onglet)')) {
+    const base = core.slice(0, -' (nouvel onglet)'.length)
+    const translatedBase = translateLegacy(base, language).trim()
+    const suffix = { en: ' (new tab)', it: ' (nuova scheda)', ar: ' (علامة تبويب جديدة)' }[language] ?? ' (nouvel onglet)'
+    return leading + translatedBase + suffix + trailing
+  }
+
+  return source
+}
+
+function localizePublicDom(language) {
+  if (typeof document === 'undefined' || window.location.pathname.startsWith('/admin')) return () => {}
+
+  const sourceText = new WeakMap()
+  const sourceAttributes = new WeakMap()
+  const translatingText = new WeakSet()
+  const translatingAttributes = new WeakSet()
+  let disposed = false
+
+  const translateTextNode = (node) => {
+    if (disposed || !node?.parentElement) return
+    const parentTag = node.parentElement.tagName
+    if (parentTag === 'SCRIPT' || parentTag === 'STYLE' || parentTag === 'NOSCRIPT' || parentTag === 'TEXTAREA') return
+
+    const current = node.nodeValue ?? ''
+    if (!current.trim()) return
+
+    if (translatingText.has(node)) {
+      translatingText.delete(node)
+      return
+    }
+
+    if (!sourceText.has(node)) sourceText.set(node, current)
+    const original = sourceText.get(node)
+    const translated = translateLegacy(original, language)
+
+    if (translated !== current) {
+      translatingText.add(node)
+      node.nodeValue = translated
+    }
+  }
+
+  const translateElement = (element) => {
+    if (!(element instanceof Element)) return
+
+    for (const attribute of LOCALIZED_ATTRIBUTES) {
+      if (!element.hasAttribute(attribute)) continue
+      const current = element.getAttribute(attribute) ?? ''
+      if (!current.trim()) continue
+
+      let originals = sourceAttributes.get(element)
+      if (!originals) {
+        originals = new Map()
+        sourceAttributes.set(element, originals)
+      }
+
+      if (translatingAttributes.has(element)) {
+        translatingAttributes.delete(element)
+        continue
+      }
+
+      if (!originals.has(attribute)) originals.set(attribute, current)
+      const original = originals.get(attribute)
+      const translated = translateLegacy(original, language)
+
+      if (translated !== current) {
+        translatingAttributes.add(element)
+        element.setAttribute(attribute, translated)
+      }
+    }
+  }
+
+  const scan = (root) => {
+    if (!root) return
+
+    if (root.nodeType === Node.TEXT_NODE) {
+      translateTextNode(root)
+      return
+    }
+
+    if (root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_NODE) return
+
+    translateElement(root)
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+    let node = walker.nextNode()
+    while (node) {
+      translateTextNode(node)
+      node = walker.nextNode()
+    }
+
+    if (root.querySelectorAll) {
+      root.querySelectorAll('*').forEach(translateElement)
+    }
+  }
+
+  scan(document.body)
+
+  const observer = new MutationObserver((records) => {
+    for (const record of records) {
+      if (record.type === 'childList') {
+        record.addedNodes.forEach(scan)
+      } else if (record.type === 'characterData') {
+        translateTextNode(record.target)
+      } else if (record.type === 'attributes' && record.target instanceof Element) {
+        translateElement(record.target)
+      }
+    }
+  })
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+    attributes: true,
+    attributeFilter: LOCALIZED_ATTRIBUTES,
+  })
+
+  return () => {
+    disposed = true
+    observer.disconnect()
   }
 }
 
@@ -46,6 +219,7 @@ export function I18nProvider({ children }) {
     document.documentElement.lang = language
     document.documentElement.dir = metadata.dir
     document.documentElement.dataset.language = language
+    return localizePublicDom(language)
   }, [language])
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
