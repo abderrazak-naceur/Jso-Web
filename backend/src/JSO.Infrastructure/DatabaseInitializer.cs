@@ -31,6 +31,52 @@ public sealed class DatabaseInitializer(
             StringComparison.OrdinalIgnoreCase);
 
         var hasAdmin = await db.AdminUsers.AnyAsync(ct);
+
+        var roster = new[]
+        {
+            new { FirstName = "Aymen", LastName = "Ben Saïd", ShirtNumber = 1, Position = "Gardien", Photo = "/players/aymen-ben-said.png" },
+            new { FirstName = "Hamza", LastName = "Trabelsi", ShirtNumber = 2, Position = "Défenseur", Photo = "/players/hamza-trabelsi.png" },
+            new { FirstName = "Mohamed", LastName = "Hachani", ShirtNumber = 4, Position = "Défenseur", Photo = "/players/mohamed-hachani.png" },
+            new { FirstName = "Oussama", LastName = "Belhadj", ShirtNumber = 5, Position = "Défenseur", Photo = "/players/oussama-belhadj.png" },
+            new { FirstName = "Nidhal", LastName = "Gharbi", ShirtNumber = 6, Position = "Milieu", Photo = "/players/nidhal-gharbi.png" },
+            new { FirstName = "Firas", LastName = "Ayari", ShirtNumber = 7, Position = "Milieu", Photo = "/players/firas-ayari.png" },
+            new { FirstName = "Yassine", LastName = "Dridi", ShirtNumber = 8, Position = "Milieu", Photo = "/players/yassine-dridi.png" },
+            new { FirstName = "Khalil", LastName = "Jebali", ShirtNumber = 10, Position = "Attaquant", Photo = "/players/khalil-jebali.png" },
+            new { FirstName = "Seif", LastName = "Mansouri", ShirtNumber = 11, Position = "Attaquant", Photo = "/players/seif-mansouri.png" },
+            new { FirstName = "Wassim", LastName = "Ferchichi", ShirtNumber = 9, Position = "Attaquant", Photo = "/players/wassim-ferchichi.png" }
+        };
+
+        foreach (var item in roster)
+        {
+            var player = await db.Players.SingleOrDefaultAsync(
+                x => x.TeamId == team.Id && x.FirstName == item.FirstName && x.LastName == item.LastName,
+                ct);
+
+            if (player is null)
+            {
+                db.Players.Add(new Player
+                {
+                    TeamId = team.Id,
+                    FirstName = item.FirstName,
+                    LastName = item.LastName,
+                    ShirtNumber = item.ShirtNumber,
+                    Position = item.Position,
+                    PhotoUrl = item.Photo,
+                    IsActive = true
+                });
+            }
+            else
+            {
+                player.ShirtNumber = item.ShirtNumber;
+                player.Position = item.Position;
+                player.PhotoUrl = item.Photo;
+                player.IsActive = true;
+            }
+        }
+
+        await db.SaveChangesAsync(ct);
+        logger.LogInformation("JSO production player roster is ready: {Count} players.", roster.Length);
+
         if (hasAdmin)
         {
             // One-time recovery path for an operator who needs to restore the
