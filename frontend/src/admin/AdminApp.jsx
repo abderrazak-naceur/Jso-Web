@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LogOut, Menu, X } from 'lucide-react'
+import { CreditCard, Eye, EyeOff, LogOut, Menu, Newspaper, ShoppingBag, Ticket, Trophy, Users, X } from 'lucide-react'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
