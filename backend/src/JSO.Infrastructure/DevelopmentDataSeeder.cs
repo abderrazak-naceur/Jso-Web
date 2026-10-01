@@ -69,8 +69,8 @@ public static class DevelopmentDataSeeder
         if (!await db.Players.AnyAsync(x => x.TeamId == team.Id, ct))
         {
             // Real player portraits (background removed) served by the frontend
-            // from frontend/public/players/<slug>.webp.
-            static string LocalPhoto(string slug) => $"/players/{slug}.webp";
+            // from frontend/public/players/<slug>.png.
+            static string LocalPhoto(string slug) => $"/players/{slug}.png";
 
             db.Players.AddRange(
                 new Player { TeamId = team.Id, FirstName = "Aymen", LastName = "Ben Saïd", ShirtNumber = 1, Position = "Gardien", PhotoUrl = LocalPhoto("aymen-ben-said") },
