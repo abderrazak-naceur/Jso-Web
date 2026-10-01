@@ -32,6 +32,19 @@ public sealed class DatabaseInitializer(
 
         var hasAdmin = await db.AdminUsers.AnyAsync(ct);
 
+        var team = await db.Teams.FirstOrDefaultAsync(x => x.Name == "JSO - Équipe Première", ct);
+        if (team is null)
+        {
+            team = new Team
+            {
+                Name = "JSO - Équipe Première",
+                Category = "Senior",
+                IsActive = true
+            };
+            db.Teams.Add(team);
+            await db.SaveChangesAsync(ct);
+        }
+
         var roster = new[]
         {
             new { FirstName = "Aymen", LastName = "Ben Saïd", ShirtNumber = 1, Position = "Gardien", Photo = "/players/aymen-ben-said.png" },
