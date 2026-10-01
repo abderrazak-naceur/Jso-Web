@@ -12,6 +12,8 @@ function normalizeLanguage(value) {
 
 function getInitialLanguage() {
   try {
+    const fromUrl = new URLSearchParams(window.location.search).get('lang')
+    if (fromUrl) return normalizeLanguage(fromUrl)
     const stored = window.localStorage.getItem(STORAGE_KEY)
     if (stored) return normalizeLanguage(stored)
     return DEFAULT_LANGUAGE
@@ -193,6 +195,72 @@ function localizePublicDom(language) {
   }
 }
 
+function setMeta(name, content, attribute = 'name') {
+  let element = document.head.querySelector(`meta[${attribute}="${name}"]`)
+  if (!element) {
+    element = document.createElement('meta')
+    element.setAttribute(attribute, name)
+    document.head.appendChild(element)
+  }
+  element.setAttribute('content', content)
+}
+
+function upsertAlternateLink(rel, hreflang, href) {
+  let link = document.head.querySelector(`link[rel="${rel}"][hreflang="${hreflang}"]`)
+  if (!link) {
+    link = document.createElement('link')
+    link.rel = rel
+    link.hreflang = hreflang
+    document.head.appendChild(link)
+  }
+  link.href = href
+}
+
+function localizedPath(pathname, language) {
+  const params = new URLSearchParams(window.location.search)
+  params.set('lang', language)
+  const query = params.toString()
+  return pathname + (query ? `?${query}` : '')
+}
+
+function updateSeo(language, t) {
+  const pathname = window.location.pathname
+  if (pathname.startsWith('/admin')) return
+
+  const normalizedPath = pathname === '/' ? '/' : pathname.replace(/\\/+$/, '')
+  const kind = normalizedPath === '/billetterie'
+    ? 'tickets'
+    : normalizedPath === '/actualites' || normalizedPath.startsWith('/actualites/')
+      ? 'news'
+      : 'home'
+  const title = t(`seo.${kind}Title`)
+  const description = t(`seo.${kind}Description`)
+  const base = (import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin).replace(/\\/$/, '')
+  const currentUrl = `${base}${localizedPath(pathname, language)}`
+
+  document.title = title
+  setMeta('description', description)
+  setMeta('og:title', title, 'property')
+  setMeta('og:description', description, 'property')
+  setMeta('og:url', currentUrl, 'property')
+  setMeta('og:locale', language === 'ar' ? 'ar_TN' : language === 'fr' ? 'fr_FR' : language === 'it' ? 'it_IT' : 'en_GB', 'property')
+  setMeta('twitter:title', title)
+  setMeta('twitter:description', description)
+
+  let canonical = document.head.querySelector('link[rel="canonical"]')
+  if (!canonical) {
+    canonical = document.createElement('link')
+    canonical.rel = 'canonical'
+    document.head.appendChild(canonical)
+  }
+  canonical.href = currentUrl
+
+  for (const supported of SUPPORTED_LANGUAGES) {
+    upsertAlternateLink('alternate', supported.code, `${base}${localizedPath(pathname, supported.code)}`)
+  }
+  upsertAlternateLink('alternate', 'x-default', `${base}${localizedPath(pathname, DEFAULT_LANGUAGE)}`)
+}
+
 const I18nContext = createContext(null)
 
 export function I18nProvider({ children }) {
@@ -203,6 +271,9 @@ export function I18nProvider({ children }) {
     setLanguageState(next)
     try {
       window.localStorage.setItem(STORAGE_KEY, next)
+      const url = new URL(window.location.href)
+      url.searchParams.set('lang', next)
+      window.history.replaceState(window.history.state, '', url)
     } catch {
       // Language remains active for the current session if storage is unavailable.
     }
@@ -220,6 +291,14 @@ export function I18nProvider({ children }) {
     document.documentElement.lang = language
     document.documentElement.dir = metadata.dir
     document.documentElement.dataset.language = language
+    try {
+      window.localStorage.setItem(STORAGE_KEY, language)
+    } catch {
+      // Ignore storage failures.
+    }
+    const translate = (key, fallback = key) =>
+      TRANSLATIONS[language]?.[key] ?? TRANSLATIONS[DEFAULT_LANGUAGE]?.[key] ?? fallback
+    updateSeo(language, translate)
     return localizePublicDom(language)
   }, [language])
 
