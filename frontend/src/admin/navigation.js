@@ -27,7 +27,7 @@ export const ADMIN_NAVIGATION = [
     ['editorial', 'Calendrier éditorial', CalendarClock, ['Editor','ClubAdmin'], 'Contenu & Site'],
     ['media', 'Médias', Images, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
     ['content', 'Contenus', Pencil, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
-    ['homepage', 'Page d\u2019accueil & menus', LayoutTemplate, ['ClubAdmin','Editor'], 'Contenu & Site'],
+    ['homepage', 'Sections de la page d’accueil', LayoutTemplate, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
     ['club-events', 'Agenda du club', PartyPopper, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
     ['documents', 'Documents', FileText, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
     ['faq', 'FAQ', HelpCircle, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
@@ -95,5 +95,4 @@ export const ADMIN_PERMISSION_BY_ID = Object.freeze({
   gdpr: 'system:gdpr',
   settings: 'system:settings',
 })
-
 export const ADMIN_CATEGORY_ORDER = ['Tableau de bord', 'Billetterie & Abonnements', 'Boutique', 'Équipe & Matchs', 'Contenu & Site', 'Communauté', 'Système']
