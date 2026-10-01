@@ -34,7 +34,7 @@ function FollowUs() {
                 href={social.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`${social.label} du club (nouvel onglet)`}
+                aria-label={`${social.label} — ${t('common.externalLink')}`}
                 className="inline-flex flex-1 items-center gap-2 rounded-xl border border-white/15 px-3 py-2 text-sm font-semibold text-white/75 transition hover:border-white/40 hover:text-white"
               >
                 <Icon size={16} aria-hidden="true" />
@@ -43,7 +43,7 @@ function FollowUs() {
               <button
                 type="button"
                 onClick={() => copy(social)}
-                aria-label={`Copier le lien ${social.label}`}
+                aria-label={`${t('common.copyLink')} ${social.label}`}
                 className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/15 text-white/75 transition hover:border-white/40 hover:text-white"
               >
                 {copied === social.key ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
@@ -85,7 +85,7 @@ function NewsletterSignup() {
         <p role="status" className="mt-3 rounded-xl bg-white/10 px-4 py-3 text-sm text-white/80">{message}</p>
       ) : (
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          <input id="footer-newsletter" type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="votre@email.com" className="min-w-0 flex-1 rounded-xl border border-white/15 bg-white px-4 py-3 text-sm text-jso-ink outline-none focus:border-jso-blue" />
+          <input id="footer-newsletter" type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder={t('common.emailPlaceholder')} className="min-w-0 flex-1 rounded-xl border border-white/15 bg-white px-4 py-3 text-sm text-jso-ink outline-none focus:border-jso-blue" />
           <button type="submit" disabled={status === 'loading'} className="rounded-xl bg-jso-gold px-5 py-3 text-sm font-extrabold text-jso-navy transition hover:bg-white disabled:opacity-60">{status === 'loading' ? t('common.newsletterSending') : t('common.newsletterSubmit')}</button>
         </div>
       )}
@@ -113,7 +113,7 @@ export default function SiteFooter({ sections, extraLinks = [], homeHref = '' })
             <div className="mt-6"><FollowUs /></div>
           </div>
 
-          <nav aria-label="Navigation de pied de page">
+          <nav aria-label={t('common.footerNavigation')}>
             <p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">{t('common.footerExplore')}</p>
             <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
               {sections.map((section) => <li key={section.id}><a href={`${homeHref}#${section.id}`} className="text-sm font-semibold text-white/65 transition hover:text-white">{section.label}</a></li>)}
