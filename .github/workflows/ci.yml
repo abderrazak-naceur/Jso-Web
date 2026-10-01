@@ -73,7 +73,7 @@ jobs:
         working-directory: backend
         env:
           Database__Provider: postgres
-          ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=JSO;Username=jso;Password=jso_ci_password
+          ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=JSO;Username=jso;Password=jso_ci_password;Ssl Mode=Disable
         run: dotnet ef database update --project src/JSO.Infrastructure --startup-project src/JSO.Infrastructure --configuration Release --no-build
       - name: Validate applied schema
         env:
@@ -123,7 +123,7 @@ jobs:
           ASPNETCORE_ENVIRONMENT: Production
           ASPNETCORE_URLS: http://127.0.0.1:5080
           Database__Provider: postgres
-          ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=JSO;Username=jso;Password=jso_ci_password
+          ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=JSO;Username=jso;Password=jso_ci_password;Ssl Mode=Disable
           Cors__AllowedOrigins__0: http://localhost:5173
           Jwt__Key: ci-only-jwt-secret-that-is-at-least-32-characters-long
           ADMIN_BOOTSTRAP_EMAIL: admin@jso.test
