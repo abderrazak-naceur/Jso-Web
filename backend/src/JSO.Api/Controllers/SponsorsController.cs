@@ -31,7 +31,7 @@ public sealed class SponsorsController(JsoDbContext db, ContentTranslationServic
             .OrderByDescending(x => x.Priority)
             .ThenBy(x => x.Name)
             .ToListAsync(ct);
-        var language = ContentTranslationService.GetRequestLanguage(Request);
+        var language = RequestLanguage.Get(Request);
         var map = await translations.LoadAsync("Sponsor", entities.Select(x => x.Id), ["name", "tier", "placement"], language, ct);
         return Ok(entities.Select(x => new
         {
