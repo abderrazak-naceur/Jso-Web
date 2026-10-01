@@ -81,7 +81,6 @@ export default function SiteHeader({
     action?.()
   }
   const current = (id) => (activeId === id ? 'true' : undefined)
-  const currentLanguage = languages.find((item) => item.code === language)
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-jso-navy/95 text-white backdrop-blur-xl">
@@ -111,7 +110,7 @@ export default function SiteHeader({
                 onClick={() => setMoreOpen((open) => !open)}
                 className={`inline-flex items-center gap-1 ${desktopLinkClass(moreActive || moreOpen)}`}
               >
-                {t('common.more')}\n                <ChevronDown size={15} aria-hidden="true" className={`transition ${moreOpen ? 'rotate-180' : ''}`} />
+                {t('common.more')}                <ChevronDown size={15} aria-hidden="true" className={`transition ${moreOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {moreOpen && (
@@ -123,7 +122,7 @@ export default function SiteHeader({
                         onClick={closeMenus}
                         className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold text-jso-ink transition hover:bg-slate-100"
                       >
-                        {t('common.ticketing')}\n                        <Ticket size={15} aria-hidden="true" className="text-slate-300" />
+                        {t('common.ticketing')}                        <Ticket size={15} aria-hidden="true" className="text-slate-300" />
                       </a>
                     </li>
                     <li>
@@ -132,7 +131,7 @@ export default function SiteHeader({
                         onClick={closeMenus}
                         className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold text-jso-ink transition hover:bg-slate-100"
                       >
-                        {t('common.news')}\n                        <Newspaper size={15} aria-hidden="true" className="text-slate-300" />
+                        {t('common.news')}                        <Newspaper size={15} aria-hidden="true" className="text-slate-300" />
                       </a>
                     </li>
                     {secondary.map((section) => (
@@ -170,6 +169,21 @@ export default function SiteHeader({
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <label className="sr-only" htmlFor="jso-language-select">{t('common.language')}</label>
+          <select
+            id="jso-language-select"
+            value={language}
+            onChange={(event) => setLanguage(event.target.value)}
+            aria-label={t('common.language')}
+            className="h-10 rounded-full border border-white/20 bg-white/5 px-3 text-xs font-extrabold text-white outline-none transition hover:bg-white/10"
+          >
+            {languages.map((item) => (
+              <option key={item.code} value={item.code} className="text-jso-ink">
+                {item.flag} {item.shortLabel}
+              </option>
+            ))}
+          </select>
+
           <button
             type="button"
             onClick={() => {
@@ -235,7 +249,7 @@ export default function SiteHeader({
               <ul className="divide-y divide-white/10">
                 <li>
                   <a href="#home" onClick={closeMenus} aria-current={current('home')} className={`flex items-center justify-between py-4 text-xl font-black ${activeId === 'home' ? 'text-jso-gold' : 'text-white'}`}>
-                    {t('common.home')}\n                  </a>
+                    {t('common.home')}                  </a>
                 </li>
                 {primary.map((section) => (
                   <li key={section.id}>
