@@ -17,9 +17,13 @@ const DEMO_HOSTS = ['randomuser.me', 'dicebear.com']
 export function resolvePlayerPhoto(player) {
   const url = String(player?.photoUrl || '').trim()
   const isDemo = DEMO_HOSTS.some((host) => url.includes(host))
-  if (url && !isDemo) return url
+  if (url && !isDemo) {
+    const localMatch = url.match(/^(?:\/|https?:\/\/[^/]+\/)(?:.*\/)?players\/([^/?#]+)\.(?:webp|svg|png)$/i)
+    if (localMatch) return `/players/${localMatch[1]}.png`
+    return url
+  }
   const slug = playerSlug(player)
-  return slug ? `/players/${slug}.webp` : ''
+  return slug ? `/players/${slug}.png` : ''
 }
 
 export const isCutoutPhoto = (url) => String(url || '').startsWith('/players/')
