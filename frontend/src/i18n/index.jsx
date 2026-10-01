@@ -79,11 +79,12 @@ function translateLegacy(source, language) {
   return source
 }
 
+const SOURCE_TEXT = new WeakMap()
+const SOURCE_ATTRIBUTES = new WeakMap()
+
 function localizePublicDom(language) {
   if (typeof document === 'undefined' || window.location.pathname.startsWith('/admin')) return () => {}
 
-  const sourceText = new WeakMap()
-  const sourceAttributes = new WeakMap()
   const translatingText = new WeakSet()
   const translatingAttributes = new WeakSet()
   let disposed = false
@@ -101,8 +102,8 @@ function localizePublicDom(language) {
       return
     }
 
-    if (!sourceText.has(node)) sourceText.set(node, current)
-    const original = sourceText.get(node)
+    if (!SOURCE_TEXT.has(node)) SOURCE_TEXT.set(node, current)
+    const original = SOURCE_TEXT.get(node)
     const translated = translateLegacy(original, language)
 
     if (translated !== current) {
@@ -119,10 +120,10 @@ function localizePublicDom(language) {
       const current = element.getAttribute(attribute) ?? ''
       if (!current.trim()) continue
 
-      let originals = sourceAttributes.get(element)
+      let originals = SOURCE_ATTRIBUTES.get(element)
       if (!originals) {
         originals = new Map()
-        sourceAttributes.set(element, originals)
+        SOURCE_ATTRIBUTES.set(element, originals)
       }
 
       if (translatingAttributes.has(element)) {
