@@ -26,7 +26,7 @@ public sealed class NewsDetailsController(JsoDbContext db, ContentTranslationSer
             .SingleOrDefaultAsync(ct);
 
         if (article is null) return NotFound();
-        var language = ContentTranslationService.GetRequestLanguage(Request);
+        var language = RequestLanguage.Get(Request);
         var map = await translations.LoadAsync("Article", [article.Id], ["title", "excerpt", "body"], language, ct);
         article = new
         {
