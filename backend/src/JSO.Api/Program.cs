@@ -29,6 +29,7 @@ if (string.IsNullOrWhiteSpace(dataProtectionKeysPath))
     // payload is required today. Make that lifecycle explicit instead of
     // silently generating keys that disappear on container replacement.
     dataProtection.UseEphemeralDataProtectionProvider();
+    builder.Services.AddSingleton<IDataProtectionProvider>(_ => new EphemeralDataProtectionProvider());
 }
 else
 {
@@ -172,7 +173,8 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseHttpsRedirection();
+    // Render terminates TLS at the edge. The app listens on the internal
+    // HTTP port, so HTTPS redirection here only creates an unnecessary warning.
 }
 
 var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "uploads");
