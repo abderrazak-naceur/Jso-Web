@@ -85,7 +85,7 @@ export default function SiteHeader({
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-jso-navy/95 text-white backdrop-blur-xl">
       <div className="mx-auto flex h-18 max-w-7xl items-center gap-3 px-5 lg:px-8">
-        <a href="#home" onClick={closeMenus} aria-label="JSO Oudhref — accueil" className="flex shrink-0 items-center gap-3 rounded-xl">
+        <a href="#home" onClick={closeMenus} aria-label={`JSO Oudhref — ${t('common.home')}`} className="flex shrink-0 items-center gap-3 rounded-xl">
           <img src={CREST_SRC} alt="" className="h-11 w-11 object-contain" />
           <span className="leading-none">
             <span className="block text-lg font-black tracking-tight">JSO</span>
@@ -93,7 +93,7 @@ export default function SiteHeader({
           </span>
         </a>
 
-        <nav aria-label={t('common.home')} className="ml-4 hidden items-center gap-1 lg:flex xl:ml-8">
+        <nav aria-label={t('common.mainNavigation')} className="ml-4 hidden items-center gap-1 lg:flex xl:ml-8">
           {primary.map((section) => (
             <a key={section.id} href={`#${section.id}`} onClick={closeMenus} aria-current={current(section.id)} className={desktopLinkClass(activeId === section.id)}>
               {section.label}
@@ -245,7 +245,7 @@ export default function SiteHeader({
       {menuOpen && (
         <div id="jso-mobile-menu" className="absolute inset-x-0 top-full h-[calc(100dvh-4.5rem)] overflow-y-auto overscroll-contain border-t border-white/10 bg-jso-navy lg:hidden">
           <div className="mx-auto max-w-3xl px-5 pb-12 pt-2">
-            <nav aria-label={t('common.home')}>
+            <nav aria-label={t('common.mainNavigation')}>
               <ul className="divide-y divide-white/10">
                 <li>
                   <a href="#home" onClick={closeMenus} aria-current={current('home')} className={`flex items-center justify-between py-4 text-xl font-black ${activeId === 'home' ? 'text-jso-gold' : 'text-white'}`}>
