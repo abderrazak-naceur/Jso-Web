@@ -60,7 +60,7 @@ public sealed class TicketsController(
             .Where(x => x.MatchId == matchId && x.IsActive)
             .OrderBy(x => x.Price)
             .ToListAsync(ct);
-        var language = ContentTranslationService.GetRequestLanguage(Request);
+        var language = RequestLanguage.Get(Request);
         var map = await translations.LoadAsync("TicketType", entities.Select(x => x.Id), ["name"], language, ct);
         var types = entities.Select(x => new
         {
