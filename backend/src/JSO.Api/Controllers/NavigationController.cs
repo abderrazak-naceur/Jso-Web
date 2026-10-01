@@ -27,7 +27,7 @@ public sealed class NavigationController(JsoDbContext db, ContentTranslationServ
         var entities = await query
             .OrderBy(x => x.DisplayOrder).ThenBy(x => x.Label)
             .ToListAsync(ct);
-        var language = ContentTranslationService.GetRequestLanguage(Request);
+        var language = RequestLanguage.Get(Request);
         var map = await translations.LoadAsync("NavigationItem", entities.Select(x => x.Id), ["label"], language, ct);
         return Ok(entities.Select(x => new
         {
