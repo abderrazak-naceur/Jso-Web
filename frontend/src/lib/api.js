@@ -1,8 +1,23 @@
 import { API_BASE_URL } from './apiConfig'
 
+const LANGUAGE_STORAGE_KEY = 'jso_language'
+const DEFAULT_LANGUAGE = 'fr'
+
+function getRequestLanguage() {
+  try {
+    return window.localStorage.getItem(LANGUAGE_STORAGE_KEY) || DEFAULT_LANGUAGE
+  } catch {
+    return DEFAULT_LANGUAGE
+  }
+}
+
+function languageHeaders() {
+  return { Accept: 'application/json', 'Accept-Language': getRequestLanguage() }
+}
+
 async function request(path, signal) {
   const response = await fetch(API_BASE_URL + path, {
-    headers: { Accept: 'application/json' },
+    headers: languageHeaders(),
     signal,
   })
   if (!response.ok) throw new Error('API request failed: ' + response.status)
@@ -59,7 +74,7 @@ async function requestJson(path, method, body, token) {
   const options = {
     method,
     headers: {
-      Accept: 'application/json',
+      ...languageHeaders(),
       'Content-Type': 'application/json',
       ...(token ? { Authorization: 'Bearer ' + token } : {}),
     },
