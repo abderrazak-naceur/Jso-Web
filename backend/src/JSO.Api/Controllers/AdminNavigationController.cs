@@ -11,7 +11,7 @@ namespace JSO.Api.Controllers;
 // plain string (route or absolute link); clients render it as an href, never as
 // raw HTML (anti-XSS). Reuses the same ReorderRequest as home sections.
 [ApiController]
-[Authorize(Roles = "ClubAdmin,Editor")]
+[Authorize(Roles = "SuperAdmin,ClubAdmin,Editor")]
 [Route("api/admin/navigation")]
 public sealed class AdminNavigationController(JsoDbContext db, AuditService audit) : ControllerBase
 {
