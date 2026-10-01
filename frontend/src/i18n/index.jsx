@@ -235,7 +235,7 @@ function updateSeo(language, t) {
       : 'home'
   const title = t(`seo.${kind}Title`)
   const description = t(`seo.${kind}Description`)
-  const base = String(import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin).replace(/\/$/, '')
+  const base = 'https://jso-web.onrender.com'
   const currentUrl = `${base}${localizedPath(pathname, language)}`
 
   document.title = title
