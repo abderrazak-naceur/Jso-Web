@@ -135,7 +135,6 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'security' && <SecurityModule onError={setError}/>}
         {section === 'media' && <MediaModule onError={setError}/>}
         {section === 'content' && <ContentModule onError={setError}/>}
-        {section === 'homepage' && <HomepageBuilderModule onError={setError}/>}
         {section === 'sponsors' && <SponsorsModule onError={setError}/>}
         {section === 'sponsorqr' && <SponsorQrModule onError={setError}/>}
         {section === 'shop' && <ShopModule onError={setError}/>}
