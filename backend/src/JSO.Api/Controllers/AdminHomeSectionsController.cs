@@ -13,7 +13,7 @@ namespace JSO.Api.Controllers;
 // known allow-list. CustomHtml/Text payloads are never rendered as raw HTML by
 // the clients (anti-XSS) — this API only stores/validates the JSON string.
 [ApiController]
-[Authorize(Roles = "ClubAdmin,Editor")]
+[Authorize(Roles = "SuperAdmin,ClubAdmin,Editor")]
 [Route("api/admin/home-sections")]
 public sealed class AdminHomeSectionsController(JsoDbContext db, AuditService audit) : ControllerBase
 {
