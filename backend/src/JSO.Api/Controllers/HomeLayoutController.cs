@@ -21,7 +21,7 @@ public sealed class HomeLayoutController(JsoDbContext db, ContentTranslationServ
             .Where(x => x.IsPublished)
             .OrderBy(x => x.DisplayOrder).ThenBy(x => x.CreatedAt)
             .ToListAsync(ct);
-        var language = ContentTranslationService.GetRequestLanguage(Request);
+        var language = RequestLanguage.Get(Request);
         var map = await translations.LoadAsync("HomeSection", entities.Select(x => x.Id), ["title"], language, ct);
         return Ok(entities.Select(x => new
         {
