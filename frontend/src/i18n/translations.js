@@ -41,7 +41,6 @@ const fr = {
   'common.admin': 'Espace admin',
   'common.backToTop': 'Retour en haut',
   'common.allRightsReserved': 'Tous droits réservés.',
-  'common.officialSite': 'Le site officiel de la JSO Oudhref.',
   'common.clubTagline': 'Plus qu’un club. Une identité.',
   'common.languageChanged': 'Langue sélectionnée',
 }
@@ -82,7 +81,6 @@ const en = {
   'common.admin': 'Admin area',
   'common.backToTop': 'Back to top',
   'common.allRightsReserved': 'All rights reserved.',
-  'common.officialSite': 'The official JSO Oudhref website.',
   'common.clubTagline': 'More than a club. An identity.',
   'common.languageChanged': 'Selected language',
 }
@@ -123,7 +121,6 @@ const it = {
   'common.admin': 'Area admin',
   'common.backToTop': 'Torna su',
   'common.allRightsReserved': 'Tutti i diritti riservati.',
-  'common.officialSite': 'Il sito ufficiale della JSO Oudhref.',
   'common.clubTagline': 'Più di un club. Un’identità.',
   'common.languageChanged': 'Lingua selezionata',
 }
@@ -164,7 +161,6 @@ const ar = {
   'common.admin': 'منطقة الإدارة',
   'common.backToTop': 'العودة إلى الأعلى',
   'common.allRightsReserved': 'جميع الحقوق محفوظة.',
-  'common.officialSite': 'الموقع الرسمي لنادي جوهرة أولاد عريف.',
   'common.clubTagline': 'أكثر من نادٍ. هوية.',
   'common.languageChanged': 'اللغة المحددة',
 }
