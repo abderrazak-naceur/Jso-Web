@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using JSO.Api;
 using JSO.Api.Security;
 using JSO.Infrastructure;
