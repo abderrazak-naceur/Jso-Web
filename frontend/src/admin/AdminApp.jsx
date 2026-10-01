@@ -166,7 +166,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'club-events' && <ClubEventsModule onError={setError}/>}
         {section === 'documents' && <DocumentsModule onError={setError}/>}
         {section === 'faq' && <FaqModule onError={setError}/>}
-        {section === 'settings' && <SettingsModule/>}
+        {section === 'settings' && <SettingsModule onError={setError}/>}
       </section>
     </div>
   </main>
