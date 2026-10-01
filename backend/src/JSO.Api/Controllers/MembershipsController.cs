@@ -32,7 +32,7 @@ public sealed class MembershipsController(
             .Where(x => x.IsActive)
             .OrderBy(x => x.DisplayOrder).ThenBy(x => x.Price)
             .ToListAsync(ct);
-        var language = ContentTranslationService.GetRequestLanguage(Request);
+        var language = RequestLanguage.Get(Request);
         var map = await translations.LoadAsync("MembershipPlan", plans.Select(x => x.Id), ["name", "description"], language, ct);
         return Ok(plans.Select(x => new
         {
