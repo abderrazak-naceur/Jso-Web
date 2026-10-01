@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Save } from 'lucide-react'
+import { Save, LayoutTemplate } from 'lucide-react'
 import Field from '../components/Field'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../../lib/apiConfig'
+import HomepageBuilderModule from '../HomepageBuilder'
 export default function SettingsModule() {
   const [value, setValue] = useState(getConfiguredApiBaseUrl())
   const [active, setActive] = useState(API_BASE_URL)
@@ -38,7 +39,7 @@ export default function SettingsModule() {
     } finally { setTesting(false) }
   }
 
-  return <div className="max-w-2xl space-y-6">
+  return <div className="space-y-6">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
       <h2 className="text-xl font-black">Configuration du backend</h2>
       <p className="mt-2 text-sm text-slate-500">URL de base de l’API utilisée par le site et l’administration. Laissez vide pour utiliser la valeur par défaut (<code className="rounded bg-slate-100 px-1">{buildDefault}</code>).</p>
@@ -56,6 +57,13 @@ export default function SettingsModule() {
         <p>API active actuellement : <b className="text-slate-700">{active}</b></p>
         <p className="mt-1">Ce réglage est enregistré dans ce navigateur. Rechargez la page après modification pour l’appliquer partout.</p>
       </div>
+    </div>
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+      <div className="flex items-start gap-3">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-jso-blue/10 text-jso-blue"><LayoutTemplate size={20}/></div>
+        <div><h2 className="text-xl font-black">Sections de la page d’accueil</h2><p className="mt-1 text-sm text-slate-500">Configurez l’ordre, la publication, la visibilité et le menu/pied de page de la page d’accueil.</p></div>
+      </div>
+      <div className="mt-6"><HomepageBuilderModule onError={() => {}} /></div>
     </div>
   </div>
 }
