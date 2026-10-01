@@ -13,7 +13,7 @@ function getInitialLanguage() {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY)
     if (stored) return normalizeLanguage(stored)
-    return normalizeLanguage(window.navigator.language)
+    return DEFAULT_LANGUAGE
   } catch {
     return DEFAULT_LANGUAGE
   }
