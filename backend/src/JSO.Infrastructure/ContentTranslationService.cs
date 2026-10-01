@@ -13,16 +13,6 @@ public sealed class ContentTranslationService(JsoDbContext db)
         return SupportedLanguages.Contains(code) ? code : DefaultLanguage;
     }
 
-    public static string GetRequestLanguage(HttpRequest request)
-    {
-        var header = request.Headers.AcceptLanguage.ToString();
-        var candidate = header.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(x => x.Split(';', 2)[0])
-            .FirstOrDefault();
-
-        return NormalizeLanguage(candidate);
-    }
-
     public static string Key(string entityType, Guid entityId, string language, string field) =>
         $"i18n:{entityType}:{entityId}:{NormalizeLanguage(language)}:{field.Trim().ToLowerInvariant()}";
 
