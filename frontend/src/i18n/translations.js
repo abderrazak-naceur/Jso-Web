@@ -43,6 +43,12 @@ const fr = {
   'common.allRightsReserved': 'Tous droits réservés.',
   'common.clubTagline': 'Plus qu’un club. Une identité.',
   'common.languageChanged': 'Langue sélectionnée',
+  'seo.homeTitle': 'JSO — Jeunesse Sportive de Oudhref'
+  'seo.homeDescription': 'Site officiel de la Jeunesse Sportive de Oudhref : actualités, matchs, effectif, médias, billetterie et boutique.'
+  'seo.newsTitle': 'Actualités — JSO Oudhref'
+  'seo.newsDescription': 'Les dernières actualités de la Jeunesse Sportive de Oudhref.'
+  'seo.ticketsTitle': 'Billetterie — JSO Oudhref'
+  'seo.ticketsDescription': 'Réservez vos billets pour les matchs de la Jeunesse Sportive de Oudhref.'
 }
 
 const en = {
@@ -83,6 +89,12 @@ const en = {
   'common.allRightsReserved': 'All rights reserved.',
   'common.clubTagline': 'More than a club. An identity.',
   'common.languageChanged': 'Selected language',
+  'seo.homeTitle': 'JSO — Jeunesse Sportive de Oudhref'
+  'seo.homeDescription': 'Official Jeunesse Sportive de Oudhref website: news, matches, squad, media, tickets and club shop.'
+  'seo.newsTitle': 'News — JSO Oudhref'
+  'seo.newsDescription': 'The latest news from Jeunesse Sportive de Oudhref.'
+  'seo.ticketsTitle': 'Tickets — JSO Oudhref'
+  'seo.ticketsDescription': 'Book your tickets for Jeunesse Sportive de Oudhref matches.'
 }
 
 const it = {
@@ -123,6 +135,12 @@ const it = {
   'common.allRightsReserved': 'Tutti i diritti riservati.',
   'common.clubTagline': 'Più di un club. Un’identità.',
   'common.languageChanged': 'Lingua selezionata',
+  'seo.homeTitle': 'JSO — Jeunesse Sportive de Oudhref'
+  'seo.homeDescription': 'Sito ufficiale della Jeunesse Sportive de Oudhref: notizie, partite, rosa, media, biglietteria e shop del club.'
+  'seo.newsTitle': 'Notizie — JSO Oudhref'
+  'seo.newsDescription': 'Le ultime notizie della Jeunesse Sportive de Oudhref.'
+  'seo.ticketsTitle': 'Biglietteria — JSO Oudhref'
+  'seo.ticketsDescription': 'Prenota i biglietti per le partite della Jeunesse Sportive de Oudhref.'
 }
 
 const ar = {
@@ -163,6 +181,12 @@ const ar = {
   'common.allRightsReserved': 'جميع الحقوق محفوظة.',
   'common.clubTagline': 'أكثر من نادٍ. هوية.',
   'common.languageChanged': 'اللغة المحددة',
+  'seo.homeTitle': 'JSO — الشبيبة الرياضية بأوذرف'
+  'seo.homeDescription': 'الموقع الرسمي للشبيبة الرياضية بأوذرف: الأخبار والمباريات والفريق والإعلام والتذاكر ومتجر النادي.'
+  'seo.newsTitle': 'الأخبار — JSO Oudhref'
+  'seo.newsDescription': 'آخر أخبار الشبيبة الرياضية بأوذرف.'
+  'seo.ticketsTitle': 'التذاكر — JSO Oudhref'
+  'seo.ticketsDescription': 'احجز تذاكرك لمباريات الشبيبة الرياضية بأوذرف.'
 }
 
 export const LEGACY_TRANSLATIONS = {
