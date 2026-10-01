@@ -6,7 +6,7 @@ export default function PlayerPortrait({ player }) {
   const name = [player.firstName, player.lastName].filter(Boolean).join(' ') || 'Joueur JSO'
   const photoUrl = resolvePlayerPhoto(player)
   const hasPhoto = Boolean(photoUrl) && !failed
-  // Local portraits (/players/*.webp) are background-removed cutouts: show them whole,
+  // Local portraits (/players/*.png) are background-removed cutouts: show them whole,
   // anchored to the bottom, instead of cropping them like a regular photo.
   const isCutout = isCutoutPhoto(photoUrl)
   const position = String(player.position || 'Équipe première')
