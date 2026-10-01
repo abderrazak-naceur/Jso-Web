@@ -12,24 +12,22 @@ namespace JSO.Api.Controllers;
 // render it and must NOT inject raw HTML (anti-XSS).
 [ApiController]
 [Route("api/home-layout")]
-public sealed class HomeLayoutController(JsoDbContext db) : ControllerBase
+public sealed class HomeLayoutController(JsoDbContext db, ContentTranslationService translations) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken ct)
     {
-        var items = await db.HomeSections.AsNoTracking()
+        var entities = await db.HomeSections.AsNoTracking()
             .Where(x => x.IsPublished)
             .OrderBy(x => x.DisplayOrder).ThenBy(x => x.CreatedAt)
-            .Select(x => new
-            {
-                x.Id,
-                x.Type,
-                x.Title,
-                x.PayloadJson,
-                x.DisplayOrder
-            })
             .ToListAsync(ct);
-
-        return Ok(items);
+        var language = ContentTranslationService.GetRequestLanguage(Request);
+        var map = await translations.LoadAsync("HomeSection", entities.Select(x => x.Id), ["title"], language, ct);
+        return Ok(entities.Select(x => new
+        {
+            x.Id, x.Type,
+            Title = ContentTranslationService.ResolveFromMap(map, "HomeSection", x.Id, "title", x.Title, language),
+            x.PayloadJson, x.DisplayOrder
+        }));
     }
 }
