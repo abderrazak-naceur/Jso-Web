@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, Pencil, Save, X, Wallet, TrendingUp, TrendingDown, Download } from 'lucide-react'
+import { Plus, Pencil, Save, X, Wallet, TrendingUp, TrendingDown, Download, FileSpreadsheet, FileText, Printer, RefreshCw } from 'lucide-react'
 import { API_BASE_URL } from '../lib/apiConfig'
 
 // Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
@@ -161,6 +161,33 @@ export default function FinanceModule({ onError }) {
     return map
   }, [categories])
 
+  // Excel-compatible export: generates a real HTML workbook that opens directly in Excel.
+  function exportExcel() {
+    const rows = transactions.map(t => [
+      toInputDate(t.date), TYPE_LABELS[t.type] || t.type,
+      t.categoryName || categoryName[t.categoryId] || '', Number(t.amount || 0).toFixed(2),
+      t.currency || CURRENCY, t.description || '',
+    ])
+    const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+    const table = '<table border="1"><thead><tr>' + ['Date','Type','Catégorie','Montant','Devise','Description'].map(h => '<th>' + esc(h) + '</th>').join('') + '</tr></thead><tbody>' + rows.map(r => '<tr>' + r.map(v => '<td>' + esc(v) + '</td>').join('') + '</tr>').join('') + '</tbody></table>'
+    const html = '<html><head><meta charset="utf-8"><style>body{font-family:Arial}table{border-collapse:collapse}th,td{padding:6px;border:1px solid #ccc}th{background:#eee}</style></head><body><h1>JSO - Rapport financier</h1><p>Période: ' + esc(from) + ' → ' + esc(to) + '</p><p>Entrées: ' + esc(fmtMoney(summary?.totalIncome)) + ' | Dépenses: ' + esc(fmtMoney(summary?.totalExpense)) + ' | Net: ' + esc(fmtMoney(summary?.net)) + '</p>' + table + '</body></html>'
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.download = 'JSO_Rapport_Financier_' + from + '_' + to + '.xls'; a.click(); URL.revokeObjectURL(url)
+  }
+
+  function printPdf() {
+    const rows = transactions.map(t => '<tr><td>' + fmtDate(t.date) + '</td><td>' + (t.categoryName || categoryName[t.categoryId] || '—') + '</td><td>' + (TYPE_LABELS[t.type] || t.type) + '</td><td>' + fmtMoney(t.amount) + '</td><td>' + (t.description || '—') + '</td></tr>').join('')
+    const win = window.open('', '_blank', 'noopener,noreferrer')
+    if (!win) { onError('Autorisez les fenêtres popup pour générer le PDF.'); return }
+    win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>JSO - Rapport financier</title><style>body{font-family:Arial,sans-serif;color:#10213f;padding:32px}h1{margin:0 0 4px}h2{margin-top:28px}.meta{color:#64748b;margin-bottom:24px}.cards{display:flex;gap:12px}.card{flex:1;border:1px solid #ddd;border-radius:10px;padding:14px}.value{font-size:22px;font-weight:700}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left;font-size:12px}th{background:#f3f4f6}@media print{button{display:none}}</style></head><body><h1>JEUNESSE SPORTIVE D'OUDHREF</h1><div class="meta">Rapport financier · période du ' + from + ' au ' + to + '</div><div class="cards"><div class="card">Entrées<div class="value">' + fmtMoney(summary?.totalIncome) + '</div></div><div class="card">Dépenses<div class="value">' + fmtMoney(summary?.totalExpense) + '</div></div><div class="card">Net<div class="value">' + fmtMoney(summary?.net) + '</div></div></div><h2>Transactions</h2><table><thead><tr><th>Date</th><th>Catégorie</th><th>Type</th><th>Montant</th><th>Description</th></tr></thead><tbody>' + rows + '</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>')
+    win.document.close()
+  }
+
+  function setYear(year) {
+    setFrom(year + '-01-01'); setTo(year + '-12-31')
+  }
+
   // Simple client-side CSV export of the current transactions view.
   function exportCsv() {
     const header = ['Date', 'Type', 'Catégorie', 'Montant', 'Devise', 'Description']
@@ -199,8 +226,19 @@ export default function FinanceModule({ onError }) {
         <label className="text-sm font-bold">Au<input type="date" value={to} onChange={e => setTo(e.target.value)} className="mt-2 block rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-jso-blue"/></label>
         <label className="text-sm font-bold">Catégorie<select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="mt-2 block rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-jso-blue"><option value="">Toutes</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name} ({TYPE_LABELS[c.type]})</option>)}</select></label>
         <label className="text-sm font-bold">Type<select value={filterType} onChange={e => setFilterType(e.target.value)} className="mt-2 block rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-jso-blue"><option value="">Tous</option><option value="Income">Entrée</option><option value="Expense">Dépense</option></select></label>
-        <button type="button" onClick={exportCsv} disabled={!transactions.length} className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:border-jso-blue disabled:opacity-50"><Download size={16}/> Export CSV</button>
+        <button type="button" onClick={() => setYear(new Date().getFullYear())} className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:border-jso-blue"><RefreshCw size={16}/> Année courante</button>
+        <button type="button" onClick={printPdf} disabled={!summary} className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-bold text-white hover:bg-jso-blue disabled:opacity-50"><Printer size={16}/> Export PDF</button>
+        <button type="button" onClick={exportExcel} disabled={!transactions.length} className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700 hover:border-emerald-400 disabled:opacity-50"><FileSpreadsheet size={16}/> Export Excel</button>
+        <button type="button" onClick={exportCsv} disabled={!transactions.length} className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:border-jso-blue disabled:opacity-50"><Download size={16}/> CSV</button>
       </div>
+    </div>
+
+    <div className="rounded-[1.5rem] border border-jso-gold/30 bg-jso-navy p-6 text-white shadow-sm">
+      <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
+        <div><p className="text-xs font-extrabold uppercase tracking-[0.2em] text-jso-gold">Centre de rapports</p><h2 className="mt-2 text-2xl font-black">Rapport financier JSO</h2><p className="mt-1 text-sm text-white/60">Une vue prête à imprimer, partager ou ouvrir dans Excel.</p></div>
+        <div className="flex flex-wrap gap-2"><button type="button" onClick={printPdf} className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-jso-navy"><Printer size={16}/> PDF</button><button type="button" onClick={exportExcel} disabled={!transactions.length} className="flex items-center gap-2 rounded-xl bg-jso-gold px-4 py-2.5 text-sm font-bold text-jso-navy disabled:opacity-50"><FileSpreadsheet size={16}/> Excel</button></div>
+      </div>
+      <div className="mt-6 grid gap-3 sm:grid-cols-3"><div className="rounded-xl bg-white/10 p-4"><p className="text-xs text-white/55">Entrées</p><p className="mt-1 text-2xl font-black">{fmtMoney(summary?.totalIncome)}</p></div><div className="rounded-xl bg-white/10 p-4"><p className="text-xs text-white/55">Dépenses</p><p className="mt-1 text-2xl font-black">{fmtMoney(summary?.totalExpense)}</p></div><div className="rounded-xl bg-white/10 p-4"><p className="text-xs text-white/55">Solde</p><p className="mt-1 text-2xl font-black">{fmtMoney(summary?.net)}</p></div></div>
     </div>
 
     {/* Résumé : Entrées / Dépenses / Net */}
