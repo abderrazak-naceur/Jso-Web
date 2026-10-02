@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, Pencil, Save, X, Wallet, TrendingUp, TrendingDown, Download, FileSpreadsheet, FileText, Printer, RefreshCw } from 'lucide-react'
+import { Plus, Pencil, Save, X, Wallet, TrendingUp, TrendingDown, Download, FileSpreadsheet, Printer, RefreshCw } from 'lucide-react'
 import { API_BASE_URL } from '../lib/apiConfig'
 
 // Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
