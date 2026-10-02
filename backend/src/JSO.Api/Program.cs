@@ -42,6 +42,7 @@ builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuditService>();
 builder.Services.AddScoped<StaffAuthorizationService>();
 builder.Services.AddScoped<DatabaseInitializer>();
+builder.Services.AddScoped<ContentTranslationService>();
 // Shared resolver for payment provider return/cancel base URLs (shop, tickets,
 // supporters' wall). Keeps the Host-header policy in one place.
 builder.Services.AddScoped<JSO.Api.PaymentLinkBuilder>();
