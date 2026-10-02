@@ -178,10 +178,14 @@ export default function FinanceModule({ onError }) {
 
   function printPdf() {
     const rows = transactions.map(t => '<tr><td>' + fmtDate(t.date) + '</td><td>' + (t.categoryName || categoryName[t.categoryId] || '—') + '</td><td>' + (TYPE_LABELS[t.type] || t.type) + '</td><td>' + fmtMoney(t.amount) + '</td><td>' + (t.description || '—') + '</td></tr>').join('')
-    const win = window.open('', '_blank', 'noopener,noreferrer')
+    const win = window.open('', '_blank')
     if (!win) { onError('Autorisez les fenêtres popup pour générer le PDF.'); return }
-    win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>JSO - Rapport financier</title><style>body{font-family:Arial,sans-serif;color:#10213f;padding:32px}h1{margin:0 0 4px}h2{margin-top:28px}.meta{color:#64748b;margin-bottom:24px}.cards{display:flex;gap:12px}.card{flex:1;border:1px solid #ddd;border-radius:10px;padding:14px}.value{font-size:22px;font-weight:700}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left;font-size:12px}th{background:#f3f4f6}@media print{button{display:none}}</style></head><body><h1>JEUNESSE SPORTIVE D'OUDHREF</h1><div class="meta">Rapport financier · période du ' + from + ' au ' + to + '</div><div class="cards"><div class="card">Entrées<div class="value">' + fmtMoney(summary?.totalIncome) + '</div></div><div class="card">Dépenses<div class="value">' + fmtMoney(summary?.totalExpense) + '</div></div><div class="card">Net<div class="value">' + fmtMoney(summary?.net) + '</div></div></div><h2>Transactions</h2><table><thead><tr><th>Date</th><th>Catégorie</th><th>Type</th><th>Montant</th><th>Description</th></tr></thead><tbody>' + rows + '</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>')
+    const reportHtml = '<!doctype html><html><head><meta charset="utf-8"><title>JSO - Rapport financier</title><style>body{font-family:Arial,sans-serif;color:#10213f;padding:32px}h1{margin:0 0 4px}h2{margin-top:28px}.meta{color:#64748b;margin-bottom:24px}.cards{display:flex;gap:12px}.card{flex:1;border:1px solid #ddd;border-radius:10px;padding:14px}.value{font-size:22px;font-weight:700}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left;font-size:12px}th{background:#f3f4f6}@media print{button{display:none}}</style></head><body><h1>JEUNESSE SPORTIVE D'OUDHREF</h1><div class="meta">Rapport financier · période du ' + from + ' au ' + to + '</div><div class="cards"><div class="card">Entrées<div class="value">' + fmtMoney(summary?.totalIncome) + '</div></div><div class="card">Dépenses<div class="value">' + fmtMoney(summary?.totalExpense) + '</div></div><div class="card">Net<div class="value">' + fmtMoney(summary?.net) + '</div></div></div><h2>Transactions</h2><table><thead><tr><th>Date</th><th>Catégorie</th><th>Type</th><th>Montant</th><th>Description</th></tr></thead><tbody>' + rows + '</tbody></table></body></html>'
+    win.document.open()
+    win.document.write(reportHtml)
     win.document.close()
+    win.focus()
+    setTimeout(() => win.print(), 250)
   }
 
   function setYear(year) {
