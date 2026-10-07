@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { CheckCircle2, Clock, XCircle, RefreshCw } from 'lucide-react'
-import { shopOrderApi, ticketApi, supporterApi, membershipApi, matchStreamApi } from '../../lib/api'
+import { shopOrderApi, ticketApi, supporterApi, membershipApi, matchStreamApi, donationsApi } from '../../lib/api'
 
 const FAN_TOKEN_KEY = 'jso_fan_token'
 
@@ -59,6 +59,16 @@ function resolvePayable(params) {
     }
   }
 
+  if (payableType === 'Donation' && payableId) {
+    return {
+      id: payableId,
+      fetch: () => donationsApi.status(payableId),
+      isPaid: (s) => s === 'Paid',
+      isFailed: () => false,
+      readStatus: (r) => r?.paymentStatus || 'Pending',
+    }
+  }
+
   if (payableType === 'Membership' && payableId) {
     return {
       id: payableId,
@@ -95,13 +105,14 @@ export default function PaymentReturn() {
   const [error, setError] = useState('')
 
   const token = (() => { try { return localStorage.getItem(FAN_TOKEN_KEY) } catch { return null } })()
+  const requiresFanToken = payable ? !payable.fetch.toString().includes('donationsApi.status') : true
 
   async function refresh() {
-    if (!payable || !token) { setLoading(false); return }
+    if (!payable || (requiresFanToken && !token)) { setLoading(false); return }
     setLoading(true)
     setError('')
     try {
-      const row = await payable.fetch(token)
+      const row = await payable.fetch(requiresFanToken ? token : undefined)
       setStatus(payable.readStatus(row))
     } catch (e) {
       setError(e?.message || 'Impossible de récupérer le statut du paiement.')
@@ -111,7 +122,7 @@ export default function PaymentReturn() {
   }
 
   useEffect(() => {
-    if (outcome !== 'success' || !payable || !token) {
+    if (outcome !== 'success' || !payable || (requiresFanToken && !token)) {
       setLoading(false)
       return undefined
     }
