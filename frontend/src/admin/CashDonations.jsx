@@ -28,7 +28,9 @@ function ReceiptCard({ receipt }) {
     </div>
     <div className="mt-5 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700"><CheckCircle2 size={18}/> Paiement en espèces enregistré et comptabilisé dans la collecte JSO.</div>
     <div className="mt-5 border-t border-dashed border-slate-200 pt-4 text-xs text-slate-500">
-      Vérification en ligne : <span className="font-semibold">{window.location.origin}{receipt.verificationUrl}</span>
+      Vérification en ligne : <span className="font-semibold">{window.location.origin}{receipt.receiptUrl}</span>
+      {receipt.whatsappSent && <p className="mt-2 font-bold text-emerald-700">✓ Reçu envoyé sur WhatsApp.</p>}
+      {!receipt.whatsappSent && receipt.whatsappConfigured && <p className="mt-2 font-bold text-amber-700">Le reçu n’a pas pu être envoyé sur WhatsApp.</p>}
     </div>
   </div>
 }
