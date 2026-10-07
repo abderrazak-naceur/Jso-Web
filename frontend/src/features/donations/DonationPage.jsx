@@ -7,11 +7,12 @@ import { useI18n } from '../../i18n/index.jsx'
 
 const PRESETS = [5, 10, 20, 50, 100, 250]
 const PAYMENT_METHODS = [
-  { id: 'flouci', label: 'Flouci', description: 'Portefeuille / paiement tunisien', country: 'TN' },
-  { id: 'orange', label: 'Orange Money', description: 'Paiement mobile Orange', country: 'TN' },
-  { id: 'ooredoo', label: 'Mobicash / Ooredoo', description: 'Portefeuille mobile Ooredoo', country: 'TN' },
-  { id: 'edinar', label: 'e-DINAR / D17', description: 'Paiement via La Poste tunisienne', country: 'TN' },
-  { id: 'card', label: 'Carte bancaire', description: 'Paiement hébergé par le prestataire', country: 'INTL' },
+  { id: 'flouci', label: 'Flouci', description: 'Portefeuille / paiement tunisien', country: 'TN', available: true },
+
+  { id: 'orange', label: 'Orange Money', description: 'Paiement mobile Orange', country: 'TN', available: false },
+  { id: 'ooredoo', label: 'Mobicash / Ooredoo', description: 'Portefeuille mobile Ooredoo', country: 'TN', available: false },
+  { id: 'edinar', label: 'e-DINAR / D17', description: 'Paiement via La Poste tunisienne', country: 'TN', available: false },
+  { id: 'card', label: 'Carte bancaire', description: 'Paiement hébergé par le prestataire', country: 'INTL', available: true },
 ]
 
 
@@ -215,10 +216,15 @@ export default function DonationPage() {
                   <button
                     key={method.id}
                     type="button"
-                    onClick={() => setSelectedMethod(method.id)}
+                    onClick={() => method.available && setSelectedMethod(method.id)}
                     className={'rounded-2xl border p-4 text-left transition ' + (selectedMethod === method.id ? 'border-jso-navy bg-jso-navy text-white' : 'border-slate-200 bg-white hover:border-jso-blue')}
                   >
-                    <p className="font-black">{method.label}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-black">{method.label}</p>
+                      <span className={'rounded-full px-2 py-1 text-[10px] font-black ' + (method.available ? (selectedMethod === method.id ? 'bg-white/15 text-white/80' : 'bg-emerald-50 text-emerald-700') : (selectedMethod === method.id ? 'bg-white/10 text-white/60' : 'bg-slate-100 text-slate-400'))}>
+                        {method.available ? 'Disponible' : 'Bientôt'}
+                      </span>
+                    </div>
                     <p className={'mt-1 text-xs ' + (selectedMethod === method.id ? 'text-white/65' : 'text-slate-500')}>{method.description}</p>
                   </button>
                 ))}
