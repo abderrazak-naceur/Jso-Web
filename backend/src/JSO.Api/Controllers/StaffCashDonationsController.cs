@@ -3,6 +3,7 @@ using System.Text.Json;
 using JSO.Api.Security;
 using JSO.Domain;
 using JSO.Infrastructure;
+using JSO.Infrastructure.Social;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,8 @@ namespace JSO.Api.Controllers;
 [Route("api/staff/donations/cash")]
 public sealed class StaffCashDonationsController(
     JsoDbContext db,
-    AuditService audit) : ControllerBase
+    AuditService audit,
+    WhatsAppSender whatsApp) : ControllerBase
 {
     [HttpGet("capabilities")]
     public async Task<IActionResult> Capabilities(CancellationToken ct)
@@ -72,7 +74,9 @@ public sealed class StaffCashDonationsController(
             ChargedCurrency = "TND",
             CashPointType = pointType,
             CashPointName = string.IsNullOrWhiteSpace(request.PointName) ? null : request.PointName.Trim(),
-            CashDonorPhone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim()
+            CashDonorPhone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
+            DonorPhone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
+            WhatsAppOptIn = request.WhatsAppOptIn
         };
 
         db.SupporterBricks.Add(donation);
@@ -98,7 +102,22 @@ public sealed class StaffCashDonationsController(
             },
             ct);
 
-        return Ok(BuildReceipt(donation, donorName, pointType, request.PointName, request.Phone));
+        var whatsapp = await whatsApp.SendDonationReceiptAsync(
+            donation.Id,
+            donation.DonorPhone,
+            donation.WhatsAppOptIn,
+            donorName,
+            donation.Amount,
+            "TND",
+            receiptNumber,
+            ct);
+
+        return Ok(new
+        {
+            receipt = BuildReceipt(donation, donorName, pointType, request.PointName, request.Phone),
+            whatsappSent = whatsapp.Sent,
+            whatsappConfigured = !whatsapp.NotConfigured
+        });
     }
 
     private async Task<StaffContext?> GetStaffContext(CancellationToken ct)
@@ -176,6 +195,7 @@ public sealed record CreateCashDonationRequest(
     string? DonorName,
     decimal Amount,
     string? Phone,
+    bool WhatsAppOptIn,
     string PointType,
     string? PointName,
     string? Note);
