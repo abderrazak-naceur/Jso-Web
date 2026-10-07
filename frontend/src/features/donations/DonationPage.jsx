@@ -19,6 +19,7 @@ export default function DonationPage() {
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const [shared, setShared] = useState(false)
+  const pageUrl = 'https://jso-web.onrender.com/soutenir'
 
   useEffect(() => {
     const controller = new AbortController()
@@ -50,7 +51,7 @@ export default function DonationPage() {
 
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(window.location.href)
+      await navigator.clipboard.writeText(pageUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 1800)
     } catch { /* browser fallback */ }
@@ -62,7 +63,7 @@ export default function DonationPage() {
         await navigator.share({
           title: campaign?.title || 'Soutenir la JSO',
           text: campaign?.description || 'Soutenez la Jeunesse Sportive de Oudhref.',
-          url: window.location.href,
+          url: pageUrl,
         })
         setShared(true)
         setTimeout(() => setShared(false), 1800)
@@ -205,7 +206,7 @@ export default function DonationPage() {
                 <img src="/jso-donation-qr.png" alt="QR code pour ouvrir la page de soutien JSO" className="mx-auto h-56 w-56 rounded-xl object-contain" />
               </div>
               <p className="mt-4 text-sm leading-6 text-slate-500">Imprimez ce QR ou partagez-le sur Facebook, WhatsApp, dans le stade et sur les affiches.</p>
-              <a href="/soutenir" className="mt-4 inline-flex items-center gap-2 text-sm font-extrabold text-jso-blue">Ouvrir la page <ArrowUpRight size={15} aria-hidden="true" /></a>
+              <a href={pageUrl} className="mt-4 inline-flex items-center gap-2 text-sm font-extrabold text-jso-blue">Ouvrir la page <ArrowUpRight size={15} aria-hidden="true" /></a>
             </div>
 
             <div className="rounded-[2rem] bg-jso-gold p-6 text-jso-navy">
