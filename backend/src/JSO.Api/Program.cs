@@ -215,9 +215,11 @@ app.UseExceptionHandler();
 // exception handler so it observes the final status code of every request
 // (including auth failures) while never storing any personal data.
 app.UseMiddleware<ApiUsageMiddleware>();
+// CORS before auth: preflight (OPTIONS, no credentials) must get its
+// Access-Control-* headers without hitting auth/rate-limiting first.
+app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseCors("Frontend");
 app.UseRateLimiter();
 
 app.MapControllers().RequireRateLimiting("public-api");

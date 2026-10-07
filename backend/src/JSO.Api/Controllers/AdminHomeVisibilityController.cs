@@ -22,6 +22,8 @@ public sealed class AdminHomeVisibilityController(JsoDbContext db, AuditService 
     // Order here drives the admin list order; labels are French UI copy.
     private static readonly (string Id, string Label)[] Sections =
     [
+        ("highlights", "À la une"),
+        ("selling", "Billetterie & Abonnements"),
         ("matches", "Matchs"),
         ("news", "Actualités"),
         ("team", "Équipe"),

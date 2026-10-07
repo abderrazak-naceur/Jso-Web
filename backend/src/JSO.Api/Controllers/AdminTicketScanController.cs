@@ -202,11 +202,11 @@ public sealed class AdminTicketScanController(
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(x => x.Status, "CheckedIn")
                 .SetProperty(x => x.CheckedInAt, checkedInAt)
-                .SetProperty(x => x.CheckedInByAdminId, adminId!.Value.ToString()), ct);
+                .SetProperty(x => x.CheckedInByAdminId, adminId == null ? null : adminId.Value.ToString()), ct);
 
-        if (affected == 1)
+        if (affected == 1 && order is not null)
         {
-            order!.Status = "CheckedIn";
+            order.Status = "CheckedIn";
             order.CheckedInAt = checkedInAt;
             order.CheckedInByAdminId = adminId?.ToString();
             return await FinishAsync("Valid", preMessage, order, request, ct);

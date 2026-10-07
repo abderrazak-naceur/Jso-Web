@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowRight, CalendarDays, Search, UsersRound } from 'lucide-react'
+import { CalendarDays, Search, UsersRound } from 'lucide-react'
 import SectionHeading from '../home/SectionHeading'
 import { SectionError, SectionLoading } from '../home/SectionState'
 import PlayerPortrait from './PlayerPortrait'
@@ -159,24 +159,9 @@ export default function TeamSection({ section, players = [], status = 'ready' })
                 {roster.map((player) => (
                   <article
                     key={player.id}
-                    className="group overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-300/35"
+                    className="group overflow-hidden rounded-[1.35rem] border border-jso-navy/30 bg-jso-navy shadow-md transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-jso-navy/40"
                   >
                     <PlayerPortrait player={player} />
-                    <div className="p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate text-[11px] font-black uppercase tracking-[0.16em] text-jso-blue">
-                            {player.position || 'Équipe première'}
-                          </p>
-                          <h3 className="mt-1 truncate text-lg font-black tracking-tight text-jso-ink">
-                            {player.firstName} {player.lastName}
-                          </h3>
-                        </div>
-                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-50 text-jso-navy transition group-hover:bg-jso-gold group-hover:text-jso-navy">
-                          <ArrowRight size={16} aria-hidden="true" />
-                        </span>
-                      </div>
-                    </div>
                   </article>
                 ))}
               </div>

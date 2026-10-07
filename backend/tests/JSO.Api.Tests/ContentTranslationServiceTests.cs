@@ -1,3 +1,4 @@
+using Xunit;
 using JSO.Infrastructure;
 
 namespace JSO.Api.Tests;

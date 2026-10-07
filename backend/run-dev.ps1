@@ -22,7 +22,8 @@
 param(
     [string]$DatabaseProvider = 'sqlserver',
     [string]$ConnectionString = 'Server=localhost,1433;Database=JSO;Integrated Security=True;TrustServerCertificate=True;Encrypt=False',
-    [string]$Urls = 'http://localhost:8080'
+    [string]$Urls = 'http://localhost:8080',
+    [string[]]$CorsOrigins = @('http://localhost:5173', 'http://localhost:7357')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -35,6 +36,11 @@ try {
     $env:Database__Provider = $DatabaseProvider
     $env:ConnectionStrings__DefaultConnection = $ConnectionString
 
+    # Mobile web (flutter run -d chrome --web-port 7357): l'origin deve essere
+    # in Cors:AllowedOrigins altrimenti il browser blocca le fetch dell'app.
+    for ($i = 0; $i -lt $CorsOrigins.Count; $i++) {
+        [Environment]::SetEnvironmentVariable("Cors__AllowedOrigins__$i", $CorsOrigins[$i], 'Process')
+    }
     # Valori di sviluppo: non sovrascrivono quelli eventualmente gia' esportati.
     if (-not $env:Jwt__Key) { $env:Jwt__Key = 'local-dev-jwt-secret-at-least-32-characters-long' }
     if (-not $env:ADMIN_BOOTSTRAP_EMAIL) { $env:ADMIN_BOOTSTRAP_EMAIL = 'admin@jso.tn' }

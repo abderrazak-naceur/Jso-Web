@@ -9,8 +9,8 @@ import {
   TeamSection,
 } from './HomeContentSections'
 import HeroSection from './HeroSection'
-import MembershipsSection from '../memberships/MembershipsSection'
 import ClubSection from '../club/ClubSection'
+import MembershipsSection from '../memberships/MembershipsSection'
 import MediaSection from '../media/MediaSection'
 import MatchdaySection from './MatchdaySection'
 import NewsSection from './NewsSection'
@@ -218,22 +218,26 @@ export default function HomePage({
     'infos',
   ]
 
+  const showHighlights = !hiddenSections.includes('highlights')
+  const showSelling = !hiddenSections.includes('selling')
   const orderedSections = orderHomeSections(defaultSectionOrder, homeLayout)
     .filter((key) => !hiddenSections.includes(key))
 
   return (
     <main id="main-content" tabIndex={-1}>
       <HeroSection content={data.content} club={data.club} />
-      <Reveal><SellingBand nextMatch={data.nextMatch} /></Reveal>
-      <Reveal>
-        <HighlightsCarousel
-          items={buildHighlights({
-            data,
-            onOpenMatch,
-            onOpenArticle,
-          })}
-        />
-      </Reveal>
+      {showSelling && <Reveal><SellingBand nextMatch={data.nextMatch} /></Reveal>}
+      {showHighlights && (
+        <Reveal>
+          <HighlightsCarousel
+            items={buildHighlights({
+              data,
+              onOpenMatch,
+              onOpenArticle,
+            })}
+          />
+        </Reveal>
+      )}
       {orderedSections.map((key) => {
         const rendered = sectionRenderers[key]?.()
         return rendered ? <Reveal key={key}>{rendered}</Reveal> : null
