@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using JSO.Infrastructure.Social;
 
 namespace JSO.Infrastructure.Payments;
 
-public sealed class DonationCompletion(JsoDbContext db) : IPayableCompletion
+public sealed class DonationCompletion(JsoDbContext db, WhatsAppSender whatsApp) : IPayableCompletion
 {
     public string PayableType => PayableTypes.Donation;
 
@@ -31,6 +32,27 @@ public sealed class DonationCompletion(JsoDbContext db) : IPayableCompletion
 
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
+
+        if (donation.WhatsAppOptIn && !string.IsNullOrWhiteSpace(donation.DonorPhone))
+        {
+            try
+            {
+                await whatsApp.SendDonationReceiptAsync(
+                    donation.Id,
+                    donation.DonorPhone,
+                    donation.WhatsAppOptIn,
+                    donation.DisplayName ?? "Donateur JSO",
+                    donation.Amount,
+                    donation.ChargedCurrency ?? "TND",
+                    donation.ProviderRef,
+                    ct);
+            }
+            catch
+            {
+                // Payment completion must never be rolled back because WhatsApp is unavailable.
+            }
+        }
+
         return PayableCompletionResult.Completed;
     }
 }
