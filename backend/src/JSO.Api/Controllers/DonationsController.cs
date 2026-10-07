@@ -64,6 +64,8 @@ public sealed class DonationsController(
                 : request.DisplayName.Trim(),
             Message = string.IsNullOrWhiteSpace(request.Message) ? null : request.Message.Trim(),
             Amount = request.Amount,
+            DonorPhone = NormalizePhone(request.Phone),
+            WhatsAppOptIn = request.WhatsAppOptIn,
             Status = CampaignStatus,
             PaymentStatus = "Pending",
         };
@@ -73,7 +75,7 @@ public sealed class DonationsController(
 
         await audit.LogAsync("DONATION_CREATED", "SupporterBrick", donation.Id.ToString(), null, null,
             HttpContext.Connection.RemoteIpAddress?.ToString(),
-            new { donation.Amount, campaign = "jso-support-2026" }, ct);
+            new { donation.Amount, hasPhone = !string.IsNullOrWhiteSpace(donation.DonorPhone), whatsappOptIn = donation.WhatsAppOptIn, campaign = "jso-support-2026" }, ct);
 
         return Created($"/api/donations/{donation.Id}", new
         {
@@ -187,7 +189,19 @@ public sealed class DonationsController(
         if (message?.Trim().Length > 280) return "Le message doit contenir au maximum 280 caractères.";
         return null;
     }
+
+    private static string? NormalizePhone(string? phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone)) return null;
+        var value = phone.Trim();
+        return value.Length <= 32 ? value : value[..32];
+    }
 }
 
-public sealed record CreateDonationRequest(string? DisplayName, string? Message, decimal Amount);
+public sealed record CreateDonationRequest(
+    string? DisplayName,
+    string? Message,
+    decimal Amount,
+    string? Phone,
+    bool WhatsAppOptIn);
 public sealed record PayDonationRequest(string Country);
