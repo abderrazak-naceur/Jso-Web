@@ -63,5 +63,10 @@ public sealed class SupporterBrick
     public string? CashPointName { get; set; }
     public string? CashDonorPhone { get; set; }
 
+    // Optional WhatsApp contact supplied by the donor for campaign updates.
+    // Never exposed publicly; messages are sent only when WhatsAppOptIn is true.
+    public string? DonorPhone { get; set; }
+    public bool WhatsAppOptIn { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
