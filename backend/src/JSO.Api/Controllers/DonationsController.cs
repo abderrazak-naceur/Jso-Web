@@ -1,3 +1,4 @@
+using System.Text.Json;
 using JSO.Domain;
 using JSO.Infrastructure;
 using JSO.Infrastructure.Payments;
@@ -15,7 +16,10 @@ public sealed class DonationsController(
     PaymentLinkBuilder paymentLinks) : ControllerBase
 {
     private const string CampaignStatus = "Donation";
-    private const decimal GoalTnd = 30000m;
+    private const decimal MonthlyGoalTnd = 10000m;
+    private const decimal AnnualGoalTnd = 120000m;
+    private const int TargetDonors = 1000;
+    private const decimal SuggestedMonthlyContributionTnd = 10m;
 
     [HttpGet("campaign")]
     public async Task<IActionResult> Campaign(CancellationToken ct)
@@ -36,7 +40,11 @@ public sealed class DonationsController(
             campaignKey = "jso-support-2026",
             title = "Soutien JSO 2026/2027",
             description = "Aidez la Jeunesse Sportive de Oudhref à poursuivre son projet sportif et associatif.",
-            goalTnd = GoalTnd,
+            targetDonors = TargetDonors,
+            suggestedMonthlyContributionTnd = SuggestedMonthlyContributionTnd,
+            monthlyGoalTnd = MonthlyGoalTnd,
+            annualGoalTnd = AnnualGoalTnd,
+            goalTnd = MonthlyGoalTnd,
             totalPaidTnd = total,
             donorCount = count,
             recentDonations = recent,
@@ -73,6 +81,54 @@ public sealed class DonationsController(
             donation.DisplayName,
             donation.Amount,
             paymentStatus = donation.PaymentStatus,
+        });
+    }
+
+    [HttpGet("{id:guid}/receipt")]
+    public async Task<IActionResult> Receipt(Guid id, CancellationToken ct)
+    {
+        var donation = await db.SupporterBricks.AsNoTracking()
+            .Where(x => x.Id == id && x.Status == CampaignStatus && x.PaymentStatus == "Paid" && x.PaymentProvider == "Cash")
+            .Select(x => new { x.Id, x.DisplayName, x.Message, x.Amount, x.PaidAt, x.ProviderRef, x.Country })
+            .SingleOrDefaultAsync(ct);
+
+        if (donation is null) return NotFound();
+
+        var auditRow = await db.AuditLogs.AsNoTracking()
+            .Where(x => x.Action == "CASH_DONATION_RECEIPT_ISSUED" &&
+                        x.EntityType == "SupporterBrick" &&
+                        x.EntityId == id.ToString())
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => x.Details)
+            .FirstOrDefaultAsync(ct);
+
+        string? pointType = null;
+        string? pointName = null;
+        if (!string.IsNullOrWhiteSpace(auditRow))
+        {
+            try
+            {
+                using var json = JsonDocument.Parse(auditRow);
+                var root = json.RootElement;
+                pointType = root.TryGetProperty("pointType", out var pt) ? pt.GetString() : null;
+                pointName = root.TryGetProperty("pointName", out var pn) ? pn.GetString() : null;
+            }
+            catch (JsonException) { }
+        }
+
+        return Ok(new
+        {
+            id = donation.Id,
+            receiptNumber = donation.ProviderRef,
+            donorName = donation.DisplayName,
+            message = donation.Message,
+            amount = donation.Amount,
+            currency = "TND",
+            paidAt = donation.PaidAt,
+            pointType,
+            pointName,
+            campaign = "jso-support-2026",
+            verificationUrl = $"/api/donations/{donation.Id}/receipt"
         });
     }
 
