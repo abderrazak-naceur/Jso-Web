@@ -23,9 +23,17 @@ public sealed class AdminDonationsController(JsoDbContext db, AuditService audit
             })
             .ToListAsync(ct);
 
+        var paidRows = rows.Where(x => x.PaymentStatus == "Paid").ToList();
+        var cashRows = paidRows.Where(x => string.Equals(x.PaymentProvider, "Cash", StringComparison.OrdinalIgnoreCase)).ToList();
+
         return Ok(new
         {
-            goalTnd = 30000m,
+            goalTnd = 10000m,
+            annualGoalTnd = 120000m,
+            targetDonors = 1000,
+            suggestedMonthlyContributionTnd = 10m,
+            cashPaidTnd = cashRows.Sum(x => x.Amount),
+            cashPaidCount = cashRows.Count,
             totalPaidTnd = rows.Where(x => x.PaymentStatus == "Paid").Sum(x => x.Amount),
             pendingTnd = rows.Where(x => x.PaymentStatus != "Paid").Sum(x => x.Amount),
             paidCount = rows.Count(x => x.PaymentStatus == "Paid"),
