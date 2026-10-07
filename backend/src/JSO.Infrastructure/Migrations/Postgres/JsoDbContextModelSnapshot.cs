@@ -2305,7 +2305,7 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .IsUnique()
                         .HasFilter("\"ProviderRef\" IS NOT NULL");
 
-                    b.HasIndex("WhatsAppOptIn", "CreatedAt");
+                    b.HasIndex("Status", "CreatedAt");
 
                     b.HasIndex("CashPointType", "CreatedAt");
 
