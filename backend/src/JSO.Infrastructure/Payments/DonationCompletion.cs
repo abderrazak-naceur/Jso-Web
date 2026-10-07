@@ -43,8 +43,8 @@ public sealed class DonationCompletion(JsoDbContext db, WhatsAppSender whatsApp)
                     donation.WhatsAppOptIn,
                     donation.DisplayName ?? "Donateur JSO",
                     donation.Amount,
-                    donation.ChargedCurrency ?? "TND",
-                    donation.ProviderRef,
+                    "TND",
+                    BuildReceiptNumber(donation),
                     ct);
             }
             catch
@@ -55,4 +55,10 @@ public sealed class DonationCompletion(JsoDbContext db, WhatsAppSender whatsApp)
 
         return PayableCompletionResult.Completed;
     }
+
+    private static string BuildReceiptNumber(SupporterBrick donation) =>
+        string.Equals(donation.PaymentProvider, "Cash", StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrWhiteSpace(donation.ProviderRef)
+            ? donation.ProviderRef
+            : $"JSO-DON-{donation.PaidAt:yyyyMMdd}-{donation.Id.ToString("N")[..8].ToUpperInvariant()}";
 }
