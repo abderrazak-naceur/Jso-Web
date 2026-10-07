@@ -139,7 +139,7 @@ export default function PaymentReturn() {
     async function poll() {
       attempts += 1
       try {
-        const row = await payable.fetch(token)
+        const row = await payable.fetch(requiresFanToken ? token : undefined)
         if (!active) return
         const s = payable.readStatus(row)
         setStatus(s)
