@@ -176,6 +176,53 @@ jobs:
           test "$cash_status" = 403
           grep -iq '^Access-Control-Allow-Origin: http://localhost:5173' /tmp/jso-cors-headers
 
+          # Cash donation: explicit staff grant, receipt, public privacy and revocation.
+          cash_assignment=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/security/staff-assignments \
+            -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+            -d "$(jq -nc --arg adminUserId "$admin_id" \
+              '{adminUserId:$adminUserId,role:"TicketSeller",scopeType:"Global",isActive:true}')")
+          cash_assignment_id=$(jq -r '.id // empty' <<< "$cash_assignment")
+          test -n "$cash_assignment_id"
+          curl -fsS http://127.0.0.1:5080/api/staff/donations/cash/capabilities \
+            -H "Authorization: Bearer $token" | jq -e '.canCollect == true and (.pointTypes | index("Seller") != null)'
+
+          cash_receipt=$(curl -fsS -X POST http://127.0.0.1:5080/api/staff/donations/cash \
+            -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+            -d '{"donorName":"CI Cash Donor","amount":12.34,"pointType":"Seller","pointName":"CI seller","note":"CI private note","whatsappOptIn":false}')
+          cash_id=$(jq -r '.id // empty' <<< "$cash_receipt")
+          receipt_url=$(jq -r '.receiptUrl // empty' <<< "$cash_receipt")
+          test -n "$cash_id" && test "$receipt_url" = "/api/donations/$cash_id/receipt"
+          jq -e '.receiptNumber | startswith("JSO-CASH-")' <<< "$cash_receipt"
+          curl -fsS "http://127.0.0.1:5080$receipt_url" \
+            | jq -e '.amount == 12.34 and .message == null and .donorName == "CI Cash Donor"'
+          curl -fsS http://127.0.0.1:5080/api/donations/campaign \
+            | jq -e --arg id "$cash_id" 'any(.recentDonations[]; .id == $id and .displayName == "Donateur en espèces" and .message == null)'
+          curl -fsS http://127.0.0.1:5080/api/admin/donations/summary \
+            -H "Authorization: Bearer $token" \
+            | jq -e --arg id "$cash_id" '.cashPaidTnd >= 12.34 and any(.donations[]; .id == $id and .paymentStatus == "Paid")'
+
+          curl -fsS -X DELETE "http://127.0.0.1:5080/api/admin/security/staff-assignments/$cash_assignment_id" \
+            -H "Authorization: Bearer $token"
+          revoked_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            http://127.0.0.1:5080/api/staff/donations/cash/capabilities \
+            -H "Authorization: Bearer $token")
+          test "$revoked_status" = 403
+
+          # Public donations do not advertise providers without credentials.
+          curl -fsS http://127.0.0.1:5080/api/donations/payment-methods \
+            | jq -e '.flouci == false and .stripe == false'
+          pending_donation=$(curl -fsS -X POST http://127.0.0.1:5080/api/donations \
+            -H 'Content-Type: application/json' \
+            -d '{"displayName":"CI supporter","amount":10,"whatsAppOptIn":false}')
+          pending_id=$(jq -r '.id // empty' <<< "$pending_donation")
+          test -n "$pending_id"
+          payment_status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+            "http://127.0.0.1:5080/api/donations/$pending_id/pay" \
+            -H 'Content-Type: application/json' -d '{"country":"TN"}')
+          test "$payment_status" = 503
+          curl -fsS "http://127.0.0.1:5080/api/donations/$pending_id" \
+            | jq -e '.paymentStatus == "Pending"'
+
           season_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/seasons \
             -H "Authorization: Bearer $token" \
             -H 'Content-Type: application/json' \

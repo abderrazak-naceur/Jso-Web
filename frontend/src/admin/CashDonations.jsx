@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Banknote, CheckCircle2, Printer, Store, Ticket } from 'lucide-react'
+import { Banknote, CheckCircle2, Printer, RefreshCw, Store, Ticket } from 'lucide-react'
 import { adminApi } from './api'
 import { API_BASE_URL } from '../lib/apiConfig'
 
@@ -18,7 +18,7 @@ function ReceiptCard({ receipt }) {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex items-center gap-4">
         <img src="/JSO-crest-regenerated.png" alt="JSO" className="h-16 w-16 object-contain" />
-        <div><p className="text-xs font-black uppercase tracking-[0.16em] text-jso-blue">Jeunesse Sportive de Oudhref</p><p className="text-xs font-black uppercase tracking-[0.16em] text-jso-gold">Reçu officiel de don</p><p className="text-lg font-black">{receipt.receiptNumber}</p></div>
+        <div><p className="text-xs font-black uppercase tracking-[0.16em] text-jso-blue">Jeunesse Sportive de Oudhref</p><p className="text-xs font-black uppercase tracking-[0.16em] text-jso-gold">Reçu officiel de don</p><p className="break-all text-lg font-black">{receipt.receiptNumber}</p></div>
       </div>
       <button onClick={() => window.print()} className="no-print inline-flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-extrabold text-white"><Printer size={16}/> Imprimer</button>
     </div>
@@ -39,20 +39,29 @@ function ReceiptCard({ receipt }) {
 
 export default function CashDonationsModule({ onError }) {
   const [capabilities, setCapabilities] = useState(null)
+  const [loadingCapabilities, setLoadingCapabilities] = useState(true)
+  const [capabilityError, setCapabilityError] = useState('')
   const [form, setForm] = useState({ donorName: '', amount: '10', phone: '', whatsappOptIn: false, pointType: 'Seller', pointName: '', note: '' })
   const [receipt, setReceipt] = useState(null)
   const [saving, setSaving] = useState(false)
 
   async function load() {
+    setLoadingCapabilities(true)
     try {
       const data = await adminApi('/staff/donations/cash/capabilities')
       setCapabilities(data)
+      setCapabilityError('')
       setForm(x => ({ ...x, pointType: data.defaultPointType, pointName: '' }))
       onError('')
     } catch (e) {
-      onError(e.status === 403
+      const message = e.status === 403
         ? 'Accès refusé : une affectation staff active avec la permission dons en espèces est nécessaire.'
-        : e.message)
+        : e.message
+      setCapabilities(null)
+      setCapabilityError(message)
+      onError(message)
+    } finally {
+      setLoadingCapabilities(false)
     }
   }
 
@@ -62,6 +71,7 @@ export default function CashDonationsModule({ onError }) {
 
   async function submit(event) {
     event.preventDefault()
+    if (!capabilities?.canCollect) return
     setSaving(true)
     setReceipt(null)
     try {
@@ -80,7 +90,13 @@ export default function CashDonationsModule({ onError }) {
       setReceipt(data)
       setForm(x => ({ ...x, donorName: '', amount: '10', phone: '', whatsappOptIn: false, note: '' }))
       onError('')
-    } catch (e) { onError(e.message) }
+    } catch (e) {
+      if (e.status === 403) {
+        setCapabilities(null)
+        setCapabilityError('Affectation staff expirée ou désactivée. Vérifiez Sécurité > Staff & Permissions.')
+      }
+      onError(e.message)
+    }
     finally { setSaving(false) }
   }
 
@@ -99,6 +115,7 @@ export default function CashDonationsModule({ onError }) {
     <div className="grid gap-6 lg:grid-cols-[1.1fr_.9fr]">
       <form onSubmit={submit} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-3"><Store className="text-jso-blue"/><h3 className="text-xl font-black">Nouveau reçu</h3></div>
+        {capabilityError && <div className="mt-5 rounded-xl bg-amber-50 p-4 text-sm font-semibold text-amber-900"><p>{capabilityError}</p><p className="mt-1 font-normal">Un SuperAdmin peut créer l'affectation dans Sécurité → Staff & Permissions.</p><button type="button" onClick={load} className="mt-3 inline-flex items-center gap-2 font-bold underline"><RefreshCw size={15}/> Réessayer</button></div>}
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <label className="text-sm font-bold">Donateur (optionnel)<input value={form.donorName} onChange={e => setForm({...form, donorName:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" placeholder="Nom du donateur"/></label>
           <label className="text-sm font-bold">Montant (TND)<input value={form.amount} onChange={e => setForm({...form, amount:e.target.value})} type="number" min="1" step="0.01" required className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue"/></label>
@@ -108,7 +125,7 @@ export default function CashDonationsModule({ onError }) {
           <label className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold sm:col-span-2"><input type="checkbox" checked={form.whatsappOptIn} onChange={e => setForm({...form, whatsappOptIn:e.target.checked})} disabled={!form.phone.trim()} className="mt-1 h-4 w-4 rounded border-slate-300"/><span><strong className="block text-emerald-900">Envoyer le reçu sur WhatsApp</strong><span className="mt-1 block text-xs font-medium text-emerald-800/70">Le numéro reste privé. Le reçu est envoyé automatiquement après l’encaissement si WhatsApp est configuré.</span></span></label>
           <label className="text-sm font-bold sm:col-span-2">Note<input value={form.note} onChange={e => setForm({...form, note:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" placeholder="Optionnel"/></label>
         </div>
-        <button disabled={saving} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-jso-navy px-5 py-3.5 font-black text-white disabled:opacity-50"><Ticket size={18}/>{saving ? 'Enregistrement…' : 'Encaisser et générer le reçu'}</button>
+        <button disabled={saving || !capabilities?.canCollect} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-jso-navy px-5 py-3.5 font-black text-white disabled:opacity-50"><Ticket size={18}/>{loadingCapabilities ? 'Vérification des droits…' : saving ? 'Enregistrement…' : 'Encaisser et générer le reçu'}</button>
         <p className="mt-3 text-xs text-slate-400">Le don est marqué comme payé uniquement après validation de cet encaissement par le personnel autorisé.</p>
       </form>
 

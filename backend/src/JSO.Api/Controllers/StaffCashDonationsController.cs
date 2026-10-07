@@ -57,16 +57,19 @@ public sealed class StaffCashDonationsController(
         if (request.Phone?.Trim().Length > 32) return BadRequest(new { message = "Le téléphone doit contenir au maximum 32 caractères." });
         if (note?.Length > 280) return BadRequest(new { message = "La note doit contenir au maximum 280 caractères." });
 
-        var receiptNumber = $"JSO-CASH-{DateTimeOffset.UtcNow:yyyyMMdd}-{Random.Shared.Next(100000, 999999)}";
+        var now = DateTimeOffset.UtcNow;
+        var donationId = Guid.NewGuid();
+        var receiptNumber = $"JSO-CASH-{now:yyyyMMdd}-{donationId:N}".ToUpperInvariant();
 
         var donation = new SupporterBrick
         {
+            Id = donationId,
             DisplayName = donorName,
             Message = note,
             Amount = decimal.Round(request.Amount, 2),
             Status = "Donation",
             PaymentStatus = "Paid",
-            PaidAt = DateTimeOffset.UtcNow,
+            PaidAt = now,
             PaymentProvider = "Cash",
             Country = "TN",
             ProviderRef = receiptNumber,

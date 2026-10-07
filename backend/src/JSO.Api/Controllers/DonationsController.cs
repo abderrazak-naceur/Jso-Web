@@ -16,23 +16,48 @@ public sealed class DonationsController(
     PaymentLinkBuilder paymentLinks) : ControllerBase
 {
     private const string CampaignStatus = "Donation";
-    private const decimal MonthlyGoalTnd = 10000m;
-    private const decimal AnnualGoalTnd = 120000m;
-    private const int TargetDonors = 1000;
-    private const decimal SuggestedMonthlyContributionTnd = 10m;
+
+    [HttpGet("payment-methods")]
+    public IActionResult PaymentMethods()
+    {
+        try
+        {
+            paymentLinks.ResolvePublicBaseUrl(Request);
+            return Ok(new
+            {
+                flouci = paymentSelector.Flouci.IsConfigured,
+                stripe = paymentSelector.Stripe.IsConfigured
+            });
+        }
+        catch (InvalidOperationException)
+        {
+            return Ok(new { flouci = false, stripe = false });
+        }
+    }
 
     [HttpGet("campaign")]
     public async Task<IActionResult> Campaign(CancellationToken ct)
     {
+        var settings = await DonationCampaignSettings.LoadAsync(db, ct);
         var paid = db.SupporterBricks.AsNoTracking()
             .Where(x => x.Status == CampaignStatus && x.PaymentStatus == "Paid");
+        var monthStart = new DateTimeOffset(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, TimeSpan.Zero);
+        var monthEnd = monthStart.AddMonths(1);
 
         var total = await paid.SumAsync(x => x.Amount, ct);
+        var monthlyTotal = await paid.Where(x => x.PaidAt >= monthStart && x.PaidAt < monthEnd)
+            .SumAsync(x => x.Amount, ct);
         var count = await paid.CountAsync(ct);
         var recent = await paid
             .OrderByDescending(x => x.PaidAt)
             .Take(9)
-            .Select(x => new { x.Id, x.DisplayName, x.Message, x.Amount, x.PaidAt })
+            .Select(x => new
+            {
+                x.Id,
+                DisplayName = x.PaymentProvider == "Cash" ? "Donateur en espèces" : x.DisplayName,
+                Message = x.PaymentProvider == "Cash" ? null : x.Message,
+                x.Amount, x.PaidAt
+            })
             .ToListAsync(ct);
 
         return Ok(new
@@ -40,12 +65,13 @@ public sealed class DonationsController(
             campaignKey = "jso-support-2026",
             title = "Soutien JSO 2026/2027",
             description = "Aidez la Jeunesse Sportive de Oudhref à poursuivre son projet sportif et associatif.",
-            targetDonors = TargetDonors,
-            suggestedMonthlyContributionTnd = SuggestedMonthlyContributionTnd,
-            monthlyGoalTnd = MonthlyGoalTnd,
-            annualGoalTnd = AnnualGoalTnd,
-            goalTnd = MonthlyGoalTnd,
+            targetDonors = settings.TargetDonors,
+            suggestedMonthlyContributionTnd = settings.SuggestedMonthlyContributionTnd,
+            monthlyGoalTnd = settings.MonthlyGoalTnd,
+            annualGoalTnd = settings.AnnualGoalTnd,
+            goalTnd = settings.MonthlyGoalTnd,
             totalPaidTnd = total,
+            monthlyPaidTnd = monthlyTotal,
             donorCount = count,
             recentDonations = recent,
         });
@@ -103,7 +129,7 @@ public sealed class DonationsController(
                 ? donation.ProviderRef
                 : $"JSO-DON-{donation.PaidAt:yyyyMMdd}-{donation.Id.ToString("N")[..8].ToUpperInvariant()}",
             donorName = donation.DisplayName,
-            message = donation.Message,
+            message = donation.PaymentProvider == "Cash" ? null : donation.Message,
             amount = donation.Amount,
             currency = "TND",
             paidAt = donation.PaidAt,

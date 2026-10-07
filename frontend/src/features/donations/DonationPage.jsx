@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowUpRight, CheckCircle2, Copy, HeartHandshake, QrCode, Share2, Wallet } from 'lucide-react'
+import { ArrowUpRight, Copy, HeartHandshake, QrCode, Share2, Wallet } from 'lucide-react'
+import QRCode from 'qrcode'
 import PayOnlineButton from '../shop/PayOnlineButton'
 import { donationsApi } from '../../lib/api'
 import { formatMoney } from '../../lib/format'
@@ -7,8 +8,8 @@ import { useI18n } from '../../i18n/index.jsx'
 
 const PRESETS = [5, 10, 20, 50, 100, 250]
 const PAYMENT_METHODS = [
-  { id: 'flouci', label: 'Flouci', description: 'Portefeuille / carte bancaire / e-DINAR', group: 'online', country: 'TN', available: true },
-  { id: 'card', label: 'Carte bancaire', description: 'Visa / Mastercard via la passerelle de paiement', group: 'online', country: 'INTL', available: true },
+  { id: 'flouci', label: 'Flouci', description: 'Paiement hébergé en Tunisie', group: 'online', country: 'TN' },
+  { id: 'card', label: 'Carte bancaire', description: 'Visa / Mastercard via la passerelle de paiement', group: 'online', country: 'INTL' },
   { id: 'd17', label: 'D17', description: 'Portefeuille mobile de La Poste Tunisienne', group: 'ipay', available: false },
   { id: 'edinar', label: 'e-DINAR', description: 'Carte e-DINAR de La Poste Tunisienne', group: 'ipay', available: false },
   { id: 'clicktopay', label: 'ClicToPay', description: 'Paiement par carte via Monétique Tunisie / banque', group: 'ipay', available: false },
@@ -25,7 +26,9 @@ const PAYMENT_METHODS = [
 export default function DonationPage() {
   const { language } = useI18n()
   const [campaign, setCampaign] = useState(null)
-  const [amount, setAmount] = useState(20)
+  const [paymentMethods, setPaymentMethods] = useState(null)
+  const [qrUrl, setQrUrl] = useState('')
+  const [amount, setAmount] = useState(null)
   const [custom, setCustom] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [message, setMessage] = useState('')
@@ -36,18 +39,43 @@ export default function DonationPage() {
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const [shared, setShared] = useState(false)
-  const [selectedMethod, setSelectedMethod] = useState('flouci')
-  const [monthly, setMonthly] = useState(true)
-  const pageUrl = 'https://jso-web.onrender.com/soutenir'
+  const [selectedMethod, setSelectedMethod] = useState('')
+  const pageUrl = window.location.origin + '/soutenir'
+
+  useEffect(() => {
+    QRCode.toDataURL(pageUrl, {
+      width: 256,
+      margin: 2,
+      errorCorrectionLevel: 'M',
+      color: { dark: '#071E42', light: '#FFFFFF' },
+    }).then(setQrUrl).catch(() => setQrUrl(''))
+  }, [pageUrl])
 
   useEffect(() => {
     const controller = new AbortController()
     donationsApi.campaign(controller.signal)
-      .then(setCampaign)
+      .then((value) => {
+        setCampaign(value)
+        setAmount((current) => current ?? Number(value.suggestedMonthlyContributionTnd || 10))
+      })
       .catch((e) => setError(e?.message || 'Impossible de charger la campagne.'))
       .finally(() => setLoading(false))
+    donationsApi.paymentMethods(controller.signal)
+      .then((methods) => {
+        setPaymentMethods(methods)
+        setSelectedMethod(methods.flouci ? 'flouci' : methods.stripe ? 'card' : '')
+      })
+      .catch(() => setPaymentMethods({ flouci: false, stripe: false }))
     return () => controller.abort()
   }, [])
+
+  const presets = [...new Set([...PRESETS, Number(campaign?.suggestedMonthlyContributionTnd || 10)])].sort((a, b) => a - b)
+  const methods = PAYMENT_METHODS.map((method) => ({
+    ...method,
+    available: method.id === 'flouci' ? Boolean(paymentMethods?.flouci)
+      : method.id === 'card' ? Boolean(paymentMethods?.stripe)
+        : false,
+  }))
 
   const effectiveAmount = useMemo(() => {
     if (amount === 'custom') {
@@ -97,9 +125,10 @@ export default function DonationPage() {
     } catch { /* share can be cancelled by the user */ }
   }
 
-  const goal = Number(campaign?.goalTnd || 30000)
+  const goal = Number(campaign?.goalTnd || 10000)
   const total = Number(campaign?.totalPaidTnd || 0)
-  const progress = goal > 0 ? Math.min(100, Math.max(0, total / goal * 100)) : 0
+  const monthlyTotal = Number(campaign?.monthlyPaidTnd || 0)
+  const progress = goal > 0 ? Math.min(100, Math.max(0, monthlyTotal / goal * 100)) : 0
 
   return (
     <main className="min-h-screen bg-jso-paper text-jso-ink">
@@ -138,16 +167,16 @@ export default function DonationPage() {
               </div>
               <div className="mt-8">
                 <div className="flex items-end justify-between gap-3">
-                  <strong className="text-3xl font-black">{formatMoney(total, 'TND')}</strong>
+                  <strong className="text-3xl font-black">{formatMoney(monthlyTotal, 'TND')}</strong>
                   <span className="text-sm font-bold text-white/45">objectif {formatMoney(goal, 'TND')}</span>
                 </div>
                 <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/10">
                   <div className="h-full rounded-full bg-jso-gold transition-all" style={{ width: progress + '%' }} />
                 </div>
-                <p className="mt-3 text-sm font-semibold text-white/55">{progress.toFixed(0)}% de l’objectif · {campaign?.donorCount || 0} contributions confirmées</p>
+                <p className="mt-3 text-sm font-semibold text-white/55">{progress.toFixed(0)}% de l’objectif ce mois-ci · {formatMoney(total, 'TND')} collectés depuis le début · {campaign?.donorCount || 0} contributions confirmées</p>
                 <div className="mt-4 rounded-xl bg-white/5 p-3 text-sm">
                   <strong>Programme mensuel</strong>
-                  <p className="mt-1 text-white/55">1 000 personnes × 10 TND/mois = 10 000 TND/mois, soit 120 000 TND sur 12 mois.</p>
+                  <p className="mt-1 text-white/55">Contribution conseillée : {formatMoney(campaign?.suggestedMonthlyContributionTnd || 10, 'TND')} à renouveler librement chaque mois. Objectif : {campaign?.targetDonors || 1000} donateurs et {formatMoney(campaign?.monthlyGoalTnd || 10000, 'TND')} par mois.</p>
                 </div>
               </div>
             </div>
@@ -169,7 +198,7 @@ export default function DonationPage() {
             {error && <div className="mt-6 rounded-2xl bg-red-50 p-4 text-sm font-bold text-red-700">{error}</div>}
 
             <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-5">
-              {PRESETS.map((value) => (
+              {presets.map((value) => (
                 <button
                   key={value}
                   type="button"
@@ -215,36 +244,34 @@ export default function DonationPage() {
               <p className="mt-1 text-4xl font-black text-jso-navy">{formatMoney(effectiveAmount, 'TND')}</p>
             </div>
 
-            <label className="mt-4 flex items-start gap-3 rounded-2xl border border-jso-gold/40 bg-jso-gold/10 p-4">
-              <input type="checkbox" checked={monthly} onChange={(e) => setMonthly(e.target.checked)} className="mt-1 h-5 w-5 rounded border-slate-300" />
-              <span>
-                <strong className="block">Je soutiens la JSO chaque mois</strong>
-                <span className="mt-1 block text-xs leading-5 text-slate-500">Objectif collectif : 1 000 supporters × 10 TND × 12 mois = 120 000 TND sur une année.</span>
-              </span>
-            </label>
+            <div className="mt-4 rounded-2xl border border-jso-gold/40 bg-jso-gold/10 p-4 text-sm">
+              <strong className="block">Contribution ponctuelle</strong>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">Cette opération est un don unique. Vous pourrez renouveler librement votre soutien chaque mois.</span>
+            </div>
 
             <label className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
               <input type="checkbox" checked={whatsappOptIn} onChange={(e) => setWhatsappOptIn(e.target.checked)} disabled={!phone.trim()} className="mt-1 h-5 w-5 rounded border-slate-300" />
               <span>
-                <strong className="block text-emerald-900">Recevoir les actualités JSO sur WhatsApp</strong>
-                <span className="mt-1 block text-xs leading-5 text-emerald-800/70">En cochant cette case, vous autorisez la JSO à vous envoyer les mises à jour de la campagne et les informations importantes sur WhatsApp.</span>
+                <strong className="block text-emerald-900">Recevoir mon reçu sur WhatsApp</strong>
+                <span className="mt-1 block text-xs leading-5 text-emerald-800/70">La JSO utilisera ce numéro uniquement pour tenter d'envoyer le reçu après la confirmation du paiement.</span>
               </span>
             </label>
 
             <div className="mt-8">
               <p className="text-sm font-black">2 · Choisir le moyen de paiement</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {PAYMENT_METHODS.map((method) => (
+                {methods.map((method) => (
                   <button
                     key={method.id}
                     type="button"
                     onClick={() => method.available && setSelectedMethod(method.id)}
+                    disabled={!method.available}
                     className={'rounded-2xl border p-4 text-left transition ' + (selectedMethod === method.id ? 'border-jso-navy bg-jso-navy text-white' : 'border-slate-200 bg-white hover:border-jso-blue')}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-black">{method.label}</p>
                       <span className={'rounded-full px-2 py-1 text-[10px] font-black ' + (method.available ? (selectedMethod === method.id ? 'bg-white/15 text-white/80' : 'bg-emerald-50 text-emerald-700') : (selectedMethod === method.id ? 'bg-white/10 text-white/60' : 'bg-slate-100 text-slate-400'))}>
-                        {method.available ? 'Disponible' : method.group === 'ipay' ? 'Via iPay' : method.group === 'cash' ? 'Sur place' : 'À configurer'}
+                        {method.available ? 'Disponible' : method.group === 'cash' ? 'En point JSO' : method.group === 'online' ? 'À configurer' : 'Non intégré'}
                       </span>
                     </div>
                     <p className={'mt-1 text-xs ' + (selectedMethod === method.id ? 'text-white/65' : 'text-slate-500')}>{method.description}</p>
@@ -255,14 +282,16 @@ export default function DonationPage() {
             <div className="mt-6">
               {(selectedMethod === 'flouci' || selectedMethod === 'card') ? (
                 <PayOnlineButton
+                  key={selectedMethod}
                   pay={startDonation}
                   label="Continuer vers le paiement"
-                  disabled={effectiveAmount < 1 || loading}
+                  disabled={effectiveAmount < 1 || loading || !paymentMethods}
                   defaultCountry={selectedMethod === 'card' ? 'FR' : 'TN'}
+                  fixedCountry
                 />
               ) : (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm font-semibold text-slate-600">
-                  Cette option est prévue dans l’écosystème de paiement JSO. Les méthodes iPay seront activées après configuration des identifiants iPay et des webhooks ; le virement et le cash nécessitent leurs coordonnées/points de collecte.
+                  Aucun paiement en ligne n'est configuré pour cette campagne. Les dons en espèces restent possibles auprès d'un point de collecte JSO autorisé.
                 </div>
               )}
             </div>
@@ -279,18 +308,12 @@ export default function DonationPage() {
                 <h2 className="text-xl font-black">QR de la campagne</h2>
               </div>
               <div className="mt-5 rounded-2xl bg-white p-4 text-center">
-                <div
-                  className="mx-auto grid h-56 w-56 place-items-center rounded-xl border border-slate-200 bg-slate-50 text-center"
-                  role="img"
-                  aria-label="QR de la page de soutien"
-                >
-                  <div>
-                    <QrCode size={94} className="mx-auto text-jso-navy" aria-hidden="true" />
-                    <p className="mt-2 text-[10px] font-black tracking-[0.12em] text-slate-500">JSO / SOUTENIR</p>
-                  </div>
-                </div>
+                {qrUrl
+                  ? <img src={qrUrl} alt="QR scannable vers la page de soutien JSO" className="mx-auto h-56 w-56" />
+                  : <div className="mx-auto grid h-56 w-56 place-items-center rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-500">QR indisponible</div>}
               </div>
               <p className="mt-4 text-sm leading-6 text-slate-500">Imprimez ce QR ou partagez-le sur Facebook, WhatsApp, dans le stade et sur les affiches.</p>
+              {qrUrl && <a href={qrUrl} download="jso-soutenir-qr.png" className="mt-3 inline-block text-sm font-bold text-jso-blue underline">Télécharger le QR</a>}
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 <button type="button" onClick={copyLink} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm font-extrabold text-jso-navy hover:border-jso-blue">
                   <Copy size={15} aria-hidden="true" /> {copied ? 'Lien copié' : 'Copier'}

@@ -21,6 +21,8 @@ public sealed class AdminContentController(JsoDbContext db, AuditService audit) 
         key = key.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(key) || key.Length > 120)
             return BadRequest(new { message = "Invalid content key." });
+        if (key == DonationCampaignSettings.ContentKey)
+            return BadRequest(new { message = "Utilisez Finance > Dons & collecte pour modifier la campagne." });
 
         var item = await db.SiteContents.SingleOrDefaultAsync(x => x.Key == key, ct);
         var userId = User.FindFirst("sub")?.Value;

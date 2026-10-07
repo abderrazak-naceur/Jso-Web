@@ -24,7 +24,7 @@ const COUNTRIES = [
   { code: 'XX', label: 'Autre pays' },
 ]
 
-export default function PayOnlineButton({ pay, label = 'Payer en ligne', disabled = false, defaultCountry = 'TN' }) {
+export default function PayOnlineButton({ pay, label = 'Payer en ligne', disabled = false, defaultCountry = 'TN', fixedCountry = false }) {
   const [country, setCountry] = useState(defaultCountry)
   const [paying, setPaying] = useState(false)
   const [error, setError] = useState('')
@@ -49,15 +49,17 @@ export default function PayOnlineButton({ pay, label = 'Payer en ligne', disable
 
   return (
     <div className="w-full max-w-xs text-left">
-      <label htmlFor="pay-country" className="mb-1 block text-sm font-bold text-jso-ink">Pays</label>
-      <select
-        id="pay-country"
-        value={country}
-        onChange={(e) => setCountry(e.target.value)}
-        className="w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-jso-blue"
-      >
-        {COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.label}</option>)}
-      </select>
+      {!fixedCountry && <>
+        <label htmlFor="pay-country" className="mb-1 block text-sm font-bold text-jso-ink">Pays</label>
+        <select
+          id="pay-country"
+          value={country}
+          onChange={(e) => setCountry(e.target.value)}
+          className="w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-jso-blue"
+        >
+          {COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.label}</option>)}
+        </select>
+      </>}
       <p className="mt-1 text-xs text-slate-400">
         {country === 'TN' ? 'Paiement en dinars (TND) via Flouci.' : 'Paiement international via Stripe.'}
       </p>

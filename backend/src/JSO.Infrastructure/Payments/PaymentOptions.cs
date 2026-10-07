@@ -30,7 +30,8 @@ public sealed class FlouciOptions
     // Hosted payment session lifetime, in seconds.
     public int SessionTimeoutSeconds { get; set; } = 1200;
 
-    // Optional shared secret guarding the webhook endpoint. Flouci does not send
+    // Shared secret guarding the webhook endpoint. Required in Production;
+    // optional for local development. Flouci does not send
     // a verifiable signature, so authenticity ultimately rests on the server-side
     // verify_payment call. When this is set, the webhook additionally requires a
     // matching "X-Flouci-Webhook-Secret" header (or query value) before doing any
@@ -63,5 +64,6 @@ public sealed class StripeOptions
     // feed; there is deliberately no paid FX service dependency.
     public decimal TndToStripeRate { get; set; } = 0.30m;
 
-    public bool IsConfigured => !string.IsNullOrWhiteSpace(SecretKey);
+    public bool IsConfigured =>
+        !string.IsNullOrWhiteSpace(SecretKey) && !string.IsNullOrWhiteSpace(WebhookSecret);
 }

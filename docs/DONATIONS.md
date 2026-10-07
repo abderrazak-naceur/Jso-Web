@@ -9,7 +9,7 @@ Objectif de collecte : **10 000 TND/mois**. Le montant de 10 TND est une contrib
 ## Parcours recommandé
 
 1. QR code / lien affiché au stade, sur Facebook, WhatsApp, affiches et site.
-2. Le supporter choisit 10 TND/mois ou un autre montant.
+2. Le supporter choisit le montant conseillé (10 TND par défaut) ou un autre montant. Le paiement est ponctuel ; il peut revenir chaque mois.
 3. Il choisit un moyen de paiement.
 4. Le paiement est traité par le prestataire ; JSO ne stocke pas les données de carte.
 5. Le serveur attend la confirmation du prestataire avant de comptabiliser le don.
@@ -24,16 +24,20 @@ Le back-office contient maintenant un écran **Dons en espèces** accessible aux
 - `ShopManager` : collecte auprès des boutiques.
 - `TicketSupervisor`, `ClubAdmin`, `SuperAdmin` : peuvent utiliser les deux circuits.
 - Chaque encaissement crée immédiatement un `SupporterBrick` payé avec le provider `Cash`.
-- Un numéro de reçu unique `JSO-CASH-YYYYMMDD-XXXXXX` est généré.
+- Un numéro de reçu unique `JSO-CASH-YYYYMMDD-<ID>` est généré à partir de l'identifiant du don.
 - Le reçu contient montant, date, donateur optionnel et point de collecte.
 - L'opération est auditée avec le collecteur et le point de vente.
 - Le reçu reste vérifiable publiquement via `/api/donations/{id}/receipt`.
 
 Le téléphone du donateur est utilisé uniquement pour la saisie opérationnelle et n'est pas exposé dans le reçu public.
+Le nom et la note saisis par le personnel restent absents de la liste publique des dons ; la note n'apparaît pas sur le reçu public.
 
 ## Moyens de paiement
 
 La première version branche le paiement hébergé existant **Flouci** pour la Tunisie et **Stripe** pour l'international.
+La page interroge `GET /api/donations/payment-methods` et n'affiche un prestataire comme disponible que si ses identifiants et la confirmation webhook nécessaires sont configurés. En production, le secret webhook Flouci est requis ; Stripe exige sa clé API et son secret webhook. Sans ces paramètres, le paiement en ligne reste désactivé.
+
+Le QR affiché sur la page de soutien est scannable et encode l'URL du domaine courant ; le bouton de téléchargement permet de préparer les supports imprimés.
 
 La page affiche aussi **Orange Money**, **Mobicash/Ooredoo** et **e-DINAR/D17** comme options prévues, mais elles restent désactivées tant qu'un compte marchand/contrat et un flux d'intégration adaptés ne sont pas obtenus.
 
@@ -46,6 +50,18 @@ Pour les espèces, seuls les comptes staff ayant une affectation active avec la 
 ## Transparence
 
 La page publique expose le total confirmé, le nombre de contributions et des contributions récentes. L'admin dispose d'un tableau de collecte et les encaissements cash sont auditables.
+
+## Configuration dans l'admin
+
+Ouvrir **Finance → Dons & collecte → Paramètres de la campagne**. Les profils `SuperAdmin`, `ClubAdmin` et `FinanceManager` peuvent définir la contribution mensuelle **conseillée**, l'objectif de collecte mensuel et le nombre cible de donateurs. Ces valeurs sont enregistrées en base et affichées sur la page publique `/soutenir`. La valeur conseillée présélectionne le montant, mais chaque donateur reste libre de la modifier. Aucun prélèvement mensuel automatique n'est créé.
+
+Le bloc **Moyens de paiement** indique si Flouci et Stripe sont disponibles et nomme les variables manquantes sans révéler leur valeur. Les identifiants marchands se définissent dans les variables d'environnement du service **API** sur Render, puis nécessitent un redéploiement :
+
+- Tunisie : `Payments__Flouci__AppToken`, `Payments__Flouci__AppSecret`, `Payments__Flouci__WebhookSecret`.
+- International : `Payments__Stripe__SecretKey`, `Payments__Stripe__WebhookSecret`.
+- URL du site pour les retours de paiement : `Payments__PublicBaseUrl` (ou origine CORS configurée).
+
+Les webhooks doivent aussi être configurés chez les prestataires selon [PAYMENTS.md](PAYMENTS.md). Une configuration présente ne prouve pas à elle seule qu'un paiement réel aboutira : effectuer un paiement test et vérifier sa confirmation dans le tableau admin. Les espèces se saisissent séparément dans **Finance → Dons en espèces** avec une affectation staff autorisée. D17, e-DINAR, ClicToPay, Konnect, virement, mandat et SMS n'ont pas encore de circuit de confirmation intégré ; leur activation nécessite une intégration spécifique.
 
 ## À faire avant le lancement
 

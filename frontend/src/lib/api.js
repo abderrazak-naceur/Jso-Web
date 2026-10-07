@@ -135,6 +135,7 @@ export const ticketApi = {
 // Public donation campaign. No fan account is required.
 export const donationsApi = {
   campaign: (signal) => request('/donations/campaign', signal),
+  paymentMethods: (signal) => request('/donations/payment-methods', signal),
   create: (data) => requestJson('/donations', 'POST', data),
   status: (id) => requestJson('/donations/' + id, 'GET'),
   pay: (id, country) => requestJson('/donations/' + id + '/pay', 'POST', { country }),

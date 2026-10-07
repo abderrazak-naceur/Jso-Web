@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using JSO.Domain;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Hosting;
 
 namespace JSO.Infrastructure.Payments;
 
@@ -24,13 +25,15 @@ namespace JSO.Infrastructure.Payments;
 public sealed class FlouciPaymentProvider(
     HttpClient httpClient,
     IOptions<PaymentOptions> options,
-    ILogger<FlouciPaymentProvider> logger) : IPaymentProvider
+    ILogger<FlouciPaymentProvider> logger,
+    IHostEnvironment environment) : IPaymentProvider
 {
     private readonly FlouciOptions _flouci = options.Value.Flouci;
 
     public string Name => "Flouci";
 
-    public bool IsConfigured => _flouci.IsConfigured;
+    public bool IsConfigured => _flouci.IsConfigured &&
+        (!environment.IsProduction() || !string.IsNullOrWhiteSpace(_flouci.WebhookSecret));
 
     public async Task<PaymentInitiation> InitiatePaymentAsync(PaymentRequest payable, string returnUrl, string cancelUrl, CancellationToken ct)
     {
