@@ -46,7 +46,7 @@ L'obiettivo è creare un ecosistema unico per:
 | Sito e admin | Logo JSO, interfaccia responsive, sezione Équipe professionale « Les visages de la JSO » e back-office modulare. Il build Vite passa; le modifiche recenti aggiungono controlli di visibilità per le sezioni home, gestione dei portrait giocatore e avvio locale coordinato di API e frontend. | Verificare URL API, CORS e HTTPS sul dominio reale; collaudare i flussi completi nel browser. |
 | Backend e dati | API .NET 10 e PostgreSQL 17. Build Release backend superata e 24 test API superati. Il run CI del 7 ottobre ha però fallito la verifica EF: le due migration più recenti non venivano scoperte e il controllo ha trovato 37 migration applicate invece delle 39 attese. La correzione degli attributi EF è stata verificata localmente ed è disponibile nel branch `fix/postgres-migration-discovery` (commit `c116762`). | Integrare la correzione migration in `main` e verificare di nuovo il workflow CI; ripetere avvio e migration sull'ambiente Oracle; eseguire un backup reale e provare il ripristino di database e media. |
 | Infrastruttura | Docker Compose production predisposto con attesa di PostgreSQL pronto; Nginx accetta il limite upload dell'API. Build Docker di frontend e backend ARM64 e controllo Nginx riusciti in CI. Script di backup, verifica, retention (dry-run di default) e procedura di restore disponibili in [deploy/oracle](deploy/oracle/README.md); tutti gli script superano il controllo di sintassi in CI. Script di collaudo `check-config.sh`, `check-local.sh` e `check-domain.sh` pronti. | Preparare VM Oracle, dominio, certificato HTTPS, backup automatico con copia esterna e monitoraggio; eseguire il deploy reale. |
-| App mobile | Due immagini concept nel README; Flutter è la scelta tecnica. | Creare l'app Android/iOS e collegarla alle API. |
+| App mobile | Progetto Flutter in `mobile/` con schermate pubbliche, account, shop, biglietti e test nel repository. | Verificare build e flussi su dispositivi Android/iOS, configurare l'API di produzione e preparare la distribuzione. |
 
 ### Cosa manca per andare in produzione
 
@@ -114,37 +114,37 @@ Documentation de référence : [docs/AGENT_ORGANIZATION.md](docs/AGENT_ORGANIZAT
 
 ## 🧭 Cosa manca da sviluppare
 
-Questa sezione riflette lo **stato reale del codice** (non solo i piani), aggiornata al 7 ottobre 2026. Legenda: ✅ fatto · 🟡 parziale · ⛔ da fare.
+Questa sezione riflette le **funzioni presenti nel codice** al 7 ottobre 2026. Legenda: ✅ implementato · 🟡 parziale o da collaudare · ⛔ assente. La presenza di API e UI non equivale a un servizio attivo in produzione.
 
 ### Riepilogo per feature
 
 | Feature | Backend (API) | Frontend (UI) | Stato | Cosa manca |
 |---|---|---|---|---|
-| Sito pubblico + Match Center + News + Media + Squadra | ✅ | ✅ | ✅ | Collaudo dati reali end-to-end sul dominio |
-| Admin: club, squadra/giocatori, partite, eventi, news, media, contenuti, sicurezza/audit | ✅ | ✅ | ✅ | — |
-| Admin: stagioni e competizioni (CRUD) | ✅ | 🟡 | 🟡 | Modulo UI dedicato (oggi gestite via API/CI) |
-| Sponsor (gestione + vetrina pubblica) | ✅ | ✅ | ✅ | Report esposizione (impression/clic) |
-| Analytics giocatore/squadra (derivate da eventi/formazioni) | ✅ | ✅ | ✅ | `PlayerMatchStat` dedicato (minuti, assist, rating) |
-| Account tifosi (registrazione/login/profilo) | ✅ | ✅ | 🟡 | Sessione cookie HttpOnly, verifica email, reset password |
-| Partita online a pagamento (paywall + YouTube) | ⛔ | ⛔ | ⛔ | Provider pagamenti, `MatchAccessProduct/Purchase`, webhook firmato, endpoint `watch`, player |
-| Finanze del club (entrate/uscite, "soldi persi") | ⛔ | ⛔ | ⛔ | Intera area (vedi piano dedicato) |
-| Homepage Builder + Menu/Footer editabili | ⛔ | ⛔ | ⛔ | Intera area |
-| Shop / Merchandising | ⛔ | 🟡 | ⛔ | Dominio Product/Order, pagamenti, catalogo. Card vendite già predisposte nella dashboard (stato "boutique non attiva") |
-| Biglietteria & eventi | ⛔ | ⛔ | ⛔ | Intera area |
-| Membership / abbonamenti tifosi | ⛔ | ⛔ | ⛔ | Intera area |
-| Community & moderazione | ⛔ | ⛔ | ⛔ | Intera area |
-| Notifiche & messaging (push/email) | ⛔ | ⛔ | ⛔ | Provider (FCM/email) + preferenze |
-| App mobile Flutter (iOS/Android) | ⛔ | ⛔ | ⛔ | Intero progetto app |
-| Deploy produzione (VM Oracle, DNS/HTTPS, backup provato) | 🟡 | — | 🟡 | Vedi "Cosa manca per andare in produzione" sopra |
+| Sito pubblico: home, Match Center, notizie, media, squadra | ✅ | ✅ | 🟡 | Collaudo con dati reali, stati vuoti/errori e browser sul dominio reale |
+| Admin: club, squadra, partite, news, media, contenuti, sicurezza e audit | ✅ | ✅ | 🟡 | Collaudo dei flussi e dei permessi sullo stack di produzione |
+| Stagioni e competizioni | ✅ | ✅ | 🟡 | Verifica CRUD admin → API → PostgreSQL → sito con dati reali |
+| Sponsor e vetrina pubblica | ✅ | ✅ | 🟡 | Verificare pubblicazione e misurazione dell'esposizione reale |
+| Analytics giocatori | ✅ | ✅ | 🟡 | Ampliare le statistiche dedicate e validarle sui dati delle partite |
+| Account tifosi | ✅ | ✅ | 🟡 | La sessione usa `localStorage`; mancano cookie HttpOnly, verifica email e recupero password |
+| Streaming di partite a pagamento | ✅ | ✅ | 🟡 | Configurare provider e video, poi collaudare acquisto, webhook e accesso alla visione |
+| Finanze, donazioni e ricevute | ✅ | ✅ | 🟡 | Verificare operatività, riconciliazione e report con dati reali |
+| Homepage Builder e link aggiuntivi di menu/footer | ✅ | ✅ | 🟡 | Il builder riordina solo sezioni note; i link configurati si aggiungono alla navigazione fissa |
+| Shop e ordini | ✅ | ✅ | 🟡 | Configurare pagamenti, catalogo e gestione ordini; collaudare il ciclo completo |
+| Biglietteria, QR e check-in | ✅ | ✅ | 🟡 | Collaudo vendita, capacità, scanner e ingressi sul campo |
+| Membership tifosi | ✅ | ✅ | 🟡 | Configurare piani e pagamenti; verificare attivazione e rinnovi |
+| Community e moderazione | ✅ | ✅ | 🟡 | Definire gestione operativa e verificare i flussi pubblici e admin |
+| Newsletter e integrazioni social | 🟡 | 🟡 | 🟡 | Configurare i servizi esterni e verificare invii e consensi |
+| Notifiche push e preferenze | ⛔ | 🟡 | 🟡 | L'app mostra notifiche ricavate dai dati esistenti; mancano push, provider e preferenze |
+| App Flutter per iOS/Android | ✅ (API condivise) | ✅ (Flutter) | 🟡 | Verificare build e flussi su dispositivi reali, API di produzione e distribuzione |
+| Deploy Oracle, DNS/HTTPS e backup ripristinabile | 🟡 | — | 🟡 | VM e dominio reali, backup esterno e prova di restore; vedi la sezione sopra |
 
 ### Prossimi passi consigliati (in ordine)
 
-1. **Andare in produzione** (Orizzonte 0): deploy VM Oracle, DNS/HTTPS, backup reale + prova di restore, collaudo browser. È il prerequisito di tutto il resto.
-2. **Completare gli account tifosi** (🟡→✅): passare alla sessione cookie HttpOnly, aggiungere verifica email e reset password.
-3. **Partita online a pagamento**: paywall con provider di pagamento + YouTube unlisted dietro accesso pagato — richiede prima la scelta del gateway. Dettagli in [FAN_ACCOUNTS_PLAN](docs/FAN_ACCOUNTS_PLAN.md).
-4. **Homepage Builder / Menu-Footer**: il club compone la home senza toccare il codice.
-5. **Finanze del club** e **estensione gestione squadra** — vedi [ADMIN_SQUAD_FINANCE_ANALYTICS_PLAN](docs/ADMIN_SQUAD_FINANCE_ANALYTICS_PLAN.md).
-6. **Shop, biglietteria, membership, notifiche, community** e **app Flutter** — Orizzonti 2–3 della [visione 2030](docs/PLATFORM_VISION_2030.md).
+1. **Sbloccare la CI PostgreSQL**: integrare la correzione delle due migration e verificare il workflow su `main`.
+2. **Andare in produzione**: deploy sulla VM Oracle, DNS/HTTPS, backup esterno con prova di restore e collaudo dal browser.
+3. **Chiudere i flussi account e pagamento**: sessione tifosi, verifica email, recupero password e acquisti reali di streaming, shop, biglietti e membership. Dettagli in [FAN_ACCOUNTS_PLAN](docs/FAN_ACCOUNTS_PLAN.md).
+4. **Rifinire gli strumenti editoriali e gestionali**: builder della home, navigazione, analytics e riconciliazione finanziaria. Vedi [ADMIN_SQUAD_FINANCE_ANALYTICS_PLAN](docs/ADMIN_SQUAD_FINANCE_ANALYTICS_PLAN.md).
+5. **Completare comunicazioni e mobile**: integrazioni email/social, notifiche push e collaudo dell'app Flutter su dispositivi reali, dopo la stabilizzazione delle API. Vedi la [visione 2030](docs/PLATFORM_VISION_2030.md).
 
 Piani di dettaglio: [visione pluriennale 2030](docs/PLATFORM_VISION_2030.md) · [account tifosi + streaming a pagamento](docs/FAN_ACCOUNTS_PLAN.md) · [squadra/finanze/analytics](docs/ADMIN_SQUAD_FINANCE_ANALYTICS_PLAN.md) · [roadmap operativa](docs/ROADMAP.md).
 
@@ -202,7 +202,7 @@ Production target
 
 </div>
 
-Queste immagini sono **concept visivi** della futura app Flutter per iOS e Android. Mostrano la direzione grafica; i contenuti e i risultati rappresentati sono illustrativi. L'app non è ancora pubblicata.
+Queste immagini sono **concept visivi**, non screenshot dell'app. Il progetto Flutter è già presente in [`mobile/`](mobile/README.md), ma l'app non è ancora pubblicata.
 
 Il sito usa il nuovo stemma JSO in `frontend/public/JSO-crest-regenerated.png`; gli asset visivi sono nel dossier `frontend/public/`.
 
@@ -508,9 +508,9 @@ Il [piano operativo aggiornato](docs/ROADMAP.md) definisce priorità, dipendenze
 
 ## 📱 Mobile App — iOS & Android
 
-La piattaforma JSO è progettata fin dall'inizio per poter diventare anche una **app mobile ufficiale del club**.
+Il progetto dell'**app mobile ufficiale del club** è presente in [`mobile/`](mobile/README.md). Le schermate principali sono implementate; restano il collaudo su dispositivi reali e la pubblicazione.
 
-L'app mobile utilizzerà gli stessi servizi backend del sito web, evitando di duplicare la logica e mantenendo un'unica fonte dati.
+L'app mobile usa gli stessi servizi backend del sito web, evitando di duplicare la logica e mantenendo un'unica fonte dati.
 
 ### Cosa farà l'app
 
