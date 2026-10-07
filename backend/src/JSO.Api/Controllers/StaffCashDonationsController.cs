@@ -114,10 +114,19 @@ public sealed class StaffCashDonationsController(
 
         return Ok(new
         {
-            receipt = BuildReceipt(donation, donorName, pointType, request.PointName, request.Phone),
+            id = donation.Id,
+            receiptNumber = donation.ProviderRef,
+            donorName,
+            phone = donation.DonorPhone,
+            amount = donation.Amount,
+            currency = "TND",
+            paidAt = donation.PaidAt,
+            pointType,
+            pointName = string.IsNullOrWhiteSpace(request.PointName) ? null : request.PointName.Trim(),
+            receiptUrl = $"/api/donations/{donation.Id}/receipt",
             whatsappSent = whatsapp.Sent,
             whatsappConfigured = !whatsapp.NotConfigured
-        });
+        });;
     }
 
     private async Task<StaffContext?> GetStaffContext(CancellationToken ct)
