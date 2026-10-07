@@ -5,7 +5,15 @@ import { donationsApi } from '../../lib/api'
 import { formatMoney } from '../../lib/format'
 import { useI18n } from '../../i18n/index.jsx'
 
-const PRESETS = [5, 10, 20, 50, 100]
+const PRESETS = [5, 10, 20, 50, 100, 250]
+const PAYMENT_METHODS = [
+  { id: 'flouci', label: 'Flouci', description: 'Portefeuille / paiement tunisien', country: 'TN' },
+  { id: 'orange', label: 'Orange Money', description: 'Paiement mobile Orange', country: 'TN' },
+  { id: 'ooredoo', label: 'Mobicash / Ooredoo', description: 'Portefeuille mobile Ooredoo', country: 'TN' },
+  { id: 'edinar', label: 'e-DINAR / D17', description: 'Paiement via La Poste tunisienne', country: 'TN' },
+  { id: 'card', label: 'Carte bancaire', description: 'Paiement hébergé par le prestataire', country: 'INTL' },
+]
+
 
 export default function DonationPage() {
   const { language } = useI18n()
@@ -19,6 +27,7 @@ export default function DonationPage() {
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const [shared, setShared] = useState(false)
+  const [selectedMethod, setSelectedMethod] = useState('flouci')
   const pageUrl = 'https://jso-web.onrender.com/soutenir'
 
   useEffect(() => {
@@ -39,6 +48,9 @@ export default function DonationPage() {
   }, [amount, custom])
 
   async function startDonation(country) {
+    if (selectedMethod !== 'flouci' && selectedMethod !== 'card') {
+      throw new Error('Ce moyen de paiement doit être activé avec un contrat marchand opérateur avant de recevoir les paiements.')
+    }
     if (effectiveAmount < 1) throw new Error('Le montant minimum est de 1 TND.')
     const created = await donationsApi.create({
       amount: effectiveAmount,
@@ -183,6 +195,22 @@ export default function DonationPage() {
               <p className="mt-1 text-4xl font-black text-jso-navy">{formatMoney(effectiveAmount, 'TND')}</p>
             </div>
 
+            <div className="mt-8">
+              <p className="text-sm font-black">2 · Choisir le moyen de paiement</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {PAYMENT_METHODS.map((method) => (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => setSelectedMethod(method.id)}
+                    className={'rounded-2xl border p-4 text-left transition ' + (selectedMethod === method.id ? 'border-jso-navy bg-jso-navy text-white' : 'border-slate-200 bg-white hover:border-jso-blue')}
+                  >
+                    <p className="font-black">{method.label}</p>
+                    <p className={'mt-1 text-xs ' + (selectedMethod === method.id ? 'text-white/65' : 'text-slate-500')}>{method.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="mt-6">
               <PayOnlineButton
                 pay={startDonation}
