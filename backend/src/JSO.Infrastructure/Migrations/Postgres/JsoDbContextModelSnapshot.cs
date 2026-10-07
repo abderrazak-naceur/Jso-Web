@@ -1608,6 +1608,9 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.Property<bool>("WhatsAppOptIn")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("WhatsAppOptIn")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("PaymentStatus")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -2308,8 +2311,6 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.HasIndex("Status", "CreatedAt");
 
                     b.HasIndex("CashPointType", "CreatedAt");
-
-                    b.HasIndex("Status", "CreatedAt");
 
                     b.ToTable("SupporterBricks");
                 });
