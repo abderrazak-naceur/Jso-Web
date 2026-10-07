@@ -89,32 +89,10 @@ public sealed class DonationsController(
     {
         var donation = await db.SupporterBricks.AsNoTracking()
             .Where(x => x.Id == id && x.Status == CampaignStatus && x.PaymentStatus == "Paid" && x.PaymentProvider == "Cash")
-            .Select(x => new { x.Id, x.DisplayName, x.Message, x.Amount, x.PaidAt, x.ProviderRef, x.Country })
+            .Select(x => new { x.Id, x.DisplayName, x.Message, x.Amount, x.PaidAt, x.ProviderRef, x.Country, x.CashPointType, x.CashPointName })
             .SingleOrDefaultAsync(ct);
 
         if (donation is null) return NotFound();
-
-        var auditRow = await db.AuditLogs.AsNoTracking()
-            .Where(x => x.Action == "CASH_DONATION_RECEIPT_ISSUED" &&
-                        x.EntityType == "SupporterBrick" &&
-                        x.EntityId == id.ToString())
-            .OrderByDescending(x => x.CreatedAt)
-            .Select(x => x.Details)
-            .FirstOrDefaultAsync(ct);
-
-        string? pointType = null;
-        string? pointName = null;
-        if (!string.IsNullOrWhiteSpace(auditRow))
-        {
-            try
-            {
-                using var json = JsonDocument.Parse(auditRow);
-                var root = json.RootElement;
-                pointType = root.TryGetProperty("pointType", out var pt) ? pt.GetString() : null;
-                pointName = root.TryGetProperty("pointName", out var pn) ? pn.GetString() : null;
-            }
-            catch (JsonException) { }
-        }
 
         return Ok(new
         {
@@ -125,8 +103,8 @@ public sealed class DonationsController(
             amount = donation.Amount,
             currency = "TND",
             paidAt = donation.PaidAt,
-            pointType,
-            pointName,
+            pointType = donation.CashPointType,
+            pointName = donation.CashPointName,
             campaign = "jso-support-2026",
             verificationUrl = $"/api/donations/{donation.Id}/receipt"
         });
