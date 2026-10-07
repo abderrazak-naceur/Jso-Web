@@ -20,6 +20,7 @@ export default function DonationsModule({ onError }) {
   useEffect(() => { load() }, [])
 
   const progress = data?.goalTnd ? Math.min(100, Math.max(0, Number(data.totalPaidTnd || 0) / Number(data.goalTnd) * 100)) : 0
+  const cashProgress = data?.goalTnd ? Math.min(100, Math.max(0, Number(data.cashPaidTnd || 0) / Number(data.goalTnd) * 100)) : 0
 
   async function copyLink() {
     try { await navigator.clipboard.writeText(window.location.origin + '/soutenir') } catch {}
@@ -35,13 +36,14 @@ export default function DonationsModule({ onError }) {
         </div>
         <HeartHandshake className="text-jso-gold" size={34} aria-hidden="true" />
       </div>
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl bg-white/5 p-4"><p className="text-xs font-bold text-white/45">Confirmé</p><p className="mt-1 text-3xl font-black">{money(data?.totalPaidTnd)}</p></div>
         <div className="rounded-2xl bg-white/5 p-4"><p className="text-xs font-bold text-white/45">Contributions</p><p className="mt-1 text-3xl font-black">{data?.paidCount ?? 0}</p></div>
-        <div className="rounded-2xl bg-white/5 p-4"><p className="text-xs font-bold text-white/45">Objectif</p><p className="mt-1 text-3xl font-black">{money(data?.goalTnd)}</p></div>
+        <div className="rounded-2xl bg-white/5 p-4"><p className="text-xs font-bold text-white/45">Objectif mensuel</p><p className="mt-1 text-3xl font-black">{money(data?.goalTnd)}</p></div>
+        <div className="rounded-2xl bg-white/5 p-4"><p className="text-xs font-bold text-white/45">Cash</p><p className="mt-1 text-3xl font-black">{money(data?.cashPaidTnd)}</p><p className="mt-1 text-xs font-semibold text-white/45">{data?.cashPaidCount ?? 0} reçus</p></div>
       </div>
       <div className="mt-6 h-3 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-jso-gold" style={{ width: progress + '%' }}/></div>
-      <p className="mt-2 text-sm font-semibold text-white/55">{progress.toFixed(0)}% atteint · {data?.pendingCount ?? 0} paiement(s) à confirmer</p>
+      <p className="mt-2 text-sm font-semibold text-white/55">{progress.toFixed(0)}% atteint · {data?.pendingCount ?? 0} paiement(s) à confirmer · Cash {cashProgress.toFixed(0)}%</p>
     </div>
 
     <div className="flex flex-wrap gap-3">
@@ -54,7 +56,7 @@ export default function DonationsModule({ onError }) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[880px] text-left text-sm">
           <thead><tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
-            <th className="p-4">Date</th><th className="p-4">Donateur</th><th className="p-4">Montant</th><th className="p-4">Statut</th><th className="p-4">Pays</th><th className="p-4">Provider</th><th className="p-4">Message</th>
+            <th className="p-4">Date</th><th className="p-4">Donateur</th><th className="p-4">Montant</th><th className="p-4">Statut</th><th className="p-4">Pays</th><th className="p-4">Provider</th><th className="p-4">Point</th><th className="p-4">Message</th>
           </tr></thead>
           <tbody>
             {(data?.donations || []).map((item) => (
@@ -65,6 +67,7 @@ export default function DonationsModule({ onError }) {
                 <td className="p-4"><span className={'rounded-full px-2.5 py-1 text-xs font-black ' + (item.paymentStatus === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')}>{item.paymentStatus === 'Paid' ? 'Payé' : 'En attente'}</span></td>
                 <td className="p-4">{item.country || '—'}</td>
                 <td className="p-4">{item.paymentProvider || '—'}</td>
+                <td className="p-4">{item.cashPointName || (item.paymentProvider === 'Cash' ? '—' : '')}</td>
                 <td className="p-4 max-w-sm truncate text-slate-500">{item.message || '—'}</td>
               </tr>
             ))}
