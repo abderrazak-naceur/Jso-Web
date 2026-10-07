@@ -28,6 +28,7 @@ export default function DonationPage() {
   const [copied, setCopied] = useState(false)
   const [shared, setShared] = useState(false)
   const [selectedMethod, setSelectedMethod] = useState('flouci')
+  const [monthly, setMonthly] = useState(true)
   const pageUrl = 'https://jso-web.onrender.com/soutenir'
 
   useEffect(() => {
@@ -133,6 +134,10 @@ export default function DonationPage() {
                   <div className="h-full rounded-full bg-jso-gold transition-all" style={{ width: progress + '%' }} />
                 </div>
                 <p className="mt-3 text-sm font-semibold text-white/55">{progress.toFixed(0)}% de l’objectif · {campaign?.donorCount || 0} contributions confirmées</p>
+                <div className="mt-4 rounded-xl bg-white/5 p-3 text-sm">
+                  <strong>Programme mensuel</strong>
+                  <p className="mt-1 text-white/55">1 000 personnes × 10 TND/mois = 10 000 TND/mois, soit 120 000 TND sur 12 mois.</p>
+                </div>
               </div>
             </div>
           </div>
@@ -194,6 +199,14 @@ export default function DonationPage() {
               <p className="text-sm font-bold text-slate-600">Montant choisi</p>
               <p className="mt-1 text-4xl font-black text-jso-navy">{formatMoney(effectiveAmount, 'TND')}</p>
             </div>
+
+            <label className="mt-4 flex items-start gap-3 rounded-2xl border border-jso-gold/40 bg-jso-gold/10 p-4">
+              <input type="checkbox" checked={monthly} onChange={(e) => setMonthly(e.target.checked)} className="mt-1 h-5 w-5 rounded border-slate-300" />
+              <span>
+                <strong className="block">Je soutiens la JSO chaque mois</strong>
+                <span className="mt-1 block text-xs leading-5 text-slate-500">Objectif collectif : 1 000 supporters × 10 TND × 12 mois = 120 000 TND sur une année.</span>
+              </span>
+            </label>
 
             <div className="mt-8">
               <p className="text-sm font-black">2 · Choisir le moyen de paiement</p>
