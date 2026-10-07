@@ -58,5 +58,10 @@ public sealed class SupporterBrick
     public decimal? ChargedAmount { get; set; }
     public string? ChargedCurrency { get; set; }
 
+    // Cash-collection metadata. Kept off the public receipt response except for the point name/type.
+    public string? CashPointType { get; set; }
+    public string? CashPointName { get; set; }
+    public string? CashDonorPhone { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
