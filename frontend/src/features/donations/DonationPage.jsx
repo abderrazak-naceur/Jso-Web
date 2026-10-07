@@ -251,10 +251,26 @@ export default function DonationPage() {
                 <h2 className="text-xl font-black">QR de la campagne</h2>
               </div>
               <div className="mt-5 rounded-2xl bg-white p-4 text-center">
-                <img src="/jso-donation-qr.png" alt="QR code pour ouvrir la page de soutien JSO" className="mx-auto h-56 w-56 rounded-xl object-contain" />
+                <div
+                  className="mx-auto grid h-56 w-56 place-items-center rounded-xl border border-slate-200 bg-slate-50 text-center"
+                  role="img"
+                  aria-label="QR de la page de soutien"
+                >
+                  <div>
+                    <QrCode size={94} className="mx-auto text-jso-navy" aria-hidden="true" />
+                    <p className="mt-2 text-[10px] font-black tracking-[0.12em] text-slate-500">JSO / SOUTENIR</p>
+                  </div>
+                </div>
               </div>
               <p className="mt-4 text-sm leading-6 text-slate-500">Imprimez ce QR ou partagez-le sur Facebook, WhatsApp, dans le stade et sur les affiches.</p>
-              <a href={pageUrl} className="mt-4 inline-flex items-center gap-2 text-sm font-extrabold text-jso-blue">Ouvrir la page <ArrowUpRight size={15} aria-hidden="true" /></a>
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                <button type="button" onClick={copyLink} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm font-extrabold text-jso-navy hover:border-jso-blue">
+                  <Copy size={15} aria-hidden="true" /> {copied ? 'Lien copié' : 'Copier'}
+                </button>
+                <a href={pageUrl} className="inline-flex items-center justify-center gap-2 rounded-full bg-jso-navy px-4 py-3 text-sm font-extrabold text-white hover:bg-jso-blue">
+                  Ouvrir <ArrowUpRight size={15} aria-hidden="true" />
+                </a>
+              </div>
             </div>
 
             <div className="rounded-[2rem] bg-jso-gold p-6 text-jso-navy">
