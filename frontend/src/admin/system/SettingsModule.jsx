@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { Save, LayoutTemplate, SlidersHorizontal, Languages } from 'lucide-react'
+import { Save, LayoutTemplate, SlidersHorizontal, Languages, CreditCard } from 'lucide-react'
 import Field from '../components/Field'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../../lib/apiConfig'
 import HomepageBuilderModule from '../HomepageBuilder'
 import TranslationsModule from './TranslationsModule'
+import PaymentSettingsModule from './PaymentSettingsModule'
 
 export default function SettingsModule({ onError = () => {} }) {
-  const [activeTab, setActiveTab] = useState('home')
+  const [activeTab, setActiveTab] = useState('payments')
   const [value, setValue] = useState(getConfiguredApiBaseUrl())
   const [active, setActive] = useState(API_BASE_URL)
   const [saved, setSaved] = useState(false)
@@ -50,6 +51,12 @@ export default function SettingsModule({ onError = () => {} }) {
 
   const tabs = [
     {
+      id: 'payments',
+      label: 'Paiements',
+      description: 'Flouci, Stripe et autres moyens de paiement.',
+      icon: CreditCard,
+    },
+    {
       id: 'home',
       label: 'Page d’accueil',
       description: 'Sections, ordre, publication, visibilité et menu du site.',
@@ -71,7 +78,7 @@ export default function SettingsModule({ onError = () => {} }) {
 
   return <div className="space-y-6">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-2 shadow-sm">
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-4">
         {tabs.map(({ id, label, description, icon: Icon }) => (
           <button
             key={id}
@@ -97,6 +104,10 @@ export default function SettingsModule({ onError = () => {} }) {
         ))}
       </div>
     </div>
+
+    {activeTab === 'payments' && (
+      <PaymentSettingsModule onError={onError} />
+    )}
 
     {activeTab === 'home' && (
       <section aria-labelledby="homepage-settings-title">
