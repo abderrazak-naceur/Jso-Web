@@ -13,6 +13,7 @@ Il lavoro realizzabile via codice è completo per il perimetro attuale. Restano 
 - **Priorità 1 — Prodotto web:** completo nel codice (contenuti+stati, editor admin, sicurezza/audit, SEO, accessibilità, prestazioni). Resta solo il collaudo manuale su ambiente reale (lettore di schermo per WCAG, Lighthouse).
 - **Priorità 2 — App mobile:** completa nel codice per il perimetro attuale. Resta il collaudo su dispositivi Android/iOS fisici, la firma e la pubblicazione sugli store, e le eventuali notifiche push FCM.
 - **Priorità 2.5 — Biglietteria digitale QR:** implementata nel codice (token opaco, QR Flutter, scanner staff, check-in atomico, audit e rate limit). Restano TICKET-QR-007 (E2E backend completo) e TICKET-QR-008 (collaudo su dispositivi/reale). Piano: [MOBILE_TICKETING_QR_PLAN.md](MOBILE_TICKETING_QR_PLAN.md).
+- **Priorità 2.6 — Soutien du club:** page /soutenir, campagne mensuelle 1 000 × 10 TND, paiements hébergés Flouci/Stripe et console admin de collecte implémentés en code. Les moyens Orange Money, Mobicash/Ooredoo et e-DINAR/D17 sont préparés comme options mais restent bloqués par les comptes marchands/contrats et l'intégration fournisseur.
 - **Priorità 3 — Funzioni successive:** Season Pass, RBAC staff avanzato, analytics avanzati e community evoluta dopo i blocchi P0.
 
 ## Decisione architetturale per l'MVP
@@ -80,6 +81,16 @@ L'app Flutter è implementata e collegata all'API reale. I concept immagine rest
 Extra implementati oltre al piano: Boutique con ordini, Biglietteria, hub "Plus" (agenda, documents, FAQ, musée, écoles, sponsors), blason officiel.
 
 **Criterio di uscita:** app installabile su entrambi i sistemi, collegata agli stessi dati del sito, con flussi principali verificati su dispositivi reali.
+
+## Priorità 2.6 — Soutien mensuel et collecte
+- [x] Page publique /soutenir avec objectif et progression.
+- [x] Campagne cible 1 000 supporters × 10 TND × 12 mois = 120 000 TND/an.
+- [x] Paiement hébergé Flouci (Tunisie) / Stripe (international), avec webhook serveur.
+- [x] Console admin pour le suivi des contributions.
+- [x] Ajouter la collecte cash pour `TicketSeller` et `ShopManager`, avec reçu numéroté, audit et vérification publique.
+- [ ] Intégrer et tester les comptes marchands Orange Money, Mobicash/Ooredoo et e-DINAR/D17.
+- [ ] Mettre en production les flux récurrents mensuels avec consentement et conditions du prestataire.
+- [ ] Tester E2E réel, QR imprimé, mobile et reporting comptable.
 
 ## Priorità 2.5 — Biglietteria digitale QR e check-in
 

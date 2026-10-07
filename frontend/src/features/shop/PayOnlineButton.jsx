@@ -24,8 +24,8 @@ const COUNTRIES = [
   { code: 'XX', label: 'Autre pays' },
 ]
 
-export default function PayOnlineButton({ pay, label = 'Payer en ligne', disabled = false }) {
-  const [country, setCountry] = useState('TN')
+export default function PayOnlineButton({ pay, label = 'Payer en ligne', disabled = false, defaultCountry = 'TN' }) {
+  const [country, setCountry] = useState(defaultCountry)
   const [paying, setPaying] = useState(false)
   const [error, setError] = useState('')
 

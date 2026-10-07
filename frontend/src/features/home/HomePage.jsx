@@ -16,6 +16,7 @@ import MatchdaySection from './MatchdaySection'
 import NewsSection from './NewsSection'
 import HighlightsCarousel from './HighlightsCarousel'
 import SellingBand from './SellingBand'
+import { HeartHandshake } from 'lucide-react'
 import Reveal from '../site/Reveal'
 import { formatDate } from '../../lib/format'
 import { orderHomeSections } from './useHomeLayout'
@@ -54,6 +55,14 @@ function buildHighlights({ data, onOpenMatch, onOpenArticle }) {
     subtitle: 'La boutique du club',
     cta: 'Découvrir',
     onSelect: () => { window.location.hash = '#shop' },
+  })
+  items.push({
+    key: 'donation',
+    badge: 'Soutenir',
+    title: 'Chaque geste compte pour la JSO',
+    subtitle: 'Aidez le club à avancer',
+    cta: 'Faire un don',
+    onSelect: () => { window.location.assign('/soutenir') },
   })
   items.push({
     key: 'memberships',
@@ -121,6 +130,24 @@ export default function HomePage({
         onOpenCart={onOpenCart}
       />
     ),
+    donation: () => (
+      <section id="donation" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
+        <div className="rounded-[2rem] bg-jso-gold p-7 text-jso-navy shadow-sm sm:p-10">
+          <p className="text-xs font-black uppercase tracking-[0.16em] opacity-60">Soutenir la JSO</p>
+          <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-3xl font-black">1 000 supporters · 10 TND par mois.</h2>
+              <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 opacity-70">
+                L’objectif est de construire un soutien régulier pour le club : 10 000 TND par mois et 120 000 TND sur 12 mois si 1 000 personnes participent.
+              </p>
+            </div>
+            <a href="/soutenir" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-jso-navy px-6 py-3 font-extrabold text-white hover:bg-white hover:text-jso-navy">
+              Participer <HeartHandshake size={17} aria-hidden="true" />
+            </a>
+          </div>
+        </div>
+      </section>
+    ),
     memberships: () => (
       <MembershipsSection
         key="memberships"
@@ -182,6 +209,7 @@ export default function HomePage({
     'club',
     'events',
     'shop',
+    'donation',
     'memberships',
     'community',
     'sponsors',

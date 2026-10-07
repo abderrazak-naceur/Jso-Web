@@ -269,8 +269,14 @@ public sealed class PaymentsController(
         if (ticket is { } ticketId)
             return (PayableTypes.TicketOrder, ticketId);
 
+        var donation = await db.SupporterBricks.AsNoTracking()
+            .Where(x => x.ProviderRef == providerRef && x.Status == "Donation")
+            .Select(x => (Guid?)x.Id).SingleOrDefaultAsync(ct);
+        if (donation is { } donationId)
+            return (PayableTypes.Donation, donationId);
+
         var brick = await db.SupporterBricks.AsNoTracking()
-            .Where(x => x.ProviderRef == providerRef)
+            .Where(x => x.ProviderRef == providerRef && x.Status != "Donation")
             .Select(x => (Guid?)x.Id).SingleOrDefaultAsync(ct);
         if (brick is { } brickId)
             return (PayableTypes.SupporterBrick, brickId);

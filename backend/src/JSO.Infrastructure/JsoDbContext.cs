@@ -162,6 +162,12 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<SupporterBrick>().Property(x=>x.Country).HasMaxLength(64);
   modelBuilder.Entity<SupporterBrick>().Property(x=>x.ChargedAmount).HasPrecision(14,2);
   modelBuilder.Entity<SupporterBrick>().Property(x=>x.ChargedCurrency).HasMaxLength(8);
+  modelBuilder.Entity<SupporterBrick>().Property(x=>x.CashPointType).HasMaxLength(16);
+  modelBuilder.Entity<SupporterBrick>().Property(x=>x.CashPointName).HasMaxLength(160);
+  modelBuilder.Entity<SupporterBrick>().Property(x=>x.CashDonorPhone).HasMaxLength(32);
+  modelBuilder.Entity<SupporterBrick>().Property(x=>x.DonorPhone).HasMaxLength(32);
+  modelBuilder.Entity<SupporterBrick>().HasIndex(x=>new{x.WhatsAppOptIn,x.CreatedAt});
+  modelBuilder.Entity<SupporterBrick>().HasIndex(x=>new{x.CashPointType,x.CreatedAt});
   modelBuilder.Entity<ClassifiedAd>().HasIndex(x=>new{x.Status,x.CreatedAt});
   modelBuilder.Entity<ClassifiedAd>().HasIndex(x=>x.Category);
   modelBuilder.Entity<ClassifiedAd>().Property(x=>x.Status).HasDefaultValue("Pending");

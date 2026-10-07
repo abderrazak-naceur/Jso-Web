@@ -74,6 +74,12 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(15);
         });
 
+        services.AddHttpClient<WhatsAppSender>(client =>
+        {
+            client.BaseAddress = new Uri("https://graph.facebook.com/");
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
+
         return services;
     }
 
@@ -106,11 +112,13 @@ public static class DependencyInjection
         // as their single, uniform completion entry point.
         services.AddScoped<TicketOrderCompletion>();
         services.AddScoped<SupporterBrickCompletion>();
+        services.AddScoped<DonationCompletion>();
         services.AddScoped<MembershipCompletion>();
         services.AddScoped<MatchStreamAccessCompletion>();
         services.AddScoped<IPayableCompletion>(sp => sp.GetRequiredService<OrderPaymentService>());
         services.AddScoped<IPayableCompletion>(sp => sp.GetRequiredService<TicketOrderCompletion>());
         services.AddScoped<IPayableCompletion>(sp => sp.GetRequiredService<SupporterBrickCompletion>());
+        services.AddScoped<IPayableCompletion>(sp => sp.GetRequiredService<DonationCompletion>());
         services.AddScoped<IPayableCompletion>(sp => sp.GetRequiredService<MembershipCompletion>());
         services.AddScoped<IPayableCompletion>(sp => sp.GetRequiredService<MatchStreamAccessCompletion>());
         services.AddScoped<PayableCompletionRouter>();

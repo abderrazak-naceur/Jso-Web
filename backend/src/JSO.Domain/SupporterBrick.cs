@@ -58,5 +58,15 @@ public sealed class SupporterBrick
     public decimal? ChargedAmount { get; set; }
     public string? ChargedCurrency { get; set; }
 
+    // Cash-collection metadata. Kept off the public receipt response except for the point name/type.
+    public string? CashPointType { get; set; }
+    public string? CashPointName { get; set; }
+    public string? CashDonorPhone { get; set; }
+
+    // Optional WhatsApp contact supplied by the donor for campaign updates.
+    // Never exposed publicly; messages are sent only when WhatsAppOptIn is true.
+    public string? DonorPhone { get; set; }
+    public bool WhatsAppOptIn { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

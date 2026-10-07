@@ -132,6 +132,14 @@ export const ticketApi = {
 // its id, then pays it online. Payment is confirmed server-side by the verified
 // webhook (sets PaymentStatus=Paid) and is ORTHOGONAL to moderation: a brick
 // only appears on the public wall once a CommunityManager approves it.
+// Public donation campaign. No fan account is required.
+export const donationsApi = {
+  campaign: (signal) => request('/donations/campaign', signal),
+  create: (data) => requestJson('/donations', 'POST', data),
+  status: (id) => requestJson('/donations/' + id, 'GET'),
+  pay: (id, country) => requestJson('/donations/' + id + '/pay', 'POST', { country }),
+}
+
 export const supporterApi = {
   wall: (name, signal) => request('/supporters/wall' + (name ? '?name=' + encodeURIComponent(name) : ''), signal),
   proposeMine: (data, token) => requestJson('/supporters/mine', 'POST', data, token),

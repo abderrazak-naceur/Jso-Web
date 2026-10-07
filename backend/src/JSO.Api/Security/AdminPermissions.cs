@@ -12,6 +12,7 @@ public static class AdminPermissions
     public const string TicketsReports = "tickets:reports";
     public const string MembershipsManage = "memberships:manage";
     public const string FinanceView = "finance:view";
+    public const string DonationsCash = "donations:cash";
     public const string ShopManage = "shop:manage";
     public const string OrdersManage = "orders:manage";
     public const string MatchesManage = "matches:manage";
@@ -26,7 +27,7 @@ public static class AdminPermissions
     public static readonly IReadOnlyList<string> All =
     [
         DashboardView, TicketsManage, TicketsAdmin, TicketsValidate, TicketsCheckIn, TicketsReports,
-        MembershipsManage, FinanceView, ShopManage, OrdersManage, MatchesManage,
+        MembershipsManage, FinanceView, DonationsCash, ShopManage, OrdersManage, MatchesManage,
         ContentNews, ContentMedia, ContentManage, CommunityModerate, ClubManage,
         SecurityManage, SystemManage
     ];
@@ -43,7 +44,7 @@ public static class AdminPermissionCatalog
                 AdminPermissions.DashboardView, AdminPermissions.TicketsManage, AdminPermissions.TicketsAdmin,
                 AdminPermissions.TicketsValidate, AdminPermissions.TicketsCheckIn,
                 AdminPermissions.TicketsReports, AdminPermissions.MembershipsManage,
-                AdminPermissions.FinanceView, AdminPermissions.ShopManage,
+                AdminPermissions.FinanceView, AdminPermissions.DonationsCash, AdminPermissions.ShopManage,
                 AdminPermissions.OrdersManage, AdminPermissions.MatchesManage,
                 AdminPermissions.ContentNews, AdminPermissions.ContentMedia,
                 AdminPermissions.ContentManage, AdminPermissions.CommunityModerate,
@@ -55,13 +56,13 @@ public static class AdminPermissionCatalog
                 AdminPermissions.TicketsValidate, AdminPermissions.TicketsCheckIn,
                 AdminPermissions.TicketsReports, AdminPermissions.MatchesManage
             ],
-            ["FinanceManager"] = [AdminPermissions.DashboardView, AdminPermissions.FinanceView],
-            ["ShopManager"] = [AdminPermissions.DashboardView, AdminPermissions.ShopManage, AdminPermissions.OrdersManage],
+            ["FinanceManager"] = [AdminPermissions.DashboardView, AdminPermissions.FinanceView, AdminPermissions.DonationsCash],
+            ["ShopManager"] = [AdminPermissions.DashboardView, AdminPermissions.ShopManage, AdminPermissions.OrdersManage, AdminPermissions.DonationsCash],
             ["Editor"] = [AdminPermissions.DashboardView, AdminPermissions.ContentNews, AdminPermissions.ContentMedia, AdminPermissions.ContentManage],
             ["CommunityManager"] = [AdminPermissions.DashboardView, AdminPermissions.CommunityModerate],
-            ["TicketSeller"] = [AdminPermissions.DashboardView, AdminPermissions.TicketsManage, AdminPermissions.TicketsReports],
+            ["TicketSeller"] = [AdminPermissions.DashboardView, AdminPermissions.TicketsManage, AdminPermissions.TicketsReports, AdminPermissions.DonationsCash],
             ["TicketValidator"] = [AdminPermissions.DashboardView, AdminPermissions.TicketsValidate, AdminPermissions.TicketsCheckIn],
-            ["TicketSupervisor"] = [AdminPermissions.DashboardView, AdminPermissions.TicketsManage, AdminPermissions.TicketsAdmin, AdminPermissions.TicketsValidate, AdminPermissions.TicketsCheckIn, AdminPermissions.TicketsReports],
+            ["TicketSupervisor"] = [AdminPermissions.DashboardView, AdminPermissions.TicketsManage, AdminPermissions.TicketsAdmin, AdminPermissions.TicketsValidate, AdminPermissions.TicketsCheckIn, AdminPermissions.TicketsReports, AdminPermissions.DonationsCash],
             ["SeasonManager"] = [AdminPermissions.DashboardView, AdminPermissions.MembershipsManage, AdminPermissions.TicketsReports]
         };
 

@@ -28,6 +28,8 @@ import SeasonsCompetitionsModule from './SeasonsCompetitions'
 import MembershipsModule from './Memberships'
 import MatchStreamsModule from './MatchStreams'
 import FinanceModule from './Finance'
+import DonationsModule from './Donations'
+import CashDonationsModule from './CashDonations'
 import { adminApi } from './api'
 import ContentModule from './content/ContentModule'
 import { ADMIN_NAVIGATION, ADMIN_CATEGORY_ORDER, ADMIN_PERMISSION_BY_ID } from './navigation'
@@ -144,6 +146,8 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'match-streams' && <MatchStreamsModule onError={setError}/>}
         {section === 'analytics' && <AnalyticsModule onError={setError}/>}
         {section === 'finance' && <FinanceModule onError={setError}/>}
+        {section === 'donations' && <DonationsModule onError={setError}/>}
+        {section === 'cash-donations' && <CashDonationsModule onError={setError}/>}
         {section === 'volunteers' && <VolunteersModule onError={setError}/>}
         {section === 'newsletter' && <NewsletterModule onError={setError}/>}
         {section === 'archive' && <ArchiveModule onError={setError}/>}
@@ -277,4 +281,3 @@ export default function AdminApp() {
   const [user,setUser]=useState(()=>{try{return JSON.parse(localStorage.getItem('jso_admin_user')||'null')}catch{return null}})
   return user ? <AdminDashboard user={user} onLogout={()=>setUser(null)}/> : <Login onLogin={setUser}/>
 }
-
