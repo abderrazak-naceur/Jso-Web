@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using JSO.Domain;
 using JSO.Infrastructure.Social;
 
 namespace JSO.Infrastructure.Payments;
