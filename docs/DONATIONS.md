@@ -60,3 +60,19 @@ La page publique expose le total confirmé, le nombre de contributions et des co
 ## Règle produit
 
 Ne pas afficher qu'un moyen de paiement est disponible tant que le contrat marchand et les identifiants API correspondants ne sont pas configurés.
+
+
+## Reçu WhatsApp automatique
+
+Après confirmation d'un paiement en ligne par le webhook Stripe/Flouci, si le donateur a renseigné son numéro et accepté WhatsApp, l'API tente d'envoyer automatiquement le reçu via **Meta WhatsApp Cloud API**. Le même mécanisme est utilisé pour les dons cash saisis par un vendeur ou une boutique.
+
+Configuration de production (variables d'environnement Render) :
+
+- `Social__WhatsApp__GraphApiVersion` — version Graph Meta, par défaut `v23.0`
+- `Social__WhatsApp__PhoneNumberId` — Phone Number ID WhatsApp Business
+- `Social__WhatsApp__AccessToken` — token Meta, jamais commité
+- `Social__WhatsApp__TemplateName` — nom du template WhatsApp approuvé, par défaut `jso_donation_receipt`
+- `Social__WhatsApp__LanguageCode` — langue du template, par défaut `fr`
+- `Social__WhatsApp__ReceiptBaseUrl` — base publique de l'API, par exemple `https://jso-api.onrender.com`
+
+Le template doit être approuvé par Meta et accepter quatre variables dans le body : **nom du donateur, montant, numéro du reçu, URL du reçu**. L'envoi WhatsApp ne bloque jamais l'enregistrement du don si Meta est indisponible ou non configuré.
