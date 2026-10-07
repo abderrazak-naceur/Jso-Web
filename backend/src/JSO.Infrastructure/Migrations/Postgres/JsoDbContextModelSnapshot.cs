@@ -2277,6 +2277,9 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<bool>("WhatsAppOptIn")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Message")
                         .HasColumnType("text");
 
@@ -2311,6 +2314,8 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.HasIndex("Status", "CreatedAt");
 
                     b.HasIndex("CashPointType", "CreatedAt");
+                    b.HasIndex("WhatsAppOptIn", "CreatedAt");
+
 
                     b.ToTable("SupporterBricks");
                 });
