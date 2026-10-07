@@ -8,6 +8,7 @@ const AdminApp = lazy(() => import('./admin/AdminApp.jsx'))
 const PaymentReturn = lazy(() => import('./features/shop/PaymentReturn.jsx'))
 const NewsListPage = lazy(() => import('./features/news/NewsListPage.jsx'))
 const BilletteriePage = lazy(() => import('./features/tickets/BilletteriePage.jsx'))
+const DonationPage = lazy(() => import('./features/donations/DonationPage.jsx'))
 
 class RootErrorBoundary extends Component {
   state = { error: null }
@@ -49,6 +50,7 @@ function Root() {
   if (path.startsWith('/payment/')) return <PaymentReturn />
   if (path === '/actualites' || path === '/actualites/') return <NewsListPage />
   if (path === '/billetterie' || path === '/billetterie/') return <BilletteriePage />
+  if (path === '/soutenir' || path === '/soutenir/') return <DonationPage />
   return <App />
 }
 
