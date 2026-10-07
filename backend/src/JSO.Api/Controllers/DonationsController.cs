@@ -91,7 +91,7 @@ public sealed class DonationsController(
     {
         var donation = await db.SupporterBricks.AsNoTracking()
             .Where(x => x.Id == id && x.Status == CampaignStatus && x.PaymentStatus == "Paid")
-            .Select(x => new { x.Id, x.DisplayName, x.Message, x.Amount, x.PaidAt, x.ProviderRef, x.Country, x.CashPointType, x.CashPointName })
+            .Select(x => new { x.Id, x.DisplayName, x.Message, x.Amount, x.PaidAt, x.ProviderRef, x.PaymentProvider, x.Country, x.CashPointType, x.CashPointName })
             .SingleOrDefaultAsync(ct);
 
         if (donation is null) return NotFound();
