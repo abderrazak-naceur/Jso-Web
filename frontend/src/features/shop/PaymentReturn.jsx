@@ -29,6 +29,7 @@ function resolvePayable(params) {
     return {
       id: orderId,
       fetch: (token) => shopOrderApi.myOrder(orderId, token),
+      publicStatus: false,
       // Shop order status: Paid / Cancelled / Failed / Pending.
       isPaid: (s) => s === 'Paid',
       isFailed: (s) => s === 'Cancelled' || s === 'Failed',
@@ -40,6 +41,7 @@ function resolvePayable(params) {
     return {
       id: payableId,
       fetch: (token) => ticketApi.myTicket(payableId, token),
+      publicStatus: false,
       // Ticket status: Confirmed (paid) / Cancelled / Pending.
       isPaid: (s) => s === 'Confirmed',
       isFailed: (s) => s === 'Cancelled',
@@ -51,6 +53,7 @@ function resolvePayable(params) {
     return {
       id: payableId,
       fetch: (token) => supporterApi.myBrick(payableId, token),
+      publicStatus: false,
       // Brick payment status: Paid / Pending (moderation is separate and never
       // exposed here).
       isPaid: (s) => s === 'Paid',
@@ -63,6 +66,7 @@ function resolvePayable(params) {
     return {
       id: payableId,
       fetch: () => donationsApi.status(payableId),
+      publicStatus: true,
       isPaid: (s) => s === 'Paid',
       isFailed: () => false,
       readStatus: (r) => r?.paymentStatus || 'Pending',
@@ -73,6 +77,7 @@ function resolvePayable(params) {
     return {
       id: payableId,
       fetch: (token) => membershipApi.myMembership(payableId, token),
+      publicStatus: false,
       // Membership payment status: Paid / Pending (lifecycle Status is Active
       // once paid, but PaymentStatus is the payment source of truth).
       isPaid: (s) => s === 'Paid',
@@ -85,6 +90,7 @@ function resolvePayable(params) {
     return {
       id: payableId,
       fetch: (token) => matchStreamApi.access(payableId, token),
+      publicStatus: false,
       // Access status: Paid / Pending.
       isPaid: (s) => s === 'Paid',
       isFailed: () => false,
@@ -105,7 +111,7 @@ export default function PaymentReturn() {
   const [error, setError] = useState('')
 
   const token = (() => { try { return localStorage.getItem(FAN_TOKEN_KEY) } catch { return null } })()
-  const requiresFanToken = payable ? !payable.fetch.toString().includes('donationsApi.status') : true
+  const requiresFanToken = payable ? !payable.publicStatus : true
 
   async function refresh() {
     if (!payable || (requiresFanToken && !token)) { setLoading(false); return }
