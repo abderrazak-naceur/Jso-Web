@@ -69,7 +69,10 @@ public sealed class StaffCashDonationsController(
             Country = "TN",
             ProviderRef = receiptNumber,
             ChargedAmount = decimal.Round(request.Amount, 2),
-            ChargedCurrency = "TND"
+            ChargedCurrency = "TND",
+            CashPointType = pointType,
+            CashPointName = string.IsNullOrWhiteSpace(request.PointName) ? null : request.PointName.Trim(),
+            CashDonorPhone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim()
         };
 
         db.SupporterBricks.Add(donation);
