@@ -1,5 +1,6 @@
 using JSO.Domain; using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 namespace JSO.Infrastructure;
 public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbContext(options) {
  public DbSet<Club> Clubs => Set<Club>();
@@ -65,6 +66,9 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<MatchStreamAccess> MatchStreamAccesses => Set<MatchStreamAccess>();
  public DbSet<FinanceCategory> FinanceCategories => Set<FinanceCategory>();
  public DbSet<FinanceTransaction> FinanceTransactions => Set<FinanceTransaction>();
+ protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
+  optionsBuilder.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+ }
  // PostgreSQL 'timestamp with time zone' only accepts DateTimeOffset values at
  // offset 0 (UTC). Any value produced in a non-UTC timezone (e.g. a server or
  // seeder running at UTC+2) would otherwise throw at write time. This global
