@@ -7,12 +7,18 @@ import { useI18n } from '../../i18n/index.jsx'
 
 const PRESETS = [5, 10, 20, 50, 100, 250]
 const PAYMENT_METHODS = [
-  { id: 'flouci', label: 'Flouci', description: 'Portefeuille / paiement tunisien', country: 'TN', available: true },
-
-  { id: 'orange', label: 'Orange Money', description: 'Paiement mobile Orange', country: 'TN', available: false },
-  { id: 'ooredoo', label: 'Mobicash / Ooredoo', description: 'Portefeuille mobile Ooredoo', country: 'TN', available: false },
-  { id: 'edinar', label: 'e-DINAR / D17', description: 'Paiement via La Poste tunisienne', country: 'TN', available: false },
-  { id: 'card', label: 'Carte bancaire', description: 'Paiement hébergé par le prestataire', country: 'INTL', available: true },
+  { id: 'flouci', label: 'Flouci', description: 'Portefeuille / carte bancaire / e-DINAR', group: 'online', country: 'TN', available: true },
+  { id: 'card', label: 'Carte bancaire', description: 'Visa / Mastercard via la passerelle de paiement', group: 'online', country: 'INTL', available: true },
+  { id: 'd17', label: 'D17', description: 'Portefeuille mobile de La Poste Tunisienne', group: 'ipay', available: false },
+  { id: 'edinar', label: 'e-DINAR', description: 'Carte e-DINAR de La Poste Tunisienne', group: 'ipay', available: false },
+  { id: 'clicktopay', label: 'ClicToPay', description: 'Paiement par carte via Monétique Tunisie / banque', group: 'ipay', available: false },
+  { id: 'konnect', label: 'Konnect', description: 'Portefeuille / paiement tunisien', group: 'ipay', available: false },
+  { id: 'bank-transfer', label: 'Virement bancaire', description: 'Virement direct vers le compte bancaire JSO', group: 'manual', available: false },
+  { id: 'postal-mandate', label: 'Mandat postal', description: 'Paiement via La Poste Tunisienne', group: 'ipay', available: false },
+  { id: 'sms-ooredoo', label: 'SMS Ooredoo', description: 'Paiement par prélèvement SMS Ooredoo', group: 'ipay', available: false },
+  { id: 'sms-tt', label: 'SMS Tunisie Telecom', description: 'Paiement par prélèvement SMS Tunisie Telecom', group: 'ipay', available: false },
+  { id: 'winsms', label: 'WinSMS', description: 'Paiement SMS multi-opérateurs', group: 'ipay', available: false },
+  { id: 'cash', label: 'Espèces', description: 'Chez un vendeur ou une boutique JSO autorisée', group: 'cash', available: false },
 ]
 
 
@@ -51,7 +57,7 @@ export default function DonationPage() {
 
   async function startDonation(country) {
     if (selectedMethod !== 'flouci' && selectedMethod !== 'card') {
-      throw new Error('Ce moyen de paiement sera disponible dès que le contrat marchand avec l’opérateur sera activé.')
+      throw new Error('Ce moyen de paiement est en cours de raccordement au compte de paiement JSO.')
     }
     if (effectiveAmount < 1) throw new Error('Le montant minimum est de 1 TND.')
     const created = await donationsApi.create({
@@ -222,7 +228,7 @@ export default function DonationPage() {
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-black">{method.label}</p>
                       <span className={'rounded-full px-2 py-1 text-[10px] font-black ' + (method.available ? (selectedMethod === method.id ? 'bg-white/15 text-white/80' : 'bg-emerald-50 text-emerald-700') : (selectedMethod === method.id ? 'bg-white/10 text-white/60' : 'bg-slate-100 text-slate-400'))}>
-                        {method.available ? 'Disponible' : 'Bientôt'}
+                        {method.available ? 'Disponible' : method.group === 'ipay' ? 'Via iPay' : method.group === 'cash' ? 'Sur place' : 'À configurer'}
                       </span>
                     </div>
                     <p className={'mt-1 text-xs ' + (selectedMethod === method.id ? 'text-white/65' : 'text-slate-500')}>{method.description}</p>
@@ -240,7 +246,7 @@ export default function DonationPage() {
                 />
               ) : (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm font-semibold text-slate-600">
-                  Ce moyen de paiement est affiché comme option de collecte, mais il n’est pas encore connecté au compte marchand JSO.
+                  Cette option est prévue dans l’écosystème de paiement JSO. Les méthodes iPay seront activées après configuration des identifiants iPay et des webhooks ; le virement et le cash nécessitent leurs coordonnées/points de collecte.
                 </div>
               )}
             </div>
