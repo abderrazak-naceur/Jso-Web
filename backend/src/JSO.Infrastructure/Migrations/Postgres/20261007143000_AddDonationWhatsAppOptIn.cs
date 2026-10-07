@@ -1,9 +1,13 @@
+using JSO.Infrastructure;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace JSO.Infrastructure.Migrations.Postgres;
 
+[DbContext(typeof(JsoDbContext))]
+[Migration("20261007143000_AddDonationWhatsAppOptIn")]
 public partial class AddDonationWhatsAppOptIn : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)

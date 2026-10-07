@@ -1,10 +1,14 @@
 using System;
+using JSO.Infrastructure;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace JSO.Infrastructure.Migrations.Postgres
 {
+    [DbContext(typeof(JsoDbContext))]
+    [Migration("20261007120000_AddCashDonationReceipt")]
     public partial class AddCashDonationReceiptNumber : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
