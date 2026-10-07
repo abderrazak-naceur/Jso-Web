@@ -242,7 +242,7 @@ export default function DonationPage() {
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm font-semibold text-slate-600">
                   Ce moyen de paiement est affiché comme option de collecte, mais il n’est pas encore connecté au compte marchand JSO.
                 </div>
-              )
+              )}
             </div>
 
             <p className="mt-4 text-xs leading-5 text-slate-400">
