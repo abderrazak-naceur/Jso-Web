@@ -49,7 +49,7 @@ export default function DonationPage() {
 
   async function startDonation(country) {
     if (selectedMethod !== 'flouci' && selectedMethod !== 'card') {
-      throw new Error('Ce moyen de paiement doit être activé avec un contrat marchand opérateur avant de recevoir les paiements.')
+      throw new Error('Ce moyen de paiement sera disponible dès que le contrat marchand avec l’opérateur sera activé.')
     }
     if (effectiveAmount < 1) throw new Error('Le montant minimum est de 1 TND.')
     const created = await donationsApi.create({
@@ -212,11 +212,18 @@ export default function DonationPage() {
               </div>
             </div>
             <div className="mt-6">
-              <PayOnlineButton
-                pay={startDonation}
-                label="Continuer vers le paiement"
-                disabled={effectiveAmount < 1 || loading}
-              />
+              {(selectedMethod === 'flouci' || selectedMethod === 'card') ? (
+                <PayOnlineButton
+                  pay={startDonation}
+                  label="Continuer vers le paiement"
+                  disabled={effectiveAmount < 1 || loading}
+                  defaultCountry={selectedMethod === 'card' ? 'FR' : 'TN'}
+                />
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm font-semibold text-slate-600">
+                  Ce moyen de paiement est affiché comme option de collecte, mais il n’est pas encore connecté au compte marchand JSO.
+                </div>
+              )
             </div>
 
             <p className="mt-4 text-xs leading-5 text-slate-400">
