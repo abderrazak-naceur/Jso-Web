@@ -29,6 +29,8 @@ export default function DonationPage() {
   const [custom, setCustom] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [message, setMessage] = useState('')
+  const [phone, setPhone] = useState('')
+  const [whatsappOptIn, setWhatsappOptIn] = useState(false)
   const [donation, setDonation] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -64,6 +66,8 @@ export default function DonationPage() {
       amount: effectiveAmount,
       displayName: displayName.trim() || null,
       message: message.trim() || null,
+      phone: phone.trim() || null,
+      whatsappOptIn: Boolean(phone.trim() && whatsappOptIn),
     })
     setDonation(created)
     return donationsApi.pay(created.id, country)
@@ -193,6 +197,12 @@ export default function DonationPage() {
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               <label className="text-sm font-bold">
+                WhatsApp <span className="font-normal text-slate-400">(facultatif)</span>
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength="32" inputMode="tel" placeholder="+216 XX XXX XXX" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" />
+                <span className="mt-2 block text-xs font-normal leading-5 text-slate-400">Votre numéro reste privé. Il n'apparaît pas sur la page publique.</span>
+              </label>
+              <label className="text-sm font-bold">
+                Message <span className="font-normal text-slate-400">(facultatif)</span>
                 Nom affiché <span className="font-normal text-slate-400">(facultatif)</span>
                 <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength="80" placeholder="Ex. Famille Ben Salah" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" />
               </label>
@@ -212,6 +222,14 @@ export default function DonationPage() {
               <span>
                 <strong className="block">Je soutiens la JSO chaque mois</strong>
                 <span className="mt-1 block text-xs leading-5 text-slate-500">Objectif collectif : 1 000 supporters × 10 TND × 12 mois = 120 000 TND sur une année.</span>
+              </span>
+            </label>
+
+            <label className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+              <input type="checkbox" checked={whatsappOptIn} onChange={(e) => setWhatsappOptIn(e.target.checked)} disabled={!phone.trim()} className="mt-1 h-5 w-5 rounded border-slate-300" />
+              <span>
+                <strong className="block text-emerald-900">Recevoir les actualités JSO sur WhatsApp</strong>
+                <span className="mt-1 block text-xs leading-5 text-emerald-800/70">En cochant cette case, vous autorisez la JSO à vous envoyer les mises à jour de la campagne et les informations importantes sur WhatsApp.</span>
               </span>
             </label>
 
