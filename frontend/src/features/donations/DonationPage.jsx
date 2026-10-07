@@ -197,21 +197,19 @@ export default function DonationPage() {
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               <label className="text-sm font-bold">
-                WhatsApp <span className="font-normal text-slate-400">(facultatif)</span>
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength="32" inputMode="tel" placeholder="+216 XX XXX XXX" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" />
-                <span className="mt-2 block text-xs font-normal leading-5 text-slate-400">Votre numéro reste privé. Il n'apparaît pas sur la page publique.</span>
-              </label>
-              <label className="text-sm font-bold">
-                Message <span className="font-normal text-slate-400">(facultatif)</span>
                 Nom affiché <span className="font-normal text-slate-400">(facultatif)</span>
                 <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength="80" placeholder="Ex. Famille Ben Salah" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" />
               </label>
               <label className="text-sm font-bold">
+                WhatsApp <span className="font-normal text-slate-400">(facultatif)</span>
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength="32" inputMode="tel" placeholder="+216 XX XXX XXX" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" />
+                <span className="mt-2 block text-xs font-normal leading-5 text-slate-400">Votre numéro reste privé. Il n'apparaît pas sur la page publique.</span>
+              </label>
+              <label className="text-sm font-bold sm:col-span-2">
                 Message <span className="font-normal text-slate-400">(facultatif)</span>
                 <input value={message} onChange={(e) => setMessage(e.target.value)} maxLength="280" placeholder="Allez JSO !" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" />
               </label>
             </div>
-
             <div className="mt-8 rounded-2xl bg-slate-50 p-5">
               <p className="text-sm font-bold text-slate-600">Montant choisi</p>
               <p className="mt-1 text-4xl font-black text-jso-navy">{formatMoney(effectiveAmount, 'TND')}</p>
