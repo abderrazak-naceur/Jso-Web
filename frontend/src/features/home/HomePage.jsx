@@ -16,7 +16,6 @@ import MatchdaySection from './MatchdaySection'
 import NewsSection from './NewsSection'
 import HighlightsCarousel from './HighlightsCarousel'
 import SellingBand from './SellingBand'
-import { HeartHandshake } from 'lucide-react'
 import Reveal from '../site/Reveal'
 import { formatDate } from '../../lib/format'
 import { orderHomeSections } from './useHomeLayout'
@@ -55,6 +54,14 @@ function buildHighlights({ data, onOpenMatch, onOpenArticle }) {
     subtitle: 'La boutique du club',
     cta: 'Découvrir',
     onSelect: () => { window.location.hash = '#shop' },
+  })
+  items.push({
+    key: 'donation',
+    badge: 'Soutenir',
+    title: 'Chaque geste compte pour la JSO',
+    subtitle: 'Aidez le club à avancer',
+    cta: 'Faire un don',
+    onSelect: () => { window.location.assign('/soutenir') },
   })
   items.push({
     key: 'memberships',
