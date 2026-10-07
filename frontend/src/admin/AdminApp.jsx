@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { CreditCard, LogOut, Menu, Newspaper, ShoppingBag, Ticket, Trophy, Users, X } from 'lucide-react'
-import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../lib/apiConfig'
 import VolunteersModule from './Volunteers'
 import NewsletterModule from './Newsletter'
 import ArchiveModule from './Archive'
@@ -279,5 +278,10 @@ function AnalyticsModule({ onError }) {
 
 export default function AdminApp() {
   const [user,setUser]=useState(()=>{try{return JSON.parse(localStorage.getItem('jso_admin_user')||'null')}catch{return null}})
+  useEffect(() => {
+    const onSessionExpired = () => setUser(null)
+    window.addEventListener('jso:admin-session-expired', onSessionExpired)
+    return () => window.removeEventListener('jso:admin-session-expired', onSessionExpired)
+  }, [])
   return user ? <AdminDashboard user={user} onLogout={()=>setUser(null)}/> : <Login onLogin={setUser}/>
 }

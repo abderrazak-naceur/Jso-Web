@@ -39,7 +39,7 @@ jobs:
       - run: dotnet restore backend/src/JSO.Api/JSO.Api.csproj
       - run: dotnet build backend/src/JSO.Api/JSO.Api.csproj --configuration Release --no-restore
       - name: Run backend unit tests
-        run: dotnet test backend/tests/JSO.Api.Tests/JSO.Api.Tests.csproj --configuration Release --no-restore
+        run: dotnet test backend/tests/JSO.Api.Tests/JSO.Api.Tests.csproj --configuration Release
 
   postgres-ef:
     name: PostgreSQL EF validation
@@ -150,6 +150,31 @@ jobs:
           admin_unauth_status=$(curl -sS -o /tmp/jso-admin-unauth.json -w '%{http_code}' \
             http://127.0.0.1:5080/api/admin/matches)
           test "$admin_unauth_status" = 401
+
+          # Browsers must be able to read authorization failures instead of
+          # reporting a generic "Failed to fetch" for the donation screens.
+          for path in admin/donations/summary staff/donations/cash/capabilities; do
+            url="http://127.0.0.1:5080/api/$path"
+            preflight_status=$(curl -sS -D /tmp/jso-cors-headers -o /dev/null -w '%{http_code}' \
+              -X OPTIONS "$url" -H 'Origin: http://localhost:5173' \
+              -H 'Access-Control-Request-Method: GET' \
+              -H 'Access-Control-Request-Headers: authorization,content-type')
+            test "$preflight_status" = 204
+            grep -iq '^Access-Control-Allow-Origin: http://localhost:5173' /tmp/jso-cors-headers
+
+            unauth_status=$(curl -sS -D /tmp/jso-cors-headers -o /dev/null -w '%{http_code}' \
+              "$url" -H 'Origin: http://localhost:5173' \
+              -H 'Authorization: Bearer invalid')
+            test "$unauth_status" = 401
+            grep -iq '^Access-Control-Allow-Origin: http://localhost:5173' /tmp/jso-cors-headers
+          done
+
+          # A valid admin without a cash staff assignment receives a readable 403.
+          cash_status=$(curl -sS -D /tmp/jso-cors-headers -o /dev/null -w '%{http_code}' \
+            http://127.0.0.1:5080/api/staff/donations/cash/capabilities \
+            -H 'Origin: http://localhost:5173' -H "Authorization: Bearer $token")
+          test "$cash_status" = 403
+          grep -iq '^Access-Control-Allow-Origin: http://localhost:5173' /tmp/jso-cors-headers
 
           season_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/seasons \
             -H "Authorization: Bearer $token" \

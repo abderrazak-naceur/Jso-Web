@@ -215,9 +215,10 @@ app.UseExceptionHandler();
 // exception handler so it observes the final status code of every request
 // (including auth failures) while never storing any personal data.
 app.UseMiddleware<ApiUsageMiddleware>();
+app.UseRouting();
+app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseCors("Frontend");
 app.UseRateLimiter();
 
 app.MapControllers().RequireRateLimiting("public-api");
