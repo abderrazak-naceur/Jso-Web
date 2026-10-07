@@ -1605,6 +1605,9 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<bool>("WhatsAppOptIn")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("PaymentStatus")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -2254,6 +2257,22 @@ namespace JSO.Infrastructure.Migrations.Postgres
 
                     b.Property<Guid?>("FanUserId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("CashDonorPhone")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("CashPointName")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<string>("CashPointType")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("DonorPhone")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<string>("Message")
                         .HasColumnType("text");
