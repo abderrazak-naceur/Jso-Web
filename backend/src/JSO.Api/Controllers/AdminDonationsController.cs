@@ -19,7 +19,8 @@ public sealed class AdminDonationsController(JsoDbContext db, AuditService audit
             .Select(x => new
             {
                 x.Id, x.DisplayName, x.Message, x.Amount, x.PaymentStatus,
-                x.PaymentProvider, x.Country, x.ChargedAmount, x.ChargedCurrency, x.CreatedAt, x.PaidAt
+                x.PaymentProvider, x.Country, x.ChargedAmount, x.ChargedCurrency, x.CreatedAt, x.PaidAt,
+                x.CashPointType, x.CashPointName
             })
             .ToListAsync(ct);
 
