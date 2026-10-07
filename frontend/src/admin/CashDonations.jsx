@@ -35,7 +35,7 @@ function ReceiptCard({ receipt }) {
 
 export default function CashDonationsModule({ onError }) {
   const [capabilities, setCapabilities] = useState(null)
-  const [form, setForm] = useState({ donorName: '', amount: '10', phone: '', pointType: 'Seller', pointName: '', note: '' })
+  const [form, setForm] = useState({ donorName: '', amount: '10', phone: '', whatsappOptIn: false, pointType: 'Seller', pointName: '', note: '' })
   const [receipt, setReceipt] = useState(null)
   const [saving, setSaving] = useState(false)
 
@@ -63,13 +63,14 @@ export default function CashDonationsModule({ onError }) {
           donorName: form.donorName || null,
           amount: Number(form.amount),
           phone: form.phone || null,
+          whatsappOptIn: Boolean(form.whatsappOptIn),
           pointType: form.pointType,
           pointName: form.pointName || null,
           note: form.note || null
         })
       })
       setReceipt(data)
-      setForm(x => ({ ...x, donorName: '', amount: '10', phone: '', note: '' }))
+      setForm(x => ({ ...x, donorName: '', amount: '10', phone: '', whatsappOptIn: false, note: '' }))
       onError('')
     } catch (e) { onError(e.message) }
     finally { setSaving(false) }
@@ -95,7 +96,7 @@ export default function CashDonationsModule({ onError }) {
           <label className="text-sm font-bold">Montant (TND)<input value={form.amount} onChange={e => setForm({...form, amount:e.target.value})} type="number" min="1" step="0.01" required className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue"/></label>
           <label className="text-sm font-bold">Point de collecte<select value={form.pointType} onChange={e => setForm({...form, pointType:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue">{pointOptions.map(x => <option key={x} value={x}>{x === 'Shop' ? 'Boutique' : 'Vendeur'}</option>)}</select></label>
           <label className="text-sm font-bold">Nom du point (optionnel)<input value={form.pointName} onChange={e => setForm({...form, pointName:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" placeholder={form.pointType === 'Shop' ? 'Ex. Boutique JSO' : 'Ex. Vendeur 01'}/></label>
-          <label className="text-sm font-bold">Téléphone (optionnel)<input value={form.phone} onChange={e => setForm({...form, phone:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" placeholder="+216 ..."/></label>
+          <label className="text-sm font-bold">Téléphone (optionnel)<input value={form.phone} onChange={e => setForm({...form, phone:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" placeholder="+216 ..."/></label>\n          <label className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold sm:col-span-2"><input type="checkbox" checked={form.whatsappOptIn} onChange={e => setForm({...form, whatsappOptIn:e.target.checked})} disabled={!form.phone.trim()} className="mt-1 h-4 w-4 rounded border-slate-300"/><span><strong className="block text-emerald-900">Envoyer le reçu sur WhatsApp</strong><span className="mt-1 block text-xs font-medium text-emerald-800/70">Le numéro reste privé. Le reçu est envoyé automatiquement après l’encaissement si WhatsApp est configuré.</span></span></label>
           <label className="text-sm font-bold sm:col-span-2">Note<input value={form.note} onChange={e => setForm({...form, note:e.target.value})} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" placeholder="Optionnel"/></label>
         </div>
         <button disabled={saving} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-jso-navy px-5 py-3.5 font-black text-white disabled:opacity-50"><Ticket size={18}/>{saving ? 'Enregistrement…' : 'Encaisser et générer le reçu'}</button>
