@@ -145,7 +145,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'match-streams' && <MatchStreamsModule onError={setError}/>}
         {section === 'analytics' && <AnalyticsModule onError={setError}/>}
         {section === 'finance' && <FinanceModule onError={setError}/>}
-        {section === 'donations' && <DonationsModule onError={setError}/ >}
+        {section === 'donations' && <DonationsModule onError={setError}/>}
         {section === 'volunteers' && <VolunteersModule onError={setError}/>}
         {section === 'newsletter' && <NewsletterModule onError={setError}/>}
         {section === 'archive' && <ArchiveModule onError={setError}/>}
