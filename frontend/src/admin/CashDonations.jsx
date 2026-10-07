@@ -5,12 +5,20 @@ import { adminApi } from './api'
 function ReceiptCard({ receipt }) {
   if (!receipt) return null
   return <div id="cash-donation-receipt" className="rounded-[1.5rem] border border-jso-gold/40 bg-white p-6 shadow-sm">
+    <style>{`
+      @media print {
+        body * { visibility: hidden !important; }
+        #cash-donation-receipt, #cash-donation-receipt * { visibility: visible !important; }
+        #cash-donation-receipt { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; box-shadow: none !important; border: 1px solid #d4af37 !important; }
+        #cash-donation-receipt .no-print { display: none !important; }
+      }
+    `}</style>
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="flex items-center gap-3">
-        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-jso-navy text-jso-gold"><ReceiptText size={24}/></div>
-        <div><p className="text-xs font-black uppercase tracking-[0.16em] text-jso-blue">Reçu officiel JSO</p><p className="text-lg font-black">{receipt.receiptNumber}</p></div>
+      <div className="flex items-center gap-4">
+        <img src="/JSO-crest-regenerated.png" alt="JSO" className="h-16 w-16 object-contain" />
+        <div><p className="text-xs font-black uppercase tracking-[0.16em] text-jso-blue">Jeunesse Sportive de Oudhref</p><p className="text-xs font-black uppercase tracking-[0.16em] text-jso-gold">Reçu officiel de don</p><p className="text-lg font-black">{receipt.receiptNumber}</p></div>
       </div>
-      <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-extrabold text-white"><Printer size={16}/> Imprimer</button>
+      <button onClick={() => window.print()} className="no-print inline-flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-extrabold text-white"><Printer size={16}/> Imprimer</button>
     </div>
     <div className="mt-6 grid gap-3 sm:grid-cols-2">
       <div className="rounded-xl bg-slate-50 p-4"><p className="text-xs font-bold text-slate-400">Donateur</p><p className="mt-1 font-black">{receipt.donorName}</p></div>
@@ -19,6 +27,9 @@ function ReceiptCard({ receipt }) {
       <div className="rounded-xl bg-slate-50 p-4"><p className="text-xs font-bold text-slate-400">Date</p><p className="mt-1 font-black">{new Date(receipt.paidAt).toLocaleString('fr-FR')}</p></div>
     </div>
     <div className="mt-5 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700"><CheckCircle2 size={18}/> Paiement en espèces enregistré et comptabilisé dans la collecte JSO.</div>
+    <div className="mt-5 border-t border-dashed border-slate-200 pt-4 text-xs text-slate-500">
+      Vérification en ligne : <span className="font-semibold">{window.location.origin}{receipt.verificationUrl}</span>
+    </div>
   </div>
 }
 
