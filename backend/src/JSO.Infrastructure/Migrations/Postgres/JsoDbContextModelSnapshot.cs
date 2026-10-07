@@ -339,6 +339,8 @@ namespace JSO.Infrastructure.Migrations.Postgres
 
                     b.HasIndex("CashPointType", "CreatedAt");
 
+                    b.HasIndex("WhatsAppOptIn", "CreatedAt");
+
                     b.HasIndex("Status", "CreatedAt");
 
                     b.ToTable("ClassifiedAds");
@@ -1380,6 +1382,10 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<string>("DonorPhone")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<string>("CashDonorPhone")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
@@ -1410,6 +1416,9 @@ namespace JSO.Infrastructure.Migrations.Postgres
 
                     b.Property<string>("ProviderRef")
                         .HasColumnType("text");
+
+                    b.Property<bool>("WhatsAppOptIn")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Status")
                         .IsRequired()
