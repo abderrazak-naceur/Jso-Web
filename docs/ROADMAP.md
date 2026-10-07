@@ -87,6 +87,7 @@ Extra implementati oltre al piano: Boutique con ordini, Biglietteria, hub "Plus"
 - [x] Campagne cible 1 000 supporters × 10 TND × 12 mois = 120 000 TND/an.
 - [x] Paiement hébergé Flouci (Tunisie) / Stripe (international), avec webhook serveur.
 - [x] Console admin pour le suivi des contributions.
+- [x] Ajouter la collecte cash pour `TicketSeller` et `ShopManager`, avec reçu numéroté, audit et vérification publique.
 - [ ] Intégrer et tester les comptes marchands Orange Money, Mobicash/Ooredoo et e-DINAR/D17.
 - [ ] Mettre en production les flux récurrents mensuels avec consentement et conditions du prestataire.
 - [ ] Tester E2E réel, QR imprimé, mobile et reporting comptable.
