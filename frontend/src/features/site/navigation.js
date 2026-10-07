@@ -6,7 +6,7 @@ export const SITE_SECTIONS = [
   { id: 'news', label: 'Actualités', eyebrow: 'NEWSROOM', primary: true },
   { id: 'team', label: 'Équipe', eyebrow: 'ÉQUIPE', primary: true },
   { id: 'club', label: 'Le Club', eyebrow: 'LE CLUB', primary: true },
-  { id: 'shop', label: 'Boutique', eyebrow: 'BOUTIQUE', primary: true },
+  { id: 'donate', label: 'Soutenir', eyebrow: 'SOUTENIR LE CLUB', primary: true },
   { id: 'memberships', label: 'Abonnements', eyebrow: 'ABONNEMENTS' },
   { id: 'media', label: 'Médias', eyebrow: 'MEDIA HOUSE' },
   { id: 'events', label: 'Agenda', eyebrow: 'AGENDA' },
