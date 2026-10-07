@@ -9,6 +9,7 @@ public sealed class SocialOptions
     public const string SectionName = "Social";
 
     public FacebookOptions Facebook { get; set; } = new();
+    public WhatsAppOptions WhatsApp { get; set; } = new();
 
     // Public base URL of the site, used to build the shareable article link that
     // is attached to a social post (e.g. "https://jso-oudhref.tn"). No trailing
