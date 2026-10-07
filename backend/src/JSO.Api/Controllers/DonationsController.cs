@@ -90,7 +90,7 @@ public sealed class DonationsController(
     public async Task<IActionResult> Receipt(Guid id, CancellationToken ct)
     {
         var donation = await db.SupporterBricks.AsNoTracking()
-            .Where(x => x.Id == id && x.Status == CampaignStatus && x.PaymentStatus == "Paid" && x.PaymentProvider == "Cash")
+            .Where(x => x.Id == id && x.Status == CampaignStatus && x.PaymentStatus == "Paid")
             .Select(x => new { x.Id, x.DisplayName, x.Message, x.Amount, x.PaidAt, x.ProviderRef, x.Country, x.CashPointType, x.CashPointName })
             .SingleOrDefaultAsync(ct);
 
@@ -99,7 +99,9 @@ public sealed class DonationsController(
         return Ok(new
         {
             id = donation.Id,
-            receiptNumber = donation.ProviderRef,
+            receiptNumber = donation.PaymentProvider == "Cash" && !string.IsNullOrWhiteSpace(donation.ProviderRef)
+                ? donation.ProviderRef
+                : $"JSO-DON-{donation.PaidAt:yyyyMMdd}-{donation.Id.ToString("N")[..8].ToUpperInvariant()}",
             donorName = donation.DisplayName,
             message = donation.Message,
             amount = donation.Amount,
