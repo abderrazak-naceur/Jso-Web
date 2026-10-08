@@ -35,11 +35,11 @@ Le nom et la note saisis par le personnel restent absents de la liste publique d
 ## Moyens de paiement
 
 La page peut proposer **Flouci**, **Konnect** et **Paymee** en Tunisie, et **Stripe** à l'international. Le donateur choisit le prestataire affiché ; la requête de paiement transmet ce choix à l'API pour éviter qu'un clic sur Flouci ouvre un autre prestataire. Paymee demande aussi une adresse e-mail. Aucun paiement n'est confirmé par le retour du navigateur : seul le webhook vérifié confirme le don.
-La page interroge `GET /api/donations/payment-methods` et n'affiche un prestataire comme disponible que si sa configuration active est complète. Flouci exige ses identifiants et son secret webhook en production ; Stripe exige sa clé API et son secret webhook ; Konnect exige sa clé API, le receiver wallet ID et l'URL webhook ; Paymee exige sa clé API et l'URL webhook. Sans ces paramètres, le paiement en ligne reste désactivé.
+La page interroge `GET /api/donations/payment-methods` et n'affiche dans le formulaire que les prestataires réellement disponibles. Si aucun prestataire n'est prêt, elle n'affiche pas de formulaire de paiement : elle explique le don en espèces et dirige le supporter vers le contact du club. Flouci exige ses identifiants et son secret webhook en production ; Stripe exige sa clé API et son secret webhook ; Konnect exige sa clé API, le receiver wallet ID et l'URL webhook ; Paymee exige sa clé API et l'URL webhook. Sans ces paramètres, le paiement en ligne reste désactivé.
 
 Le QR affiché sur la page de soutien est scannable et encode l'URL du domaine courant ; le bouton de téléchargement permet de préparer les supports imprimés.
 
-La page affiche aussi **Orange Money**, **Mobicash/Ooredoo** et **e-DINAR/D17** comme options prévues, mais elles restent désactivées tant qu'un compte marchand/contrat et un flux d'intégration adaptés ne sont pas obtenus. Les moyens éventuellement proposés sur la page hébergée Konnect dépendent du compte marchand ; cela n'active pas les boutons D17/e-DINAR propres au site JSO.
+**Orange Money**, **Mobicash/Ooredoo** et **e-DINAR/D17** restent des pistes d'intégration et ne sont pas proposés comme boutons de paiement au supporter. Les moyens éventuellement proposés sur la page hébergée Konnect dépendent du compte marchand ; cela n'active pas les boutons D17/e-DINAR propres au site JSO.
 
 ## Sécurité
 
@@ -55,13 +55,15 @@ La page publique expose le total confirmé, le nombre de contributions et des co
 
 Ouvrir **Finance → Dons & collecte → Paramètres de la campagne**. Les profils `SuperAdmin`, `ClubAdmin` et `FinanceManager` peuvent définir la contribution mensuelle **conseillée**, l'objectif de collecte mensuel et le nombre cible de donateurs. Ces valeurs sont enregistrées en base et affichées sur la page publique `/soutenir`. La valeur conseillée présélectionne le montant, mais chaque donateur reste libre de la modifier. Aucun prélèvement mensuel automatique n'est créé.
 
-Le bloc **Moyens de paiement** indique si Flouci et Stripe sont disponibles et nomme les variables manquantes sans révéler leur valeur. Les identifiants marchands se définissent dans les variables d'environnement du service **API** sur Render, puis nécessitent un redéploiement :
+Le bloc **Moyens de paiement** indique l'état de Flouci, Stripe, Konnect et Paymee. Les erreurs des statistiques et des paramètres sont affichées séparément pour que l'une des API n'empêche pas d'utiliser l'autre. Les identifiants Flouci et Stripe se définissent dans les variables d'environnement du service **API** sur Render, puis nécessitent un redéploiement :
 
 - Tunisie : `Payments__Flouci__AppToken`, `Payments__Flouci__AppSecret`, `Payments__Flouci__WebhookSecret`.
 - International : `Payments__Stripe__SecretKey`, `Payments__Stripe__WebhookSecret`.
 - URL du site pour les retours de paiement : `Payments__PublicBaseUrl` (ou origine CORS configurée).
 
 Konnect et Paymee se configurent dans **Admin → Configuration → Paiements** avec un compte marchand du club, leurs identifiants et une URL webhook publique. Leur activation dans l'admin ne prouve pas qu'un paiement réel aboutit : tester un paiement en environnement de test du prestataire et sa confirmation par webhook avant le lancement.
+
+**Faire un don aujourd'hui si tous les paiements en ligne sont désactivés :** le supporter ouvre `/soutenir`, contacte le club pour trouver un vendeur ou une boutique JSO autorisée, remet la somme choisie et reçoit un reçu numéroté. Le personnel se connecte à `/admin/cash-donations`, vérifie que l'argent a été reçu, saisit le montant puis confirme. L'API comptabilise immédiatement le don et produit le reçu. Le compte staff doit avoir une affectation active avec `donations:cash`; un SuperAdmin peut la créer dans `/admin/security`. Le formulaire public ne peut pas créer ou valider un don en espèces à distance.
 
 Les webhooks doivent aussi être configurés chez les prestataires selon [PAYMENTS.md](PAYMENTS.md). Une configuration présente ne prouve pas à elle seule qu'un paiement réel aboutira : effectuer un paiement test et vérifier sa confirmation dans le tableau admin. Les espèces se saisissent séparément dans **Finance → Dons en espèces** avec une affectation staff autorisée. D17, e-DINAR, ClicToPay, virement, mandat et SMS n'ont pas encore de circuit de confirmation intégré ; leur activation nécessite une intégration spécifique.
 

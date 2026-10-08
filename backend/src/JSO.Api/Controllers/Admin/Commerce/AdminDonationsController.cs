@@ -43,7 +43,9 @@ public sealed class AdminDonationsController(
             providers = new
             {
                 flouci = new { available = paymentSelector.Flouci.IsConfigured && publicUrlConfigured, missing = flouciMissing },
-                stripe = new { available = paymentSelector.Stripe.IsConfigured && publicUrlConfigured, missing = stripeMissing }
+                stripe = new { available = paymentSelector.Stripe.IsConfigured && publicUrlConfigured, missing = stripeMissing },
+                konnect = new { available = paymentSelector.Konnect.IsConfigured && publicUrlConfigured },
+                paymee = new { available = paymentSelector.Paymee.IsConfigured && publicUrlConfigured }
             }
         });
     }

@@ -14,15 +14,6 @@ const PAYMENT_METHODS = [
   { id: 'card', label: 'Carte bancaire', description: 'Visa / Mastercard via la passerelle de paiement', group: 'online', country: 'INTL' },
   { id: 'konnect', label: 'Konnect', description: 'Paiement hébergé en Tunisie', group: 'online', country: 'TN' },
   { id: 'paymee', label: 'Paymee', description: 'Paiement hébergé en Tunisie (e-mail requis)', group: 'online', country: 'TN' },
-  { id: 'd17', label: 'D17', description: 'Portefeuille mobile de La Poste Tunisienne', group: 'ipay', available: false },
-  { id: 'edinar', label: 'e-DINAR', description: 'Carte e-DINAR de La Poste Tunisienne', group: 'ipay', available: false },
-  { id: 'clicktopay', label: 'ClicToPay', description: 'Paiement par carte via Monétique Tunisie / banque', group: 'ipay', available: false },
-  { id: 'bank-transfer', label: 'Virement bancaire', description: 'Virement direct vers le compte bancaire JSO', group: 'manual', available: false },
-  { id: 'postal-mandate', label: 'Mandat postal', description: 'Paiement via La Poste Tunisienne', group: 'ipay', available: false },
-  { id: 'sms-ooredoo', label: 'SMS Ooredoo', description: 'Paiement par prélèvement SMS Ooredoo', group: 'ipay', available: false },
-  { id: 'sms-tt', label: 'SMS Tunisie Telecom', description: 'Paiement par prélèvement SMS Tunisie Telecom', group: 'ipay', available: false },
-  { id: 'winsms', label: 'WinSMS', description: 'Paiement SMS multi-opérateurs', group: 'ipay', available: false },
-  { id: 'cash', label: 'Espèces', description: 'Chez un vendeur ou une boutique JSO autorisée', group: 'cash', available: false },
 ]
 
 
@@ -31,6 +22,8 @@ export default function DonationPage() {
   useDocumentTitle('Soutenir la JSO')
   const [campaign, setCampaign] = useState(null)
   const [paymentMethods, setPaymentMethods] = useState(null)
+  const [methodsLoading, setMethodsLoading] = useState(true)
+  const [methodsError, setMethodsError] = useState(false)
   const [qrUrl, setQrUrl] = useState('')
   const [amount, setAmount] = useState(null)
   const [custom, setCustom] = useState('')
@@ -69,19 +62,16 @@ export default function DonationPage() {
     donationsApi.paymentMethods(controller.signal)
       .then((methods) => {
         setPaymentMethods(methods)
+        setMethodsError(false)
         setSelectedMethod(methods.flouci ? 'flouci' : methods.konnect ? 'konnect' : methods.paymee ? 'paymee' : methods.stripe ? 'card' : '')
       })
-      .catch(() => { if (!controller.signal.aborted) setPaymentMethods({ flouci: false, stripe: false, konnect: false, paymee: false }) })
+      .catch(() => { if (!controller.signal.aborted) { setPaymentMethods({ flouci: false, stripe: false, konnect: false, paymee: false }); setMethodsError(true) } })
+      .finally(() => { if (!controller.signal.aborted) setMethodsLoading(false) })
     return () => controller.abort()
   }, [])
 
   const presets = [...new Set([...PRESETS, Number(campaign?.suggestedMonthlyContributionTnd || 10)])].sort((a, b) => a - b)
-  const methods = PAYMENT_METHODS.map((method) => ({
-    ...method,
-    available: method.group === 'online'
-      ? Boolean(paymentMethods?.[method.id === 'card' ? 'stripe' : method.id])
-      : false,
-  }))
+  const methods = PAYMENT_METHODS.filter((method) => Boolean(paymentMethods?.[method.id === 'card' ? 'stripe' : method.id]))
 
   const effectiveAmount = useMemo(() => {
     if (amount === 'custom') {
@@ -161,7 +151,10 @@ export default function DonationPage() {
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <button type="button" onClick={sharePage} className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-extrabold text-jso-navy hover:bg-jso-gold">
+                <a href="#faire-un-don" className="inline-flex items-center gap-2 rounded-full bg-jso-gold px-5 py-3 text-sm font-extrabold text-jso-navy hover:bg-white">
+                  <HeartHandshake size={17} aria-hidden="true" /> Comment faire un don
+                </a>
+                <button type="button" onClick={sharePage} className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10">
                   <Share2 size={17} aria-hidden="true" /> {shared ? 'Partagé' : 'Partager'}
                 </button>
                 <button type="button" onClick={copyLink} className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10">
@@ -188,8 +181,8 @@ export default function DonationPage() {
                 </div>
                 <p className="mt-3 text-sm font-semibold text-white/55">{progress.toFixed(0)}% de l’objectif ce mois-ci · {formatMoney(total, 'TND')} collectés depuis le début · {campaign?.donorCount || 0} contributions confirmées</p>
                 <div className="mt-4 rounded-xl bg-white/5 p-3 text-sm">
-                  <strong>Programme mensuel</strong>
-                  <p className="mt-1 text-white/55">Contribution conseillée : {formatMoney(campaign?.suggestedMonthlyContributionTnd || 10, 'TND')} à renouveler librement chaque mois. Objectif : {campaign?.targetDonors || 1000} donateurs et {formatMoney(campaign?.monthlyGoalTnd || 10000, 'TND')} par mois.</p>
+                  <strong>Objectif mensuel du club</strong>
+                  <p className="mt-1 text-white/55">Suggestion : {formatMoney(campaign?.suggestedMonthlyContributionTnd || 10, 'TND')} par don. Vous choisissez librement le montant et pouvez revenir chaque mois. Aucun abonnement ni prélèvement automatique.</p>
                 </div>
               </div>
             </div>
@@ -197,9 +190,9 @@ export default function DonationPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
+      <section id="faire-un-don" className="mx-auto max-w-7xl scroll-mt-24 px-5 py-16 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          {methodsLoading ? <div role="status" className="rounded-[2rem] border border-slate-200 bg-white p-8 text-sm font-semibold text-slate-600">Vérification des moyens de paiement…</div> : methods.length > 0 ? <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-blue">1 · Choisir le montant</p>
@@ -275,21 +268,18 @@ export default function DonationPage() {
             </label>
 
             <div className="mt-8">
-              <p className="text-sm font-black">2 · Choisir le moyen de paiement</p>
+              <p className="text-sm font-black">2 · Choisir un moyen disponible</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {methods.map((method) => (
                   <button
                     key={method.id}
                     type="button"
-                    onClick={() => method.available && setSelectedMethod(method.id)}
-                    disabled={!method.available}
+                    onClick={() => setSelectedMethod(method.id)}
                     className={'rounded-2xl border p-4 text-left transition ' + (selectedMethod === method.id ? 'border-jso-navy bg-jso-navy text-white' : 'border-slate-200 bg-white hover:border-jso-blue')}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-black">{method.label}</p>
-                      <span className={'rounded-full px-2 py-1 text-[10px] font-black ' + (method.available ? (selectedMethod === method.id ? 'bg-white/15 text-white/80' : 'bg-emerald-50 text-emerald-700') : (selectedMethod === method.id ? 'bg-white/10 text-white/60' : 'bg-slate-100 text-slate-400'))}>
-                        {method.available ? 'Disponible' : method.group === 'cash' ? 'En point JSO' : method.group === 'online' ? 'À configurer' : 'Non intégré'}
-                      </span>
+                      <span className={'rounded-full px-2 py-1 text-[10px] font-black ' + (selectedMethod === method.id ? 'bg-white/15 text-white/80' : 'bg-emerald-50 text-emerald-700')}>Disponible</span>
                     </div>
                     <p className={'mt-1 text-xs ' + (selectedMethod === method.id ? 'text-white/65' : 'text-slate-500')}>{method.description}</p>
                   </button>
@@ -297,7 +287,7 @@ export default function DonationPage() {
               </div>
             </div>
             <div className="mt-6">
-              {['flouci', 'card', 'konnect', 'paymee'].includes(selectedMethod) ? (
+              {methods.some((method) => method.id === selectedMethod) ? (
                 <PayOnlineButton
                   key={selectedMethod}
                   pay={startDonation}
@@ -308,16 +298,25 @@ export default function DonationPage() {
                   providerLabel={selectedMethod === 'card' ? 'Stripe' : PAYMENT_METHODS.find((method) => method.id === selectedMethod)?.label}
                 />
               ) : (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm font-semibold text-slate-600">
-                  Aucun paiement en ligne n'est configuré pour cette campagne. Les dons en espèces restent possibles auprès d'un point de collecte JSO autorisé.
-                </div>
+                <p className="text-sm text-slate-600">Choisissez un moyen de paiement ci-dessus pour continuer.</p>
               )}
             </div>
 
             <p className="mt-4 text-xs leading-5 text-slate-400">
               La page de paiement est hébergée par le prestataire. Le site JSO ne reçoit pas les données de carte.
             </p>
-          </div>
+          </div> : <div className="rounded-[2rem] border border-amber-200 bg-white p-6 shadow-sm sm:p-8">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-blue">Comment donner aujourd’hui</p>
+            <h2 className="mt-3 text-3xl font-black text-jso-navy">Don en espèces auprès de la JSO</h2>
+            <p className="mt-4 text-base leading-7 text-slate-600">{methodsError ? 'Nous ne pouvons pas vérifier les paiements en ligne pour le moment.' : 'Le paiement en ligne n’est pas encore disponible.'} Vous pouvez soutenir le club en remettant votre don à un vendeur ou à une boutique JSO autorisée.</p>
+            <ol className="mt-6 space-y-3 text-sm leading-6 text-slate-700">
+              <li className="rounded-xl bg-slate-50 p-4"><strong>1.</strong> Contactez le club pour connaître un point de collecte autorisé.</li>
+              <li className="rounded-xl bg-slate-50 p-4"><strong>2.</strong> Remettez le montant de votre choix au personnel.</li>
+              <li className="rounded-xl bg-slate-50 p-4"><strong>3.</strong> Le personnel enregistre le don et vous remet un reçu numéroté.</li>
+            </ol>
+            <a href="/infos" className="mt-6 inline-flex items-center gap-2 rounded-full bg-jso-navy px-5 py-3 text-sm font-extrabold text-white hover:bg-jso-blue">Contacter le club <ArrowUpRight size={16} aria-hidden="true" /></a>
+            <p className="mt-4 text-xs leading-5 text-slate-500">Cette page ne prélève aucun montant et ne crée pas de don en attente. Chaque don est ponctuel ; la contribution mensuelle affichée est une suggestion, sans abonnement automatique.</p>
+          </div>}
 
           <aside className="space-y-6">
             <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
@@ -330,7 +329,7 @@ export default function DonationPage() {
                   ? <img src={qrUrl} alt="QR scannable vers la page de soutien JSO" className="mx-auto h-56 w-56" />
                   : <div className="mx-auto grid h-56 w-56 place-items-center rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-500">QR indisponible</div>}
               </div>
-              <p className="mt-4 text-sm leading-6 text-slate-500">Imprimez ce QR ou partagez-le sur Facebook, WhatsApp, dans le stade et sur les affiches.</p>
+              <p className="mt-4 text-sm leading-6 text-slate-500">Ce QR ouvre cette page d’information. {methods.length ? 'Vous pourrez y choisir un paiement disponible.' : 'Il ne déclenche aucun paiement ; le don en espèces se fait auprès du club.'}</p>
               {qrUrl && <a href={qrUrl} download="jso-soutenir-qr.png" className="mt-3 inline-block text-sm font-bold text-jso-blue underline">Télécharger le QR</a>}
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 <button type="button" onClick={copyLink} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm font-extrabold text-jso-navy hover:border-jso-blue">
@@ -342,7 +341,7 @@ export default function DonationPage() {
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+            {methods.length > 0 && <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-xl font-black">Faire un don en espèces</h2>
               <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-6 text-slate-600">
                 <li>Adressez-vous à un vendeur ou à une boutique JSO autorisée.</li>
@@ -351,12 +350,7 @@ export default function DonationPage() {
               </ol>
               <p className="mt-4 text-xs leading-5 text-slate-500">Le don en espèces se fait sur place. Aucun paiement en espèces ne peut être validé depuis cette page.</p>
               <a href="/infos" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-jso-blue underline">Contacter le club <ArrowUpRight size={15} aria-hidden="true" /></a>
-            </div>
-
-            <div className="rounded-[2rem] bg-jso-gold p-6 text-jso-navy">
-              <p className="text-xs font-black uppercase tracking-[0.16em] opacity-60">Important</p>
-              <p className="mt-3 text-sm font-semibold leading-6">Orange, Ooredoo, D17/e-Dinar et un futur numéro USSD/SMS peuvent être ajoutés comme moyens de paiement dédiés après validation commerciale et réglementaire avec les opérateurs.</p>
-            </div>
+            </div>}
           </aside>
         </div>
       </section>

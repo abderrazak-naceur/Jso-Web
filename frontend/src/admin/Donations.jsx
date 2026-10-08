@@ -13,21 +13,29 @@ export default function DonationsModule({ onError }) {
   const [saving, setSaving] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [loading, setLoading] = useState(false)
+  const [summaryError, setSummaryError] = useState('')
+  const [settingsError, setSettingsError] = useState('')
+  const [linkCopied, setLinkCopied] = useState(false)
 
   async function load() {
     setLoading(true)
-    try {
-      const [summary, settings] = await Promise.all([
-        adminApi('/admin/donations/summary'),
-        adminApi('/admin/donations/settings'),
-      ])
-      setData(summary)
-      setConfiguration(settings)
-      setForm(settings.settings)
-      onError('')
+    const [summary, settings] = await Promise.allSettled([
+      adminApi('/admin/donations/summary'),
+      adminApi('/admin/donations/settings'),
+    ])
+    if (summary.status === 'fulfilled') { setData(summary.value); setSummaryError('') }
+    else { setData(null); setSummaryError(summary.reason.message) }
+    if (settings.status === 'fulfilled') {
+      setConfiguration(settings.value)
+      setForm(settings.value.settings)
+      setSettingsError('')
+    } else {
+      setConfiguration(null)
+      setForm(null)
+      setSettingsError(settings.reason.message)
     }
-    catch (e) { onError(e.message) }
-    finally { setLoading(false) }
+    onError('')
+    setLoading(false)
   }
 
   useEffect(() => { load() }, [])
@@ -36,7 +44,11 @@ export default function DonationsModule({ onError }) {
   const cashProgress = data?.goalTnd ? Math.min(100, Math.max(0, Number(data.monthlyCashPaidTnd || 0) / Number(data.goalTnd) * 100)) : 0
 
   async function copyLink() {
-    try { await navigator.clipboard.writeText(window.location.origin + '/soutenir') } catch {}
+    try {
+      await navigator.clipboard.writeText(window.location.origin + '/soutenir')
+      setLinkCopied(true)
+      window.setTimeout(() => setLinkCopied(false), 2000)
+    } catch { onError('Impossible de copier le lien de collecte.') }
   }
 
   async function saveSettings(event) {
@@ -67,11 +79,11 @@ export default function DonationsModule({ onError }) {
         <div>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-gold">Collecte</p>
           <h2 className="mt-2 text-3xl font-black">Soutien JSO</h2>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-white/60">Suivez les contributions en ligne et partagez le lien officiel de collecte.</p>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-white/70">Suivez tous les dons confirmés, réglez la campagne et vérifiez quels moyens de paiement sont réellement ouverts.</p>
         </div>
         <HeartHandshake className="text-jso-gold" size={34} aria-hidden="true" />
       </div>
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {data && <><div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl bg-white/5 p-4"><p className="text-xs font-bold text-white/45">Confirmé ce mois-ci</p><p className="mt-1 text-3xl font-black">{money(data?.monthlyPaidTnd)}</p><p className="mt-1 text-xs text-white/45">Total historique : {money(data?.totalPaidTnd)}</p></div>
         <div className="rounded-2xl bg-white/5 p-4"><p className="text-xs font-bold text-white/45">Contributions</p><p className="mt-1 text-3xl font-black">{data?.paidCount ?? 0}</p></div>
         <div className="rounded-2xl bg-white/5 p-4"><p className="text-xs font-bold text-white/45">Objectif mensuel</p><p className="mt-1 text-3xl font-black">{money(data?.goalTnd)}</p></div>
@@ -79,10 +91,28 @@ export default function DonationsModule({ onError }) {
       </div>
       <div className="mt-6 h-3 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-jso-gold" style={{ width: progress + '%' }}/></div>
       <p className="mt-2 text-sm font-semibold text-white/55">{progress.toFixed(0)}% atteint · {data?.pendingCount ?? 0} paiement(s) à confirmer · Cash {cashProgress.toFixed(0)}%</p>
+      </>}
+      {loading && !data && <p role="status" className="mt-6 text-sm text-white/70">Chargement des statistiques…</p>}
+      {summaryError && <p role="alert" className="mt-4 rounded-xl bg-red-950/40 p-3 text-sm text-white">Statistiques indisponibles : {summaryError}</p>}
+    </div>
+
+    <div className="grid gap-4 md:grid-cols-2">
+      <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+        <p className="text-xs font-black uppercase tracking-widest text-jso-blue">Pour un supporter</p>
+        <h3 className="mt-2 text-xl font-black">Faire un don</h3>
+        <p className="mt-2 text-sm leading-6 text-slate-600">Partagez la page publique. Elle affiche uniquement les paiements en ligne opérationnels et explique le don en espèces quand aucun paiement en ligne n’est ouvert.</p>
+        <a href="/soutenir" target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-bold text-white">Ouvrir la page de don</a>
+      </div>
+      <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+        <p className="text-xs font-black uppercase tracking-widest text-jso-blue">Pour le personnel</p>
+        <h3 className="mt-2 text-xl font-black">Encaisser des espèces</h3>
+        <p className="mt-2 text-sm leading-6 text-slate-600">Après avoir reçu l’argent, ouvrez « Dons en espèces », saisissez le montant et remettez le reçu numéroté. Une affectation staff active est nécessaire.</p>
+        <a href="/admin/cash-donations" className="mt-4 inline-flex rounded-xl border border-jso-navy px-4 py-2.5 text-sm font-bold text-jso-navy">Ouvrir la saisie espèces</a>
+      </div>
     </div>
 
     <div className="flex flex-wrap gap-3">
-      <button onClick={copyLink} className="inline-flex items-center gap-2 rounded-full bg-jso-navy px-5 py-3 text-sm font-extrabold text-white"><Copy size={16}/> Copier le lien de collecte</button>
+      <button onClick={copyLink} className="inline-flex items-center gap-2 rounded-full bg-jso-navy px-5 py-3 text-sm font-extrabold text-white"><Copy size={16}/> {linkCopied ? 'Lien copié' : 'Copier le lien de collecte'}</button>
       <a href="/soutenir" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-jso-navy"><ExternalLink size={16}/> Voir la page</a>
       <button onClick={load} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-600"><RefreshCw size={16}/> Actualiser</button>
     </div>
@@ -91,6 +121,7 @@ export default function DonationsModule({ onError }) {
       <form onSubmit={saveSettings} className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
         <h3 className="text-xl font-black text-jso-navy">Paramètres de la campagne</h3>
         <p className="mt-2 text-sm text-slate-500">Le montant conseillé est libre : chaque don est ponctuel, sans prélèvement automatique mensuel.</p>
+        {settingsError && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">Paramètres indisponibles : {settingsError}</p>}
         {form && <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <label className="text-sm font-bold">Contribution conseillée (TND)
             <input type="number" min="1" max="1000000" step="0.001" required value={form.suggestedMonthlyContributionTnd} onChange={(e) => setForm({ ...form, suggestedMonthlyContributionTnd: e.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" />
@@ -107,15 +138,18 @@ export default function DonationsModule({ onError }) {
       </form>
       <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
         <h3 className="text-xl font-black text-jso-navy">Moyens de paiement</h3>
-        <p className="mt-2 text-sm text-slate-500">Les clés marchandes se configurent sur le service API dans Render, jamais dans ce formulaire.</p>
-        {['flouci', 'stripe'].map((provider) => {
+        <p className="mt-2 text-sm text-slate-500">Seuls les moyens marqués « Disponible » apparaissent comme payables sur la page publique.</p>
+        {settingsError && <p className="mt-4 text-sm font-semibold text-amber-800">État des prestataires indisponible. Réessayez avec « Actualiser ».</p>}
+        {configuration && ['flouci', 'stripe', 'konnect', 'paymee'].map((provider) => {
           const status = configuration?.providers?.[provider]
           return <div key={provider} className="mt-4 rounded-xl border border-slate-200 p-4">
-            <div className="flex items-center justify-between gap-2"><strong>{provider === 'flouci' ? 'Flouci · Tunisie' : 'Stripe · international'}</strong><span className={'text-xs font-black ' + (status?.available ? 'text-emerald-700' : 'text-amber-700')}>{status?.available ? 'Disponible' : 'Non configuré'}</span></div>
+            <div className="flex items-center justify-between gap-2"><strong>{({ flouci: 'Flouci · Tunisie', stripe: 'Stripe · international', konnect: 'Konnect · Tunisie', paymee: 'Paymee · Tunisie' })[provider]}</strong><span className={'text-xs font-black ' + (status?.available ? 'text-emerald-700' : 'text-amber-700')}>{status?.available ? 'Disponible' : 'Non disponible'}</span></div>
             {!!status?.missing?.length && <p className="mt-2 break-words text-xs text-slate-500">Variables manquantes : {status.missing.join(', ')}</p>}
+            {!status?.available && ['konnect', 'paymee'].includes(provider) && <p className="mt-2 text-xs text-slate-500">Configurer et activer dans Configuration → Paiements, puis tester le webhook.</p>}
           </div>
         })}
-        <p className="mt-4 text-xs leading-5 text-slate-500">D17, e-DINAR, ClicToPay, Konnect et SMS nécessitent une intégration et un compte marchand dédiés. Les espèces se saisissent dans « Dons en espèces » par un membre du personnel autorisé.</p>
+        <p className="mt-4 text-xs leading-5 text-slate-500">Flouci et Stripe nécessitent les secrets du service API sur Render. D17, e-DINAR, ClicToPay et SMS n’ont pas encore de parcours de paiement intégré.</p>
+        <a href="/admin/settings" className="mt-4 inline-flex rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-jso-blue">Ouvrir Configuration → Paiements</a>
       </div>
     </div>
 
@@ -141,7 +175,7 @@ export default function DonationsModule({ onError }) {
           </tbody>
         </table>
       </div>
-      {!data?.donations?.length && !loading && <p className="p-6 text-sm text-slate-500">Aucune contribution enregistrée.</p>}
+      {data && !data.donations?.length && !loading && <p className="p-6 text-sm text-slate-500">Aucune contribution enregistrée.</p>}
     </div>
   </div>
 }
