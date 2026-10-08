@@ -181,7 +181,7 @@ public sealed class KonnectPaymentProvider(
 
     private sealed class PaymentDetails
     {
-        [JsonPropertyName("status")] public string? Status { get; set; }
+        [JsonPropertyName("status")] public string? Status { get; set; }\n        [JsonPropertyName("orderId")] public string? OrderId { get; set; }
         [JsonPropertyName("amount")] public long? Amount { get; set; }
         [JsonPropertyName("token")] public string? Token { get; set; }
         [JsonPropertyName("orderId")] public string? OrderId { get; set; }
