@@ -142,19 +142,19 @@ export default function PaymentSettingsModule({ onError = () => {} }) {
     {editing && <Modal title={isNew ? 'Ajouter un moyen de paiement' : 'Modifier ' + form.name} onClose={() => setEditing(null)}>
       <form onSubmit={save} className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Prestataire"><select value={form.code} onChange={e => selectTemplate(e.target.value)} className="input">{templates.map(t => <option key={t[0]} value={t[0]}>{t[1]}</option>)}</select></Field>
-          <Field label="Nom affiché"><input required value={form.name} onChange={e => updateField('name', e.target.value)} className="input"/></Field>
-          <Field label="Type"><select value={form.type} onChange={e => updateField('type', e.target.value)} className="input"><option>Hosted</option><option>Api</option><option>BankTransfer</option><option>Cash</option></select></Field>
-          <Field label="Pays"><input value={form.country || ''} onChange={e => updateField('country', e.target.value)} placeholder="TN" className="input"/></Field>
-          <Field label="Devise"><input value={form.currency} onChange={e => updateField('currency', e.target.value)} placeholder="TND" className="input"/></Field>
-          <Field label="URL API"><input value={form.baseUrl || ''} onChange={e => updateField('baseUrl', e.target.value)} placeholder="https://..." className="input"/></Field>
+          <Field label="Prestataire"><select value={form.code} onChange={e => selectTemplate(e.target.value)} className="mt-0.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100">{templates.map(t => <option key={t[0]} value={t[0]}>{t[1]}</option>)}</select></Field>
+          <Field label="Nom affiché"><input required value={form.name} onChange={e => updateField('name', e.target.value)} className="mt-0.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"/></Field>
+          <Field label="Type"><select value={form.type} onChange={e => updateField('type', e.target.value)} className="mt-0.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"><option>Hosted</option><option>Api</option><option>BankTransfer</option><option>Cash</option></select></Field>
+          <Field label="Pays"><input value={form.country || ''} onChange={e => updateField('country', e.target.value)} placeholder="TN" className="mt-0.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"/></Field>
+          <Field label="Devise"><input value={form.currency} onChange={e => updateField('currency', e.target.value)} placeholder="TND" className="mt-0.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"/></Field>
+          <Field label="URL API"><input value={form.baseUrl || ''} onChange={e => updateField('baseUrl', e.target.value)} placeholder="https://..." className="mt-0.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"/></Field>
         </div>
-        <Field label="Ordre"><input type="number" value={form.sortOrder} onChange={e => updateField('sortOrder', e.target.value)} className="input"/></Field>
+        <Field label="Ordre"><input type="number" value={form.sortOrder} onChange={e => updateField('sortOrder', e.target.value)} className="mt-0.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"/></Field>
 
         {fields.length > 0 && <div className="rounded-xl border border-slate-200 p-4">
           <p className="text-sm font-black">Identifiants secrets</p>
           <p className="mt-1 text-xs text-slate-500">{isNew ? 'Ils seront chiffrés en base.' : 'Laissez vide pour conserver le secret actuel.'}</p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">{fields.map(key => <Field key={key} label={key}><input type="password" autoComplete="new-password" value={form.secrets?.[key] || ''} onChange={e => setForm(v => ({ ...v, secrets: { ...v.secrets, [key]: e.target.value } }))} className="input" placeholder={isNew ? '••••••••' : (form.secretsConfigured?.[key] ? '•••••••• (déjà configuré)' : 'Non configuré')}/></Field>)}</div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">{fields.map(key => <Field key={key} label={key}><input type="password" autoComplete="new-password" value={form.secrets?.[key] || ''} onChange={e => setForm(v => ({ ...v, secrets: { ...v.secrets, [key]: e.target.value } }))} className="mt-0.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100" placeholder={isNew ? '••••••••' : (form.secretsConfigured?.[key] ? '•••••••• (déjà configuré)' : 'Non configuré')}/></Field>)}</div>
         </div>}
 
         <Field label="Paramètres JSON (optionnel)"><textarea rows={3} value={form.settingsJson || ''} onChange={e => updateField('settingsJson', e.target.value)} className="input font-mono text-xs" placeholder='{"merchantId":"..."}'/></Field>
@@ -162,7 +162,7 @@ export default function PaymentSettingsModule({ onError = () => {} }) {
         <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-slate-50 p-3"><input type="checkbox" checked={form.isActive} onChange={e => updateField('isActive', e.target.checked)} className="h-4 w-4"/><span><b>Activer ce moyen de paiement</b><span className="block text-xs text-slate-500">Un moyen actif peut être utilisé par l'application.</span></span></label>
 
         {notice && <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">{notice}</div>}
-        <div className="flex justify-end gap-2 pt-2"><button type="button" onClick={() => setEditing(null)} className="btn-secondary">Annuler</button><button disabled={saving} className="btn-primary">{saving ? 'Enregistrement…' : 'Enregistrer'}</button></div>
+        <div className="flex justify-end gap-2 pt-2"><button type="button" onClick={() => setEditing(null)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50 disabled:opacity-50">Annuler</button><button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-black text-white hover:opacity-90 disabled:opacity-50">{saving ? 'Enregistrement…' : 'Enregistrer'}</button></div>
       </form>
     </Modal>}
   </div>
@@ -178,10 +178,10 @@ function ProviderCard({ p, testing, onEdit, onToggle, onTest, onDelete }) {
     </div>
     <div className="mt-4 grid gap-2 text-xs text-slate-500 sm:grid-cols-2"><div>Secrets configurés : <b>{secrets.length ? secrets.join(', ') : 'aucun'}</b></div><div>URL : <b>{p.baseUrl || '—'}</b></div></div>
     <div className="mt-5 flex flex-wrap gap-2">
-      <button onClick={onEdit} className="btn-secondary"><Pencil size={14}/> Modifier</button>
-      <button onClick={onToggle} className="btn-secondary"><Power size={14}/> {p.isActive ? 'Désactiver' : 'Activer'}</button>
-      <button onClick={onTest} disabled={testing} className="btn-secondary">{testing ? <RefreshCw className="animate-spin" size={14}/> : <CheckCircle2 size={14}/>} Tester</button>
-      <button onClick={onDelete} className="btn-danger"><Trash2 size={14}/> Supprimer</button>
+      <button onClick={onEdit} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50 disabled:opacity-50"><Pencil size={14}/> Modifier</button>
+      <button onClick={onToggle} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50 disabled:opacity-50"><Power size={14}/> {p.isActive ? 'Désactiver' : 'Activer'}</button>
+      <button onClick={onTest} disabled={testing} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50 disabled:opacity-50">{testing ? <RefreshCw className="animate-spin" size={14}/> : <CheckCircle2 size={14}/>} Tester</button>
+      <button onClick={onDelete} className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-700 hover:bg-red-100"><Trash2 size={14}/> Supprimer</button>
     </div>
   </article>
 }
