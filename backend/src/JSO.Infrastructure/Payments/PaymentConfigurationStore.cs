@@ -110,7 +110,7 @@ public sealed class PaymentConfigurationStore
     // Runtime provider activation is persisted in the admin payment configuration.
     public bool HasActiveConfiguredByCode(string code)
     {
-        var row = _db.SiteContents.AsNoTracking().SingleOrDefault(x => x.Key == Key);
+        var row = _db.SiteContents.AsNoTracking().FirstOrDefault(x => x.Key == Key);
         if (row is null || string.IsNullOrWhiteSpace(row.Value)) return false;
 
         try
@@ -153,7 +153,7 @@ public sealed class PaymentConfigurationStore
 
     private async Task<StoredSettings> ReadAsync(CancellationToken ct)
     {
-        var row = await _db.SiteContents.AsNoTracking().SingleOrDefaultAsync(x => x.Key == Key, ct);
+        var row = await _db.SiteContents.AsNoTracking().FirstOrDefaultAsync(x => x.Key == Key, ct);
         if (row is null || string.IsNullOrWhiteSpace(row.Value)) return new StoredSettings();
 
         try
@@ -169,7 +169,7 @@ public sealed class PaymentConfigurationStore
     private async Task WriteAsync(StoredSettings settings, CancellationToken ct)
     {
         var value = JsonSerializer.Serialize(settings, JsonOptions);
-        var row = await _db.SiteContents.SingleOrDefaultAsync(x => x.Key == Key, ct);
+        var row = await _db.SiteContents.FirstOrDefaultAsync(x => x.Key == Key, ct);
 
         if (row is null)
             _db.SiteContents.Add(new SiteContent { Key = Key, Value = value, UpdatedAt = DateTimeOffset.UtcNow });
