@@ -177,6 +177,26 @@ public sealed class DatabaseInitializer(
             "JSO official 2026/27 fixtures are ready: {Count} rounds.",
             officialFixtures.Length);
 
+        // Official annual supporter subscription shown on the 2026/27 card.
+        // Seed only when missing so an administrator can safely edit the plan later.
+        var annualMembership = await db.MembershipPlans.FirstOrDefaultAsync(
+            x => x.Name == "Abonnement annuel 2026-2027", ct);
+        if (annualMembership is null)
+        {
+            db.MembershipPlans.Add(new MembershipPlan
+            {
+                Name = "Abonnement annuel 2026-2027",
+                Description = "Carte d'abonnement annuelle JSO pour la saison 2026-2027. Prix officiel : 30 dinars tunisiens.",
+                Price = 30m,
+                Currency = "TND",
+                DurationDays = 365,
+                IsActive = true,
+                DisplayOrder = 0
+            });
+            await db.SaveChangesAsync(ct);
+            logger.LogInformation("JSO annual membership plan 2026/27 created at 30 TND.");
+        }
+
         if (hasAdmin)
         {
             // One-time recovery path for an operator who needs to restore the
