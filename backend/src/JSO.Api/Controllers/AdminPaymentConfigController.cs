@@ -74,6 +74,30 @@ public sealed class AdminPaymentConfigController(PaymentConfigurationStore store
             return Ok(new { success = ok, message = ok ? "Identifiants Flouci présents. Test API sans débit disponible via ce panneau." : "App Token / App Secret Flouci manquants." });
         }
 
+        if (provider.Code == "KONNECT")
+        {
+            if (!secrets.TryGetValue("apiKey", out var apiKey) || string.IsNullOrWhiteSpace(apiKey))
+                return Ok(new { success = false, message = "Clé API Konnect manquante." });
+            if (!secrets.TryGetValue("receiverWalletId", out var walletId) || string.IsNullOrWhiteSpace(walletId))
+                return Ok(new { success = false, message = "Receiver Wallet ID Konnect manquant." });
+
+            var baseUrl = string.IsNullOrWhiteSpace(provider.BaseUrl)
+                ? "https://api.konnect.network/api/v2/"
+                : provider.BaseUrl.TrimEnd('/') + "/";
+            using var http = new HttpClient { BaseAddress = new Uri(baseUrl), Timeout = TimeSpan.FromSeconds(15) };
+            using var request = new HttpRequestMessage(HttpMethod.Get, "payments/__jso_connection_test__");
+            request.Headers.TryAddWithoutValidation("x-api-key", apiKey);
+            using var response = await http.SendAsync(request, ct);
+
+            var success = response.StatusCode == System.Net.HttpStatusCode.NotFound;
+            var message = success
+                ? "Connexion Konnect valide (clé API authentifiée)."
+                : response.StatusCode == System.Net.HttpStatusCode.Unauthorized
+                    ? "Konnect a refusé la clé API."
+                    : $"Konnect a répondu HTTP {(int)response.StatusCode}.";
+            return Ok(new { success, message });
+        }
+
         return Ok(new { success = false, message = "Ce fournisseur est enregistré, mais son intégration de paiement n'est pas encore implémentée." });
     }
 }
