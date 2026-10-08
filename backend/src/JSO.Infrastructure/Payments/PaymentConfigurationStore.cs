@@ -107,6 +107,7 @@ public sealed class PaymentConfigurationStore
         return (p, p is null ? new Dictionary<string, string>() : DecryptSecrets(p.Secrets));
     }
 
+    // Runtime provider activation is persisted in the admin payment configuration.
     public bool HasActiveConfiguredByCode(string code)
     {
         var row = _db.SiteContents.AsNoTracking().SingleOrDefault(x => x.Key == Key);
