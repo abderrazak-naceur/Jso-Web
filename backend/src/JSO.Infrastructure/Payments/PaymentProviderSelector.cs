@@ -7,7 +7,7 @@ public sealed class PaymentProviderSelector(
     StripePaymentProvider stripe)
 {
     public FlouciPaymentProvider Flouci { get; } = flouci;
-    public StripePaymentProvider Stripe { get; } = stripe;
+    public StripePaymentProvider Stripe { get; } = stripe;\n    public KonnectPaymentProvider Konnect { get; } = konnect;
 
     // Returns true when the (normalised) country is Tunisia. Accepts the ISO
     // alpha-2 code "TN" as well as common French/English names.
