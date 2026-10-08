@@ -9,6 +9,7 @@ const templates = [
   ['EDINAR', 'e-DINAR', 'Hosted', 'TN', 'TND'],
   ['CLICTOPAY', 'ClicToPay', 'Hosted', 'TN', 'TND'],
   ['KONNECT', 'Konnect', 'Hosted', 'TN', 'TND'],
+  ['PAYMEE', 'Paymee', 'Hosted', 'TN', 'TND'],
   ['IPAY', 'iPay', 'Hosted', 'TN', 'TND'],
   ['BANK_TRANSFER', 'Virement bancaire', 'BankTransfer', '', 'TND'],
   ['CASH', 'Espèces', 'Cash', 'TN', 'TND'],
@@ -22,6 +23,7 @@ const secretFields = {
   CLICTOPAY: ['siteKey', 'apiKey', 'secretKey'],
   KONNECT: ['apiKey', 'receiverWalletId'],
   IPAY: ['apiKey', 'secretKey'],
+  PAYMEE: ['apiKey'],
 }
 
 function Badge({ active }) {
@@ -31,7 +33,7 @@ function Badge({ active }) {
 }
 
 function emptyForm() {
-  return { code: 'FLOUCI', name: 'Flouci', type: 'Hosted', country: 'TN', currency: 'TND', baseUrl: '', isActive: false, sortOrder: 0, settingsJson: '', secrets: {} }
+  return { code: 'FLOUCI', name: 'Flouci', type: 'Hosted', country: 'TN', currency: 'TND', baseUrl: '', isActive: false, sortOrder: 0, settingsJson: '', webhookUrl: '', secrets: {} }
 }
 
 export default function PaymentSettingsModule({ onError = () => {} }) {
@@ -67,6 +69,7 @@ export default function PaymentSettingsModule({ onError = () => {} }) {
       ...p,
       settingsJson: p.settingsJson || '',
       secrets: {},
+      webhookUrl: (() => { try { return JSON.parse(p.settingsJson || '{}').webhookUrl || '' } catch { return '' } })(),
     })
     setEditing(p.id)
     setNotice('')
@@ -79,7 +82,7 @@ export default function PaymentSettingsModule({ onError = () => {} }) {
   function selectTemplate(code) {
     const t = templates.find(x => x[0] === code)
     if (!t) return
-    setForm(v => ({ ...v, code: t[0], name: t[1], type: t[2], country: t[3], currency: t[4] }))
+    setForm(v => ({ ...v, code: t[0], name: t[1], type: t[2], country: t[3], currency: t[4], webhookUrl: '' }))
   }
 
   async function save(e) {
@@ -90,6 +93,7 @@ export default function PaymentSettingsModule({ onError = () => {} }) {
         ...form,
         sortOrder: Number(form.sortOrder) || 0,
         secrets: Object.fromEntries(Object.entries(form.secrets || {}).filter(([, v]) => v.trim())),
+        settingsJson: (() => {\n          let settings = {};\n          try { settings = JSON.parse(form.settingsJson || '{}') || {} } catch { settings = {} }\n          if (form.webhookUrl !== undefined && ['KONNECT', 'PAYMEE'].includes(form.code)) settings.webhookUrl = form.webhookUrl.trim() || undefined;\n          return JSON.stringify(settings);\n        })(),
       }
       if (isNew) await adminApi('/admin/payment-config', { method: 'POST', body: JSON.stringify(payload) })
       else await adminApi('/admin/payment-config/' + editing, { method: 'PUT', body: JSON.stringify(payload) })
@@ -157,6 +161,7 @@ export default function PaymentSettingsModule({ onError = () => {} }) {
           <div className="mt-3 grid gap-3 sm:grid-cols-2">{fields.map(key => <Field key={key} label={key}><input type="password" autoComplete="new-password" value={form.secrets?.[key] || ''} onChange={e => setForm(v => ({ ...v, secrets: { ...v.secrets, [key]: e.target.value } }))} className="mt-0.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100" placeholder={isNew ? '••••••••' : (form.secretsConfigured?.[key] ? '•••••••• (déjà configuré)' : 'Non configuré')}/></Field>)}</div>
         </div>}
 
+        {['KONNECT', 'PAYMEE'].includes(form.code) && <Field label="URL Webhook"><input value={form.webhookUrl || ''} onChange={e => updateField('webhookUrl', e.target.value)} placeholder={form.code === 'KONNECT' ? '/api/webhooks/konnect?payment_ref=...' : '/api/webhooks/paymee'} className="mt-0.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"/></Field>}
         <Field label="Paramètres JSON (optionnel)"><textarea rows={3} value={form.settingsJson || ''} onChange={e => updateField('settingsJson', e.target.value)} className="input font-mono text-xs" placeholder='{"merchantId":"..."}'/></Field>
 
         <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-slate-50 p-3"><input type="checkbox" checked={form.isActive} onChange={e => updateField('isActive', e.target.checked)} className="h-4 w-4"/><span><b>Activer ce moyen de paiement</b><span className="block text-xs text-slate-500">Un moyen actif peut être utilisé par l'application.</span></span></label>
