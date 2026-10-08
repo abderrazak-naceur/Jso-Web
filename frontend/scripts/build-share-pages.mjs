@@ -31,9 +31,19 @@ function setMeta(html, name, value) {
   return html.replace(new RegExp(`(<meta (?:name|property)="${name}" content=")[^"]*(" />)`), `$1${escaped}$2`)
 }
 
+function setSiteOrigin(html) {
+  return html.replaceAll('https://jso-web.onrender.com', site)
+}
+
+await writeFile(new URL('index.html', dist), setSiteOrigin(source))
+for (const file of ['sitemap.xml', 'robots.txt']) {
+  const url = new URL(file, dist)
+  await writeFile(url, setSiteOrigin(await readFile(url, 'utf8')))
+}
+
 for (const [path, title, description] of pages) {
   const absolute = site + path
-  let html = source
+  let html = setSiteOrigin(source)
     .replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(title)} · JSO</title>`)
     .replace(/(<link rel="canonical" href=")[^"]*(" \/>)/, `$1${absolute}$2`)
   for (const key of ['description', 'og:description', 'twitter:description']) html = setMeta(html, key, description)
