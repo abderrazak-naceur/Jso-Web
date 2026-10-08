@@ -99,77 +99,46 @@ public static class DevelopmentDataSeeder
             );
         }
 
-        if (!await db.Matches.AnyAsync(x => x.TeamId == team.Id, ct))
+        // Official 2026/27 fixture list supplied by the club (9 rounds).
+        // The source image does not contain kickoff dates/times, so we use the
+        // season's provisional weekly Sundays until the federation publishes the
+        // exact dates. Results remain empty until an administrator records them.
+        var officialMatches = new (int Round, string Opponent, bool IsHome)[]
         {
-            var now = DateTimeOffset.UtcNow;
-            db.Matches.AddRange(
-                new Match
-                {
-                    SeasonId = season.Id,
-                    CompetitionId = competition.Id,
-                    TeamId = team.Id,
-                    OpponentName = "US Monastir",
-                    KickoffAt = now.AddDays(6),
-                    Venue = "Stade d'Oudhref",
-                    IsHome = true,
-                    Status = "Scheduled",
-                    IsPublished = true
-                },
-                new Match
-                {
-                    SeasonId = season.Id,
-                    CompetitionId = competition.Id,
-                    TeamId = team.Id,
-                    OpponentName = "Stade Gabésien",
-                    KickoffAt = now.AddDays(13),
-                    Venue = "Stade Municipal de Gabès",
-                    IsHome = false,
-                    Status = "Scheduled",
-                    IsPublished = true
-                },
-                new Match
-                {
-                    SeasonId = season.Id,
-                    CompetitionId = competition.Id,
-                    TeamId = team.Id,
-                    OpponentName = "AS Gabès",
-                    KickoffAt = now.AddDays(-7),
-                    Venue = "Stade d'Oudhref",
-                    IsHome = true,
-                    HomeScore = 2,
-                    AwayScore = 1,
-                    Status = "Finished",
-                    IsPublished = true
-                },
-                new Match
-                {
-                    SeasonId = season.Id,
-                    CompetitionId = competition.Id,
-                    TeamId = team.Id,
-                    OpponentName = "CS Hammam-Lif",
-                    KickoffAt = now.AddDays(-14),
-                    Venue = "Stade de Hammam-Lif",
-                    IsHome = false,
-                    HomeScore = 1,
-                    AwayScore = 1,
-                    Status = "Finished",
-                    IsPublished = true
-                },
-                new Match
-                {
-                    SeasonId = season.Id,
-                    CompetitionId = competition.Id,
-                    TeamId = team.Id,
-                    OpponentName = "El Gawafel Gafsa",
-                    KickoffAt = now.AddDays(-21),
-                    Venue = "Stade d'Oudhref",
-                    IsHome = true,
-                    HomeScore = 3,
-                    AwayScore = 0,
-                    Status = "Finished",
-                    IsPublished = true
-                }
-            );
+            (1, "المستقبل الرياضي بحسي عمر", true),
+            (2, "الاتحاد الرياضي المطوي", false),
+            (3, "الاتحاد الرياضي الجرجيـسي", true),
+            (4, "الأمل الرياضي بالرقبة", false),
+            (5, "الملعب الرياضي بسيدي مخلوف", true),
+            (6, "الوداد الرياضي بالجامعة", false),
+            (7, "الجمعية الرياضية بالجامعة", false),
+            (8, "جمعية أولمبيك بنقردان", true),
+            (9, "النادي الرياضي ببئر العين", false)
+        };
+
+        var legacyOpponents = new[] { "US Monastir", "Stade Gabésien", "AS Gabès", "CS Hammam-Lif", "El Gawafel Gafsa" };
+        var legacyMatches = await db.Matches.Where(x => x.TeamId == team.Id && legacyOpponents.Contains(x.OpponentName)).ToListAsync(ct);
+        if (legacyMatches.Count > 0)
+            db.Matches.RemoveRange(legacyMatches);
+
+        foreach (var fixture in officialMatches)
+        {
+            if (await db.Matches.AnyAsync(x => x.TeamId == team.Id && x.SeasonId == season.Id && x.OpponentName == fixture.Opponent && x.IsHome == fixture.IsHome, ct))
+                continue;
+
+            var provisionalDate = new DateTimeOffset(2026, 9, 20, 15, 0, 0, TimeSpan.Zero).AddDays((fixture.Round - 1) * 7);
+            db.Matches.Add(new Match
+            {
+                SeasonId = season.Id,
+                CompetitionId = competition.Id,
+                TeamId = team.Id,
+                OpponentName = fixture.Opponent,
+                KickoffAt = provisionalDate,
+                Venue = fixture.IsHome ? "Stade d'Oudhref" : "À confirmer",
+                IsHome = fixture.IsHome,
+                Status = "Scheduled",
+                IsPublished = true
+            });
         }
 
         if (!await db.Articles.AnyAsync(ct))
