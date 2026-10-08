@@ -115,15 +115,15 @@ public sealed class KonnectPaymentProvider(
             "completed" => new PaymentVerification(
                 PaymentVerificationStatus.Succeeded,
                 paymentRef,
-                payment.Amount,
-                payment.Token,
-                payment.OrderId),
+                payment?.Amount,
+                payment?.Token,
+                payment?.OrderId),
             "pending" => new PaymentVerification(
                 PaymentVerificationStatus.Pending,
                 paymentRef,
-                payment.Amount,
-                payment.Token,
-                payment.OrderId),
+                payment?.Amount,
+                payment?.Token,
+                payment?.OrderId),
             _ => new PaymentVerification(
                 PaymentVerificationStatus.Failed,
                 paymentRef,
@@ -181,10 +181,10 @@ public sealed class KonnectPaymentProvider(
 
     private sealed class PaymentDetails
     {
-        [JsonPropertyName("status")] public string? Status { get; set; }\n        [JsonPropertyName("orderId")] public string? OrderId { get; set; }
+        [JsonPropertyName("status")] public string? Status { get; set; }
+        [JsonPropertyName("orderId")] public string? OrderId { get; set; }
         [JsonPropertyName("amount")] public long? Amount { get; set; }
         [JsonPropertyName("token")] public string? Token { get; set; }
-        [JsonPropertyName("orderId")] public string? OrderId { get; set; }
     }
 
     public sealed class KonnectSettings

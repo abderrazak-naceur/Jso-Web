@@ -3,11 +3,13 @@ namespace JSO.Infrastructure.Payments;
 public sealed class PaymentProviderSelector(
     FlouciPaymentProvider flouci,
     StripePaymentProvider stripe,
-    KonnectPaymentProvider konnect,\n    PaymeePaymentProvider paymee)
+    KonnectPaymentProvider konnect,
+    PaymeePaymentProvider paymee)
 {
     public FlouciPaymentProvider Flouci { get; } = flouci;
     public StripePaymentProvider Stripe { get; } = stripe;
-    public KonnectPaymentProvider Konnect { get; } = konnect;\n    public PaymeePaymentProvider Paymee { get; } = paymee;
+    public KonnectPaymentProvider Konnect { get; } = konnect;
+    public PaymeePaymentProvider Paymee { get; } = paymee;
 
     public static bool IsTunisia(string? country)
     {

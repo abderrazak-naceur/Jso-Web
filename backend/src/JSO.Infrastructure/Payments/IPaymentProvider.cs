@@ -12,7 +12,11 @@ public sealed record PaymentRequest(
     Guid PayableId,
     Guid? FanUserId,
     decimal AmountTnd,
-    string Description,\n    string? FirstName = null,\n    string? LastName = null,\n    string? Email = null,\n    string? Phone = null);
+    string Description,
+    string? FirstName = null,
+    string? LastName = null,
+    string? Email = null,
+    string? Phone = null);
 
 public static class PayableTypes
 {

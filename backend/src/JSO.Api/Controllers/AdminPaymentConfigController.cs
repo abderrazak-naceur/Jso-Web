@@ -57,7 +57,7 @@ public sealed class AdminPaymentConfigController(PaymentConfigurationStore store
                 return Ok(new { success = false, message = "Clé secrète Stripe non configurée." });
             try
             {
-                var service = new AccountService(new StripeClient(key));
+                var service = new BalanceService(new StripeClient(key));
                 await service.GetAsync(cancellationToken: ct);
                 return Ok(new { success = true, message = "Connexion Stripe valide." });
             }
