@@ -93,7 +93,13 @@ export default function PaymentSettingsModule({ onError = () => {} }) {
         ...form,
         sortOrder: Number(form.sortOrder) || 0,
         secrets: Object.fromEntries(Object.entries(form.secrets || {}).filter(([, v]) => v.trim())),
-        settingsJson: (() => {\n          let settings = {};\n          try { settings = JSON.parse(form.settingsJson || '{}') || {} } catch { settings = {} }\n          if (form.webhookUrl !== undefined && ['KONNECT', 'PAYMEE'].includes(form.code)) settings.webhookUrl = form.webhookUrl.trim() || undefined;\n          return JSON.stringify(settings);\n        })(),
+        settingsJson: (() => {
+          let settings = {};
+          try { settings = JSON.parse(form.settingsJson || '{}') || {} } catch { settings = {} }
+          if (form.webhookUrl !== undefined && ['KONNECT', 'PAYMEE'].includes(form.code))
+            settings.webhookUrl = form.webhookUrl.trim() || undefined;
+          return JSON.stringify(settings);
+        })(),
       }
       if (isNew) await adminApi('/admin/payment-config', { method: 'POST', body: JSON.stringify(payload) })
       else await adminApi('/admin/payment-config/' + editing, { method: 'PUT', body: JSON.stringify(payload) })
