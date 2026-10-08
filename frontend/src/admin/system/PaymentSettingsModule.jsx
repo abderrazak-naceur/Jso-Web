@@ -174,7 +174,12 @@ function ProviderCard({ p, testing, onEdit, onToggle, onTest, onDelete }) {
   return <article className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
     <div className="flex items-start justify-between gap-3">
       <div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-xl bg-jso-navy text-jso-gold"><Icon size={20}/></div><div><h3 className="font-black">{p.name}</h3><p className="text-xs text-slate-500">{p.code} · {p.type} · {p.currency}{p.country ? ' · ' + p.country : ''}</p></div></div>
-      <Badge active={p.isActive}/>
+      <div className="flex items-center gap-2">
+        <Badge active={p.isActive}/>
+        <button type="button" onClick={onToggle} aria-label={(p.isActive ? 'Désactiver ' : 'Activer ') + p.name} aria-pressed={p.isActive} className={"relative h-7 w-12 rounded-full p-1 transition-colors " + (p.isActive ? "bg-emerald-500" : "bg-slate-300")}>
+          <span className={"block h-5 w-5 rounded-full bg-white shadow transition-transform " + (p.isActive ? "translate-x-5" : "translate-x-0")}/>
+        </button>
+      </div>
     </div>
     <div className="mt-4 grid gap-2 text-xs text-slate-500 sm:grid-cols-2"><div>Secrets configurés : <b>{secrets.length ? secrets.join(', ') : 'aucun'}</b></div><div>URL : <b>{p.baseUrl || '—'}</b></div></div>
     <div className="mt-5 flex flex-wrap gap-2">
