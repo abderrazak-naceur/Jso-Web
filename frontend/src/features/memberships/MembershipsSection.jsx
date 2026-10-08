@@ -3,17 +3,14 @@ import { CreditCard, CheckCircle2 } from 'lucide-react'
 import { membershipApi } from '../../lib/api'
 import PayOnlineButton from '../shop/PayOnlineButton'
 
-// Public supporter memberships section (idea B: monetisation). Anyone can browse
-// the active plans; a signed-in fan subscribes (server recomputes the price) and
-// pays online via the shared hosted-payment flow (PayOnlineButton). The
-// membership becomes Active only server-side via the verified webhook. Loading,
-// empty and error states are handled; no card data ever touches our servers.
+// Public supporter memberships section. The membership is activated only after
+// the payment provider confirms the transaction through its verified webhook.
 export default function MembershipsSection({ section, token, onRequireLogin }) {
   const [plans, setPlans] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selected, setSelected] = useState(null)
-  const [pending, setPending] = useState(null) // { membershipId }
+  const [pending, setPending] = useState(null)
   const [subscribing, setSubscribing] = useState(false)
 
   useEffect(() => {
@@ -23,7 +20,27 @@ export default function MembershipsSection({ section, token, onRequireLogin }) {
       .then((rows) => { setPlans(Array.isArray(rows) ? rows : []); setError('') })
       .catch((e) => { if (!controller.signal.aborted) setError(e?.message || 'Erreur de chargement.') })
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
-    return (
+    return () => controller.abort()
+  }, [])
+
+  const money = (n, c) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: c || 'TND' }).format(n || 0)
+
+  async function subscribe(plan) {
+    setError('')
+    if (!token) { onRequireLogin?.(); return }
+    setSelected(plan.id)
+    setSubscribing(true)
+    try {
+      const membership = await membershipApi.subscribe(plan.id, token)
+      setPending({ membershipId: membership.id ?? membership.Id, plan })
+    } catch (e) {
+      setError(e?.message || 'La souscription a échoué. Veuillez réessayer.')
+    } finally {
+      setSubscribing(false)
+    }
+  }
+
+  return (
     <section id={section?.id || 'memberships'} aria-labelledby="memberships-title" className="relative isolate overflow-hidden bg-[#11164f] px-5 py-16 text-white sm:py-20">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute -left-20 -top-24 h-72 w-72 rounded-full bg-yellow-300/20 blur-3xl" />
@@ -78,7 +95,7 @@ export default function MembershipsSection({ section, token, onRequireLogin }) {
                   {pending && pending.plan.id === plan.id ? (
                     <div className="mt-6">
                       <p className="mb-3 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-3 text-sm font-semibold text-emerald-700"><CheckCircle2 size={16} /> Abonnement créé. Réglez pour l’activer.</p>
-                      <PayOnlineButton pay={(country) => membershipApi.pay(pending.membershipId, country, token)} label="Payer l’abonnement — 30 TND" />
+                      <PayOnlineButton pay={(country) => membershipApi.pay(pending.membershipId, country, token)} label={`Payer l’abonnement — ${money(plan.price, plan.currency)}`} />
                     </div>
                   ) : (
                     <button
