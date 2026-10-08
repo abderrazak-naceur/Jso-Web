@@ -41,4 +41,4 @@ public sealed record PaymentVerification(
     PaymentVerificationStatus Status,
     string ProviderRef,
     long? Amount = null,
-    string? Currency = null);
+    string? Currency = null, string? PayableReference = null);
