@@ -46,7 +46,7 @@ export default function SellingBand({ nextMatch }) {
             <span className="w-fit rounded-full bg-jso-gold px-3 py-1 text-[11px] font-black uppercase tracking-[0.15em] text-jso-navy">Saison 2026/27</span>
             <h3 className="mt-4 text-3xl font-black leading-tight">Devenez abonné</h3>
             <p className="mt-1 text-white/85">Soutenez la JSO toute la saison.</p>
-            <a href="#memberships" className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-white px-6 py-3 font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-jso-gold">
+            <a href="/abonnements" className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-white px-6 py-3 font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-jso-gold">
               Voir les formules <ArrowUpRight size={16} aria-hidden="true" />
             </a>
           </div>
@@ -61,7 +61,7 @@ export default function SellingBand({ nextMatch }) {
             <span className="w-fit rounded-full bg-jso-navy px-3 py-1 text-[11px] font-black uppercase tracking-[0.15em] text-jso-gold">Boutique</span>
             <h3 className="mt-4 text-3xl font-black leading-tight">Maillots &amp; articles</h3>
             <p className="mt-1 font-semibold text-jso-navy/75">Portez les couleurs du club.</p>
-            <a href="#shop" className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-jso-navy px-6 py-3 font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-jso-blue">
+            <a href="/boutique" className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-jso-navy px-6 py-3 font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-jso-blue">
               Découvrir <ArrowUpRight size={16} aria-hidden="true" />
             </a>
           </div>

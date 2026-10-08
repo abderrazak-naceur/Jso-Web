@@ -30,13 +30,20 @@ export function articleShareUrl(slug) {
 // pushState so the browser Back button closes the article naturally.
 export function pushArticleUrl(slug) {
   const url = ARTICLE_PATH_PREFIX + encodeURIComponent(slug)
-  if (window.location.pathname !== url) window.history.pushState({ articleSlug: slug }, '', url)
+  if (window.location.pathname !== url) {
+    const returnPath = window.location.pathname + window.location.search + window.location.hash
+    window.history.pushState({ articleSlug: slug, returnPath }, '', url)
+  }
 }
 
-// Restore the home URL when the article closes, without adding a history entry
-// on top of the user's own navigation.
+// Restore the page the visitor came from; a direct article link returns to the
+// news listing. Replacing the current entry avoids reopening the modal on Back.
 export function restoreHomeUrl() {
   if (window.location.pathname.startsWith(ARTICLE_PATH_PREFIX)) {
-    window.history.pushState({}, '', '/')
+    const returnPath = window.history.state?.returnPath
+    const target = typeof returnPath === 'string' && returnPath.startsWith('/') && !returnPath.startsWith('//')
+      ? returnPath : NEWS_LIST_PATH
+    if (target.startsWith(NEWS_LIST_PATH)) window.location.replace(target)
+    else window.history.replaceState({}, '', target)
   }
 }

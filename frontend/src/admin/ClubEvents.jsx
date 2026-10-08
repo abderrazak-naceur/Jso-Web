@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Save, Pencil, X, Plus } from 'lucide-react'
+import { Link2, Save, Pencil, X, Plus } from 'lucide-react'
 import { API_BASE_URL } from '../lib/apiConfig'
+import { adminEditIdFromPath, adminEditUrl, navigateAdminEdit } from './adminRoutes'
+import { sharePreviewUrl } from '../lib/sharePreviewUrl'
 
 async function api(path, options = {}) {
   const token = localStorage.getItem('jso_admin_token')
@@ -42,8 +44,22 @@ export default function ClubEventsModule({ onError }) {
   }
   useEffect(() => { load() }, [])
 
-  function reset() { setForm(empty); setEditing(null) }
-  function edit(x) {
+  useEffect(() => {
+    function syncRoute() {
+      const id = adminEditIdFromPath('club-events')
+      if (!id) { setForm(empty); setEditing(null); return }
+      const item = items.find((event) => String(event.id) === id)
+      if (item) setSelected(item)
+      else if (items.length) onError('Événement admin introuvable.')
+    }
+    syncRoute()
+    window.addEventListener('popstate', syncRoute)
+    return () => window.removeEventListener('popstate', syncRoute)
+  }, [items, onError])
+
+  function reset() { navigateAdminEdit('club-events', null); setForm(empty); setEditing(null) }
+  function edit(x) { navigateAdminEdit('club-events', x.id); setSelected(x) }
+  function setSelected(x) {
     setEditing(x.id)
     setForm({
       title: x.title || '', slug: x.slug || '', description: x.description || '',
@@ -51,6 +67,8 @@ export default function ClubEventsModule({ onError }) {
       location: x.location || '', isPublished: x.isPublished,
     })
   }
+  async function copyAdminLink(x) { try { await navigator.clipboard.writeText(window.location.origin + adminEditUrl('club-events', x.id)) } catch { onError('Impossible de copier le lien admin.') } }
+  async function copyPublicLink(x) { try { await navigator.clipboard.writeText(sharePreviewUrl('event', x.slug)) } catch { onError('Impossible de copier le lien public.') } }
 
   async function save(e) {
     e.preventDefault()
@@ -73,7 +91,7 @@ export default function ClubEventsModule({ onError }) {
 
   async function remove(id) {
     if (!confirm('Supprimer cet événement ?')) return
-    try { await api('/admin/events/' + id, { method: 'DELETE' }); await load() }
+    try { await api('/admin/events/' + id, { method: 'DELETE' }); if (editing === id) reset(); await load() }
     catch (e) { onError(e.message) }
   }
 
@@ -83,7 +101,7 @@ export default function ClubEventsModule({ onError }) {
       <div className="mt-5 overflow-x-auto">
         {loading ? <p className="text-sm text-slate-400">Chargement…</p>
           : items.length === 0 ? <p className="text-sm text-slate-400">Aucun événement pour le moment.</p>
-          : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Événement</th><th className="p-2">Date</th><th className="p-2">Publié</th><th className="p-2"></th></tr></thead><tbody>{items.map(x => <tr key={x.id} className="border-b last:border-0"><td className="p-2"><b>{x.title}</b><div className="text-xs text-slate-400">{x.location || '—'}</div></td><td className="p-2 whitespace-nowrap">{x.startAt ? new Date(x.startAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—'}</td><td className="p-2">{x.isPublished ? 'Oui' : 'Non'}</td><td className="p-2 whitespace-nowrap"><button onClick={() => edit(x)} className="mr-2 text-jso-blue"><Pencil size={16}/></button><button onClick={() => remove(x.id)} className="text-red-600"><X size={16}/></button></td></tr>)}</tbody></table>}
+          : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Événement</th><th className="p-2">Date</th><th className="p-2">Publié</th><th className="p-2"></th></tr></thead><tbody>{items.map(x => <tr key={x.id} className="border-b last:border-0"><td className="p-2"><b>{x.title}</b><div className="text-xs text-slate-400">{x.location || '—'}</div></td><td className="p-2 whitespace-nowrap">{x.startAt ? new Date(x.startAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—'}</td><td className="p-2">{x.isPublished ? 'Oui' : 'Non'}</td><td className="p-2 whitespace-nowrap"><button onClick={() => edit(x)} title="Modifier" className="mr-2 text-jso-blue"><Pencil size={16}/></button><button onClick={() => copyAdminLink(x)} title="Copier le lien admin" className="mr-2 text-jso-blue"><Link2 size={16}/></button>{x.isPublished && x.slug && <button onClick={() => copyPublicLink(x)} title="Copier le lien public" className="mr-2 text-xs font-bold text-jso-blue">Public</button>}<button onClick={() => remove(x.id)} title="Supprimer" className="text-red-600"><X size={16}/></button></td></tr>)}</tbody></table>}
       </div>
     </div>
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">

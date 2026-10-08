@@ -25,6 +25,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm install
       - run: npm run build
+      - run: node --test tests/routes.test.mjs
       - run: npm run lint
 
   backend:

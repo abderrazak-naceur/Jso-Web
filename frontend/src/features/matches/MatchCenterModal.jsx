@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { CalendarDays, MapPin, X } from 'lucide-react'
+import { CalendarDays, Copy, MapPin, X } from 'lucide-react'
 import { publicApi } from '../../lib/api'
 import { formatDateTime, pick } from '../../lib/format'
 import { useDialog } from '../site/useDialog'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
+import { sharePreviewUrl } from '../../lib/sharePreviewUrl'
 import CommentsSection from '../community/CommentsSection'
 import MatchStreamPanel from './MatchStreamPanel'
 import TeamBadge from './TeamBadge'
@@ -18,6 +19,8 @@ function asArray(result) {
 export default function MatchCenterModal({ match, onClose, token, onRequireLogin }) {
   const [details, setDetails] = useState(() => ({ ...match, ...EMPTY_DETAILS }))
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [copied, setCopied] = useState(false)
   const dialogRef = useDialog(onClose)
 
   useEffect(() => {
@@ -25,6 +28,7 @@ export default function MatchCenterModal({ match, onClose, token, onRequireLogin
     const { signal } = controller
     setDetails({ ...match, ...EMPTY_DETAILS })
     setLoading(true)
+    setLoadError('')
 
     Promise.allSettled([
       publicApi.getMatch(match.id, signal),
@@ -35,6 +39,11 @@ export default function MatchCenterModal({ match, onClose, token, onRequireLogin
       publicApi.getMatchLiveBlog(match.id, signal),
     ]).then(([matchResult, eventsResult, lineupResult, officialsResult, statsResult, liveblogResult]) => {
       if (signal.aborted) return
+      if (matchResult.status === 'rejected') {
+        setLoadError(matchResult.reason?.message?.includes('404') ? "Ce match n'est plus disponible." : 'Impossible de charger ce match pour le moment.')
+        setLoading(false)
+        return
+      }
       const latestMatch = matchResult.status === 'fulfilled' ? normalizeMatch(matchResult.value) : null
       setDetails({
         ...match,
@@ -56,6 +65,8 @@ export default function MatchCenterModal({ match, onClose, token, onRequireLogin
   // Reflect the open match in the browser tab / shared-link title.
   useDocumentTitle(`${sides.home.name} - ${sides.away.name}`)
 
+  if (loadError) return <div className="fixed inset-0 z-[80] grid place-items-center bg-jso-navy/65 p-4" role="presentation"><div ref={dialogRef} role="dialog" aria-modal="true" tabIndex={-1} className="w-full max-w-lg rounded-2xl bg-white p-8 text-jso-ink"><p role="alert" className="font-bold">{loadError}</p><button type="button" onClick={onClose} className="mt-5 rounded-full bg-jso-navy px-5 py-3 text-sm font-bold text-white">Retour aux matchs</button></div></div>
+
   return (
     <div className="fixed inset-0 z-[80] overflow-y-auto bg-jso-navy/65 p-4 backdrop-blur-sm" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="match-center-title" tabIndex={-1} className="mx-auto my-6 w-full max-w-4xl rounded-[2rem] bg-white p-5 text-jso-ink shadow-2xl outline-none sm:p-8">
@@ -64,7 +75,10 @@ export default function MatchCenterModal({ match, onClose, token, onRequireLogin
             <p className="text-xs font-extrabold tracking-[0.2em] text-jso-blue">MATCH CENTER</p>
             <h2 id="match-center-title" className="mt-2 text-2xl font-black sm:text-3xl">{sides.home.name} <span className="text-slate-400">–</span> {sides.away.name}</h2>
           </div>
-          <button type="button" onClick={onClose} aria-label="Fermer le Match Center" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-slate-200 transition hover:bg-slate-100"><X size={18} aria-hidden="true" /></button>
+          <div className="flex shrink-0 gap-2">
+            <button type="button" onClick={async () => { try { await navigator.clipboard.writeText(sharePreviewUrl('match', details.id)); setCopied(true) } catch { setCopied(false) } }} aria-label="Copier le lien du match" className="inline-flex h-10 items-center gap-2 rounded-full border border-slate-200 px-3 text-sm font-bold"><Copy size={16} aria-hidden="true" />{copied ? 'Copié' : 'Lien'}</button>
+            <button type="button" onClick={onClose} aria-label="Fermer le Match Center" className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 transition hover:bg-slate-100"><X size={18} aria-hidden="true" /></button>
+          </div>
         </div>
 
         <div className="mt-7 rounded-[1.7rem] bg-jso-navy p-5 text-white sm:p-7">

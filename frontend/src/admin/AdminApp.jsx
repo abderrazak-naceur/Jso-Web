@@ -32,6 +32,7 @@ import CashDonationsModule from './CashDonations'
 import { adminApi } from './api'
 import ContentModule from './content/ContentModule'
 import { ADMIN_NAVIGATION, ADMIN_CATEGORY_ORDER, ADMIN_PERMISSION_BY_ID } from './navigation'
+import { adminSectionFromPath, adminSectionUrl } from './adminRoutes'
 import ClubSettingsModule from './club/ClubSettingsModule'
 import SecurityModule from './system/SecurityModule'
 import MediaModule from './content/MediaModule'
@@ -78,7 +79,7 @@ function Login({ onLogin }) {
 
 function AdminDashboard({ user, onLogout }) {
   const [open, setOpen] = useState(false)
-  const [section, setSection] = useState('dashboard')
+  const [section, setSection] = useState(() => adminSectionFromPath())
   const [stats, setStats] = useState(null)
   const [error, setError] = useState('')
 
@@ -100,9 +101,32 @@ function AdminDashboard({ user, onLogout }) {
   async function loadDashboard() {
     try { setStats(await adminApi('/admin/dashboard')); setError('') } catch (e) { setError(e.message) }
   }
-  useEffect(() => { if (section === 'dashboard') loadDashboard() }, [section])
+  useEffect(() => {
+    if (section !== 'dashboard') return
+    if (visibleItems.some(([id]) => id === 'dashboard')) loadDashboard()
+    else if (visibleItems[0]) {
+      const next = visibleItems[0][0]
+      window.history.replaceState({}, '', adminSectionUrl(next))
+      setSection(next)
+    }
+  }, [section])
 
-  function navigate(next) { setSection(next); setOpen(false); setError('') }
+  useEffect(() => {
+    const onPopState = () => { setSection(adminSectionFromPath()); setError('') }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  function navigate(event, next) {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return
+    event.preventDefault()
+    const url = adminSectionUrl(next)
+    if (window.location.pathname !== url) window.history.pushState({}, '', url)
+    window.dispatchEvent(new PopStateEvent('popstate'))
+    setSection(next)
+    setOpen(false)
+    setError('')
+  }
 
   function logout() {
     localStorage.removeItem('jso_admin_token')
@@ -113,7 +137,7 @@ function AdminDashboard({ user, onLogout }) {
   return <main className="min-h-screen bg-jso-paper text-jso-ink">
     <aside className={'fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-slate-200 bg-white transition-transform ' + (open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0')}>
       <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-jso-navy font-black text-jso-gold">JSO</span><div><p className="font-black">JSO Admin</p><p className="text-xs text-slate-400">{role}</p></div></div><button className="lg:hidden" onClick={() => setOpen(false)}><X /></button></div>
-      <nav className="jso-scroll flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4">{groupedItems.map(([category, list]) => <div key={category} className="space-y-1"><p className="px-4 pb-1 pt-2 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">{category}</p>{list.map(([id,label,Icon]) => <button key={id} onClick={() => navigate(id)} className={'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold transition-colors ' + (section === id ? 'bg-jso-navy text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100')}><Icon size={18}/>{label}</button>)}</div>)}</nav>
+      <nav className="jso-scroll flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4">{groupedItems.map(([category, list]) => <div key={category} className="space-y-1"><p className="px-4 pb-1 pt-2 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">{category}</p>{list.map(([id,label,Icon]) => <a key={id} href={adminSectionUrl(id)} onClick={(event) => navigate(event, id)} aria-current={section === id ? 'page' : undefined} className={'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold transition-colors ' + (section === id ? 'bg-jso-navy text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100')}><Icon size={18}/>{label}</a>)}</div>)}</nav>
       <div className="border-t border-slate-100 px-4 py-4"><button onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 transition-colors hover:bg-red-50 hover:text-red-700"><LogOut size={18}/>Déconnexion</button></div>
     </aside>
     <div className="lg:pl-72">
@@ -124,6 +148,9 @@ function AdminDashboard({ user, onLogout }) {
       </header>
       <section className="mx-auto max-w-7xl p-5 lg:p-8">
         {error && <div className="mb-6 rounded-2xl bg-red-50 p-4 font-semibold text-red-700">{error}</div>}
+        {!section && <div role="alert" className="rounded-[1.5rem] bg-white p-8 text-slate-600">Page admin introuvable. <a href="/admin" className="font-bold text-jso-blue underline">Ouvrir le tableau de bord</a></div>}
+        {section && !visibleItems.some(([id]) => id === section) && <div role="alert" className="rounded-[1.5rem] bg-white p-8 text-slate-600">Accès refusé à cette section.</div>}
+        {visibleItems.some(([id]) => id === section) && <>
         {section === 'dashboard' && <DashboardStats stats={stats}/>}
         {section === 'club' && <ClubSettingsModule onError={setError}/>}
         {section === 'teams' && <TeamsModule onError={setError}/>}
@@ -168,6 +195,7 @@ function AdminDashboard({ user, onLogout }) {
         {section === 'documents' && <DocumentsModule onError={setError}/>}
         {section === 'faq' && <FaqModule onError={setError}/>}
         {section === 'settings' && <SettingsModule onError={setError}/>}
+        </>}
       </section>
     </div>
   </main>

@@ -114,7 +114,7 @@ Documentation de référence : [docs/AGENT_ORGANIZATION.md](docs/AGENT_ORGANIZAT
 
 ## 🧭 Cosa manca da sviluppare
 
-Questa sezione riflette le **funzioni presenti nel codice** al 7 ottobre 2026. Legenda: ✅ implementato · 🟡 parziale o da collaudare · ⛔ assente. La presenza di API e UI non equivale a un servizio attivo in produzione.
+Questa sezione riflette le **funzioni presenti nel codice** all'8 ottobre 2026. Legenda: ✅ implementato · 🟡 parziale o da collaudare · ⛔ assente. La presenza di API e UI non equivale a un servizio attivo in produzione.
 
 ### Riepilogo per feature
 
@@ -129,6 +129,7 @@ Questa sezione riflette le **funzioni presenti nel codice** al 7 ottobre 2026. L
 | Streaming di partite a pagamento | ✅ | ✅ | 🟡 | Configurare provider e video, poi collaudare acquisto, webhook e accesso alla visione |
 | Finanze, donazioni e ricevute | ✅ | ✅ | 🟡 | Verificare operatività, riconciliazione e report con dati reali |
 | Homepage Builder e link aggiuntivi di menu/footer | ✅ | ✅ | 🟡 | Il builder riordina solo sezioni note; i link configurati si aggiungono alla navigazione fissa |
+| Link diretti admin e contenuti pubblici | ✅ | ✅ | 🟡 | URL per sezioni, notizie, prodotti, match ed eventi implementati; verificare fallback e anteprime social sul dominio pubblicato |
 | Shop e ordini | ✅ | ✅ | 🟡 | Configurare pagamenti, catalogo e gestione ordini; collaudare il ciclo completo |
 | Biglietteria, QR e check-in | ✅ | ✅ | 🟡 | Collaudo vendita, capacità, scanner e ingressi sul campo |
 | Membership tifosi | ✅ | ✅ | 🟡 | Configurare piani e pagamenti; verificare attivazione e rinnovi |
@@ -621,6 +622,7 @@ The administration layer is designed around role-based access:
 | Document | Purpose |
 |---|---|
 | `docs/ROADMAP.md` | Product and development roadmap |
+| `docs/ROUTING.md` | Link diretti admin e frontend, condivisione e anteprime |
 | `docs/NEXT_STEPS.md` | Development sequence |
 | `docs/MOBILE_ANALYSIS.md` | Flutter app prerequisites and scope |
 | `docs/FIREBASE_VS_POSTGRESQL_ANALYSIS.md` | Firebase and PostgreSQL cost analysis |

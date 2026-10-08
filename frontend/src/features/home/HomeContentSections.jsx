@@ -46,6 +46,7 @@ export function ShopSection({ section, products, cart, onOpenCart, status = 'rea
               {products.map((rawProduct) => {
                 const product = {
                   id: pick(rawProduct, 'id', 'Id'),
+                  slug: pick(rawProduct, 'slug', 'Slug'),
                   name: pick(rawProduct, 'name', 'Name') || 'Produit JSO',
                   description: pick(rawProduct, 'description', 'Description'),
                   price: pick(rawProduct, 'price', 'Price') || 0,
@@ -63,7 +64,7 @@ export function ShopSection({ section, products, cart, onOpenCart, status = 'rea
                     </div>
                     <div className="flex flex-1 flex-col p-5">
                       {product.category && <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-jso-blue">{product.category}</p>}
-                      <h3 className="mt-1 text-xl font-black text-jso-ink">{product.name}</h3>
+                      <h3 className="mt-1 text-xl font-black text-jso-ink">{product.slug ? <a href={'/boutique/' + encodeURIComponent(product.slug)} className="hover:text-jso-blue hover:underline">{product.name}</a> : product.name}</h3>
                       {product.description && <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">{product.description}</p>}
                       <div className="mt-auto flex items-center justify-between gap-3 pt-5">
                         <span className="text-xl font-black text-jso-navy">{formatMoney(product.price, product.currency)}</span>
@@ -95,6 +96,7 @@ export function AgendaSection({ section, events, status = 'ready' }) {
       <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {events.length > 0 ? events.map((event) => {
           const id = pick(event, 'id', 'Id')
+          const slug = pick(event, 'slug', 'Slug')
           const title = pick(event, 'title', 'Title')
           const startAt = pick(event, 'startAt', 'StartAt')
           const endAt = pick(event, 'endAt', 'EndAt')
@@ -103,7 +105,7 @@ export function AgendaSection({ section, events, status = 'ready' }) {
           return (
             <article key={id || `${title}-${startAt}`} className="rounded-[1.7rem] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/35">
               <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.15em] text-jso-blue"><CalendarDays size={16} aria-hidden="true" />{formatDate(startAt, { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-              <h3 className="mt-4 text-2xl font-black">{title}</h3>
+              <h3 className="mt-4 text-2xl font-black">{slug ? <a href={'/agenda/' + encodeURIComponent(slug)} className="hover:text-jso-blue hover:underline">{title}</a> : title}</h3>
               {location && <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-slate-500"><MapPin size={15} aria-hidden="true" />{location}</p>}
               {description && <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-500">{description}</p>}
               <p className="mt-5 text-sm font-black text-jso-navy">{formatTime(startAt)}{endAt ? ` → ${formatTime(endAt)}` : ''}</p>
@@ -239,7 +241,7 @@ export function InfoSection({ section, club, documents, faq, documentsStatus = '
               <span className="grid h-12 w-12 place-items-center rounded-2xl bg-jso-gold text-jso-navy"><MapPin size={22} aria-hidden="true" /></span>
               <h3 className="mt-8 text-2xl font-black">Retrouvez le club</h3>
               <p className="mt-3 text-white/65">Stade d’Oudhref<br />{city}, {country}</p>
-              <a href="#matches" className="mt-7 inline-flex items-center gap-2 text-sm font-extrabold text-jso-gold">Voir le calendrier <ArrowUpRight size={15} aria-hidden="true" /></a>
+              <a href="/matchs" className="mt-7 inline-flex items-center gap-2 text-sm font-extrabold text-jso-gold">Voir le calendrier <ArrowUpRight size={15} aria-hidden="true" /></a>
             </article>
 
             {documentsStatus === 'error' ? (

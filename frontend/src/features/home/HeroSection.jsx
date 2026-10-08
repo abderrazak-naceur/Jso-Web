@@ -48,10 +48,10 @@ export default function HeroSection({ content, club }) {
             {content.hero_description || club?.description || club?.Description || `Toute l'actualité de ${CLUB_NAME}, les matchs et la vie du club au même endroit.`}
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
-            <a href="#matches" className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-jso-gold px-6 py-4 font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-white sm:w-auto">
+            <a href="/matchs" className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-jso-gold px-6 py-4 font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-white sm:w-auto">
               Suivre les matchs <ArrowUpRight size={18} aria-hidden="true" />
             </a>
-            <a href="#news" className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-4 font-extrabold text-white transition hover:bg-white/20 sm:w-auto">
+            <a href="/actualites" className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-4 font-extrabold text-white transition hover:bg-white/20 sm:w-auto">
               Les actualités <ArrowDown size={18} aria-hidden="true" />
             </a>
           </div>

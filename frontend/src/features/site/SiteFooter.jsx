@@ -3,6 +3,7 @@ import { ArrowUp, ArrowUpRight, Check, Copy, Facebook, Instagram, Music2, Shield
 import { newsletterApi } from '../../lib/api'
 import { CLUB_FULL_NAME, CLUB_SOCIALS, CREST_SRC } from './brand'
 import { useI18n } from '../../i18n/index.jsx'
+import { sectionUrl } from './publicRoutes'
 
 const SOCIAL_ICONS = { facebook: Facebook, instagram: Instagram, tiktok: Music2 }
 
@@ -116,7 +117,7 @@ export default function SiteFooter({ sections, extraLinks = [], homeHref = '' })
           <nav aria-label={t('common.footerNavigation')}>
             <p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">{t('common.footerExplore')}</p>
             <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
-              {sections.map((section) => <li key={section.id}><a href={`${homeHref}#${section.id}`} className="text-sm font-semibold text-white/65 transition hover:text-white">{section.label}</a></li>)}
+              {sections.map((section) => <li key={section.id}><a href={sectionUrl(section.id)} className="text-sm font-semibold text-white/65 transition hover:text-white">{section.label}</a></li>)}
               {extraLinks.map((link) => (
                 <li key={link.id}>
                   <a

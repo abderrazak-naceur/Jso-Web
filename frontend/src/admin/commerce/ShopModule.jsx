@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Pencil, X, Save } from 'lucide-react'
+import { Link2, Pencil, X, Save } from 'lucide-react'
 import Field from '../components/Field'
 import { adminApi } from '../api'
 import { emptyProduct } from '../constants'
+import { adminEditIdFromPath, adminEditUrl, navigateAdminEdit } from '../adminRoutes'
+import { sharePreviewUrl } from '../../lib/sharePreviewUrl'
 export default function ShopModule({ onError }) {
   const [products, setProducts] = useState([])
   const [form, setForm] = useState(emptyProduct)
@@ -16,13 +18,28 @@ export default function ShopModule({ onError }) {
     finally { setLoading(false) }
   }
   useEffect(() => { load() }, [])
+  useEffect(() => {
+    function syncRoute() {
+      const id = adminEditIdFromPath('shop')
+      if (!id) { setForm(emptyProduct); setEditing(null); return }
+      const item = products.find((product) => String(product.id) === id)
+      if (item) setSelected(item)
+      else if (products.length) onError('Produit admin introuvable.')
+    }
+    syncRoute()
+    window.addEventListener('popstate', syncRoute)
+    return () => window.removeEventListener('popstate', syncRoute)
+  }, [products, onError])
 
   function slugify(s) { return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') }
-  function edit(p) {
+  function setSelected(p) {
     setEditing(p.id)
     setForm({ name: p.name || '', slug: p.slug || '', description: p.description || '', price: p.price ?? '', currency: p.currency || 'TND', imageUrl: p.imageUrl || '', category: p.category || '', stock: p.stock ?? 0, isActive: p.isActive })
   }
-  function reset() { setForm(emptyProduct); setEditing(null) }
+  function edit(p) { navigateAdminEdit('shop', p.id); setSelected(p) }
+  function reset() { navigateAdminEdit('shop', null); setForm(emptyProduct); setEditing(null) }
+  async function copyAdminLink(p) { try { await navigator.clipboard.writeText(window.location.origin + adminEditUrl('shop', p.id)) } catch { onError('Impossible de copier le lien admin.') } }
+  async function copyPublicLink(p) { try { await navigator.clipboard.writeText(sharePreviewUrl('product', p.slug)) } catch { onError('Impossible de copier le lien public.') } }
 
   async function save(e) {
     e.preventDefault()
@@ -47,7 +64,7 @@ export default function ShopModule({ onError }) {
 
   async function remove(id) {
     if (!confirm('Supprimer ce produit ?')) return
-    try { await adminApi('/admin/shop/products/' + id, { method: 'DELETE' }); await load() }
+    try { await adminApi('/admin/shop/products/' + id, { method: 'DELETE' }); if (editing === id) reset(); await load() }
     catch (e) { onError(e.message) }
   }
 
@@ -59,7 +76,7 @@ export default function ShopModule({ onError }) {
       <div className="mt-5 overflow-x-auto">
         {loading ? <p className="text-sm text-slate-400">Chargement…</p>
           : products.length === 0 ? <p className="text-sm text-slate-400">Aucun produit. Créez le premier avec le formulaire.</p>
-          : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Produit</th><th className="p-2">Prix</th><th className="p-2">Stock</th><th className="p-2">Actif</th><th className="p-2"></th></tr></thead><tbody>{products.map(p => <tr key={p.id} className="border-b last:border-0"><td className="p-2"><b>{p.name}</b><div className="text-xs text-slate-400">{p.category || '—'}</div></td><td className="p-2 whitespace-nowrap">{money(p.price, p.currency)}</td><td className="p-2">{p.stock}</td><td className="p-2">{p.isActive ? 'Oui' : 'Non'}</td><td className="p-2 whitespace-nowrap"><button onClick={() => edit(p)} className="mr-2 text-jso-blue"><Pencil size={16}/></button><button onClick={() => remove(p.id)} className="text-red-600"><X size={16}/></button></td></tr>)}</tbody></table>}
+          : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Produit</th><th className="p-2">Prix</th><th className="p-2">Stock</th><th className="p-2">Actif</th><th className="p-2"></th></tr></thead><tbody>{products.map(p => <tr key={p.id} className="border-b last:border-0"><td className="p-2"><b>{p.name}</b><div className="text-xs text-slate-400">{p.category || '—'}</div></td><td className="p-2 whitespace-nowrap">{money(p.price, p.currency)}</td><td className="p-2">{p.stock}</td><td className="p-2">{p.isActive ? 'Oui' : 'Non'}</td><td className="p-2 whitespace-nowrap"><button onClick={() => edit(p)} title="Modifier" className="mr-2 text-jso-blue"><Pencil size={16}/></button><button onClick={() => copyAdminLink(p)} title="Copier le lien admin" className="mr-2 text-jso-blue"><Link2 size={16}/></button>{p.isActive && p.slug && <><a href={'/boutique/' + encodeURIComponent(p.slug)} target="_blank" rel="noopener noreferrer" title="Voir le produit" className="mr-2 text-jso-blue">Voir</a><button onClick={() => copyPublicLink(p)} title="Copier le lien public" className="mr-2 text-xs font-bold text-jso-blue">Copier</button></>}<button onClick={() => remove(p.id)} title="Supprimer" className="text-red-600"><X size={16}/></button></td></tr>)}</tbody></table>}
       </div>
     </div>
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">

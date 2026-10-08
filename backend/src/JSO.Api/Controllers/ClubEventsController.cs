@@ -39,18 +39,20 @@ public sealed class ClubEventsController(JsoDbContext db, ContentTranslationServ
     {
         var ev = await db.ClubEvents.AsNoTracking()
             .Where(x => x.IsPublished && x.Slug == slug)
-            .Select(x => new
-            {
-                x.Id,
-                x.Title,
-                x.Slug,
-                x.Description,
-                x.StartAt,
-                x.EndAt,
-                x.Location
-            })
             .FirstOrDefaultAsync(ct);
 
-        return ev is null ? NotFound() : Ok(ev);
+        if (ev is null) return NotFound();
+        var language = RequestLanguage.Get(Request);
+        var map = await translations.LoadAsync("ClubEvent", [ev.Id], ["title", "description", "location"], language, ct);
+        return Ok(new
+        {
+            ev.Id,
+            Title = ContentTranslationService.ResolveFromMap(map, "ClubEvent", ev.Id, "title", ev.Title, language),
+            ev.Slug,
+            Description = ContentTranslationService.ResolveFromMap(map, "ClubEvent", ev.Id, "description", ev.Description, language),
+            ev.StartAt,
+            ev.EndAt,
+            Location = ContentTranslationService.ResolveFromMap(map, "ClubEvent", ev.Id, "location", ev.Location, language)
+        });
     }
 }

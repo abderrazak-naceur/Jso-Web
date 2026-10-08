@@ -17,6 +17,8 @@ import NewsSection from './NewsSection'
 import HighlightsCarousel from './HighlightsCarousel'
 import SellingBand from './SellingBand'
 import { HeartHandshake } from 'lucide-react'
+import ProductDetail from '../shop/ProductDetail'
+import EventDetail from './EventDetail'
 import Reveal from '../site/Reveal'
 import { formatDate } from '../../lib/format'
 import { orderHomeSections } from './useHomeLayout'
@@ -54,7 +56,7 @@ function buildHighlights({ data, onOpenMatch, onOpenArticle }) {
     title: 'Maillots & articles officiels',
     subtitle: 'La boutique du club',
     cta: 'Découvrir',
-    onSelect: () => { window.location.hash = '#shop' },
+    onSelect: () => { window.location.assign('/boutique') },
   })
   items.push({
     key: 'donation',
@@ -70,7 +72,7 @@ function buildHighlights({ data, onOpenMatch, onOpenArticle }) {
     title: 'Rejoignez les abonnés',
     subtitle: 'Soutenez la JSO toute la saison',
     cta: 'S’abonner',
-    onSelect: () => { window.location.hash = '#memberships' },
+    onSelect: () => { window.location.assign('/abonnements') },
   })
 
   return items
@@ -87,6 +89,9 @@ export default function HomePage({
   sections,
   hiddenSections,
   homeLayout,
+  focusSection,
+  productSlug,
+  eventSlug,
 }) {
   const sectionById = Object.fromEntries(sections.map((section) => [section.id, section]))
 
@@ -120,7 +125,7 @@ export default function HomePage({
       />
     ),
     club: () => <ClubSection key="club" section={sectionById.club} club={data.club} content={data.content} />,
-    shop: () => (
+    shop: () => productSlug ? <ProductDetail key="shop-product" slug={productSlug} cart={cart} onOpenCart={onOpenCart} /> : (
       <ShopSection
         key="shop"
         section={sectionById.shop}
@@ -164,7 +169,7 @@ export default function HomePage({
         status={data.sectionStatus.media}
       />
     ),
-    events: () => (
+    events: () => eventSlug ? <EventDetail key="event-detail" slug={eventSlug} /> : (
       <AgendaSection
         key="events"
         section={sectionById.events}
@@ -220,9 +225,13 @@ export default function HomePage({
 
   const orderedSections = orderHomeSections(defaultSectionOrder, homeLayout)
     .filter((key) => !hiddenSections.includes(key))
+  const pageSections = focusSection
+    ? defaultSectionOrder.filter((key) => key === focusSection && !hiddenSections.includes(key))
+    : orderedSections
 
   return (
     <main id="main-content" tabIndex={-1}>
+      {focusSection ? <div className="mx-auto max-w-7xl px-5 pt-8 lg:px-8"><a href="/" className="text-sm font-bold text-jso-blue underline">← Accueil</a></div> : <>
       <HeroSection content={data.content} club={data.club} />
       <Reveal><SellingBand nextMatch={data.nextMatch} /></Reveal>
       <Reveal>
@@ -234,7 +243,9 @@ export default function HomePage({
           })}
         />
       </Reveal>
-      {orderedSections.map((key) => {
+      </>}
+      {focusSection && !pageSections.includes(focusSection) && <div role="alert" className="mx-auto max-w-7xl px-5 py-16 text-slate-600 lg:px-8">Cette page n'est pas disponible pour le moment.</div>}
+      {pageSections.map((key) => {
         const rendered = sectionRenderers[key]?.()
         return rendered ? <Reveal key={key}>{rendered}</Reveal> : null
       })}

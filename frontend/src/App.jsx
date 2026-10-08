@@ -16,6 +16,8 @@ import { useCart } from './features/shop/useCart'
 import SiteFooter from './features/site/SiteFooter'
 import SiteHeader from './features/site/SiteHeader'
 import { visibleSections } from './features/site/navigation'
+import { eventSlugFromPath, matchIdFromPath, productSlugFromPath, sectionFromPath } from './features/site/publicRoutes'
+import { useDocumentTitle } from './lib/useDocumentTitle'
 import { useActiveSection } from './features/site/useActiveSection'
 import { useNavigation } from './features/site/useNavigation'
 import { useHomeLayout } from './features/home/useHomeLayout'
@@ -27,7 +29,10 @@ function App() {
   const cart = useCart()
   const fan = useFanSession()
 
-  const [selectedMatch, setSelectedMatch] = useState(null)
+  const [selectedMatch, setSelectedMatch] = useState(() => {
+    const id = matchIdFromPath()
+    return id ? { id } : null
+  })
   // Seed the open article from a `/actualites/{slug}` deep-link so a shared
   // link (e.g. from Facebook) reopens the exact article. Only the slug is known
   // up front; ArticleModal fetches the full article by slug.
@@ -36,7 +41,7 @@ function App() {
     return slug ? { slug } : null
   })
 
-  // Open an article and mirror it into the URL; close and restore the home URL.
+  // Open an article and mirror it into the URL; close and restore its source page.
   function openArticle(article) {
     setSelectedArticle(article)
     if (article?.slug) pushArticleUrl(article.slug)
@@ -46,12 +51,25 @@ function App() {
     restoreHomeUrl()
   }
 
+  function openMatch(match) {
+    if (!match?.id) return
+    setSelectedMatch(match)
+    const url = '/matchs/' + encodeURIComponent(match.id)
+    if (window.location.pathname !== url) window.history.pushState({ matchId: match.id }, '', url)
+  }
+  function closeMatch() {
+    setSelectedMatch(null)
+    if (matchIdFromPath()) window.history.replaceState({}, '', '/matchs')
+  }
+
   // Keep the modal in sync with browser Back/Forward: navigating away from a
   // `/actualites/{slug}` URL closes the article, navigating onto one opens it.
   useEffect(() => {
     function onPopState() {
       const slug = slugFromPath()
       setSelectedArticle(slug ? { slug } : null)
+      const matchId = matchIdFromPath()
+      setSelectedMatch(matchId ? { id: matchId } : null)
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
@@ -83,6 +101,10 @@ function App() {
   const headerLinks = useNavigation('Header')
   const footerLinks = useNavigation('Footer')
   const homeLayout = useHomeLayout()
+  const focusSection = sectionFromPath()
+  const productSlug = productSlugFromPath()
+  const eventSlug = eventSlugFromPath()
+  useDocumentTitle(focusSection ? sections.find((item) => item.id === focusSection)?.label : null)
 
   function openAuth(mode) {
     setAuthMode(mode)
@@ -96,7 +118,7 @@ function App() {
       <SiteHeader
         sections={sections}
         extraLinks={headerLinks}
-        activeId={activeSection}
+        activeId={focusSection || activeSection}
         cartCount={cart.count}
         onOpenCart={() => setCartOpen(true)}
         user={fan.user}
@@ -113,11 +135,14 @@ function App() {
         fan={fan}
         onOpenCart={() => setCartOpen(true)}
         onOpenAuth={openAuth}
-        onOpenMatch={setSelectedMatch}
+        onOpenMatch={openMatch}
         onOpenArticle={openArticle}
         sections={sections}
         hiddenSections={hiddenSections}
         homeLayout={homeLayout}
+        focusSection={focusSection}
+        productSlug={productSlug}
+        eventSlug={eventSlug}
       />
 
       <SiteFooter sections={sections} extraLinks={footerLinks} />
@@ -125,10 +150,10 @@ function App() {
       {selectedMatch && (
         <MatchCenterModal
           match={selectedMatch}
-          onClose={() => setSelectedMatch(null)}
+          onClose={closeMatch}
           token={fan.token}
           onRequireLogin={() => {
-            setSelectedMatch(null)
+            closeMatch()
             openAuth('login')
           }}
         />

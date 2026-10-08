@@ -1,1 +1,17 @@
+/admin/*    /admin/index.html   200
+/matchs    /matchs/index.html   200
+/actualites    /actualites/index.html   200
+/equipe    /equipe/index.html   200
+/club    /club/index.html   200
+/boutique    /boutique/index.html   200
+/soutenir    /soutenir/index.html   200
+/abonnements    /abonnements/index.html   200
+/medias    /medias/index.html   200
+/agenda    /agenda/index.html   200
+/communaute    /communaute/index.html   200
+/musee    /musee/index.html   200
+/application    /application/index.html   200
+/partenaires    /partenaires/index.html   200
+/infos    /infos/index.html   200
+/billetterie    /billetterie/index.html   200
 /*    /index.html   200

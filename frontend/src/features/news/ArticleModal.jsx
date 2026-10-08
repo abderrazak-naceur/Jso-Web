@@ -7,17 +7,19 @@ import { useDialog } from '../site/useDialog'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import CommentsSection from '../community/CommentsSection'
 import ShareBar from './ShareBar'
-import { articleShareUrl } from './articleUrl'
+import { sharePreviewUrl } from '../../lib/sharePreviewUrl'
 
 export default function ArticleModal({ initialArticle, onClose, token, onRequireLogin }) {
   const [article, setArticle] = useState(initialArticle)
   const [metadata, setMetadata] = useState(null)
   const [loading, setLoading] = useState(Boolean(initialArticle.slug))
+  const [loadError, setLoadError] = useState('')
   const dialogRef = useDialog(onClose)
 
   useEffect(() => {
     setArticle(initialArticle)
     setMetadata(null)
+    setLoadError('')
     if (!initialArticle.slug) {
       setLoading(false)
       return undefined
@@ -31,7 +33,10 @@ export default function ArticleModal({ initialArticle, onClose, token, onRequire
         setMetadata(result?.metadata || null)
       })
       .catch((error) => {
-        if (error.name !== 'AbortError') setArticle(initialArticle)
+        if (error.name !== 'AbortError') {
+          setArticle(initialArticle)
+          setLoadError(error.message?.includes('404') ? "Cet article n'est plus disponible." : "Impossible de charger cet article pour le moment.")
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
@@ -62,14 +67,15 @@ export default function ArticleModal({ initialArticle, onClose, token, onRequire
             {author && <p className="flex items-center gap-2"><User size={15} aria-hidden="true" />{author}</p>}
           </div>
           {article.excerpt && <p className="mt-7 text-xl font-semibold leading-8 text-slate-700">{article.excerpt}</p>}
-          {loading ? <p role="status" className="mt-7 text-sm text-slate-400">Chargement de l’article…</p> : (
+          {loadError && <p role="alert" className="mt-7 rounded-xl bg-amber-50 p-4 text-amber-900">{loadError}</p>}
+          {loading ? <p role="status" className="mt-7 text-sm text-slate-400">Chargement de l’article…</p> : !loadError && (
             <div className="mt-7 space-y-5 text-base leading-8 text-slate-600">
               {paragraphs.length > 0 ? paragraphs.map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 20)}`}>{paragraph}</p>) : <p>Le contenu complet sera disponible prochainement.</p>}
             </div>
           )}
-          {article.slug && (
+          {article.slug && !loadError && (
             <div className="mt-8 border-t border-slate-200 pt-6">
-              <ShareBar url={articleShareUrl(article.slug)} title={article.title} />
+              <ShareBar url={sharePreviewUrl('article', article.slug)} title={article.title} />
             </div>
           )}
           {article.id && (

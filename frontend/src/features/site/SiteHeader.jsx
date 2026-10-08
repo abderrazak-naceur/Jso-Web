@@ -5,6 +5,7 @@ import { NEWS_LIST_PATH } from '../news/articleUrl'
 import { BILLETTERIE_PATH } from '../tickets/ticketsUrl'
 import { CREST_SRC } from './brand'
 import { useI18n } from '../../i18n/index.jsx'
+import { sectionUrl } from './publicRoutes'
 
 const desktopLinkClass = (active) =>
   `rounded-full px-3 py-2 text-sm font-bold transition ${active ? 'bg-white/10 text-jso-gold' : 'text-white/75 hover:bg-white/10 hover:text-white'}`
@@ -85,7 +86,7 @@ export default function SiteHeader({
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-jso-navy/95 text-white backdrop-blur-xl">
       <div className="mx-auto flex h-18 max-w-7xl items-center gap-3 px-5 lg:px-8">
-        <a href="#home" onClick={closeMenus} aria-label={`JSO Oudhref — ${t('common.home')}`} className="flex shrink-0 items-center gap-3 rounded-xl">
+        <a href="/" onClick={closeMenus} aria-label={`JSO Oudhref — ${t('common.home')}`} className="flex shrink-0 items-center gap-3 rounded-xl">
           <img src={CREST_SRC} alt="" className="h-11 w-11 object-contain" />
           <span className="leading-none">
             <span className="block text-lg font-black tracking-tight">JSO</span>
@@ -95,7 +96,7 @@ export default function SiteHeader({
 
         <nav aria-label={t('common.mainNavigation')} className="ml-4 hidden items-center gap-1 lg:flex xl:ml-8">
           {primary.map((section) => (
-            <a key={section.id} href={`#${section.id}`} onClick={closeMenus} aria-current={current(section.id)} className={desktopLinkClass(activeId === section.id)}>
+            <a key={section.id} href={sectionUrl(section.id)} onClick={closeMenus} aria-current={current(section.id)} className={desktopLinkClass(activeId === section.id)}>
               {section.label}
             </a>
           ))}
@@ -137,7 +138,7 @@ export default function SiteHeader({
                     {secondary.map((section) => (
                       <li key={section.id}>
                         <a
-                          href={`#${section.id}`}
+                          href={sectionUrl(section.id)}
                           onClick={closeMenus}
                           aria-current={current(section.id)}
                           className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold transition hover:bg-slate-100 ${activeId === section.id ? 'text-jso-blue' : 'text-jso-ink'}`}
@@ -218,7 +219,7 @@ export default function SiteHeader({
           </div>
 
           <a
-            href="#matches"
+            href="/matchs"
             onClick={closeMenus}
             className="hidden h-11 items-center gap-2 rounded-full bg-jso-gold px-5 text-sm font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-white xl:inline-flex"
           >
@@ -248,13 +249,13 @@ export default function SiteHeader({
             <nav aria-label={t('common.mainNavigation')}>
               <ul className="divide-y divide-white/10">
                 <li>
-                  <a href="#home" onClick={closeMenus} aria-current={current('home')} className={`flex items-center justify-between py-4 text-xl font-black ${activeId === 'home' ? 'text-jso-gold' : 'text-white'}`}>
+                  <a href="/" onClick={closeMenus} aria-current={current('home')} className={`flex items-center justify-between py-4 text-xl font-black ${activeId === 'home' ? 'text-jso-gold' : 'text-white'}`}>
                     {t('common.home')}</a>
                 </li>
                 {primary.map((section) => (
                   <li key={section.id}>
                     <a
-                      href={`#${section.id}`}
+                      href={sectionUrl(section.id)}
                       onClick={closeMenus}
                       aria-current={current(section.id)}
                       className={`flex items-center justify-between py-4 text-xl font-black ${activeId === section.id ? 'text-jso-gold' : 'text-white'}`}
@@ -291,7 +292,7 @@ export default function SiteHeader({
                     {secondary.map((section) => (
                       <li key={section.id}>
                         <a
-                          href={`#${section.id}`}
+                          href={sectionUrl(section.id)}
                           onClick={closeMenus}
                           aria-current={current(section.id)}
                           className={`block rounded-xl px-4 py-3 text-sm font-bold transition hover:bg-white/10 ${activeId === section.id ? 'bg-white/10 text-jso-gold' : 'bg-white/5 text-white/85'}`}
@@ -352,7 +353,7 @@ export default function SiteHeader({
               )}
             </div>
 
-            <a href="#matches" onClick={closeMenus} className="mt-4 flex items-center justify-center gap-2 rounded-full bg-jso-gold px-6 py-4 font-extrabold text-jso-navy transition hover:bg-white">
+            <a href="/matchs" onClick={closeMenus} className="mt-4 flex items-center justify-center gap-2 rounded-full bg-jso-gold px-6 py-4 font-extrabold text-jso-navy transition hover:bg-white">
               Match Center <ArrowUpRight size={18} aria-hidden="true" />
             </a>
           </div>
