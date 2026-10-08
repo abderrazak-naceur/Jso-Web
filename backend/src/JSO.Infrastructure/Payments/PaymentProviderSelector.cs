@@ -1,22 +1,25 @@
 namespace JSO.Infrastructure.Payments;
 
-// Routes a checkout to the correct provider based on the buyer's country.
-// Tunisia -> Flouci (TND). Everything else -> Stripe (international).
 public sealed class PaymentProviderSelector(
     FlouciPaymentProvider flouci,
-    StripePaymentProvider stripe)
+    StripePaymentProvider stripe,
+    KonnectPaymentProvider konnect)
 {
     public FlouciPaymentProvider Flouci { get; } = flouci;
-    public StripePaymentProvider Stripe { get; } = stripe;\n    public KonnectPaymentProvider Konnect { get; } = konnect;
+    public StripePaymentProvider Stripe { get; } = stripe;
+    public KonnectPaymentProvider Konnect { get; } = konnect;
 
-    // Returns true when the (normalised) country is Tunisia. Accepts the ISO
-    // alpha-2 code "TN" as well as common French/English names.
     public static bool IsTunisia(string? country)
     {
         var c = country?.Trim().ToUpperInvariant();
         return c is "TN" or "TUN" or "TUNISIA" or "TUNISIE";
     }
 
-    public IPaymentProvider Select(string? country) =>
-        IsTunisia(country) ? Flouci : (IPaymentProvider)Stripe;
+    public IPaymentProvider Select(string? country)
+    {
+        if (IsTunisia(country))
+            return Konnect.IsConfigured ? Konnect : Flouci;
+
+        return Stripe;
+    }
 }
