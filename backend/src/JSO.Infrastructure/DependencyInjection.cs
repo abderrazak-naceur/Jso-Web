@@ -52,6 +52,7 @@ public static class DependencyInjection
         });
 
         services.AddPayments(configuration);
+        services.AddScoped<PaymentConfigurationStore>();
         services.AddSocial(configuration);
 
         return services;
