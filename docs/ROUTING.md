@@ -6,6 +6,12 @@ Ogni voce della barra laterale ha un URL stabile: `/admin/<id-sezione>` (dashboa
 
 Gli editor di notizie, prodotti, match ed eventi del club supportano `/admin/<sezione>/<id>/edit`. Le rispettive liste hanno un pulsante per copiare il link admin. Il percorso usa l'ID stabile del record: modificare il titolo o lo slug non lo invalida.
 
+La barra laterale raggruppa le funzioni per area (biglietteria, finanze e doni, boutique e partner, sport, contenuti, comunità, sistema). La ricerca filtra solo le voci accessibili al ruolo; `Ctrl+K` o `⌘K` porta al campo di ricerca. Il dashboard mostra collegamenti rapidi anche quando le statistiche API non sono disponibili. Il pulsante «Copier le lien» condivide l'URL della sezione corrente; «Voir sur le site» apre la pagina pubblica corrispondente quando esiste.
+
+Per aggiungere una sezione admin, registrare lo stesso ID in `frontend/src/admin/navigation.js` (etichetta, ruolo, categoria e permesso) e in `frontend/src/admin/moduleRegistry.js` (import del modulo). Il test `frontend/tests/routes.test.mjs` verifica che nessuna voce resti senza modulo o categoria. I moduli sono caricati solo all'apertura della relativa sezione; un errore di caricamento resta confinato nella sezione.
+
+I controller API admin sono raccolti in `backend/src/JSO.Api/Controllers/Admin/` per dominio: `Commerce`, `Community`, `Content`, `Operations`, `Sport` e `System`. Namespace, attributi di routing e autorizzazioni sono invariati; lo spostamento dei file non modifica gli URL `/api/admin/*`.
+
 ## Pubblico
 
 Le sezioni principali hanno pagine dedicate, ad esempio `/matchs`, `/boutique`, `/abonnements`, `/agenda`, `/equipe`, `/club`. `/actualites`, `/billetterie` e `/soutenir` mantengono i percorsi già esistenti. Le sezioni della vecchia homepage e i link `/#...` restano raggiungibili.

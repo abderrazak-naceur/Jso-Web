@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
-import { ArrowLeft, CalendarDays, MapPin, Ticket, Minus, Plus, LogIn, X, CheckCircle2 } from 'lucide-react'
+import { CalendarDays, MapPin, Ticket, Minus, Plus, LogIn, X, CheckCircle2 } from 'lucide-react'
 import { ticketApi } from '../../lib/api'
 import { formatDateTime, formatMoney } from '../../lib/format'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { useFanSession } from '../account/useFanSession'
 import AuthModal from '../account/AuthModal'
 import PayOnlineButton from '../shop/PayOnlineButton'
-import { CREST_SRC } from '../site/brand'
+import StandalonePageHeader from '../site/StandalonePageHeader'
 
 // Standalone public billetterie page (route /billetterie). It is the first and
 // only place a fan can actually buy match tickets in the web app: it lists every
@@ -213,31 +213,9 @@ export default function BilletteriePage() {
 
   return (
     <div className="min-h-screen bg-jso-paper text-jso-ink">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-jso-navy/95 text-white backdrop-blur-xl">
-        <div className="mx-auto flex h-18 max-w-7xl items-center gap-3 px-5 lg:px-8">
-          <a href="/" aria-label="JSO Oudhref — accueil" className="flex shrink-0 items-center gap-3 rounded-xl">
-            <img src={CREST_SRC} alt="" className="h-11 w-11 object-contain" />
-            <span className="leading-none">
-              <span className="block text-lg font-black tracking-tight">JSO</span>
-              <span className="mt-1 block whitespace-nowrap text-[10px] font-bold tracking-[0.2em] text-white/55">OUDHREF · TUNISIE</span>
-            </span>
-          </a>
-          <div className="ml-auto flex items-center gap-2">
-            {fan.status !== 'authenticated' && (
-              <button
-                type="button"
-                onClick={openAuth}
-                className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-sm font-extrabold text-white transition hover:bg-white/10"
-              >
-                <LogIn size={16} aria-hidden="true" /> Connexion
-              </button>
-            )}
-            <a href="/" className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-sm font-extrabold text-white transition hover:bg-white/10">
-              <ArrowLeft size={16} aria-hidden="true" /> Accueil
-            </a>
-          </div>
-        </div>
-      </header>
+      <StandalonePageHeader>
+        {fan.status !== 'authenticated' && <button type="button" onClick={openAuth} className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-sm font-extrabold text-white transition hover:bg-white/10"><LogIn size={16} aria-hidden="true" /> Connexion</button>}
+      </StandalonePageHeader>
 
       <main id="main-content" tabIndex={-1} className="mx-auto max-w-5xl px-5 py-16 lg:px-8">
         <p className="text-xs font-extrabold tracking-[0.2em] text-jso-blue">BILLETTERIE</p>

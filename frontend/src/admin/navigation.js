@@ -4,14 +4,14 @@ export const ADMIN_NAVIGATION = [
 
     ['tickets', 'Billetterie', Ticket, ['SuperAdmin','ClubAdmin','MatchManager','TicketSeller','TicketSupervisor'], 'Billetterie & Abonnements'],
     ['memberships', 'Abonnements', CreditCard, ['SuperAdmin','ClubAdmin','SeasonManager'], 'Billetterie & Abonnements'],
-    ['finance', 'Finances', Wallet, ['SuperAdmin','ClubAdmin','FinanceManager'], 'Billetterie & Abonnements'],
-    ['donations', 'Dons & collecte', HeartHandshake, ['SuperAdmin','ClubAdmin','FinanceManager'], 'Billetterie & Abonnements'],
-    ['cash-donations', 'Dons en espèces', Banknote, ['SuperAdmin','ClubAdmin','FinanceManager','ShopManager','TicketSeller','TicketSupervisor'], 'Billetterie & Abonnements'],
+    ['finance', 'Finances', Wallet, ['SuperAdmin','ClubAdmin','FinanceManager'], 'Finances & dons'],
+    ['donations', 'Dons & collecte', HeartHandshake, ['SuperAdmin','ClubAdmin','FinanceManager'], 'Finances & dons'],
+    ['cash-donations', 'Dons en espèces', Banknote, ['SuperAdmin','ClubAdmin','FinanceManager','ShopManager','TicketSeller','TicketSupervisor'], 'Finances & dons'],
 
-    ['shop', 'Boutique', ShoppingBag, ['SuperAdmin','ClubAdmin','ShopManager'], 'Boutique'],
-    ['orders', 'Commandes', Receipt, ['SuperAdmin','ClubAdmin','ShopManager'], 'Boutique'],
-    ['sponsors', 'Sponsors', Handshake, ['SuperAdmin','ClubAdmin'], 'Boutique'],
-    ['sponsorqr', 'QR Sponsors', QrCode, ['SuperAdmin','ClubAdmin'], 'Boutique'],
+    ['shop', 'Boutique', ShoppingBag, ['SuperAdmin','ClubAdmin','ShopManager'], 'Boutique & partenaires'],
+    ['orders', 'Commandes', Receipt, ['SuperAdmin','ClubAdmin','ShopManager'], 'Boutique & partenaires'],
+    ['sponsors', 'Sponsors', Handshake, ['SuperAdmin','ClubAdmin'], 'Boutique & partenaires'],
+    ['sponsorqr', 'QR Sponsors', QrCode, ['SuperAdmin','ClubAdmin'], 'Boutique & partenaires'],
 
     ['matches', 'Match Center', Trophy, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
     ['match-events', 'Événements de match', Trophy, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
@@ -97,4 +97,32 @@ export const ADMIN_PERMISSION_BY_ID = Object.freeze({
   gdpr: 'system:gdpr',
   settings: 'system:settings',
 })
-export const ADMIN_CATEGORY_ORDER = ['Tableau de bord', 'Billetterie & Abonnements', 'Boutique', 'Équipe & Matchs', 'Contenu & Site', 'Communauté', 'Système']
+export const ADMIN_CATEGORY_ORDER = ['Tableau de bord', 'Billetterie & Abonnements', 'Finances & dons', 'Boutique & partenaires', 'Équipe & Matchs', 'Contenu & Site', 'Communauté', 'Système']
+
+export const ADMIN_PUBLIC_PATHS = Object.freeze({
+  tickets: '/billetterie',
+  memberships: '/abonnements',
+  donations: '/soutenir',
+  'cash-donations': '/soutenir',
+  shop: '/boutique',
+  orders: '/boutique',
+  sponsors: '/partenaires',
+  sponsorqr: '/partenaires',
+  matches: '/matchs',
+  'match-events': '/matchs',
+  teams: '/equipe',
+  news: '/actualites',
+  media: '/medias',
+  'club-events': '/agenda',
+  archive: '/musee',
+  supporters: '/communaute',
+  community: '/communaute',
+  club: '/club',
+})
+
+export function visibleAdminItems(role, query = '') {
+  const search = query.trim().toLocaleLowerCase('fr')
+  return ADMIN_NAVIGATION.filter(([id, label, , roles, category]) =>
+    roles.includes(role) && Boolean(ADMIN_PERMISSION_BY_ID[id]) &&
+    (!search || `${label} ${category} ${id}`.toLocaleLowerCase('fr').includes(search)))
+}

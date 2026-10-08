@@ -26,10 +26,18 @@ export async function adminApi(path, options = {}) {
       localStorage.removeItem('jso_admin_user')
       window.dispatchEvent(new Event('jso:admin-session-expired'))
     }
-    let message = 'Request failed: ' + response.status
+    let message = response.status >= 500
+      ? 'Le serveur API a rencontré une erreur. Réessayez dans un instant ou consultez les journaux du backend.'
+      : response.status === 404
+        ? 'Cette fonction est introuvable sur l’API déployée. Vérifiez que le frontend et le backend utilisent la même version.'
+        : response.status === 403
+          ? 'Votre compte n’a pas accès à cette fonction.'
+          : response.status === 401
+            ? 'Votre session a expiré. Reconnectez-vous.'
+            : `La requête a échoué (${response.status}).`
     try {
       const payload = await response.json()
-      message = payload.message || message
+      message = payload.message || (response.status < 500 ? payload.title : null) || message
     } catch {}
     const error = new Error(message)
     error.status = response.status
