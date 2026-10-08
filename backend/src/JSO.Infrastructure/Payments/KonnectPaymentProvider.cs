@@ -37,7 +37,7 @@ public sealed class KonnectPaymentProvider(
         var amountMillimes = checked((long)Math.Round(
             payable.AmountTnd * 1000m, MidpointRounding.AwayFromZero));
 
-        var orderId = payable.PayableId.ToString("N");
+        var orderId = $"{payable.PayableType}:{payable.PayableId:N}";
         var request = new InitPaymentRequest
         {
             ReceiverWalletId = walletId,
