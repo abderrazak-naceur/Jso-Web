@@ -90,6 +90,93 @@ public sealed class DatabaseInitializer(
         await db.SaveChangesAsync(ct);
         logger.LogInformation("JSO production player roster is ready: {Count} players.", roster.Length);
 
+        // Official 2026/27 Group 2 fixture list supplied by the club/federation.
+        // The source schedule image contains the round pairings but no kickoff
+        // dates or times, so these are provisional weekly Sundays until the
+        // federation publishes the exact dates. Existing administrator-entered
+        // matches are never overwritten.
+        var fixtureSeason = await db.Seasons.FirstOrDefaultAsync(x => x.Name == "2026/27", ct);
+        if (fixtureSeason is null)
+        {
+            fixtureSeason = new Season { Name = "2026/27", IsActive = true };
+            db.Seasons.Add(fixtureSeason);
+        }
+
+        var fixtureCompetition = await db.Competitions.FirstOrDefaultAsync(x => x.Name == "Championnat", ct);
+        if (fixtureCompetition is null)
+        {
+            fixtureCompetition = new Competition
+            {
+                Name = "Championnat",
+                Country = "Tunisie"
+            };
+            db.Competitions.Add(fixtureCompetition);
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        var officialFixtures = new (int Round, string Opponent, bool IsHome)[]
+        {
+            (1, "المستقبل الرياضي بحسي عمر", true),
+            (2, "الاتحاد الرياضي المطوي", false),
+            (3, "الاتحاد الرياضي الجرجيـسي", true),
+            (4, "الأمل الرياضي بالرقبة", false),
+            (5, "الملعب الرياضي بسيدي مخلوف", true),
+            (6, "الوداد الرياضي بالجامعة", false),
+            (7, "الجمعية الرياضية بالجامعة", false),
+            (8, "جمعية أولمبيك بنقردان", true),
+            (9, "النادي الرياضي ببئر العين", false)
+        };
+
+        var legacyOpponents = new[]
+        {
+            "US Monastir",
+            "Stade Gabésien",
+            "AS Gabès",
+            "CS Hammam-Lif",
+            "El Gawafel Gafsa"
+        };
+        var legacyMatches = await db.Matches
+            .Where(x => x.TeamId == team.Id && legacyOpponents.Contains(x.OpponentName))
+            .ToListAsync(ct);
+        if (legacyMatches.Count > 0)
+            db.Matches.RemoveRange(legacyMatches);
+
+        foreach (var fixture in officialFixtures)
+        {
+            var exists = await db.Matches.AnyAsync(
+                x => x.TeamId == team.Id
+                    && x.SeasonId == fixtureSeason.Id
+                    && x.OpponentName == fixture.Opponent
+                    && x.IsHome == fixture.IsHome,
+                ct);
+
+            if (exists)
+                continue;
+
+            var provisionalDate = new DateTimeOffset(
+                2026, 9, 20, 15, 0, 0, TimeSpan.Zero)
+                .AddDays((fixture.Round - 1) * 7);
+
+            db.Matches.Add(new Match
+            {
+                SeasonId = fixtureSeason.Id,
+                CompetitionId = fixtureCompetition.Id,
+                TeamId = team.Id,
+                OpponentName = fixture.Opponent,
+                KickoffAt = provisionalDate,
+                Venue = fixture.IsHome ? "Stade d'Oudhref" : "À confirmer",
+                IsHome = fixture.IsHome,
+                Status = "Scheduled",
+                IsPublished = true
+            });
+        }
+
+        await db.SaveChangesAsync(ct);
+        logger.LogInformation(
+            "JSO official 2026/27 fixtures are ready: {Count} rounds.",
+            officialFixtures.Length);
+
         if (hasAdmin)
         {
             // One-time recovery path for an operator who needs to restore the
