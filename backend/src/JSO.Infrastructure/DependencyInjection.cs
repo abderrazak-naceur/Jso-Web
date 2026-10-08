@@ -52,6 +52,7 @@ public static class DependencyInjection
         });
 
         services.AddPayments(configuration);
+        services.AddScoped<PaymentConfigurationStore>();
         services.AddSocial(configuration);
 
         return services;
@@ -103,6 +104,7 @@ public static class DependencyInjection
         });
 
         services.AddScoped<StripePaymentProvider>();
+        services.AddScoped<PaymeePaymentProvider>();
         services.AddScoped<PaymentProviderSelector>();
         services.AddScoped<OrderPaymentService>();
 
