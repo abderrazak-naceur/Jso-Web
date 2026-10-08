@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CheckCircle2, CircleAlert, CreditCard, Landmark, Pencil, Plus, Power, RefreshCw, Smartphone, Trash2, X } from 'lucide-react'
+import { CheckCircle2, CreditCard, Landmark, Pencil, Plus, Power, RefreshCw, Smartphone, Trash2, X } from 'lucide-react'
 import { adminApi } from '../api'
 
 const templates = [
@@ -33,7 +33,7 @@ function Badge({ active }) {
 }
 
 function emptyForm() {
-  return { code: 'FLOUCI', name: 'Flouci', type: 'Hosted', country: 'TN', currency: 'TND', baseUrl: '', isActive: false, sortOrder: 0, settingsJson: '', webhookUrl: '', secrets: {} }
+  return { code: 'KONNECT', name: 'Konnect', type: 'Hosted', country: 'TN', currency: 'TND', baseUrl: '', isActive: false, sortOrder: 0, settingsJson: '', webhookUrl: '', secrets: {} }
 }
 
 export default function PaymentSettingsModule({ onError = () => {} }) {
@@ -142,10 +142,14 @@ export default function PaymentSettingsModule({ onError = () => {} }) {
       </div>
     </div>
 
+    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+      Konnect et Paymee utilisent les identifiants enregistrés ici. Flouci et Stripe utilisent actuellement les variables d'environnement du service API : une fiche active dans cet écran ne les rend pas disponibles sur le site. Les autres moyens sont des fiches de préparation tant que leur intégration n'est pas terminée.
+    </div>
+
     {notice && <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700">{notice}</div>}
 
     {providers.length === 0
-      ? <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-white p-10 text-center"><CreditCard className="mx-auto text-slate-300" size={38}/><p className="mt-3 font-black">Aucun moyen configuré</p><p className="mt-1 text-sm text-slate-500">Ajoutez Flouci, Stripe ou un autre prestataire.</p></div>
+      ? <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-white p-10 text-center"><CreditCard className="mx-auto text-slate-300" size={38}/><p className="mt-3 font-black">Aucun moyen configuré ici</p><p className="mt-1 text-sm text-slate-500">Ajoutez Konnect ou Paymee pour la collecte en ligne depuis cet écran.</p></div>
       : <div className="grid gap-4 xl:grid-cols-2">{providers.map(p => <ProviderCard key={p.id} p={p} testing={testing === p.id} onEdit={() => openEdit(p)} onToggle={() => toggle(p.id)} onTest={() => test(p)} onDelete={() => remove(p)}/>)}</div>
     }
 

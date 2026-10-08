@@ -26,12 +26,14 @@ public sealed class DonationsController(
             return Ok(new
             {
                 flouci = paymentSelector.Flouci.IsConfigured,
-                stripe = paymentSelector.Stripe.IsConfigured
+                stripe = paymentSelector.Stripe.IsConfigured,
+                konnect = paymentSelector.Konnect.IsConfigured,
+                paymee = paymentSelector.Paymee.IsConfigured
             });
         }
         catch (InvalidOperationException)
         {
-            return Ok(new { flouci = false, stripe = false });
+            return Ok(new { flouci = false, stripe = false, konnect = false, paymee = false });
         }
     }
 
@@ -165,7 +167,9 @@ public sealed class DonationsController(
         if (donation.Amount <= 0)
             return BadRequest(new { message = "Le montant de la contribution doit être supérieur à zéro." });
 
-        var provider = paymentSelector.Select(country);
+        var provider = paymentSelector.Select(country, request.Provider);
+        if (provider is null)
+            return BadRequest(new { message = "Le moyen de paiement choisi ne correspond pas au pays." });
         if (!provider.IsConfigured)
             return StatusCode(StatusCodes.Status503ServiceUnavailable,
                 new { message = $"Le paiement en ligne via {provider.Name} n'est pas encore disponible." });
@@ -180,8 +184,13 @@ public sealed class DonationsController(
 
         var returnUrl = $"{baseUrl}/payment/success?payableType=Donation&payableId={donation.Id}";
         var cancelUrl = $"{baseUrl}/payment/cancel?payableType=Donation&payableId={donation.Id}";
+        if (provider == paymentSelector.Paymee &&
+            !System.Net.Mail.MailAddress.TryCreate(request.Email, out _))
+            return BadRequest(new { message = "Une adresse e-mail valide est requise pour Paymee." });
+
         var paymentRequest = new PaymentRequest(
-            PayableTypes.Donation, donation.Id, null, donation.Amount, "Soutien JSO 2026/2027");
+            PayableTypes.Donation, donation.Id, null, donation.Amount, "Soutien JSO 2026/2027",
+            donation.DisplayName, "JSO", request.Email?.Trim(), donation.DonorPhone);
 
         PaymentInitiation initiation;
         try { initiation = await provider.InitiatePaymentAsync(paymentRequest, returnUrl, cancelUrl, ct); }
@@ -232,4 +241,4 @@ public sealed record CreateDonationRequest(
     decimal Amount,
     string? Phone,
     bool WhatsAppOptIn);
-public sealed record PayDonationRequest(string Country);
+public sealed record PayDonationRequest(string Country, string? Provider = null, string? Email = null);

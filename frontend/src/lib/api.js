@@ -20,7 +20,11 @@ async function request(path, signal) {
     headers: languageHeaders(),
     signal,
   })
-  if (!response.ok) throw new Error('API request failed: ' + response.status)
+  if (!response.ok) {
+    if (response.status >= 500)
+      throw new Error(`Le service est momentanément indisponible. Réessayez plus tard. (HTTP ${response.status})`)
+    throw new Error('API request failed: ' + response.status)
+  }
   return response.json()
 }
 
@@ -138,7 +142,7 @@ export const donationsApi = {
   paymentMethods: (signal) => request('/donations/payment-methods', signal),
   create: (data) => requestJson('/donations', 'POST', data),
   status: (id) => requestJson('/donations/' + id, 'GET'),
-  pay: (id, country) => requestJson('/donations/' + id + '/pay', 'POST', { country }),
+  pay: (id, country, provider, email) => requestJson('/donations/' + id + '/pay', 'POST', { country, provider, email }),
 }
 
 export const supporterApi = {

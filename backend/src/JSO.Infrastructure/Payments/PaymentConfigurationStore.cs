@@ -118,9 +118,23 @@ public sealed class PaymentConfigurationStore
             var settings = JsonSerializer.Deserialize<StoredSettings>(row.Value, JsonOptions);
             var p = settings?.Providers.FirstOrDefault(x =>
                 x.IsActive && string.Equals(x.Code, code, StringComparison.OrdinalIgnoreCase));
-            return p is not null && DecryptSecrets(p.Secrets).Count > 0;
+            if (p is null) return false;
+            var secrets = DecryptSecrets(p.Secrets);
+            bool Has(string key) => secrets.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value);
+            return code.ToUpperInvariant() switch
+            {
+                "KONNECT" => Has("apiKey") && Has("receiverWalletId") &&
+                    !string.IsNullOrWhiteSpace(KonnectPaymentProvider.ReadSettings(p.SettingsJson).WebhookUrl),
+                "PAYMEE" => Has("apiKey") &&
+                    !string.IsNullOrWhiteSpace(PaymeePaymentProvider.ReadSettings(p.SettingsJson).WebhookUrl),
+                _ => secrets.Count > 0,
+            };
         }
         catch (JsonException)
+        {
+            return false;
+        }
+        catch (CryptographicException)
         {
             return false;
         }

@@ -24,4 +24,19 @@ public sealed class PaymentProviderSelector(
 
         return Stripe;
     }
+
+    public IPaymentProvider? Select(string? country, string? requestedProvider)
+    {
+        var code = requestedProvider?.Trim().ToUpperInvariant();
+        if (string.IsNullOrEmpty(code)) return Select(country);
+        if (IsTunisia(country))
+            return code switch
+            {
+                "FLOUCI" => Flouci,
+                "KONNECT" => Konnect,
+                "PAYMEE" => Paymee,
+                _ => null,
+            };
+        return code == "STRIPE" ? Stripe : null;
+    }
 }

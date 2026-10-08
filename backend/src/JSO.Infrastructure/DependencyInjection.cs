@@ -104,6 +104,7 @@ public static class DependencyInjection
         });
 
         services.AddScoped<StripePaymentProvider>();
+        services.AddScoped<KonnectPaymentProvider>();
         services.AddScoped<PaymeePaymentProvider>();
         services.AddScoped<PaymentProviderSelector>();
         services.AddScoped<OrderPaymentService>();

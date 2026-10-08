@@ -133,7 +133,7 @@ public sealed class KonnectPaymentProvider(
         };
     }
 
-    private static KonnectSettings ReadSettings(string? json)
+    public static KonnectSettings ReadSettings(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
             return new KonnectSettings();

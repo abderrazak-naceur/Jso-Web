@@ -10,10 +10,11 @@ const PRESETS = [5, 10, 20, 50, 100, 250]
 const PAYMENT_METHODS = [
   { id: 'flouci', label: 'Flouci', description: 'Paiement hébergé en Tunisie', group: 'online', country: 'TN' },
   { id: 'card', label: 'Carte bancaire', description: 'Visa / Mastercard via la passerelle de paiement', group: 'online', country: 'INTL' },
+  { id: 'konnect', label: 'Konnect', description: 'Paiement hébergé en Tunisie', group: 'online', country: 'TN' },
+  { id: 'paymee', label: 'Paymee', description: 'Paiement hébergé en Tunisie (e-mail requis)', group: 'online', country: 'TN' },
   { id: 'd17', label: 'D17', description: 'Portefeuille mobile de La Poste Tunisienne', group: 'ipay', available: false },
   { id: 'edinar', label: 'e-DINAR', description: 'Carte e-DINAR de La Poste Tunisienne', group: 'ipay', available: false },
   { id: 'clicktopay', label: 'ClicToPay', description: 'Paiement par carte via Monétique Tunisie / banque', group: 'ipay', available: false },
-  { id: 'konnect', label: 'Konnect', description: 'Portefeuille / paiement tunisien', group: 'ipay', available: false },
   { id: 'bank-transfer', label: 'Virement bancaire', description: 'Virement direct vers le compte bancaire JSO', group: 'manual', available: false },
   { id: 'postal-mandate', label: 'Mandat postal', description: 'Paiement via La Poste Tunisienne', group: 'ipay', available: false },
   { id: 'sms-ooredoo', label: 'SMS Ooredoo', description: 'Paiement par prélèvement SMS Ooredoo', group: 'ipay', available: false },
@@ -33,6 +34,7 @@ export default function DonationPage() {
   const [displayName, setDisplayName] = useState('')
   const [message, setMessage] = useState('')
   const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
   const [whatsappOptIn, setWhatsappOptIn] = useState(false)
   const [donation, setDonation] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -63,18 +65,18 @@ export default function DonationPage() {
     donationsApi.paymentMethods(controller.signal)
       .then((methods) => {
         setPaymentMethods(methods)
-        setSelectedMethod(methods.flouci ? 'flouci' : methods.stripe ? 'card' : '')
+        setSelectedMethod(methods.flouci ? 'flouci' : methods.konnect ? 'konnect' : methods.paymee ? 'paymee' : methods.stripe ? 'card' : '')
       })
-      .catch(() => setPaymentMethods({ flouci: false, stripe: false }))
+      .catch(() => setPaymentMethods({ flouci: false, stripe: false, konnect: false, paymee: false }))
     return () => controller.abort()
   }, [])
 
   const presets = [...new Set([...PRESETS, Number(campaign?.suggestedMonthlyContributionTnd || 10)])].sort((a, b) => a - b)
   const methods = PAYMENT_METHODS.map((method) => ({
     ...method,
-    available: method.id === 'flouci' ? Boolean(paymentMethods?.flouci)
-      : method.id === 'card' ? Boolean(paymentMethods?.stripe)
-        : false,
+    available: method.group === 'online'
+      ? Boolean(paymentMethods?.[method.id === 'card' ? 'stripe' : method.id])
+      : false,
   }))
 
   const effectiveAmount = useMemo(() => {
@@ -86,10 +88,13 @@ export default function DonationPage() {
   }, [amount, custom])
 
   async function startDonation(country) {
-    if (selectedMethod !== 'flouci' && selectedMethod !== 'card') {
+    if (!['flouci', 'card', 'konnect', 'paymee'].includes(selectedMethod) ||
+        !paymentMethods?.[selectedMethod === 'card' ? 'stripe' : selectedMethod]) {
       throw new Error('Ce moyen de paiement est en cours de raccordement au compte de paiement JSO.')
     }
     if (effectiveAmount < 1) throw new Error('Le montant minimum est de 1 TND.')
+    if (selectedMethod === 'paymee' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+      throw new Error('Une adresse e-mail valide est requise pour Paymee.')
     const created = await donationsApi.create({
       amount: effectiveAmount,
       displayName: displayName.trim() || null,
@@ -98,7 +103,7 @@ export default function DonationPage() {
       whatsappOptIn: Boolean(phone.trim() && whatsappOptIn),
     })
     setDonation(created)
-    return donationsApi.pay(created.id, country)
+    return donationsApi.pay(created.id, country, selectedMethod === 'card' ? 'STRIPE' : selectedMethod.toUpperCase(), email.trim() || null)
   }
 
   async function copyLink() {
@@ -235,6 +240,10 @@ export default function DonationPage() {
                 <span className="mt-2 block text-xs font-normal leading-5 text-slate-400">Votre numéro reste privé. Il n'apparaît pas sur la page publique.</span>
               </label>
               <label className="text-sm font-bold sm:col-span-2">
+                E-mail <span className="font-normal text-slate-400">(requis pour Paymee)</span>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength="254" placeholder="vous@exemple.com" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" />
+              </label>
+              <label className="text-sm font-bold sm:col-span-2">
                 Message <span className="font-normal text-slate-400">(facultatif)</span>
                 <input value={message} onChange={(e) => setMessage(e.target.value)} maxLength="280" placeholder="Allez JSO !" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" />
               </label>
@@ -280,7 +289,7 @@ export default function DonationPage() {
               </div>
             </div>
             <div className="mt-6">
-              {(selectedMethod === 'flouci' || selectedMethod === 'card') ? (
+              {['flouci', 'card', 'konnect', 'paymee'].includes(selectedMethod) ? (
                 <PayOnlineButton
                   key={selectedMethod}
                   pay={startDonation}
@@ -322,6 +331,17 @@ export default function DonationPage() {
                   Ouvrir <ArrowUpRight size={15} aria-hidden="true" />
                 </a>
               </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-black">Faire un don en espèces</h2>
+              <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-6 text-slate-600">
+                <li>Adressez-vous à un vendeur ou à une boutique JSO autorisée.</li>
+                <li>Remettez le montant choisi. Le personnel enregistre le don dans son espace JSO.</li>
+                <li>Demandez immédiatement le reçu numéroté et conservez son lien de vérification.</li>
+              </ol>
+              <p className="mt-4 text-xs leading-5 text-slate-500">Le don en espèces se fait sur place. Aucun paiement en espèces ne peut être validé depuis cette page.</p>
+              <a href="/infos" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-jso-blue underline">Contacter le club <ArrowUpRight size={15} aria-hidden="true" /></a>
             </div>
 
             <div className="rounded-[2rem] bg-jso-gold p-6 text-jso-navy">

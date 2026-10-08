@@ -97,6 +97,8 @@ public sealed class AdminPaymentConfigController(PaymentConfigurationStore store
                 return Ok(new { success = false, message = "Clé API Konnect manquante." });
             if (!secrets.TryGetValue("receiverWalletId", out var walletId) || string.IsNullOrWhiteSpace(walletId))
                 return Ok(new { success = false, message = "Receiver Wallet ID Konnect manquant." });
+            if (string.IsNullOrWhiteSpace(KonnectPaymentProvider.ReadSettings(provider.SettingsJson).WebhookUrl))
+                return Ok(new { success = false, message = "URL webhook Konnect manquante." });
 
             var baseUrl = string.IsNullOrWhiteSpace(provider.BaseUrl)
                 ? "https://api.konnect.network/api/v2/"
