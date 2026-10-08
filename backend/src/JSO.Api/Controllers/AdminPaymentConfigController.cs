@@ -74,6 +74,23 @@ public sealed class AdminPaymentConfigController(PaymentConfigurationStore store
             return Ok(new { success = ok, message = ok ? "Identifiants Flouci présents. Test API sans débit disponible via ce panneau." : "App Token / App Secret Flouci manquants." });
         }
 
+        if (provider.Code == "PAYMEE")
+        {
+            var ok = secrets.TryGetValue("apiKey", out var apiKey) && !string.IsNullOrWhiteSpace(apiKey);
+            if (!ok)
+                return Ok(new { success = false, message = "Clé API Paymee manquante." });
+
+            var settings = PaymeePaymentProvider.ReadSettings(provider.SettingsJson);
+            var webhookOk = !string.IsNullOrWhiteSpace(settings.WebhookUrl);
+            return Ok(new
+            {
+                success = webhookOk,
+                message = webhookOk
+                    ? "Configuration Paymee valide (clé API + webhook configurés)."
+                    : "URL webhook Paymee manquante."
+            });
+        }
+
         if (provider.Code == "KONNECT")
         {
             if (!secrets.TryGetValue("apiKey", out var apiKey) || string.IsNullOrWhiteSpace(apiKey))
