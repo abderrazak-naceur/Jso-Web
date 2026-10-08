@@ -20,7 +20,7 @@ const secretFields = {
   D17: ['apiKey', 'secretKey'],
   EDINAR: ['apiKey', 'secretKey'],
   CLICTOPAY: ['siteKey', 'apiKey', 'secretKey'],
-  KONNECT: ['apiKey', 'secretKey'],
+  KONNECT: ['apiKey', 'receiverWalletId'],
   IPAY: ['apiKey', 'secretKey'],
 }
 
