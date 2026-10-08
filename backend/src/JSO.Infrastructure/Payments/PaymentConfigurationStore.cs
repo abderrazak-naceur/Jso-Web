@@ -43,20 +43,7 @@ public sealed class PaymentConfigurationStore
         if (settings.Providers.Any(x => string.Equals(x.Code, code, StringComparison.OrdinalIgnoreCase)))
             throw new InvalidOperationException($"Un moyen de paiement avec le code '{code}' existe déjà.");
 
-        var p = new StoredProvider
-        {
-            Id = Guid.NewGuid(),
-            Code = code,
-            Name = input.Name.Trim(),
-            Type = input.Type.Trim(),
-            Country = input.Country?.Trim().ToUpperInvariant(),
-            Currency = input.Currency.Trim().ToUpperInvariant(),
-            BaseUrl = input.BaseUrl?.Trim(),
-            IsActive = input.IsActive,
-            SortOrder = input.SortOrder,
-            SettingsJson = input.SettingsJson,
-            Secrets = EncryptSecrets(input.Secrets)
-        };
+        var p = FromInput(input, Guid.NewGuid());
         settings.Providers.Add(p);
         await WriteAsync(settings, ct);
         return ToPublic(p);
@@ -81,13 +68,16 @@ public sealed class PaymentConfigurationStore
         p.IsActive = input.IsActive;
         p.SortOrder = input.SortOrder;
         p.SettingsJson = input.SettingsJson;
+
         if (input.Secrets.Any(x => !string.IsNullOrWhiteSpace(x.Value)))
         {
             var current = DecryptSecrets(p.Secrets);
             foreach (var pair in input.Secrets)
-                if (!string.IsNullOrWhiteSpace(pair.Value)) current[pair.Key] = pair.Value;
+                if (!string.IsNullOrWhiteSpace(pair.Value))
+                    current[pair.Key.Trim()] = pair.Value;
             p.Secrets = EncryptSecrets(current);
         }
+
         await WriteAsync(settings, ct);
         return ToPublic(p);
     }
@@ -114,73 +104,141 @@ public sealed class PaymentConfigurationStore
     {
         var settings = await ReadAsync(ct);
         var p = settings.Providers.FirstOrDefault(x => x.Id == id);
-        return (p, p is null ? new Dictionary<string,string>() : DecryptSecrets(p.Secrets));
+        return (p, p is null ? new Dictionary<string, string>() : DecryptSecrets(p.Secrets));
     }
 
-    public bool HasActiveConfiguredByCode(string code)\n    {\n        var row = _db.SiteContents.AsNoTracking().SingleOrDefault(x => x.Key == Key);\n        if (row is null || string.IsNullOrWhiteSpace(row.Value)) return false;\n        try\n        {\n            var settings = JsonSerializer.Deserialize<StoredSettings>(row.Value, JsonOptions);\n            var p = settings?.Providers.FirstOrDefault(x => x.IsActive && string.Equals(x.Code, code, StringComparison.OrdinalIgnoreCase));\n            return p is not null && DecryptSecrets(p.Secrets).Count > 0;\n        }\n        catch (JsonException) { return false; }\n    }\n\n    public async Task<(StoredProvider? Provider, IReadOnlyDictionary<string, string> Secrets)> GetActiveForServerByCodeAsync(string code, CancellationToken ct = default)\n    {\n        var settings = await ReadAsync(ct);\n        var p = settings.Providers.FirstOrDefault(x => x.IsActive && string.Equals(x.Code, code, StringComparison.OrdinalIgnoreCase));\n        return (p, p is null ? new Dictionary<string,string>() : DecryptSecrets(p.Secrets));\n    }\n\n    private async Task<StoredSettings> ReadAsync(CancellationToken ct)
+    public bool HasActiveConfiguredByCode(string code)
+    {
+        var row = _db.SiteContents.AsNoTracking().SingleOrDefault(x => x.Key == Key);
+        if (row is null || string.IsNullOrWhiteSpace(row.Value)) return false;
+
+        try
+        {
+            var settings = JsonSerializer.Deserialize<StoredSettings>(row.Value, JsonOptions);
+            var p = settings?.Providers.FirstOrDefault(x =>
+                x.IsActive && string.Equals(x.Code, code, StringComparison.OrdinalIgnoreCase));
+            return p is not null && DecryptSecrets(p.Secrets).Count > 0;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    public async Task<(StoredProvider? Provider, IReadOnlyDictionary<string, string> Secrets)> GetActiveForServerByCodeAsync(
+        string code, CancellationToken ct = default)
+    {
+        var settings = await ReadAsync(ct);
+        var p = settings.Providers.FirstOrDefault(x =>
+            x.IsActive && string.Equals(x.Code, code, StringComparison.OrdinalIgnoreCase));
+
+        return (p, p is null ? new Dictionary<string, string>() : DecryptSecrets(p.Secrets));
+    }
+
+    private StoredProvider FromInput(PaymentProviderInput input, Guid id) => new()
+    {
+        Id = id,
+        Code = NormalizeCode(input.Code),
+        Name = input.Name.Trim(),
+        Type = input.Type.Trim(),
+        Country = input.Country?.Trim().ToUpperInvariant(),
+        Currency = input.Currency.Trim().ToUpperInvariant(),
+        BaseUrl = input.BaseUrl?.Trim(),
+        IsActive = input.IsActive,
+        SortOrder = input.SortOrder,
+        SettingsJson = input.SettingsJson,
+        Secrets = EncryptSecrets(input.Secrets)
+    };
+
+    private async Task<StoredSettings> ReadAsync(CancellationToken ct)
     {
         var row = await _db.SiteContents.AsNoTracking().SingleOrDefaultAsync(x => x.Key == Key, ct);
         if (row is null || string.IsNullOrWhiteSpace(row.Value)) return new StoredSettings();
-        try { return JsonSerializer.Deserialize<StoredSettings>(row.Value, JsonOptions) ?? new StoredSettings(); }
-        catch (JsonException) { return new StoredSettings(); }
+
+        try
+        {
+            return JsonSerializer.Deserialize<StoredSettings>(row.Value, JsonOptions) ?? new StoredSettings();
+        }
+        catch (JsonException)
+        {
+            return new StoredSettings();
+        }
     }
 
     private async Task WriteAsync(StoredSettings settings, CancellationToken ct)
     {
         var value = JsonSerializer.Serialize(settings, JsonOptions);
         var row = await _db.SiteContents.SingleOrDefaultAsync(x => x.Key == Key, ct);
+
         if (row is null)
             _db.SiteContents.Add(new SiteContent { Key = Key, Value = value, UpdatedAt = DateTimeOffset.UtcNow });
-        else { row.Value = value; row.UpdatedAt = DateTimeOffset.UtcNow; }
+        else
+        {
+            row.Value = value;
+            row.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
         await _db.SaveChangesAsync(ct);
     }
 
     private PaymentProviderRecord ToPublic(StoredProvider p) => new(
         p.Id, p.Code, p.Name, p.Type, p.Country, p.Currency, p.BaseUrl,
-        p.IsActive, p.SortOrder, DecryptSecrets(p.Secrets).ToDictionary(x => x.Key, _ => true),
+        p.IsActive, p.SortOrder,
+        DecryptSecrets(p.Secrets).ToDictionary(x => x.Key, _ => true),
         p.SettingsJson);
 
-    private Dictionary<string,string> DecryptSecrets(string? encoded)
+    private Dictionary<string, string> DecryptSecrets(string? encoded)
     {
         if (string.IsNullOrWhiteSpace(encoded)) return new();
+
         try
         {
             var all = Convert.FromBase64String(encoded);
+            if (all.Length < 28) return new();
+
             var nonce = all.AsSpan(0, 12);
             var tag = all.AsSpan(12, 16);
             var cipher = all.AsSpan(28);
             var plain = new byte[cipher.Length];
+
             using var aes = new AesGcm(_key, 16);
             aes.Decrypt(nonce, cipher, tag, plain);
-            return JsonSerializer.Deserialize<Dictionary<string,string>>(plain, JsonOptions) ?? new();
+
+            return JsonSerializer.Deserialize<Dictionary<string, string>>(plain, JsonOptions) ?? new();
         }
         catch (CryptographicException) { return new(); }
         catch (FormatException) { return new(); }
         catch (JsonException) { return new(); }
     }
 
-    private string EncryptSecrets(IReadOnlyDictionary<string,string> secrets)
+    private string EncryptSecrets(IReadOnlyDictionary<string, string> secrets)
     {
         var filtered = secrets.Where(x => !string.IsNullOrWhiteSpace(x.Value))
             .ToDictionary(x => x.Key.Trim(), x => x.Value);
+
         if (filtered.Count == 0) return "";
+
         var plain = JsonSerializer.SerializeToUtf8Bytes(filtered, JsonOptions);
         var nonce = RandomNumberGenerator.GetBytes(12);
         var cipher = new byte[plain.Length];
         var tag = new byte[16];
+
         using var aes = new AesGcm(_key, 16);
         aes.Encrypt(nonce, plain, cipher, tag);
+
         return Convert.ToBase64String(nonce.Concat(tag).Concat(cipher).ToArray());
     }
 
     private static string NormalizeCode(string value)
     {
         var code = value.Trim().ToUpperInvariant();
-        if (string.IsNullOrWhiteSpace(code) || code.Length > 40) throw new ArgumentException("Code fournisseur invalide.");
+        if (string.IsNullOrWhiteSpace(code) || code.Length > 40)
+            throw new ArgumentException("Code fournisseur invalide.");
         return code;
     }
 
     private sealed class StoredSettings { public List<StoredProvider> Providers { get; set; } = new(); }
+
     public sealed class StoredProvider
     {
         public Guid Id { get; set; }
@@ -200,14 +258,13 @@ public sealed class PaymentConfigurationStore
 public sealed record PaymentProviderRecord(
     Guid Id, string Code, string Name, string Type, string? Country, string Currency,
     string? BaseUrl, bool IsActive, int SortOrder,
-    IReadOnlyDictionary<string,bool> SecretsConfigured, string? SettingsJson);
+    IReadOnlyDictionary<string, bool> SecretsConfigured, string? SettingsJson);
 
 public sealed record PaymentProviderInput(
     string Code, string Name, string Type, string? Country, string Currency,
     string? BaseUrl, bool IsActive, int SortOrder, string? SettingsJson,
-    IReadOnlyDictionary<string,string> Secrets);
+    IReadOnlyDictionary<string, string> Secrets);
 
-public sealed record PaymentSettingsInput(
-    FlouciSettingsInput Flouci, StripeSettingsInput Stripe);
+public sealed record PaymentSettingsInput(FlouciSettingsInput Flouci, StripeSettingsInput Stripe);
 public sealed record FlouciSettingsInput(string BaseUrl, string? DeveloperTrackingId, int SessionTimeoutSeconds);
 public sealed record StripeSettingsInput(string Currency, decimal TndToStripeRate);
