@@ -7,6 +7,7 @@ import { formatMoney } from '../../lib/format'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { useI18n } from '../../i18n/index.jsx'
 import StandalonePageHeader from '../site/StandalonePageHeader'
+import { CLUB_SOCIALS } from '../site/brand'
 
 const PRESETS = [5, 10, 20, 50, 100, 250]
 const PAYMENT_METHODS = [
@@ -15,6 +16,7 @@ const PAYMENT_METHODS = [
   { id: 'konnect', label: 'Konnect', description: 'Paiement hébergé en Tunisie', group: 'online', country: 'TN' },
   { id: 'paymee', label: 'Paymee', description: 'Paiement hébergé en Tunisie (e-mail requis)', group: 'online', country: 'TN' },
 ]
+const CLUB_FACEBOOK_URL = CLUB_SOCIALS.find((social) => social.key === 'facebook').url
 
 
 export default function DonationPage() {
@@ -314,7 +316,7 @@ export default function DonationPage() {
               <li className="rounded-xl bg-slate-50 p-4"><strong>2.</strong> Remettez le montant de votre choix au personnel.</li>
               <li className="rounded-xl bg-slate-50 p-4"><strong>3.</strong> Le personnel enregistre le don et vous remet un reçu numéroté.</li>
             </ol>
-            <a href="/infos" className="mt-6 inline-flex items-center gap-2 rounded-full bg-jso-navy px-5 py-3 text-sm font-extrabold text-white hover:bg-jso-blue">Contacter le club <ArrowUpRight size={16} aria-hidden="true" /></a>
+            <a href={CLUB_FACEBOOK_URL} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-full bg-jso-navy px-5 py-3 text-sm font-extrabold text-white hover:bg-jso-blue">Demander un point de collecte sur Facebook <ArrowUpRight size={16} aria-hidden="true" /></a>
             <p className="mt-4 text-xs leading-5 text-slate-500">Cette page ne prélève aucun montant et ne crée pas de don en attente. Chaque don est ponctuel ; la contribution mensuelle affichée est une suggestion, sans abonnement automatique.</p>
           </div>}
 
@@ -349,7 +351,7 @@ export default function DonationPage() {
                 <li>Demandez immédiatement le reçu numéroté et conservez son lien de vérification.</li>
               </ol>
               <p className="mt-4 text-xs leading-5 text-slate-500">Le don en espèces se fait sur place. Aucun paiement en espèces ne peut être validé depuis cette page.</p>
-              <a href="/infos" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-jso-blue underline">Contacter le club <ArrowUpRight size={15} aria-hidden="true" /></a>
+              <a href={CLUB_FACEBOOK_URL} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-jso-blue underline">Demander un point de collecte sur Facebook <ArrowUpRight size={15} aria-hidden="true" /></a>
             </div>}
           </aside>
         </div>
