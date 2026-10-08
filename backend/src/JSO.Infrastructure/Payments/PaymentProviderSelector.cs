@@ -20,7 +20,9 @@ public sealed class PaymentProviderSelector(
     public IPaymentProvider Select(string? country)
     {
         if (IsTunisia(country))
-            return Konnect.IsConfigured ? Konnect : Flouci.IsConfigured ? Flouci : Paymee;
+            // Other checkout flows do not collect the e-mail and phone Paymee
+            // requires. Donations can still request Paymee explicitly.
+            return Konnect.IsConfigured ? Konnect : Flouci;
 
         return Stripe;
     }

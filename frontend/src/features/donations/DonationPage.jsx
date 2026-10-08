@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowUpRight, Copy, HeartHandshake, QrCode, Share2, Wallet } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, Copy, HeartHandshake, QrCode, Share2, Wallet } from 'lucide-react'
 import QRCode from 'qrcode'
 import PayOnlineButton from '../shop/PayOnlineButton'
 import { donationsApi } from '../../lib/api'
 import { formatMoney } from '../../lib/format'
+import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { useI18n } from '../../i18n/index.jsx'
+import { CREST_SRC } from '../site/brand'
 
 const PRESETS = [5, 10, 20, 50, 100, 250]
 const PAYMENT_METHODS = [
@@ -26,6 +28,7 @@ const PAYMENT_METHODS = [
 
 export default function DonationPage() {
   const { language } = useI18n()
+  useDocumentTitle('Soutenir la JSO')
   const [campaign, setCampaign] = useState(null)
   const [paymentMethods, setPaymentMethods] = useState(null)
   const [qrUrl, setQrUrl] = useState('')
@@ -58,16 +61,17 @@ export default function DonationPage() {
     donationsApi.campaign(controller.signal)
       .then((value) => {
         setCampaign(value)
+        setError('')
         setAmount((current) => current ?? Number(value.suggestedMonthlyContributionTnd || 10))
       })
-      .catch((e) => setError(e?.message || 'Impossible de charger la campagne.'))
-      .finally(() => setLoading(false))
+      .catch((e) => { if (!controller.signal.aborted) setError(e?.message || 'Impossible de charger la campagne.') })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false) })
     donationsApi.paymentMethods(controller.signal)
       .then((methods) => {
         setPaymentMethods(methods)
         setSelectedMethod(methods.flouci ? 'flouci' : methods.konnect ? 'konnect' : methods.paymee ? 'paymee' : methods.stripe ? 'card' : '')
       })
-      .catch(() => setPaymentMethods({ flouci: false, stripe: false, konnect: false, paymee: false }))
+      .catch(() => { if (!controller.signal.aborted) setPaymentMethods({ flouci: false, stripe: false, konnect: false, paymee: false }) })
     return () => controller.abort()
   }, [])
 
@@ -95,6 +99,8 @@ export default function DonationPage() {
     if (effectiveAmount < 1) throw new Error('Le montant minimum est de 1 TND.')
     if (selectedMethod === 'paymee' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
       throw new Error('Une adresse e-mail valide est requise pour Paymee.')
+    if (selectedMethod === 'paymee' && !phone.trim())
+      throw new Error('Un numéro de téléphone est requis pour Paymee.')
     const created = await donationsApi.create({
       amount: effectiveAmount,
       displayName: displayName.trim() || null,
@@ -136,7 +142,22 @@ export default function DonationPage() {
   const progress = goal > 0 ? Math.min(100, Math.max(0, monthlyTotal / goal * 100)) : 0
 
   return (
-    <main className="min-h-screen bg-jso-paper text-jso-ink">
+    <div className="min-h-screen bg-jso-paper text-jso-ink">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-jso-navy/95 text-white backdrop-blur-xl">
+        <div className="mx-auto flex h-18 max-w-7xl items-center gap-3 px-5 lg:px-8">
+          <a href="/" aria-label="JSO Oudhref — accueil" className="flex shrink-0 items-center gap-3 rounded-xl">
+            <img src={CREST_SRC} alt="" className="h-11 w-11 object-contain" />
+            <span className="leading-none">
+              <span className="block text-lg font-black tracking-tight">JSO</span>
+              <span className="mt-1 block whitespace-nowrap text-[10px] font-bold tracking-[0.2em] text-white/55">OUDHREF · TUNISIE</span>
+            </span>
+          </a>
+          <a href="/" className="ml-auto inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-sm font-extrabold text-white transition hover:bg-white/10">
+            <ArrowLeft size={16} aria-hidden="true" /> Accueil
+          </a>
+        </div>
+      </header>
+      <main id="main-content" tabIndex={-1}>
       <section className="overflow-hidden bg-jso-navy text-white">
         <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-24">
           <div className="grid gap-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
@@ -235,9 +256,9 @@ export default function DonationPage() {
                 <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength="80" placeholder="Ex. Famille Ben Salah" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" />
               </label>
               <label className="text-sm font-bold">
-                WhatsApp <span className="font-normal text-slate-400">(facultatif)</span>
+                Téléphone / WhatsApp <span className="font-normal text-slate-400">({selectedMethod === 'paymee' ? 'requis pour Paymee' : 'facultatif'})</span>
                 <input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength="32" inputMode="tel" placeholder="+216 XX XXX XXX" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" />
-                <span className="mt-2 block text-xs font-normal leading-5 text-slate-400">Votre numéro reste privé. Il n'apparaît pas sur la page publique.</span>
+                <span className="mt-2 block text-xs font-normal leading-5 text-slate-400">Votre numéro reste privé. Pour Paymee, il est transmis au prestataire afin d'initier le paiement. Il n'apparaît pas sur la page publique.</span>
               </label>
               <label className="text-sm font-bold sm:col-span-2">
                 E-mail <span className="font-normal text-slate-400">(requis pour Paymee)</span>
@@ -297,6 +318,7 @@ export default function DonationPage() {
                   disabled={effectiveAmount < 1 || loading || !paymentMethods}
                   defaultCountry={selectedMethod === 'card' ? 'FR' : 'TN'}
                   fixedCountry
+                  providerLabel={selectedMethod === 'card' ? 'Stripe' : PAYMENT_METHODS.find((method) => method.id === selectedMethod)?.label}
                 />
               ) : (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm font-semibold text-slate-600">
@@ -376,6 +398,15 @@ export default function DonationPage() {
           </div>
         </section>
       )}
-    </main>
+      </main>
+      <footer className="border-t border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-8 lg:px-8">
+          <a href="/" className="inline-flex items-center gap-2 text-sm font-extrabold text-jso-navy hover:text-jso-blue">
+            <ArrowLeft size={16} aria-hidden="true" /> Retour à l’accueil
+          </a>
+          <p className="text-xs font-semibold text-slate-400">© {new Date().getFullYear()} Jeunesse Sportive de Oudhref</p>
+        </div>
+      </footer>
+    </div>
   )
 }

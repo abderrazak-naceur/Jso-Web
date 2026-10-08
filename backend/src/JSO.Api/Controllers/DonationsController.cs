@@ -187,6 +187,8 @@ public sealed class DonationsController(
         if (provider == paymentSelector.Paymee &&
             !System.Net.Mail.MailAddress.TryCreate(request.Email, out _))
             return BadRequest(new { message = "Une adresse e-mail valide est requise pour Paymee." });
+        if (provider == paymentSelector.Paymee && string.IsNullOrWhiteSpace(donation.DonorPhone))
+            return BadRequest(new { message = "Un numéro de téléphone est requis pour Paymee." });
 
         var paymentRequest = new PaymentRequest(
             PayableTypes.Donation, donation.Id, null, donation.Amount, "Soutien JSO 2026/2027",

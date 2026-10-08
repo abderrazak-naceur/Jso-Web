@@ -31,6 +31,8 @@ public sealed class PaymeePaymentProvider(
 
         if (string.IsNullOrWhiteSpace(payable.Email))
             throw new PaymentProviderException("Paymee exige une adresse e-mail client pour initier le paiement.");
+        if (string.IsNullOrWhiteSpace(payable.Phone))
+            throw new PaymentProviderException("Paymee exige un numéro de téléphone client pour initier le paiement.");
 
         var baseUrl = string.IsNullOrWhiteSpace(provider.BaseUrl)
             ? "https://app.paymee.tn/api/v2/"
@@ -42,7 +44,7 @@ public sealed class PaymeePaymentProvider(
 
         var firstName = string.IsNullOrWhiteSpace(payable.FirstName) ? "JSO" : payable.FirstName.Trim();
         var lastName = string.IsNullOrWhiteSpace(payable.LastName) ? "Support" : payable.LastName.Trim();
-        var phone = string.IsNullOrWhiteSpace(payable.Phone) ? "00000000" : payable.Phone.Trim();
+        var phone = payable.Phone.Trim();
 
         var request = new CreatePaymentRequest
         {
@@ -82,7 +84,7 @@ public sealed class PaymeePaymentProvider(
 
     // Paymee signs webhook data with MD5(token + payment_status + API token).
     // The webhook is accepted only when the checksum is valid and payment_status
-    // is true; the order id is then completed through the shared router.
+    // is true; the webhook also binds the signed token to the stored payable.
     public bool VerifyWebhookChecksum(string token, bool paymentStatus, string checkSum, string apiKey)
     {
         var raw = token + (paymentStatus ? "1" : "0") + apiKey;

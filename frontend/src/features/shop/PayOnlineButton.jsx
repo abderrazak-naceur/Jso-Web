@@ -5,7 +5,7 @@ import { useState } from 'react'
 // flow and safety model. It takes a `pay(country)` callback that must call the
 // relevant API (ticketApi.pay / supporterApi.pay / shopOrderApi.pay) and return
 // a `{ redirectUrl }`. On success the browser is redirected to the provider's
-// HOSTED page (Flouci for Tunisia, Stripe otherwise); no card data ever touches
+// HOSTED page; no card data ever touches
 // our servers, and payment is confirmed server-side by the verified webhook.
 //
 // Loading and error states are handled here: if the provider is not configured
@@ -24,7 +24,7 @@ const COUNTRIES = [
   { code: 'XX', label: 'Autre pays' },
 ]
 
-export default function PayOnlineButton({ pay, label = 'Payer en ligne', disabled = false, defaultCountry = 'TN', fixedCountry = false }) {
+export default function PayOnlineButton({ pay, label = 'Payer en ligne', disabled = false, defaultCountry = 'TN', fixedCountry = false, providerLabel }) {
   const [country, setCountry] = useState(defaultCountry)
   const [paying, setPaying] = useState(false)
   const [error, setError] = useState('')
@@ -61,7 +61,9 @@ export default function PayOnlineButton({ pay, label = 'Payer en ligne', disable
         </select>
       </>}
       <p className="mt-1 text-xs text-slate-400">
-        {country === 'TN' ? 'Paiement en dinars (TND) via Flouci.' : 'Paiement international via Stripe.'}
+        {country === 'TN'
+          ? `Paiement en dinars (TND)${providerLabel ? ` via ${providerLabel}` : ''}.`
+          : `Paiement international${providerLabel ? ` via ${providerLabel}` : ''}.`}
       </p>
 
       {error && <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p>}
