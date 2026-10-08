@@ -13,7 +13,7 @@ public sealed class KonnectPaymentProvider(
 {
     public string Name => "Konnect";
 
-    public bool IsConfigured => true; // Runtime configuration is resolved from the encrypted DB store.
+    public bool IsConfigured => store.HasActiveConfiguredByCode("KONNECT");
 
     public async Task<PaymentInitiation> InitiatePaymentAsync(
         PaymentRequest payable,
