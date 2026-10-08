@@ -117,7 +117,7 @@ public sealed class PaymentConfigurationStore
         return (p, p is null ? new Dictionary<string,string>() : DecryptSecrets(p.Secrets));
     }
 
-    private async Task<StoredSettings> ReadAsync(CancellationToken ct)
+    public async Task<(StoredProvider? Provider, IReadOnlyDictionary<string, string> Secrets)> GetActiveForServerByCodeAsync(string code, CancellationToken ct = default)\n    {\n        var settings = await ReadAsync(ct);\n        var p = settings.Providers.FirstOrDefault(x => x.IsActive && string.Equals(x.Code, code, StringComparison.OrdinalIgnoreCase));\n        return (p, p is null ? new Dictionary<string,string>() : DecryptSecrets(p.Secrets));\n    }\n\n    private async Task<StoredSettings> ReadAsync(CancellationToken ct)
     {
         var row = await _db.SiteContents.AsNoTracking().SingleOrDefaultAsync(x => x.Key == Key, ct);
         if (row is null || string.IsNullOrWhiteSpace(row.Value)) return new StoredSettings();
