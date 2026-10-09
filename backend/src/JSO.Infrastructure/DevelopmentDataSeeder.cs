@@ -351,6 +351,25 @@ public static class DevelopmentDataSeeder
             );
         }
 
+        // Official annual subscription shown on the club's 2026/27 card.
+        // Do not overwrite a plan already configured by an administrator.
+        var annualMembership = await db.MembershipPlans.FirstOrDefaultAsync(
+            x => x.Name == "Abonnement annuel 2026-2027", ct);
+        if (annualMembership is null)
+        {
+            db.MembershipPlans.Add(new MembershipPlan
+            {
+                Name = "Abonnement annuel 2026-2027",
+                Description = "Carte d'abonnement annuelle JSO pour la saison 2026-2027. Prix officiel : 30 dinars tunisiens.",
+                Price = 30m,
+                Currency = "TND",
+                DurationDays = 365,
+                IsActive = true,
+                DisplayOrder = 0
+            });
+            await db.SaveChangesAsync(ct);
+        }
+
         var defaultContent = new Dictionary<string, string>
         {
             ["hero_title"] = "Toujours plus haut.",
