@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { Save, LayoutTemplate, SlidersHorizontal, Languages, CreditCard } from 'lucide-react'
+import { Save, SlidersHorizontal, Languages, CreditCard } from 'lucide-react'
 import Field from '../components/Field'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../../lib/apiConfig'
-import HomepageBuilderModule from '../HomepageBuilder'
 import TranslationsModule from './TranslationsModule'
 import PaymentSettingsModule from './PaymentSettingsModule'
 
@@ -57,12 +56,6 @@ export default function SettingsModule({ onError = () => {} }) {
       icon: CreditCard,
     },
     {
-      id: 'home',
-      label: 'Page d’accueil',
-      description: 'Sections, ordre, publication, visibilité et menu du site.',
-      icon: LayoutTemplate,
-    },
-    {
       id: 'api',
       label: 'Backend / API',
       description: 'URL de base utilisée par le site et l’administration.',
@@ -78,7 +71,7 @@ export default function SettingsModule({ onError = () => {} }) {
 
   return <div className="space-y-6">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-2 shadow-sm">
-      <div className="grid gap-2 sm:grid-cols-4">
+      <div className="grid gap-2 sm:grid-cols-3">
         {tabs.map(({ id, label, description, icon: Icon }) => (
           <button
             key={id}
@@ -107,27 +100,6 @@ export default function SettingsModule({ onError = () => {} }) {
 
     {activeTab === 'payments' && (
       <PaymentSettingsModule onError={onError} />
-    )}
-
-    {activeTab === 'home' && (
-      <section aria-labelledby="homepage-settings-title">
-        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-          <div className="flex items-start gap-3">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-jso-blue/10 text-jso-blue">
-              <LayoutTemplate size={20} />
-            </div>
-            <div>
-              <h2 id="homepage-settings-title" className="text-xl font-black">Sections de la page d’accueil</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Configurez les sections de la page d’accueil, leur ordre, leur publication et la visibilité, ainsi que le menu et le pied de page.
-              </p>
-            </div>
-          </div>
-          <div className="mt-6">
-            <HomepageBuilderModule onError={onError} />
-          </div>
-        </div>
-      </section>
     )}
 
     {activeTab === 'languages' && (
