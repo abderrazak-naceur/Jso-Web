@@ -821,8 +821,17 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.Property<DateTimeOffset?>("LastLoginAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateOnly?>("LastLoginDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("LoginDaysCount")
+                        .HasColumnType("integer");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProfilePhotoUrl")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
