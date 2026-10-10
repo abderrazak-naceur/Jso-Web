@@ -124,7 +124,7 @@ function App() {
         user={fan.user}
         onLogin={() => openAuth('login')}
         onRegister={() => openAuth('register')}
-        onOpenProfile={() => setProfileOpen(true)}
+        onOpenProfile={() => { window.location.href = '/profil' }}
         onOpenSettings={() => setSettingsOpen(true)}
         onLogout={fan.signOut}
       />
