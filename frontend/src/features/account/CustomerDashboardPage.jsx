@@ -49,6 +49,8 @@ function DataError({ message, onRetry }) {
   return <div role="alert" className="mt-5 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between"><span className="inline-flex items-start gap-2"><CircleAlert size={18} className="mt-0.5 shrink-0" />{message}</span><button type="button" onClick={onRetry} className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2 font-bold hover:bg-amber-100"><RefreshCw size={15} /> Réessayer</button></div>
 }
 
+import { LayoutDashboard, Crown, ShoppingBag, Settings, LogOut, Menu, ChevronDown, ChevronRight } from 'lucide-react'
+
 export default function CustomerDashboardPage() {
   const fan = useFanSession()
   const [authOpen, setAuthOpen] = useState(false)
@@ -66,18 +68,12 @@ export default function CustomerDashboardPage() {
   useEffect(() => {
     if (fan.status !== 'authenticated' || !fan.token) return
     let active = true
-    Promise.allSettled([
-      ticketApi.mine(fan.token),
-      shopOrderApi.myOrders(fan.token),
-      membershipApi.mine(fan.token),
-    ]).then((tasks) => {
+    Promise.allSettled([ticketApi.mine(fan.token), shopOrderApi.myOrders(fan.token), membershipApi.mine(fan.token)]).then((tasks) => {
       if (!active) return
       const names = ['tickets', 'orders', 'memberships']
       setData(Object.fromEntries(names.map((name, index) => {
         const result = tasks[index]
-        return [name, result.status === 'fulfilled'
-          ? { status: 'ready', items: listOf(result.value) }
-          : { status: 'error', items: [], message: result.reason?.message || 'Service temporairement indisponible.' }]
+        return [name, result.status === 'fulfilled' ? { status: 'ready', items: listOf(result.value) } : { status: 'error', items: [], message: result.reason?.message || 'Service temporairement indisponible.' }]
       })))
     })
     return () => { active = false }
@@ -98,84 +94,125 @@ export default function CustomerDashboardPage() {
     }
   }
 
-  if (fan.status === 'unknown') {
-    return <div className="min-h-screen bg-jso-paper"><StandalonePageHeader /><main className="mx-auto max-w-5xl px-5 py-20 text-center"><p className="font-bold text-slate-500">Vérification de votre session…</p></main></div>
-  }
+  if (fan.status === 'unknown') return <div className="min-h-screen bg-jso-paper"><StandalonePageHeader /><main className="mx-auto max-w-5xl px-5 py-20 text-center"><p className="font-bold text-slate-500">Vérification de votre session…</p></main></div>
 
   if (fan.status !== 'authenticated' || !fan.token) {
-    return (
-      <div className="min-h-screen bg-jso-paper text-jso-ink">
-        <StandalonePageHeader />
-        <main className="mx-auto max-w-3xl px-5 py-16 sm:py-24">
-          <a href="/" className="inline-flex items-center gap-2 text-sm font-extrabold text-jso-blue"><ArrowLeft size={16} /> Retour au site</a>
-          <section className="mt-8 overflow-hidden rounded-[2rem] bg-jso-navy p-8 text-white shadow-xl sm:p-12">
-            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-white/10 text-jso-gold"><ShieldCheck size={28} /></span>
-            <p className="mt-6 text-xs font-extrabold tracking-[0.2em] text-jso-gold">ESPACE SUPPORTER</p>
-            <h1 className="mt-2 text-3xl font-black sm:text-4xl">Votre espace personnel</h1>
-            <p className="mt-4 max-w-xl leading-7 text-white/70">Retrouvez vos billets, vos abonnements et vos commandes dans un seul endroit sécurisé.</p>
-            <button type="button" onClick={() => setAuthOpen(true)} className="mt-7 inline-flex items-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy hover:bg-white"><LogIn size={18} /> Se connecter</button>
-            <p className="mt-4 text-sm text-white/55">Vous n’avez pas encore de compte ? Ouvrez la connexion puis choisissez « Créer un compte ».</p>
-          </section>
-        </main>
-        <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onAuthenticated={(result) => { fan.signIn(result); setAuthOpen(false) }} />
-      </div>
-    )
+    return <div className="min-h-screen bg-jso-paper text-jso-ink">
+      <StandalonePageHeader />
+      <main className="mx-auto max-w-3xl px-5 py-16 sm:py-24">
+        <a href="/" className="inline-flex items-center gap-2 text-sm font-extrabold text-jso-blue"><ArrowLeft size={16} /> Retour au site</a>
+        <section className="mt-8 overflow-hidden rounded-[2rem] bg-jso-navy p-8 text-white shadow-xl sm:p-12">
+          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-white/10 text-jso-gold"><ShieldCheck size={28} /></span>
+          <p className="mt-6 text-xs font-extrabold tracking-[0.2em] text-jso-gold">ESPACE SUPPORTER</p>
+          <h1 className="mt-2 text-3xl font-black sm:text-4xl">Votre espace personnel</h1>
+          <p className="mt-4 max-w-xl leading-7 text-white/70">Retrouvez vos billets, vos abonnements et vos commandes dans un seul endroit sécurisé.</p>
+          <button type="button" onClick={() => setAuthOpen(true)} className="mt-7 inline-flex items-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy hover:bg-white"><LogIn size={18} /> Se connecter</button>
+          <p className="mt-4 text-sm text-white/55">Vous n’avez pas encore de compte ? Ouvrez la connexion puis choisissez « Créer un compte ».</p>
+        </section>
+      </main>
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onAuthenticated={(result) => { fan.signIn(result); setAuthOpen(false) }} />
+    </div>
   }
 
   const ticketItems = data.tickets.items
   const orderItems = data.orders.items
   const membershipItems = data.memberships.items
   const allLoading = [data.tickets, data.orders, data.memberships].every((item) => item.status === 'loading')
+  const nextTicket = ticketItems[0]
+  const nextTicketId = nextTicket ? idOf(nextTicket) : null
+  const nextDigital = nextTicketId ? digital[nextTicketId] : null
+  const nextQr = value(nextDigital, 'qrCodeDataUrl', 'QrCodeDataUrl', 'qrCodeUrl', 'QrCodeUrl', 'qrCode', 'QrCode', 'imageDataUrl', 'ImageDataUrl')
+  const nextQrImage = typeof nextQr === 'string' && (nextQr.startsWith('data:image/') || /^https:\/\//i.test(nextQr))
+  const activeMembership = membershipItems.find((item) => ['Active', 'Confirmed', 'Paid'].includes(statusOf(item))) || membershipItems[0]
+  const recentOrders = orderItems.slice(0, 3)
+  const displayName = fan.user?.displayName || fan.user?.fullName || fan.user?.name || fan.user?.email?.split('@')[0] || 'Supporter'
+  const initials = displayName.split(/[\\s._-]+/).filter(Boolean).slice(0, 2).map((word) => word[0]).join('').toUpperCase() || 'JS'
+  const jumpTo = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    document.getElementById('jso-mobile-sidebar')?.classList.remove('is-open')
+  }
+  function NavItem({ icon: Icon, label, href, active = false, onClick }) {
+    const classes = "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold transition " + (active ? 'bg-blue-600 text-white shadow-md' : 'text-white/75 hover:bg-white/10 hover:text-white')
+    return onClick
+      ? <button type="button" onClick={onClick} className={classes}><Icon size={18} aria-hidden="true" /><span>{label}</span></button>
+      : <a href={href} aria-current={active ? 'page' : undefined} className={classes}><Icon size={18} aria-hidden="true" /><span>{label}</span></a>
+  }
+  const sidebar = <aside className="jso-dashboard-sidebar">
+    <a href="/" className="jso-brand-lockup" aria-label="JSO, accueil"><img src="/JSO-crest-regenerated-ok.png" alt="" /><span><strong>JSO</strong><small>FOOTBALL CLUB</small></span></a>
+    <nav aria-label="Navigazione area supporter" className="jso-sidebar-nav">
+      <NavItem icon={LayoutDashboard} label="Mon espace" href="/mon-espace" active />
+      <NavItem icon={Ticket} label="Mes billets" href="#mes-billets" onClick={() => jumpTo('mes-billets')} />
+      <NavItem icon={Crown} label="Mes abonnements" href="#mes-abonnements" onClick={() => jumpTo('mes-abonnements')} />
+      <NavItem icon={ShoppingBag} label="Mes commandes" href="#mes-commandes" onClick={() => jumpTo('mes-commandes')} />
+      <NavItem icon={UserRound} label="Mon profil" onClick={() => setAuthOpen(true)} />
+      <NavItem icon={Settings} label="Paramètres" onClick={() => setAuthOpen(true)} />
+      <NavItem icon={LogOut} label="Se déconnecter" onClick={fan.signOut} />
+    </nav>
+    <div className="jso-sidebar-art" aria-hidden="true"><span>Plus qu’un club</span><em>Une famille</em></div>
+    <div className="jso-sidebar-foot">JSO · Ensemble vers la victoire</div>
+  </aside>
 
-  return (
-    <div className="min-h-screen bg-jso-paper text-jso-ink">
-      <StandalonePageHeader />
-      <main id="main-content" tabIndex={-1} className="mx-auto max-w-6xl px-5 py-10 sm:py-14 lg:px-8">
-        <a href="/" className="inline-flex items-center gap-2 text-sm font-extrabold text-jso-blue hover:text-jso-navy"><ArrowLeft size={16} /> Retour au site</a>
-        <div className="mt-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div><p className="text-xs font-extrabold tracking-[0.2em] text-jso-blue">ESPACE SUPPORTER</p><h1 className="mt-2 text-3xl font-black tracking-tight sm:text-5xl">Bonjour, {fan.user?.displayName || fan.user?.email || 'supporter'} !</h1><p className="mt-3 max-w-2xl text-slate-500">Vos billets, abonnements et achats réunis au même endroit.</p></div>
-          <button type="button" onClick={() => setReload((n) => n + 1)} className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold hover:border-jso-blue sm:self-auto"><RefreshCw size={16} /> Actualiser</button>
+  return <div className="jso-account-page min-h-screen bg-jso-paper text-jso-ink">
+    {sidebar}
+    <div className="jso-dashboard-shell">
+      <header className="jso-dashboard-topbar">
+        <button type="button" className="jso-mobile-menu" aria-label="Afficher le menu supporter" onClick={() => document.getElementById('jso-mobile-sidebar')?.classList.toggle('is-open')}><Menu size={21} /></button>
+        <a href="/" className="jso-mobile-brand"><img src="/JSO-crest-regenerated-ok.png" alt="" /><strong>JSO</strong><small>FOOTBALL CLUB</small></a>
+        <nav className="jso-top-links" aria-label="Navigation principale"><a href="/">Accueil</a><a href="/matchs">Matches</a><a href="/billetterie">Billetterie</a><a href="/abonnements">Abonnements</a><a href="/boutique">Boutique</a><a href="/actualites">Actualités</a></nav>
+        <div className="jso-top-user"><span className="jso-notification-dot" aria-label="Notifications">♧</span><span className="jso-avatar" aria-label={displayName}>{initials}</span><span className="jso-top-user-name">{displayName}</span><ChevronDown size={15} aria-hidden="true" /></div>
+      </header>
+      <main id="main-content" tabIndex={-1} className="jso-dashboard-main">
+        <div className="jso-welcome"><div><p className="jso-eyebrow">ESPACE SUPPORTER</p><h1>Bonjour {displayName},</h1><p className="jso-welcome-subtitle">Bienvenue dans votre espace personnel.</p><p className="jso-welcome-copy">Retrouvez ici tous vos billets, abonnements, commandes et informations.</p></div><div className="jso-welcome-actions"><button type="button" onClick={() => setReload((n) => n + 1)}><RefreshCw size={16} /> Actualiser</button></div></div>
+        <div className="jso-dashboard-kpis" aria-label="Résumé de votre compte">
+          <article className="jso-kpi-card"><span className="jso-kpi-icon"><Ticket size={23} /></span><div><span className="jso-kpi-label">Mes billets</span><strong>{data.tickets.status === 'ready' ? ticketItems.length : '—'}</strong><small>{ticketItems.length ? 'Votre prochain match' : 'Vos billets apparaîtront ici'}</small></div><ChevronRight size={18} className="jso-kpi-arrow" /></article>
+          <article className="jso-kpi-card jso-kpi-gold"><span className="jso-kpi-icon"><Crown size={23} /></span><div><span className="jso-kpi-label">Mon abonnement</span><strong className="jso-kpi-word">{activeMembership ? 'Actif' : '—'}</strong><small>{value(activeMembership, 'planName', 'PlanName', 'name', 'Name') || 'Saison 2026/27'}</small></div><ChevronRight size={18} className="jso-kpi-arrow" /></article>
+          <article className="jso-kpi-card"><span className="jso-kpi-icon"><ShoppingBag size={23} /></span><div><span className="jso-kpi-label">Mes commandes</span><strong>{data.orders.status === 'ready' ? orderItems.length : '—'}</strong><small>{recentOrders[0] ? dateOf(recentOrders[0], 'createdAt', 'CreatedAt', 'orderDate', 'OrderDate') : 'Vos achats JSO'}</small></div><ChevronRight size={18} className="jso-kpi-arrow" /></article>
         </div>
-
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          {[
-            { label: 'Mes billets', count: data.tickets.status === 'ready' ? ticketItems.length : '—', icon: Ticket },
-            { label: 'Mes abonnements', count: data.memberships.status === 'ready' ? membershipItems.length : '—', icon: CheckCircle2 },
-            { label: 'Mes commandes', count: data.orders.status === 'ready' ? orderItems.length : '—', icon: Package },
-          ].map((stat) => <div key={stat.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-500">{stat.label}</span><stat.icon size={19} className="text-jso-blue" aria-hidden="true" /></div><p className="mt-3 text-3xl font-black">{stat.count}</p></div>)}
+        <div className="jso-dashboard-panels">
+          <section className="jso-panel jso-next-match" id="mes-billets">
+            <div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">BILLETTERIE</span><h2>Prochain match</h2></div><a href="/matchs">Voir tous les matchs <ChevronRight size={14} /></a></div>
+            {data.tickets.status === 'error' ? <DataError message={data.tickets.message} onRetry={() => setReload((n) => n + 1)} /> : data.tickets.status === 'loading' ? <p className="jso-muted">Chargement des billets…</p> : nextTicket ? <div className="jso-match-ticket">
+              <div className="jso-match-banner"><img src="/JSO-crest-regenerated-ok.png" alt="JSO" className="jso-match-crest" /><div className="jso-match-info"><p>{value(nextTicket, 'competitionName', 'CompetitionName', 'matchTitle', 'MatchTitle', 'matchName', 'MatchName', 'opponentName', 'OpponentName', 'ticketTypeName', 'TicketTypeName') || 'Match JSO'}</p><h3>JSO <span>vs</span> {value(nextTicket, 'opponentName', 'OpponentName') || 'Adversaire'}</h3><small><CalendarDays size={13} /> {dateOf(nextTicket, 'kickoffAt', 'KickoffAt', 'createdAt', 'CreatedAt', 'purchaseDate', 'PurchaseDate')} · {value(nextTicket, 'venue', 'Venue') || 'Stade Municipal'}</small></div></div>
+              <div className="jso-ticket-details"><span><small>Tribune</small><strong>{value(nextTicket, 'standName', 'StandName', 'tribune', 'Tribune') || '—'}</strong></span><span><small>Rang</small><strong>{value(nextTicket, 'row', 'Row', 'rank', 'Rank') || '—'}</strong></span><span><small>Siège</small><strong>{value(nextTicket, 'seat', 'Seat') || '—'}</strong></span>{nextQrImage && <img className="jso-ticket-qr" src={nextQr} alt="QR code du billet" />}</div>
+              <div className="jso-ticket-actions"><span className={'jso-status-pill ' + (['Confirmed', 'Paid', 'Active'].includes(statusOf(nextTicket)) ? 'is-ok' : '')}><CheckCircle2 size={14} /> {prettyStatus(statusOf(nextTicket))}</span><button type="button" onClick={() => showDigital(nextTicket)} disabled={!nextTicketId || Boolean(digitalBusy[nextTicketId])}>{digitalBusy[nextTicketId] ? 'Chargement…' : <><Ticket size={15} /> Voir mon billet</>}</button></div>
+              {digitalErrors[nextTicketId] && <p role="alert" className="jso-dashboard-error">{digitalErrors[nextTicketId]}</p>}
+              {nextDigital && <div className="jso-ticket-extra"><p>Billet numérique</p>{nextQrImage && <a href={nextQr} download={'jso-ticket-' + nextTicketId + '.png'}><Download size={14} /> Télécharger le billet</a>}<button type="button" onClick={() => setDigital((state) => { const next = { ...state }; delete next[nextTicketId]; return next })}>Fermer</button></div>}
+            </div> : <EmptyState title="Aucun billet pour le moment" detail="Vos réservations apparaîtront ici après l’achat." />}
+          </section>
+          <section className="jso-panel jso-membership-panel" id="mes-abonnements">
+            <div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">VOTRE ADHÉSION</span><h2>Mon abonnement</h2></div><a href="#historique-abonnements">Voir les détails <ChevronRight size={14} /></a></div>
+            {data.memberships.status === 'error' ? <DataError message={data.memberships.message} onRetry={() => setReload((n) => n + 1)} /> : data.memberships.status === 'loading' ? <p className="jso-muted">Chargement de votre abonnement…</p> : activeMembership ? <>
+              <div className="jso-membership-feature"><div className="jso-membership-cover"><img src="/JSO-crest-regenerated-ok.png" alt="" /><strong>ABONNEMENT</strong><small>SAISON 2026/27</small></div><div className="jso-membership-status"><span className="jso-status-pill is-ok"><CheckCircle2 size={14} /> {prettyStatus(statusOf(activeMembership))}</span><h3>{value(activeMembership, 'planName', 'PlanName', 'name', 'Name', 'membershipName', 'MembershipName') || 'Abonnement JSO'}</h3><p>Valide jusqu’au {dateOf(activeMembership, 'endDate', 'EndDate', 'expiresAt', 'ExpiresAt')}</p></div></div>
+              <div className="jso-membership-facts"><span><small>Nom</small><strong>{displayName}</strong></span><span><small>Catégorie</small><strong>{value(activeMembership, 'category', 'Category') || 'Adulte'}</strong></span><span><small>N° abonné</small><strong>{value(activeMembership, 'membershipNumber', 'MembershipNumber', 'number', 'Number') || '—'}</strong></span></div>
+              <div className="jso-membership-actions"><button type="button" onClick={() => setDigitalErrors((s) => ({ ...s, membership: 'La carte sera affichée ici lorsqu’elle sera fournie par l’API.' }))}><Ticket size={15} /> Voir la carte</button><button type="button" className="is-secondary" onClick={() => setDigitalErrors((s) => ({ ...s, membership: 'Le téléchargement sera disponible lorsque l’API fournira le document.' }))}><Download size={15} /> Télécharger</button></div>
+              {digitalErrors.membership && <p role="status" className="jso-dashboard-error">{digitalErrors.membership}</p>}
+              {membershipItems.length > 1 && <div id="historique-abonnements" className="jso-membership-history"><strong>Historique</strong>{membershipItems.slice(1).map((membership, i) => <div key={idOf(membership) ?? i}><span>{value(membership, 'planName', 'PlanName', 'name', 'Name') || 'Abonnement JSO'}</span><span>{prettyStatus(statusOf(membership))}</span></div>)}</div>}
+            </> : <EmptyState title="Aucun abonnement registrato" detail="Le informazioni sull’abbonamento appariranno qui." />}
+          </section>
+          <section className="jso-panel jso-orders-panel" id="mes-commandes">
+            <div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">BOUTIQUE JSO</span><h2>Dernières commandes</h2></div><a href="/boutique">Voir toutes <ChevronRight size={14} /></a></div>
+            {data.orders.status === 'error' ? <DataError message={data.orders.message} onRetry={() => setReload((n) => n + 1)} /> : data.orders.status === 'loading' ? <p className="jso-muted">Chargement des commandes…</p> : recentOrders.length ? <div className="jso-order-list">{recentOrders.map((order, index) => {
+              const id = idOf(order) ?? index
+              const lines = value(order, 'items', 'Items', 'lines', 'Lines')
+              const firstLine = Array.isArray(lines) ? lines[0] : null
+              return <article key={id} className="jso-order-row"><span className="jso-order-thumb"><ShoppingBag size={23} /></span><span className="jso-order-text"><strong>{value(firstLine, 'productName', 'ProductName', 'name', 'Name', 'title', 'Title') || ('Commande ' + String(id).slice(0, 8))}</strong><small>{dateOf(order, 'createdAt', 'CreatedAt', 'orderDate', 'OrderDate')} · {prettyStatus(statusOf(order))}</small></span><strong className="jso-order-price">{moneyOf(order) || '—'}</strong><ChevronRight size={16} /></article>
+            })}</div> : <EmptyState title="Aucune commande pour le moment" detail="Vos achats seront affichés ici avec leur statut et leur montant." />}
+          </section>
         </div>
-
-        {allLoading && <div role="status" className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm font-semibold text-slate-500">Chargement de vos informations…</div>}
-
-        <section className="mt-10 rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-          <SectionHeading eyebrow="BILLETTERIE" title="Mes billets" count={data.tickets.status === 'ready' ? ticketItems.length : undefined} icon={Ticket} />
-          {data.tickets.status === 'error' ? <DataError message={data.tickets.message} onRetry={() => setReload((n) => n + 1)} /> : data.tickets.status === 'loading' ? <p className="mt-5 text-sm text-slate-400">Chargement…</p> : ticketItems.length === 0 ? <EmptyState title="Aucun billet pour le moment" detail="Vos réservations et billets apparaîtront ici après votre achat." /> : <div className="mt-5 space-y-3">{ticketItems.map((ticket, index) => {
-            const id = idOf(ticket) ?? index
-            const status = statusOf(ticket)
-            const digitalData = digital[id]
-            const qr = value(digitalData, 'qrCodeDataUrl', 'QrCodeDataUrl', 'qrCodeUrl', 'QrCodeUrl', 'qrCode', 'QrCode', 'imageDataUrl', 'ImageDataUrl')
-            const qrImage = typeof qr === 'string' && (qr.startsWith('data:image/') || /^https:\/\//i.test(qr))
-            const canRequestDigital = ['Confirmed', 'Paid', 'Used', 'CheckedIn'].includes(status)
-            return <article key={id} className="rounded-2xl border border-slate-200 p-4 sm:p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div className="min-w-0"><p className="font-extrabold">{value(ticket, 'matchTitle', 'MatchTitle', 'matchName', 'MatchName', 'opponentName', 'OpponentName', 'ticketTypeName', 'TicketTypeName') || 'Billet JSO'}</p><p className="mt-1 text-sm text-slate-500">{value(ticket, 'quantity', 'Quantity') ? `Quantité : ${value(ticket, 'quantity', 'Quantity')} · ` : ''}{dateOf(ticket, 'createdAt', 'CreatedAt', 'purchaseDate', 'PurchaseDate', 'kickoffAt', 'KickoffAt')}</p>{moneyOf(ticket) && <p className="mt-1 text-sm font-bold">{moneyOf(ticket)}</p>}</div><span className={`w-fit rounded-full px-3 py-1 text-xs font-extrabold ${statusClass(status)}`}>{prettyStatus(status)}</span></div>
-              {canRequestDigital && <div className="mt-4"><button type="button" onClick={() => showDigital(ticket)} disabled={Boolean(digitalBusy[id])} className="inline-flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-extrabold text-white hover:bg-jso-blue disabled:opacity-60">{digitalBusy[id] ? 'Chargement…' : <><Ticket size={16} /> Afficher mon billet / QR</>}</button></div>}
-              {digitalErrors[id] && <p role="alert" className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{digitalErrors[id]}</p>}
-              {digitalData && <div className="mt-4 flex flex-col items-start gap-3 rounded-xl bg-slate-50 p-4 sm:flex-row sm:items-center">{qrImage ? <img src={qr} alt="QR code du billet" className="h-40 w-40 rounded-xl border border-slate-200 bg-white p-2" /> : <div className="rounded-xl bg-white p-3 text-sm text-slate-600">Billet numérique chargé. Présentez les informations officielles fournies par le club.</div>}<div><p className="font-extrabold">Billet numérique</p><p className="mt-1 text-sm text-slate-500">Le QR est fourni par l’API après vérification de votre compte et du statut du billet.</p>{qrImage && <a href={qr} download={`jso-ticket-${id}.png`} className="mt-3 inline-flex items-center gap-2 text-sm font-extrabold text-jso-blue"><Download size={15} /> Enregistrer le QR</a>}</div><button type="button" onClick={() => setDigital((state) => { const next = { ...state }; delete next[id]; return next })} aria-label="Fermer le billet numérique" className="ml-auto rounded-full border border-slate-200 p-2"><X size={16} /></button></div>}
-            </article>
-          })}</div>}
+        <section className="jso-panel jso-news-panel"><div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">JSO FOOTBALL CLUB</span><h2>Actualités pour vous</h2></div><a href="/actualites">Voir toutes les actualités <ChevronRight size={14} /></a></div>
+          <div className="jso-news-grid">
+            <a href="/actualites" className="jso-news-card"><div className="jso-news-photo jso-news-photo-one" /><strong>Préparez votre venue au stade</strong><small>Infos match · JSO</small></a>
+            <a href="/abonnements" className="jso-news-card"><div className="jso-news-photo jso-news-photo-two" /><strong>Les abonnements 2026/27</strong><small>Vie du club · JSO</small></a>
+            <a href="/actualites" className="jso-news-card"><div className="jso-news-photo jso-news-photo-three" /><strong>Une belle dynamique avant la prochaine journée</strong><small>Équipe · JSO</small></a>
+            <a href="/boutique" className="jso-news-card"><div className="jso-news-photo jso-news-photo-four" /><strong>Nouvelle collection disponible</strong><small>Boutique · JSO</small></a>
+          </div>
         </section>
-
-        <section className="mt-6 rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-          <SectionHeading eyebrow="VOTRE ADHÉSION" title="Mes abonnements" count={data.memberships.status === 'ready' ? membershipItems.length : undefined} icon={CheckCircle2} />
-          {data.memberships.status === 'error' ? <DataError message={data.memberships.message} onRetry={() => setReload((n) => n + 1)} /> : data.memberships.status === 'loading' ? <p className="mt-5 text-sm text-slate-400">Chargement…</p> : membershipItems.length === 0 ? <EmptyState title="Aucun abonnement enregistré" detail="Si vous souscrivez un abonnement, il apparaîtra ici avec son état et sa période de validité." /> : <div className="mt-5 space-y-3">{membershipItems.map((membership, index) => { const id = idOf(membership) ?? index; const status = statusOf(membership); return <article key={id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-extrabold">{value(membership, 'planName', 'PlanName', 'name', 'Name', 'membershipName', 'MembershipName') || 'Abonnement JSO'}</p><p className="mt-1 inline-flex items-center gap-1.5 text-sm text-slate-500"><CalendarDays size={15} /> {dateOf(membership, 'startDate', 'StartDate', 'startsAt', 'StartsAt')} – {dateOf(membership, 'endDate', 'EndDate', 'expiresAt', 'ExpiresAt')}</p>{moneyOf(membership) && <p className="mt-1 text-sm font-bold">{moneyOf(membership)}</p>}</div><span className={`w-fit rounded-full px-3 py-1 text-xs font-extrabold ${statusClass(status)}`}>{prettyStatus(status)}</span></article> })}</div>}
-        </section>
-
-        <section className="mt-6 rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-          <SectionHeading eyebrow="BOUTIQUE JSO" title="Mes commandes" count={data.orders.status === 'ready' ? orderItems.length : undefined} icon={Package} />
-          {data.orders.status === 'error' ? <DataError message={data.orders.message} onRetry={() => setReload((n) => n + 1)} /> : data.orders.status === 'loading' ? <p className="mt-5 text-sm text-slate-400">Chargement…</p> : orderItems.length === 0 ? <EmptyState title="Aucune commande pour le moment" detail="Vos achats dans la boutique apparaîtront ici avec leur statut et leur montant." /> : <div className="mt-5 space-y-3">{orderItems.map((order, index) => { const id = idOf(order) ?? index; const status = statusOf(order); return <article key={id} className="rounded-2xl border border-slate-200 p-4 sm:p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><p className="font-extrabold">Commande {String(id).slice(0, 8)}</p><p className="mt-1 inline-flex items-center gap-1.5 text-sm text-slate-500"><Clock3 size={15} /> {dateOf(order, 'createdAt', 'CreatedAt', 'orderDate', 'OrderDate', 'createdOn', 'CreatedOn')}</p>{moneyOf(order) && <p className="mt-1 text-lg font-black">{moneyOf(order)}</p>}</div><span className={`w-fit rounded-full px-3 py-1 text-xs font-extrabold ${statusClass(status)}`}>{prettyStatus(status)}</span></div>{Array.isArray(value(order, 'items', 'Items', 'lines', 'Lines')) && <ul className="mt-3 space-y-1 border-t border-slate-100 pt-3 text-sm text-slate-600">{value(order, 'items', 'Items', 'lines', 'Lines').map((line, i) => <li key={value(line, 'id', 'Id') || i}>{value(line, 'productName', 'ProductName', 'name', 'Name', 'title', 'Title') || 'Articolo'} × {value(line, 'quantity', 'Quantity') || 1}</li>)}</ul>}</article> })}</div>}
-        </section>
-
-        <section className="mt-6 flex flex-col gap-4 rounded-[1.75rem] bg-jso-navy p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:p-8"><div className="flex items-start gap-3"><UserRound size={22} className="mt-1 shrink-0 text-jso-gold" /><div><h2 className="font-black">Profilo e sicurezza</h2><p className="mt-1 text-sm text-white/65">Gestisci i tuoi dati personali e le impostazioni dell’account dal menu del tuo profilo.</p></div></div><a href="/" className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-extrabold text-jso-navy hover:bg-jso-gold">Torna al sito <ArrowLeft size={15} className="rotate-180" /></a></section>
+        <div className="jso-mobile-bottom-nav"><a href="/mon-espace" className="is-active"><LayoutDashboard size={18} /><small>Mon espace</small></a><a href="#mes-billets"><Ticket size={18} /><small>Mes billets</small></a><a href="/boutique"><ShoppingBag size={18} /><small>Boutique</small></a><a href="#mes-commandes"><UserRound size={18} /><small>Profil</small></a></div>
+        <div className="jso-dashboard-footer">JSO Football Club · Espace supporter</div>
       </main>
     </div>
-  )
+    <div id="jso-mobile-sidebar" className="jso-mobile-sidebar">{sidebar}<button type="button" className="jso-mobile-sidebar-close" onClick={() => document.getElementById('jso-mobile-sidebar')?.classList.remove('is-open')}>Fermer le menu</button></div>
+    {allLoading && <div className="jso-loading-bar" role="status">Chargement de vos informations…</div>}
+    <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onAuthenticated={(result) => { fan.signIn(result); setAuthOpen(false) }} />
+  </div>
 }
