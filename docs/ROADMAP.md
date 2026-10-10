@@ -115,7 +115,11 @@ Per la prima versione il formato raccomandato è un payload minimo tipo `JSO1.<o
 
 **Criterio di uscita:** un ticket Confirmed genera un QR verificabile; lo staff lo scansiona; il primo ingresso diventa CheckedIn; il secondo viene rifiutato; tutte le operazioni sono auditabili.
 
-## Priorità 2.7 — Area personale cliente (pianificata)\n\nRealizzare una dashboard cliente unificata per biglietti, abbonamenti, ordini e documenti digitali, separata dall'admin. Il piano operativo e i criteri di accettazione sono in [CUSTOMER_DASHBOARD_PLAN.md](CUSTOMER_DASHBOARD_PLAN.md). Stato: pianificata; non dichiarare completata prima di test E2E.\n\n## Priorità 3 — Funzioni successive
+## Priorità 2.7 — Area personale cliente (pianificata)
+
+Realizzare una dashboard cliente unificata per biglietti, abbonamenti, ordini e documenti digitali, separata dall'admin. Il piano operativo e i criteri di accettazione sono in [CUSTOMER_DASHBOARD_PLAN.md](CUSTOMER_DASHBOARD_PLAN.md). Stato: pianificata; non dichiarare completata prima di test E2E.
+
+## Priorità 3 — Funzioni successive
 
 - Community e moderazione, dopo regole di accesso, privacy e strumenti operativi.
 - Boutique, pagamenti, sponsor e analytics avanzati, dopo definizione dei requisiti commerciali.
