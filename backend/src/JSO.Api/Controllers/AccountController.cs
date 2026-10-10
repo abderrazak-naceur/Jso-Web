@@ -65,6 +65,12 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
         if (fan is null || !PasswordHasher.Verify(request.Password, fan.PasswordHash))
             return Unauthorized(new { message = "Invalid credentials." });
 
+        var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.UtcDateTime);
+        if (fan.LastLoginDate != today)
+        {
+            fan.LoginDaysCount++;
+            fan.LastLoginDate = today;
+        }
         fan.LastLoginAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
 
@@ -102,6 +108,7 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
             // membership date (CreatedAt) so the fan can review it.
             fan.BirthDate,
             fan.AnniversaryOptIn,
+            fan.LoginDaysCount,
             MemberSince = fan.CreatedAt
         });
     }
@@ -167,6 +174,7 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
             fan.EmailVerified,
             fan.BirthDate,
             fan.AnniversaryOptIn,
+            fan.LoginDaysCount,
             MemberSince = fan.CreatedAt
         });
     }
