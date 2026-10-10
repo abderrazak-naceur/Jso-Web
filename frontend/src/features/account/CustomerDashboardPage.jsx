@@ -5,6 +5,7 @@ import { useFanSession } from './useFanSession'
 import AuthModal from './AuthModal'
 import StandalonePageHeader from '../site/StandalonePageHeader'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
+import './CustomerDashboardPage.css'
 
 const value = (item, ...keys) => {
   for (const key of keys) if (item?.[key] !== undefined && item?.[key] !== null) return item[key]
