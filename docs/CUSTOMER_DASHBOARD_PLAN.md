@@ -1,6 +1,6 @@
 # JSO Web — Piano Area Cliente
 
-**Stato:** pianificato, non ancora implementato come dashboard unificata  
+**Stato:** prima versione frontend implementata su branch `feat/customer-account-dashboard`; verifiche CI e API di produzione ancora da completare  
 **Priorità proposta:** P1 — esperienza cliente e-commerce/biglietteria  
 **Ambito:** frontend React/Vite + API ASP.NET Core .NET 10 già esistenti
 
@@ -8,7 +8,7 @@
 
 Creare un'area personale cliente distinta dal back office admin, accessibile dopo il login da una voce chiara nel menu del sito (es. **La mia area**). Deve mostrare esclusivamente i dati appartenenti all'utente autenticato e permettere di recuperare biglietti digitali, abbonamenti e ordini.
 
-## Verifica iniziale del codice
+## Implementazione frontend (prima versione)\n\n- Route dedicata `/account`, distinta da `/admin`.\n- Voce «Mon espace» nel menu account desktop e mobile.\n- Accesso protetto tramite sessione Fan; utente anonimo invitato al login.\n- Riepilogo e sezioni per biglietti, abbonamenti e ordini usando le API Fan esistenti.\n- Stati loading, vuoto, errore e aggiornamento manuale; caricamento indipendente delle tre sezioni.\n- Pulsante QR che chiama l’endpoint digitale protetto solo per ticket che risultano confermati/pagati.\n- La presenza e il download di ricevute/documenti sono limitati ai dati realmente restituiti dall’API; non vengono creati documenti fittizi.\n\nDa verificare in CI e contro il backend effettivamente distribuito: shape esatti dei DTO, risposta dell’endpoint digitale e rendering del QR. Il frontend non considera mai il redirect del browser una conferma di pagamento.\n\n## Verifica iniziale del codice
 
 Esistono già componenti per autenticazione e profilo nel frontend e API fan-facing per biglietteria e shop. In particolare:
 - `GET /api/tickets/mine`: ordini/biglietti del tifoso autenticato.
