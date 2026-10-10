@@ -37,7 +37,9 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
             Email = email,
             DisplayName = request.DisplayName.Trim(),
             PasswordHash = PasswordHasher.Hash(request.Password),
-            IsActive = true
+            IsActive = true,
+            LoginDaysCount = 1,
+            LastLoginDate = DateOnly.FromDateTime(DateTimeOffset.UtcNow.UtcDateTime)
         };
         db.FanUsers.Add(fan);
         await db.SaveChangesAsync(ct);
