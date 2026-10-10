@@ -100,6 +100,25 @@ export default function ProfileModal({ open, token, user, onClose, onUpdated }) 
           <p className="mt-8 text-sm font-semibold text-slate-500">Chargement…</p>
         ) : (
           <form onSubmit={onSubmit} className="mt-6 space-y-5">
+            <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <div className="flex items-center gap-4">
+                <div className="relative grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full border-4 border-amber-400 bg-jso-navy text-lg font-black text-white">
+                  {profilePhoto ? <img src={profilePhoto} alt="Votre photo de profil" className="h-full w-full object-cover" /> : (displayName || "JS").slice(0, 2).toUpperCase()}
+                  <Crown size={14} className="absolute bottom-0 right-0 rounded-full bg-amber-400 p-0.5 text-jso-navy" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-black">Profil VIP</p>
+                  <p className="mt-1 text-xs text-slate-600">Votre photo apparaîtra dans le menu avec un contour doré.</p>
+                  <label className="mt-2 inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-xl bg-jso-navy px-3 py-2 text-sm font-bold text-white">
+                    <Camera size={15} /> {photoBusy ? "Préparation…" : "Choisir une photo"}
+                    <input type="file" accept="image/*" className="sr-only" onChange={onPhotoSelected} disabled={photoBusy} />
+                  </label>
+                  {profilePhoto && <button type="button" onClick={() => setProfilePhoto("")} className="ml-2 text-xs font-bold text-red-600"><Trash2 size={13} className="inline" /> Retirer</button>}
+                </div>
+              </div>
+              {photoError && <p role="alert" className="mt-2 text-xs text-red-700">{photoError}</p>}
+              <p className="mt-2 text-[11px] text-slate-500">La photo reste enregistrée sur cet appareil et ce navigateur.</p>
+            </section>
             {error && (
               <div className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
                 {error}
