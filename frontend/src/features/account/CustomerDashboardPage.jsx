@@ -6,6 +6,7 @@ import AuthModal from './AuthModal'
 import StandalonePageHeader from '../site/StandalonePageHeader'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import './CustomerDashboardPage.css'
+import { getProfilePhoto, subscribeProfilePhoto } from './profilePhoto'
 
 const value = (item, ...keys) => {
   for (const key of keys) if (item?.[key] !== undefined && item?.[key] !== null) return item[key]
@@ -54,6 +55,8 @@ function DataError({ message, onRetry }) {
 export default function CustomerDashboardPage() {
   const fan = useFanSession()
   const [authOpen, setAuthOpen] = useState(false)
+  const [profilePhoto, setProfilePhoto] = useState(getProfilePhoto)
+  useEffect(() => subscribeProfilePhoto(setProfilePhoto), [])
   const [reload, setReload] = useState(0)
   const [data, setData] = useState({
     tickets: { status: 'loading', items: [] },
@@ -159,7 +162,7 @@ export default function CustomerDashboardPage() {
         <button type="button" className="jso-mobile-menu" aria-label="Afficher le menu supporter" onClick={() => document.getElementById('jso-mobile-sidebar')?.classList.toggle('is-open')}><Menu size={21} /></button>
         <a href="/" className="jso-mobile-brand"><img src="/JSO-crest-regenerated-ok.png" alt="" /><strong>JSO</strong><small>FOOTBALL CLUB</small></a>
         <nav className="jso-top-links" aria-label="Navigation principale"><a href="/">Accueil</a><a href="/matchs">Matches</a><a href="/billetterie">Billetterie</a><a href="/abonnements">Abonnements</a><a href="/boutique">Boutique</a><a href="/actualites">Actualités</a></nav>
-        <div className="jso-top-user"><span className="jso-notification-dot" aria-label="Notifications">♧</span><span className="jso-avatar" aria-label={displayName}>{initials}</span><span className="jso-top-user-name">{displayName}</span><ChevronDown size={15} aria-hidden="true" /></div>
+        <div className="jso-top-user"><span className="jso-notification-dot" aria-label="Notifications">♧</span><span className="jso-avatar relative overflow-hidden border-2 border-amber-400 shadow-md" aria-label={displayName}>{profilePhoto ? <img src={profilePhoto} alt="" className="h-full w-full object-cover" /> : initials}<Crown size={12} className="absolute bottom-0 right-0 rounded-full bg-amber-300 p-[1px] text-jso-navy" aria-hidden="true" /></span><span className="jso-top-user-name">{displayName}</span><ChevronDown size={15} aria-hidden="true" /></div>
       </header>
       <main id="main-content" tabIndex={-1} className="jso-dashboard-main">
         <div className="jso-welcome"><div><p className="jso-eyebrow">ESPACE SUPPORTER</p><h1>Bonjour {displayName},</h1><p className="jso-welcome-subtitle">Bienvenue dans votre espace personnel.</p><p className="jso-welcome-copy">Retrouvez ici tous vos billets, abonnements, commandes et informations.</p></div><div className="jso-welcome-actions"><button type="button" onClick={() => setReload((n) => n + 1)}><RefreshCw size={16} /> Actualiser</button></div></div>
