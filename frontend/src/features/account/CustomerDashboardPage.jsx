@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, CalendarDays, CheckCircle2, CircleAlert, Clock3, Download, LogIn, Package, RefreshCw, ShieldCheck, Ticket, UserRound, X, LayoutDashboard, Crown, ShoppingBag, Settings, LogOut, Menu, ChevronDown, ChevronRight } from 'lucide-react'
+import { ArrowLeft, CalendarDays, CheckCircle2, CircleAlert, Clock3, Download, LogIn, Package, RefreshCw, ShieldCheck, Ticket, UserRound, X } from 'lucide-react'
 import { membershipApi, shopOrderApi, ticketApi } from '../../lib/api'
 import { useFanSession } from './useFanSession'
 import AuthModal from './AuthModal'
@@ -49,7 +49,7 @@ function DataError({ message, onRetry }) {
   return <div role="alert" className="mt-5 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between"><span className="inline-flex items-start gap-2"><CircleAlert size={18} className="mt-0.5 shrink-0" />{message}</span><button type="button" onClick={onRetry} className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2 font-bold hover:bg-amber-100"><RefreshCw size={15} /> Réessayer</button></div>
 }
 
-import { LayoutDashboard, Crown, ShoppingBag, Settings, LogOut, Menu, ChevronDown, ChevronRight } from 'lucide-react'
+
 
 export default function CustomerDashboardPage() {
   const fan = useFanSession()
