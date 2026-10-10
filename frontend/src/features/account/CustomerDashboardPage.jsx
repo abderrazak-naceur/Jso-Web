@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, CalendarDays, CheckCircle2, CircleAlert, Clock3, CreditCard, Download, LogIn, Package, RefreshCw, ShieldCheck, Ticket, UserRound, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ArrowLeft, CalendarDays, CheckCircle2, CircleAlert, Clock3, Download, LogIn, Package, RefreshCw, ShieldCheck, Ticket, UserRound, X } from 'lucide-react'
 import { membershipApi, shopOrderApi, ticketApi } from '../../lib/api'
 import { useFanSession } from './useFanSession'
 import AuthModal from './AuthModal'
@@ -61,26 +61,6 @@ export default function CustomerDashboardPage() {
   const [digitalBusy, setDigitalBusy] = useState({})
   const [digitalErrors, setDigitalErrors] = useState({})
   useDocumentTitle('La mia area')
-
-  const load = useCallback(async (token) => {
-    setData({
-      tickets: { status: 'loading', items: [] },
-      orders: { status: 'loading', items: [] },
-      memberships: { status: 'loading', items: [] },
-    })
-    const tasks = await Promise.allSettled([
-      ticketApi.mine(token),
-      shopOrderApi.myOrders(token),
-      membershipApi.mine(token),
-    ])
-    const names = ['tickets', 'orders', 'memberships']
-    setData(Object.fromEntries(names.map((name, index) => {
-      const result = tasks[index]
-      return [name, result.status === 'fulfilled'
-        ? { status: 'ready', items: listOf(result.value) }
-        : { status: 'error', items: [], message: result.reason?.message || 'Servizio temporaneamente indisponibile.' }]
-    })))
-  }, [])
 
   useEffect(() => {
     if (fan.status !== 'authenticated' || !fan.token) return
