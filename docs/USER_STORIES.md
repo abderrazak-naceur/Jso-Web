@@ -23,7 +23,39 @@
 - Le squadre selezionate sono persistite.
 - La home usa le preferenze salvate.
 
-## Epic 1A — Area personale cliente e acquisti\n\n### US-015 — Dashboard personale\n**As a** tifoso autenticato\n**I want** una dashboard personale unica\n**So that** posso trovare biglietti, abbonamenti, ordini e documenti senza contattare l'amministratore.\n\n**Acceptance Criteria**\n- L'area è accessibile da una voce chiara del menu dopo il login.\n- La dashboard mostra solo dati del cliente autenticato.\n- Loading, errore e stato senza acquisti sono gestiti.\n\n### US-016 — Biglietti digitali\n**As a** tifoso che ha acquistato un biglietto\n**I want** vedere e aprire il mio biglietto digitale\n**So that** posso presentare il QR all'ingresso.\n\n**Acceptance Criteria**\n- Sono mostrati stato, partita e quantità.\n- Il QR è disponibile solo dopo conferma server-side del pagamento.\n- Un cliente non può leggere il biglietto di un altro cliente modificando l'ID.\n\n### US-017 — Ordini e abbonamenti\n**As a** cliente\n**I want** consultare i miei ordini e abbonamenti\n**So that** posso verificare lo stato e la validità dei miei acquisti.\n\n**Acceptance Criteria**\n- Ordini e dettagli sono filtrati sul proprietario autenticato.\n- Abbonamenti mostrati solo se presenti nei dati persistiti.\n- Download disponibili solo per documenti realmente generati e autorizzati.\n\n## Epic 2 — Match Center
+## Epic 1A — Area personale cliente e acquisti
+
+### US-015 — Dashboard personale
+**As a** tifoso autenticato
+**I want** una dashboard personale unica
+**So that** posso trovare biglietti, abbonamenti, ordini e documenti senza contattare l'amministratore.
+
+**Acceptance Criteria**
+- L'area è accessibile da una voce chiara del menu dopo il login.
+- La dashboard mostra solo dati del cliente autenticato.
+- Loading, errore e stato senza acquisti sono gestiti.
+
+### US-016 — Biglietti digitali
+**As a** tifoso che ha acquistato un biglietto
+**I want** vedere e aprire il mio biglietto digitale
+**So that** posso presentare il QR all'ingresso.
+
+**Acceptance Criteria**
+- Sono mostrati stato, partita e quantità.
+- Il QR è disponibile solo dopo conferma server-side del pagamento.
+- Un cliente non può leggere il biglietto di un altro cliente modificando l'ID.
+
+### US-017 — Ordini e abbonamenti
+**As a** cliente
+**I want** consultare i miei ordini e abbonamenti
+**So that** posso verificare lo stato e la validità dei miei acquisti.
+
+**Acceptance Criteria**
+- Ordini e dettagli sono filtrati sul proprietario autenticato.
+- Abbonamenti mostrati solo se presenti nei dati persistiti.
+- Download disponibili solo per documenti realmente generati e autorizzati.
+
+## Epic 2 — Match Center
 
 ### US-003 — Partite delle mie squadre
 **As a** tifoso
