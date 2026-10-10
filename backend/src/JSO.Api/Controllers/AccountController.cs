@@ -174,6 +174,7 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
             fan.Id,
             fan.Email,
             fan.DisplayName,
+            fan.ProfilePhotoUrl,
             fan.EmailVerified,
             fan.BirthDate,
             fan.AnniversaryOptIn,
