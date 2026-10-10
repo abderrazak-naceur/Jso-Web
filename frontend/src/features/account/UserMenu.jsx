@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { UserCircle, User, Settings, LogOut } from 'lucide-react'
+import { UserCircle, User, Settings, LogOut, LayoutDashboard } from 'lucide-react'
 
 export default function UserMenu({ user, onOpenProfile, onOpenSettings, onLogout }) {
   const [open, setOpen] = useState(false)
@@ -63,6 +63,16 @@ export default function UserMenu({ user, onOpenProfile, onOpenSettings, onLogout
             <p className="text-sm font-bold">{user.displayName}</p>
             <p className="text-xs text-slate-500">{user.email}</p>
           </div>
+
+          <a
+            href="/account"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-extrabold text-jso-blue hover:bg-blue-50 transition"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            Mon espace
+          </a>
 
           <button
             type="button"
