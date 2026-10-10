@@ -5,6 +5,7 @@ import { useFanSession } from './useFanSession'
 import AuthModal from './AuthModal'
 import StandalonePageHeader from '../site/StandalonePageHeader'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
+import { LayoutDashboard, Crown, ShoppingBag, Settings, LogOut, Menu, ChevronDown, ChevronRight } from 'lucide-react'
 import './CustomerDashboardPage.css'
 
 const value = (item, ...keys) => {
