@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { User, Settings, LogOut, LayoutDashboard, Crown } from 'lucide-react'
 import { getProfilePhoto, subscribeProfilePhoto } from './profilePhoto'
+import { getSupporterLevel } from './supporterLevel'
 
 function initials(name) {
   return (name || 'JS').split(/[\s._-]+/).filter(Boolean).slice(0, 2).map((word) => word[0]).join('').toUpperCase()
@@ -22,6 +23,7 @@ function VipAvatar({ photo, name, size = 'h-9 w-9' }) {
 export default function UserMenu({ user, onOpenProfile, onOpenSettings, onLogout }) {
   const [open, setOpen] = useState(false)
   const [photo, setPhoto] = useState(getProfilePhoto)
+  const level = getSupporterLevel(user.loginDaysCount)
   const wrapperRef = useRef(null)
 
   useEffect(() => subscribeProfilePhoto(setPhoto), [])
@@ -59,7 +61,7 @@ export default function UserMenu({ user, onOpenProfile, onOpenSettings, onLogout
               <div className="min-w-0">
                 <p className="truncate text-sm font-black">{user.displayName}</p>
                 <p className="truncate text-xs text-slate-500">{user.email}</p>
-                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-800"><Crown size={11} /> Profil VIP</span>
+                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black tracking-wide text-amber-800"><Crown size={11} /> {level.name}</span><p className="mt-1 text-xs tracking-wider text-amber-600" aria-label={`${level.stars} étoiles sur 5`}>{'★'.repeat(level.stars)}{'☆'.repeat(5 - level.stars)}</p>
               </div>
             </div>
           </div>
