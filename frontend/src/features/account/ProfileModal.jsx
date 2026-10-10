@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, Camera, Crown, Trash2 } from 'lucide-react'
+import { getProfilePhoto, saveProfilePhoto, prepareProfilePhoto } from './profilePhoto'
 import { accountApi } from '../../lib/api'
 
 function formatMemberSince(value) {
@@ -17,6 +18,9 @@ export default function ProfileModal({ open, token, user, onClose, onUpdated }) 
   const [displayName, setDisplayName] = useState('')
   const [anniversaryOptIn, setAnniversaryOptIn] = useState(false)
   const [birthDate, setBirthDate] = useState('')
+  const [profilePhoto, setProfilePhoto] = useState(getProfilePhoto)
+  const [photoError, setPhotoError] = useState('')
+  const [photoBusy, setPhotoBusy] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -47,6 +51,17 @@ export default function ProfileModal({ open, token, user, onClose, onUpdated }) 
 
   if (!open) return null
 
+  const onPhotoSelected = async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setPhotoBusy(true)
+    setPhotoError('')
+    try { setProfilePhoto(await prepareProfilePhoto(file)) }
+    catch (err) { setPhotoError(err?.message || 'Impossible de préparer la photo.') }
+    finally { setPhotoBusy(false) }
+  }
+
   const onSubmit = async (event) => {
     event.preventDefault()
     setBusy(true)
@@ -60,7 +75,8 @@ export default function ProfileModal({ open, token, user, onClose, onUpdated }) 
         },
         token,
       )
-      onUpdated(updated)
+      saveProfilePhoto(profilePhoto)
+      onUpdated({ ...updated, profilePhoto })
       onClose()
     } catch (err) {
       setError(err?.message || 'La mise à jour a échoué.')
