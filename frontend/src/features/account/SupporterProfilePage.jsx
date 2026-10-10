@@ -5,7 +5,8 @@ import { useFanSession } from './useFanSession'
 import AuthModal from './AuthModal'
 import StandalonePageHeader from '../site/StandalonePageHeader'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
-import { getProfilePhoto, saveProfilePhoto, prepareProfilePhoto } from './profilePhoto'
+import { prepareProfilePhoto } from './profilePhoto'
+import { API_BASE_URL } from '../../lib/apiConfig'
 import { getSupporterLevel, SUPPORTER_LEVELS } from './supporterLevel'
 
 const formatDate = (value) => {
@@ -26,7 +27,7 @@ export default function SupporterProfilePage() {
   const [displayName, setDisplayName] = useState('')
   const [anniversaryOptIn, setAnniversaryOptIn] = useState(false)
   const [birthDate, setBirthDate] = useState('')
-  const [photo, setPhoto] = useState(getProfilePhoto)
+  const [photo, setPhoto] = useState('')
   const [photoError, setPhotoError] = useState('')
   useDocumentTitle('Mon profil — JSO')
 
@@ -40,6 +41,7 @@ export default function SupporterProfilePage() {
     accountApi.me(fan.token).then((data) => {
       if (!active) return
       setProfile(data)
+      setPhoto(data?.profilePhotoUrl ? new URL(data.profilePhotoUrl, API_BASE_URL).href : '')
       setDisplayName(data?.displayName || '')
       setAnniversaryOptIn(Boolean(data?.anniversaryOptIn))
       setBirthDate(data?.birthDate ? String(data.birthDate).slice(0, 10) : '')
@@ -61,10 +63,13 @@ export default function SupporterProfilePage() {
     setPhotoBusy(true)
     setPhotoError('')
     try {
-      const next = await prepareProfilePhoto(file)
-      saveProfilePhoto(next)
+      const prepared = await prepareProfilePhoto(file)
+      const blob = await (await fetch(prepared)).blob()
+      const uploaded = await accountApi.uploadPhoto(new File([blob], 'profile.jpg', { type: 'image/jpeg' }), fan.token)
+      const next = uploaded.profilePhotoUrl ? new URL(uploaded.profilePhotoUrl, API_BASE_URL).href : ''
       setPhoto(next)
-      setNotice('Photo de profil mise à jour sur cet appareil.')
+      setProfile(previous => ({ ...previous, profilePhotoUrl: uploaded.profilePhotoUrl }))
+      setNotice('Photo de profil enregistrée sur votre compte.')
     } catch (err) {
       setPhotoError(err?.message || 'Impossible de charger cette photo.')
     } finally {
@@ -74,9 +79,11 @@ export default function SupporterProfilePage() {
 
   function removePhoto() {
     try {
-      saveProfilePhoto('')
-      setPhoto('')
-      setNotice('Photo retirée. Vos initiales sont affichées.')
+      accountApi.deletePhoto(fan.token).then(() => {
+        setPhoto('')
+        setProfile(previous => ({ ...previous, profilePhotoUrl: null }))
+        setNotice('Photo retirée. Vos initiales sont affichées.')
+      }).catch(err => setPhotoError(err?.message || 'Impossible de retirer la photo.'))
       setPhotoError('')
     } catch (err) {
       setPhotoError(err?.message || 'Impossible de retirer la photo.')
