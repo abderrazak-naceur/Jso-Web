@@ -104,7 +104,7 @@ public sealed class AdminPaymentConfigController(PaymentConfigurationStore store
                 ? "https://api.konnect.network/api/v2/"
                 : provider.BaseUrl.TrimEnd('/') + "/";
             using var http = new HttpClient { BaseAddress = new Uri(baseUrl), Timeout = TimeSpan.FromSeconds(15) };
-            using var request = new HttpRequestMessage(HttpMethod.Get, "payments/__jso_connection_test__");
+            using var request = new HttpRequestMessage(HttpMethod.Get, "payments/000000000000000000000000");
             request.Headers.TryAddWithoutValidation("x-api-key", apiKey);
             using var response = await http.SendAsync(request, ct);
 
