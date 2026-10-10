@@ -105,6 +105,7 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
             fan.Id,
             fan.Email,
             fan.DisplayName,
+            fan.ProfilePhotoUrl,
             fan.EmailVerified,
             // Idea A3: expose the birthday/anniversary opt-in state and the
             // membership date (CreatedAt) so the fan can review it.
