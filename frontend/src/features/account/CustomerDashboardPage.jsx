@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, CalendarDays, CheckCircle2, CircleAlert, Clock3, Download, LogIn, Package, RefreshCw, ShieldCheck, Ticket, UserRound, X } from 'lucide-react'
+import { ArrowLeft, CalendarDays, CheckCircle2, CircleAlert, Clock3, Download, LogIn, Package, RefreshCw, ShieldCheck, Ticket, UserRound, X, LayoutDashboard, Crown, ShoppingBag, Settings, LogOut, Menu, ChevronDown, ChevronRight } from 'lucide-react'
 import { membershipApi, shopOrderApi, ticketApi } from '../../lib/api'
 import { useFanSession } from './useFanSession'
 import AuthModal from './AuthModal'
 import StandalonePageHeader from '../site/StandalonePageHeader'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
-import { LayoutDashboard, Crown, ShoppingBag, Settings, LogOut, Menu, ChevronDown, ChevronRight } from 'lucide-react'
 import './CustomerDashboardPage.css'
 
 const value = (item, ...keys) => {
