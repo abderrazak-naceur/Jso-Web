@@ -9,6 +9,7 @@ const PaymentReturn = lazy(() => import('./features/shop/PaymentReturn.jsx'))
 const NewsListPage = lazy(() => import('./features/news/NewsListPage.jsx'))
 const BilletteriePage = lazy(() => import('./features/tickets/BilletteriePage.jsx'))
 const DonationPage = lazy(() => import('./features/donations/DonationPage.jsx'))
+const CustomerDashboardPage = lazy(() => import('./features/account/CustomerDashboardPage.jsx'))
 
 class RootErrorBoundary extends Component {
   state = { error: null }
@@ -35,22 +36,20 @@ class RootErrorBoundary extends Component {
 
 function RouteFallback() {
   return (
-    <div
-      role="status"
-      className="grid min-h-screen place-items-center bg-jso-paper text-jso-ink"
-    >
+    <div role="status" className="grid min-h-screen place-items-center bg-jso-paper text-jso-ink">
       <span className="text-sm font-semibold text-slate-500">Chargement…</span>
     </div>
   )
 }
 
 function Root() {
-  const path = window.location.pathname
-  if (path.startsWith('/admin')) return <AdminApp />
+  const path = window.location.pathname.replace(/\/+$/, '') || '/'
+  if (path === '/admin' || path.startsWith('/admin/')) return <AdminApp />
   if (path.startsWith('/payment/')) return <PaymentReturn />
-  if (path === '/actualites' || path === '/actualites/') return <NewsListPage />
-  if (path === '/billetterie' || path === '/billetterie/') return <BilletteriePage />
-  if (path === '/soutenir' || path === '/soutenir/') return <DonationPage />
+  if (path === '/actualites') return <NewsListPage />
+  if (path === '/billetterie') return <BilletteriePage />
+  if (path === '/soutenir') return <DonationPage />
+  if (path === '/account') return <CustomerDashboardPage />
   return <App />
 }
 

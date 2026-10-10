@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, ChevronDown, LogIn, LogOut, Menu, Newspaper, Settings, ShoppingBag, Ticket, User, UserPlus, X } from 'lucide-react'
+import { ArrowUpRight, ChevronDown, LayoutDashboard, LogIn, LogOut, Menu, Newspaper, Settings, ShoppingBag, Ticket, User, UserPlus, X } from 'lucide-react'
 import UserMenu from '../account/UserMenu'
 import { NEWS_LIST_PATH } from '../news/articleUrl'
 import { BILLETTERIE_PATH } from '../tickets/ticketsUrl'
@@ -327,6 +327,9 @@ export default function SiteHeader({
                   <p className="mt-2 truncate font-black">{user.displayName}</p>
                   {user.email && <p className="truncate text-sm text-white/55">{user.email}</p>}
                   <div className="mt-3 grid gap-1">
+                    <a href="/account" onClick={closeMenus} className={panelButtonClass}>
+                      <LayoutDashboard size={16} aria-hidden="true" /> La mia area
+                    </a>
                     <button type="button" onClick={closeThen(onOpenProfile)} className={panelButtonClass}>
                       <User size={16} aria-hidden="true" /> {t('common.profile')}
                     </button>
