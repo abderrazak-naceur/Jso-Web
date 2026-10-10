@@ -3,6 +3,7 @@ import { lazy } from 'react'
 // Each section is loaded only when opened. The sidebar and dashboard remain
 // available even when an individual module or its API is unavailable.
 export const ADMIN_MODULES = {
+  'fan-accounts': lazy(() => import('./community/FanAccounts')),
   club: lazy(() => import('./club/ClubSettingsModule')),
   teams: lazy(() => import('./sport/TeamsModule')),
   matches: lazy(() => import('./sport/MatchesModule')),
