@@ -1,0 +1,31 @@
+/* JSO supporter dashboard — visual language aligned with the approved mockup */
+.jso-account-page{--dash-navy:#071a36;--dash-blue:#0755d9;--dash-gold:#e8b84f;--dash-ink:#10213d;background:#f3f6fb;color:var(--dash-ink);min-height:100vh}
+.jso-account-page main.mx-auto{max-width:1440px!important}
+.jso-account-page main.mx-auto>div:first-of-type{align-items:center}
+.jso-account-page main.mx-auto h1{letter-spacing:-.045em;color:var(--dash-navy)}
+.jso-account-page main.mx-auto section{border-color:#e3e9f2!important;box-shadow:0 8px 28px rgba(12,31,61,.055)!important}
+.jso-account-page main.mx-auto>div.mt-8.grid{gap:18px}
+.jso-account-page main.mx-auto>div.mt-8.grid>div{position:relative;overflow:hidden;border:1px solid #e4eaf3;border-radius:20px;padding:23px;background:linear-gradient(135deg,#fff 0%,#fff 76%,#f1f6ff 100%);box-shadow:0 7px 22px rgba(12,31,61,.055)}
+.jso-account-page main.mx-auto>div.mt-8.grid>div:after{content:"";position:absolute;width:4px;left:0;top:0;bottom:0;background:var(--dash-blue)}
+.jso-account-page main.mx-auto>div.mt-8.grid>div:nth-child(2):after{background:var(--dash-gold)}
+.jso-account-page main.mx-auto>div.mt-8.grid>div p:first-of-type{font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.jso-account-page main.mx-auto>div.mt-8.grid>div p:last-child{font-size:34px;color:var(--dash-navy)}
+.jso-account-page main.mx-auto section.mt-10,.jso-account-page main.mx-auto section.mt-6{border-radius:24px!important;padding:clamp(20px,2.3vw,32px)!important}
+.jso-account-page main.mx-auto section h2{color:var(--dash-navy);letter-spacing:-.025em}
+.jso-account-page main.mx-auto section article{border-color:#e7edf5!important;border-radius:17px!important;transition:box-shadow .18s ease,border-color .18s ease}
+.jso-account-page main.mx-auto section article:hover{border-color:#b8cdf1!important;box-shadow:0 6px 18px rgba(12,31,61,.055)}
+.jso-account-page main.mx-auto button{transition:transform .15s ease,background-color .15s ease}
+.jso-account-page main.mx-auto button:hover{transform:translateY(-1px)}
+.jso-account-page main.mx-auto a{transition:color .15s ease}
+.jso-account-page main.mx-auto>section:last-child{background:linear-gradient(115deg,#071a36,#12376b)!important;position:relative;overflow:hidden}
+.jso-account-page main.mx-auto>section:last-child:after{content:"JSO";position:absolute;right:2%;bottom:-55%;font-size:clamp(100px,18vw,240px);font-weight:1000;letter-spacing:-.08em;color:rgba(255,255,255,.035);pointer-events:none}
+.jso-account-page .bg-jso-paper{background:#f3f6fb}
+.jso-account-page .bg-jso-navy{background-color:var(--dash-navy)}
+.jso-account-page .text-jso-gold{color:var(--dash-gold)}
+.jso-account-page .bg-jso-gold{background-color:var(--dash-gold)}
+.jso-account-page .text-jso-blue{color:var(--dash-blue)}
+.jso-account-page .text-jso-ink{color:var(--dash-ink)}
+.jso-account-page .rounded-\[1\.75rem\]{border-radius:24px}
+@media(min-width:1100px){.jso-account-page main.mx-auto{padding-left:48px;padding-right:48px}.jso-account-page main.mx-auto>div.mt-8.grid>div{min-height:130px}}
+@media(max-width:640px){.jso-account-page main.mx-auto{padding-top:24px;padding-bottom:36px}.jso-account-page main.mx-auto h1{font-size:clamp(27px,7vw,38px)}.jso-account-page main.mx-auto>div.mt-8.grid>div{padding:17px}.jso-account-page main.mx-auto>div.mt-8.grid>div p:last-child{font-size:29px}.jso-account-page main.mx-auto section.mt-10,.jso-account-page main.mx-auto section.mt-6{padding:18px!important;border-radius:20px!important}}
+@media(prefers-reduced-motion:reduce){.jso-account-page *{transition:none!important}}
