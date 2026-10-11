@@ -109,6 +109,27 @@ export default function AdminLiveStreamsPage({ token, onBack, onLogin }) {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
+  async function togglePublished(stream) {
+    setError('')
+    setNotice('')
+    try {
+      const saved = await adminRequest('/admin/match-streams/' + stream.matchId, 'PUT', {
+        provider: stream.provider || 'Mux',
+        streamUrl: stream.streamUrl || null,
+        isPaid: Boolean(stream.isPaid),
+        price: Number(stream.price ?? 0),
+        currency: stream.currency === 'EUR' ? 'EUR' : 'TND',
+        startsAt: stream.startsAt || null,
+        endsAt: stream.endsAt || null,
+        isPublished: !stream.isPublished,
+      })
+      setStreams((current) => current.map((item) => item.matchId === saved.matchId ? saved : item))
+      setNotice(saved.isPublished ? 'Diretta attivata e pubblicata.' : 'Diretta disattivata. La configurazione è stata conservata.')
+    } catch (e) {
+      setError(e.message || 'Impossibile modificare lo stato della diretta.')
+    }
+  }
+
   async function save(event) {
     event.preventDefault()
     if (!selectedMatchId) {
@@ -168,6 +189,40 @@ export default function AdminLiveStreamsPage({ token, onBack, onLogin }) {
 
       {error && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">{error}</div>}
       {notice && <div role="status" className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">{notice}</div>}
+
+      {!loading && (
+        <section className="mb-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
+            <h2 className="text-lg font-black text-slate-900">Dirette configurate</h2>
+            <p className="mt-1 text-sm text-slate-500">Attiva o disattiva la pubblicazione senza cancellare il Playback URL.</p>
+          </div>
+          {streams.length === 0 ? (
+            <p className="px-5 py-6 text-sm text-slate-500 sm:px-6">Nessuna diretta salvata. Seleziona una partita qui sotto e salva la configurazione.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr><th className="px-5 py-3 font-bold">Partita</th><th className="px-5 py-3 font-bold">Playback URL</th><th className="px-5 py-3 font-bold">Accesso</th><th className="px-5 py-3 font-bold">Stato</th><th className="px-5 py-3 text-right font-bold">Azione</th></tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {streams.map((stream) => {
+                    const match = matches.find((item) => item.id === stream.matchId)
+                    return (
+                      <tr key={stream.matchId}>
+                        <td className="px-5 py-4 font-semibold text-slate-900">{match ? matchLabel(match) : 'Partita'}</td>
+                        <td className="max-w-xs px-5 py-4 text-slate-500"><span className="block truncate" title={stream.streamUrl || ''}>{stream.streamUrl || 'URL non impostato'}</span></td>
+                        <td className="px-5 py-4 text-slate-600">{stream.isPaid ? 'Pagamento' : 'Gratuita'}</td>
+                        <td className="px-5 py-4"><span className={stream.isPublished ? 'inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700' : 'inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700'}>{stream.isPublished ? 'Attiva' : 'Bozza / disattiva'}</span></td>
+                        <td className="px-5 py-4 text-right"><button type="button" onClick={() => togglePublished(stream)} disabled={!stream.streamUrl || saving} className={stream.isPublished ? 'rounded-lg border border-red-200 px-3 py-2 text-xs font-extrabold text-red-700 hover:bg-red-50 disabled:opacity-50' : 'rounded-lg bg-emerald-700 px-3 py-2 text-xs font-extrabold text-white hover:bg-emerald-800 disabled:opacity-50'}>{stream.isPublished ? 'Disattiva' : 'Attiva'}</button></td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
 
       {loading ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-8 text-slate-500">Caricamento partite e dirette…</div>
