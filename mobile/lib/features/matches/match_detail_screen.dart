@@ -16,6 +16,7 @@ import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../tickets/tickets_screen.dart';
 import 'match_lineup_tab.dart';
+import 'match_live_stream_tab.dart';
 import 'match_stats_tab.dart';
 import 'match_weather_card.dart';
 
@@ -87,13 +88,14 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Match'),
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Résumé'),
+              Tab(text: 'Live'),
               Tab(text: 'Direct'),
               Tab(text: 'Compos'),
               Tab(text: 'Stats'),
@@ -124,6 +126,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
             return TabBarView(
               children: [
                 _MatchSummaryTab(data: data, weatherFuture: _weatherFuture),
+                MatchLiveStreamTab(matchId: widget.matchId),
                 _LiveBlogTab(matchId: widget.matchId),
                 MatchLineupTab(matchId: widget.matchId),
                 MatchStatsTab(matchId: widget.matchId, match: data.match),
