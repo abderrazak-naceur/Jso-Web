@@ -250,7 +250,7 @@ export default function HomePage({
             <h2 id="mobile-app-download-title" className="mt-2 text-2xl font-black">La JSO dans votre poche</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-white/75">Téléchargez l’application Android officielle pour suivre les matchs et les directs.</p>
           </div>
-          <a href="https://github.com/abderrazak-naceur/Jso-Web/releases/download/android-latest/JSO-Android.apk" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy transition hover:bg-white">
+          <a href="https://github.com/abderrazak-naceur/Jso-Web/releases/download/android-latest/app-release.apk" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy transition hover:bg-white">
             <Download size={18} aria-hidden="true" /> Télécharger l’APK
           </a>
         </div>
