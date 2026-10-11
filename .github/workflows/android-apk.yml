@@ -11,7 +11,7 @@ on:
       - '.github/workflows/android-apk.yml'
 
 permissions:
-  contents: read
+  contents: write
   actions: read
 
 jobs:
@@ -55,3 +55,16 @@ jobs:
           path: mobile/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish stable APK download
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: JSO Android APK (latest)
+          body: Latest automatically built Android APK for JSO.
+          target_commitish: main
+          files: mobile/build/app/outputs/flutter-apk/app-release.apk
+          overwrite_files: true
+          prerelease: true
+          make_latest: false
