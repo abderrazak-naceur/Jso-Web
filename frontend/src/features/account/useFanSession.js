@@ -74,9 +74,15 @@ export function useFanSession() {
         updateUser(freshUser)
         setStatus('authenticated')
       })
-      .catch(() => {
+      .catch((error) => {
         if (!active) return
-        signOut()
+        // Only discard a session when the API explicitly rejects its credentials.
+        // Network failures and server errors must not force the supporter to log in again.
+        if (error?.status === 401 || error?.status === 403) {
+          signOut()
+          return
+        }
+        setStatus('authenticated')
       })
 
     return () => {
