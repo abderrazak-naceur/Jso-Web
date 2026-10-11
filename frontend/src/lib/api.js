@@ -80,7 +80,9 @@ async function requestJson(path, method, body, token) {
   if (!response.ok) {
     let message = 'Request failed: ' + response.status
     try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
+    const error = new Error(message)
+    error.status = response.status
+    throw error
   }
   return response.status === 204 ? null : response.json()
 }
