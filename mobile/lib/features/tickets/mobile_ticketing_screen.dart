@@ -100,7 +100,7 @@ class _MatchTicketCard extends StatelessWidget {
           Row(children: [
             Container(width: 54, height: 62, decoration: BoxDecoration(color: const Color(0xFFEAF1FF), borderRadius: BorderRadius.circular(14)), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               Text(match.kickoffAt.day.toString().padLeft(2, '0'), style: const TextStyle(color: JsoColors.navy, fontSize: 22, fontWeight: FontWeight.w900)),
-              Text(JsoFormat.monthShort(match.kickoffAt), style: const TextStyle(color: JsoColors.blue, fontSize: 10, fontWeight: FontWeight.w900)),
+              Text(match.kickoffAt.month.toString().padLeft(2, '0'), style: const TextStyle(color: JsoColors.blue, fontSize: 10, fontWeight: FontWeight.w900)),
             ])),
             const SizedBox(width: JsoSpacing.md),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
