@@ -212,7 +212,7 @@ export default function CustomerDashboardPage() {
             <a href="/boutique" className="jso-news-card"><div className="jso-news-photo jso-news-photo-four" /><strong>Nouvelle collection disponible</strong><small>Boutique · JSO</small></a>
           </div>
         </section>
-        <div className="jso-mobile-bottom-nav"><a href="/mon-espace" className="is-active"><LayoutDashboard size={18} /><small>Mon espace</small></a><a href="#mes-billets"><Ticket size={18} /><small>Mes billets</small></a><a href="/boutique"><ShoppingBag size={18} /><small>Boutique</small></a><a href="#mes-commandes"><UserRound size={18} /><small>Profil</small></a></div>
+        <div className="jso-mobile-bottom-nav"><a href="/mon-espace" className="is-active"><LayoutDashboard size={18} /><small>Mon espace</small></a><a href="#mes-billets"><Ticket size={18} /><small>Mes billets</small></a><a href="/boutique"><ShoppingBag size={18} /><small>Boutique</small></a><a href="/profil"><UserRound size={18} /><small>Profil</small></a></div>
         <div className="jso-dashboard-footer">JSO Football Club · Espace supporter</div>
       </main>
     </div>
