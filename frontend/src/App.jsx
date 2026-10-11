@@ -9,7 +9,6 @@ import { useFanSession } from './features/account/useFanSession'
 import HomePage from './features/home/HomePage'
 import { useHomeData } from './features/home/useHomeData'
 import MatchCenterModal from './features/matches/MatchCenterModal'
-import AdminLiveStreamsPage from './features/admin/AdminLiveStreamsPage'
 import ArticleModal from './features/news/ArticleModal'
 import { pushArticleUrl, restoreHomeUrl, slugFromPath } from './features/news/articleUrl'
 import CartDrawer from './features/shop/CartDrawer'
@@ -132,11 +131,13 @@ function App() {
       />
 
       {isAdminStreamsRoute ? (
-        <AdminLiveStreamsPage
-          token={fan.token}
-          onLogin={() => openAuth('login')}
-          onBack={() => { window.history.pushState({}, '', '/'); window.location.reload() }}
-        />
+        <main className="mx-auto flex min-h-[70vh] max-w-2xl flex-col items-start justify-center px-6 py-16">
+          <p className="text-xs font-extrabold tracking-[0.2em] text-jso-blue">JSO ADMIN</p>
+          <h1 className="mt-3 text-3xl font-black">Gestione delle dirette</h1>
+          <p className="mt-3 text-slate-600">Per salvare il link della diretta serve l’accesso amministratore. La pagina pubblica usava l’accesso utente e non aveva i permessi necessari.</p>
+          <a href="/admin/match-streams" className="mt-6 inline-flex rounded-xl bg-jso-navy px-5 py-3 font-bold text-white">Apri gestione dirette admin</a>
+          <a href="/admin" className="mt-3 font-bold text-jso-blue underline">Accedi al pannello amministratore</a>
+        </main>
       ) : (
         <>
           <HomePage
