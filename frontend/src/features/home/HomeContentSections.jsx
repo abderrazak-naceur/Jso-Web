@@ -2,6 +2,7 @@ export { default as TeamSection } from '../team/TeamSection'
 
 import {
   ArrowUpRight,
+  Apple,
   CalendarDays,
   ChevronRight,
   CircleHelp,
@@ -174,7 +175,23 @@ export function MobileSection({ section }) {
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 py-20 lg:grid-cols-[0.7fr_1.3fr] lg:px-8">
         <div>
           <SectionHeading section={section} title="La JSO" muted="dans ta poche." description="Le Match Center, les actualités et la vie du club dans une expérience pensée pour iOS et Android." light />
-          <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-jso-gold/30 bg-jso-gold/10 px-4 py-2 text-sm font-bold text-jso-gold"><Smartphone size={16} aria-hidden="true" /> Application en préparation</p>
+          <div className="mt-6 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap">
+            <a
+              href="https://github.com/abderrazak-naceur/Jso-Web/releases/download/android-latest/app-release.apk"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy transition hover:bg-white"
+            >
+              <Download size={18} aria-hidden="true" /> Télécharger pour Android (APK)
+            </a>
+            <a
+              href="https://github.com/abderrazak-naceur/Jso-Web/releases/tag/ios-latest"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/35 px-6 py-3 font-extrabold text-white transition hover:bg-white hover:text-jso-navy"
+            >
+              <Apple size={18} aria-hidden="true" /> Version iPhone (test)
+            </a>
+          </div>
+          <p className="mt-3 max-w-xl text-xs leading-5 text-white/60">
+            Sur iPhone, l’installation directe nécessite une version signée par Apple. Consultez la page iOS pour vérifier les fichiers de test disponibles.
+          </p>
         </div>
         <div className="grid grid-cols-2 items-end gap-3 sm:gap-6">
           <img src="/jso-flutter-home-concept.png" alt="Aperçu de l’écran d’accueil de l’application JSO" loading="lazy" className="w-full rounded-[1.5rem] shadow-2xl shadow-black/35" />
