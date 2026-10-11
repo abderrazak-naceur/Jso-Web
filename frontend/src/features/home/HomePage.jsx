@@ -16,7 +16,7 @@ import MatchdaySection from './MatchdaySection'
 import NewsSection from './NewsSection'
 import HighlightsCarousel from './HighlightsCarousel'
 import SellingBand from './SellingBand'
-import { Download, HeartHandshake } from 'lucide-react'
+import { Download, HeartHandshake, Apple } from 'lucide-react'
 import ProductDetail from '../shop/ProductDetail'
 import EventDetail from './EventDetail'
 import Reveal from '../site/Reveal'
@@ -244,15 +244,23 @@ export default function HomePage({
         />
       </Reveal>
       <section aria-labelledby="mobile-app-download-title" className="mx-auto max-w-7xl px-5 pb-8 lg:px-8">
-        <div className="flex flex-col gap-5 rounded-[2rem] bg-jso-navy p-6 text-white shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-8">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-gold">JSO Mobile</p>
-            <h2 id="mobile-app-download-title" className="mt-2 text-2xl font-black">La JSO dans votre poche</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-white/75">Téléchargez l’application Android officielle pour suivre les matchs et les directs.</p>
+        <div className="rounded-[2rem] bg-jso-navy p-6 text-white shadow-sm sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-gold">JSO Mobile</p>
+              <h2 id="mobile-app-download-title" className="mt-2 text-2xl font-black">La JSO dans votre poche</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-white/75">Téléchargez l’application Android ou consultez la build iOS de test.</p>
+            </div>
+            <div className="flex flex-col gap-3 sm:shrink-0">
+              <a href="https://github.com/abderrazak-naceur/Jso-Web/releases/download/android-latest/app-release.apk" className="inline-flex items-center justify-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy transition hover:bg-white">
+                <Download size={18} aria-hidden="true" /> Télécharger Android (APK)
+              </a>
+              <a href="https://github.com/abderrazak-naceur/Jso-Web/releases/tag/ios-latest" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-6 py-3 font-extrabold text-white transition hover:bg-white hover:text-jso-navy">
+                <Apple size={18} aria-hidden="true" /> Build iPhone (test)
+              </a>
+              <p className="max-w-xs text-xs leading-5 text-white/60">La build iOS de test nécessite une signature Apple pour être installée sur un iPhone réel.</p>
+            </div>
           </div>
-          <a href="https://github.com/abderrazak-naceur/Jso-Web/releases/download/android-latest/app-release.apk" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy transition hover:bg-white">
-            <Download size={18} aria-hidden="true" /> Télécharger l’APK
-          </a>
         </div>
       </section>
       </>}
