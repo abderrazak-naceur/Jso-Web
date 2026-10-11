@@ -11,11 +11,13 @@ import 'data/repositories/tickets_repository.dart';
 import 'features/auth/admin_auth_controller.dart';
 import 'features/auth/auth_controller.dart';
 import 'features/club/club_screen.dart';
+import 'features/account/account_dashboard_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/matches/matches_screen.dart';
 import 'features/news/news_screen.dart';
 import 'features/shop/cart_controller.dart';
 import 'features/shop/shop_screen.dart';
+import 'features/tickets/mobile_ticketing_screen.dart';
 
 /// Root widget: installs the global dark theme for legacy and pushed screens,
 /// provides the app-lifetime dependencies, and hosts the five-tab shell.
@@ -71,8 +73,8 @@ class JsoApp extends StatelessWidget {
 
 /// Root shell matching the five primary destinations of the mobile app.
 ///
-/// [IndexedStack] keeps every tab alive while the account entry point lives in
-/// the Home header and in the Plus hub, rather than floating over all screens.
+/// [IndexedStack] keeps the five primary destinations alive while secondary
+/// club areas remain grouped under Plus.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -90,9 +92,9 @@ class _HomeShellState extends State<HomeShell> {
     _tabs = [
       HomeScreen(onViewAllNews: _showNews),
       const MatchesScreen(),
-      const ShopScreen(),
+      const MobileTicketingScreen(),
       const NewsScreen(),
-      const ClubScreen(),
+      const AccountDashboardScreen(),
     ];
   }
 
@@ -152,15 +154,15 @@ class _HomeShellState extends State<HomeShell> {
             ),
             BottomNavigationBarItem(
               icon: _BottomTabIcon(
-                icon: Icons.storefront_outlined,
-                semanticLabel: 'Boutique',
+                icon: Icons.confirmation_number_outlined,
+                semanticLabel: 'Biglietti',
               ),
               activeIcon: _BottomTabIcon(
-                icon: Icons.storefront,
-                semanticLabel: 'Boutique',
+                icon: Icons.confirmation_number,
+                semanticLabel: 'Biglietti',
                 selected: true,
               ),
-              label: 'Boutique',
+              label: 'Biglietti',
             ),
             BottomNavigationBarItem(
               icon: _BottomTabIcon(
@@ -176,15 +178,15 @@ class _HomeShellState extends State<HomeShell> {
             ),
             BottomNavigationBarItem(
               icon: _BottomTabIcon(
-                icon: Icons.more_horiz,
-                semanticLabel: 'Plus',
+                icon: Icons.person_outline_rounded,
+                semanticLabel: 'Profilo',
               ),
               activeIcon: _BottomTabIcon(
-                icon: Icons.more_horiz,
-                semanticLabel: 'Plus',
+                icon: Icons.person_rounded,
+                semanticLabel: 'Profilo',
                 selected: true,
               ),
-              label: 'Plus',
+              label: 'Profilo',
             ),
           ],
         ),
