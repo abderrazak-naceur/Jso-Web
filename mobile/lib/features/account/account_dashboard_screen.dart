@@ -20,7 +20,7 @@ class AccountDashboardScreen extends StatelessWidget {
     final user = auth.user;
     final signedIn = auth.status == AuthStatus.authenticated && user != null;
     final name = user?.displayName ?? 'Supporter JSO';
-    final initials = name.trim().split(RegExp(r'\\s+')).where((part) => part.isNotEmpty).take(2).map((part) => part[0]).join().toUpperCase();
+    final initials = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).take(2).map((part) => part[0]).join().toUpperCase();
 
     return Theme(
       data: JsoTheme.paper(),
