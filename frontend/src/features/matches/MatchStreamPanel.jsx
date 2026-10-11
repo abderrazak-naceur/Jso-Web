@@ -69,7 +69,23 @@ export default function MatchStreamPanel({ matchId, token, onRequireLogin }) {
   if (loading) {
     return <section aria-labelledby="stream-title" className="rounded-2xl border border-slate-200 bg-slate-50 p-5"><p className="text-sm text-slate-500">Chargement de la diffusion…</p></section>
   }
-  if (!stream) return null
+  if (!stream) {
+    return (
+      <section aria-labelledby="stream-title" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-4">
+          <Radio size={20} className="text-jso-blue" aria-hidden="true" />
+          <h3 id="stream-title" className="text-xl font-black text-slate-900">Diretta della partita</h3>
+        </div>
+        <div className="flex items-start gap-3 p-5">
+          <div className="rounded-xl bg-slate-100 p-3 text-slate-500"><PlayCircle size={22} aria-hidden="true" /></div>
+          <div>
+            <p className="font-bold text-slate-900">La diretta non è ancora disponibile</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">Il video comparirà qui quando la diretta sarà configurata e pubblicata dall’amministratore per questa partita.</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section aria-labelledby="stream-title" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
