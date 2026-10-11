@@ -183,10 +183,10 @@ export function MobileSection({ section }) {
               <Download size={18} aria-hidden="true" /> Télécharger pour Android (APK)
             </a>
             <a
-              href="https://github.com/abderrazak-naceur/Jso-Web/releases/tag/ios-latest"
+              href="https://github.com/abderrazak-naceur/Jso-Web/actions/workflows/ios-test-build.yml"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-white/35 px-6 py-3 font-extrabold text-white transition hover:bg-white hover:text-jso-navy"
             >
-              <Apple size={18} aria-hidden="true" /> Version iPhone (test)
+              <Apple size={18} aria-hidden="true" /> Build iPhone (test)
             </a>
           </div>
           <p className="mt-3 max-w-xl text-xs leading-5 text-white/60">
