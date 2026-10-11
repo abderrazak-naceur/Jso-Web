@@ -9,6 +9,7 @@ import { useFanSession } from './features/account/useFanSession'
 import HomePage from './features/home/HomePage'
 import { useHomeData } from './features/home/useHomeData'
 import MatchCenterModal from './features/matches/MatchCenterModal'
+import AdminLiveStreamsPage from './features/admin/AdminLiveStreamsPage'
 import ArticleModal from './features/news/ArticleModal'
 import { pushArticleUrl, restoreHomeUrl, slugFromPath } from './features/news/articleUrl'
 import CartDrawer from './features/shop/CartDrawer'
@@ -102,6 +103,7 @@ function App() {
   const footerLinks = useNavigation('Footer')
   const homeLayout = useHomeLayout()
   const focusSection = sectionFromPath()
+  const isAdminStreamsRoute = window.location.pathname === '/admin/live-streams'
   const productSlug = productSlugFromPath()
   const eventSlug = eventSlugFromPath()
   useDocumentTitle(focusSection ? sections.find((item) => item.id === focusSection)?.label : null)
@@ -129,23 +131,32 @@ function App() {
         onLogout={fan.signOut}
       />
 
-      <HomePage
-        data={data}
-        cart={cart}
-        fan={fan}
-        onOpenCart={() => setCartOpen(true)}
-        onOpenAuth={openAuth}
-        onOpenMatch={openMatch}
-        onOpenArticle={openArticle}
-        sections={sections}
-        hiddenSections={hiddenSections}
-        homeLayout={homeLayout}
-        focusSection={focusSection}
-        productSlug={productSlug}
-        eventSlug={eventSlug}
-      />
-
-      <SiteFooter sections={sections} extraLinks={footerLinks} />
+      {isAdminStreamsRoute ? (
+        <AdminLiveStreamsPage
+          token={fan.token}
+          onLogin={() => openAuth('login')}
+          onBack={() => { window.history.pushState({}, '', '/'); window.location.reload() }}
+        />
+      ) : (
+        <>
+          <HomePage
+            data={data}
+            cart={cart}
+            fan={fan}
+            onOpenCart={() => setCartOpen(true)}
+            onOpenAuth={openAuth}
+            onOpenMatch={openMatch}
+            onOpenArticle={openArticle}
+            sections={sections}
+            hiddenSections={hiddenSections}
+            homeLayout={homeLayout}
+            focusSection={focusSection}
+            productSlug={productSlug}
+            eventSlug={eventSlug}
+          />
+          <SiteFooter sections={sections} extraLinks={footerLinks} />
+        </>
+      )}
 
       {selectedMatch && (
         <MatchCenterModal
