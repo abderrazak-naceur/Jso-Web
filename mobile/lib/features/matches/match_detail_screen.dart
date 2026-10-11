@@ -126,8 +126,8 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
             return TabBarView(
               children: [
                 _MatchSummaryTab(data: data, weatherFuture: _weatherFuture),
-                MatchLiveStreamTab(matchId: widget.matchId),
                 _LiveBlogTab(matchId: widget.matchId),
+                MatchLiveStreamTab(matchId: widget.matchId),
                 MatchLineupTab(matchId: widget.matchId),
                 MatchStatsTab(matchId: widget.matchId, match: data.match),
               ],
