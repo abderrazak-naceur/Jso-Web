@@ -20,7 +20,7 @@ export const ADMIN_NAVIGATION = [
     ['formations', 'Formations', Users, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
     ['teams', 'Équipes & joueurs', Users, ['SuperAdmin','ClubAdmin'], 'Équipe & Matchs'],
     ['seasons-competitions', 'Saisons & compétitions', CalendarDays, ['SuperAdmin','ClubAdmin'], 'Équipe & Matchs'],
-    ['match-streams', 'Diffusion en direct', Radio, ['ClubAdmin','MatchManager'], 'Équipe & Matchs'],
+    ['match-streams', 'Diffusion en direct', Radio, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
     ['analytics', 'Analytics joueurs', BarChart3, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
     ['injuries', 'Infirmerie', HeartPulse, ['ClubAdmin','MatchManager'], 'Équipe & Matchs'],
     ['scouting', 'Scouting', ScanSearch, ['ClubAdmin','MatchManager'], 'Équipe & Matchs'],
