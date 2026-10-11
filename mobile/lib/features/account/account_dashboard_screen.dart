@@ -19,7 +19,7 @@ class AccountDashboardScreen extends StatelessWidget {
     final auth = context.watch<AuthController>();
     final user = auth.user;
     final signedIn = auth.status == AuthStatus.authenticated && user != null;
-    final name = signedIn ? user.displayName : 'Supporter JSO';
+    final name = user?.displayName ?? 'Supporter JSO';
     final initials = name.trim().split(RegExp(r'\\s+')).where((part) => part.isNotEmpty).take(2).map((part) => part[0]).join().toUpperCase();
 
     return Theme(
@@ -77,7 +77,7 @@ class AccountDashboardScreen extends StatelessWidget {
                             const SizedBox(height: JsoSpacing.xs),
                             Text(name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w900)),
                             const SizedBox(height: 3),
-                            Text(signedIn ? user.email : 'La tua passione, la nostra squadra.', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                            Text(signedIn ? (user?.email ?? '') : 'La tua passione, la nostra squadra.', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12)),
                           ],
                         ),
                       ),
