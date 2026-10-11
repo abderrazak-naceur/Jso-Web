@@ -9,7 +9,7 @@ const PaymentReturn = lazy(() => import('./features/shop/PaymentReturn.jsx'))
 const NewsListPage = lazy(() => import('./features/news/NewsListPage.jsx'))
 const BilletteriePage = lazy(() => import('./features/tickets/BilletteriePage.jsx'))
 const DonationPage = lazy(() => import('./features/donations/DonationPage.jsx'))
-const CustomerDashboardPage = lazy(() => import('./features/account/CustomerDashboardPage.jsx'))
+const CustomerDashboardPage = lazy(() => import('./features/account/AccountOverviewPage.jsx'))
 const SupporterProfilePage = lazy(() => import('./features/account/SupporterProfilePage.jsx'))
 
 class RootErrorBoundary extends Component {
