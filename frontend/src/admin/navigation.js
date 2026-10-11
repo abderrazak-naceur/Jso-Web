@@ -1,6 +1,7 @@
-import { LayoutDashboard, Trophy, CreditCard, Wallet, HeartHandshake, ShoppingBag, Receipt, Handshake, QrCode, Users, CalendarDays, Radio, BarChart3, HeartPulse, ScanSearch, ListChecks, Newspaper, CalendarClock, Images, Pencil, PartyPopper, FileText, HelpCircle, MessageSquare, BrickWall, Megaphone, Mail, ClipboardList, GraduationCap, CalendarRange, ShieldCheck, Flag, Gauge, ShieldAlert, Server, Ticket, Landmark, Banknote } from 'lucide-react'
+import { LayoutDashboard, Trophy, CreditCard, UserRound, Wallet, HeartHandshake, ShoppingBag, Receipt, Handshake, QrCode, Users, CalendarDays, Radio, BarChart3, HeartPulse, ScanSearch, ListChecks, Newspaper, CalendarClock, Images, Pencil, PartyPopper, FileText, HelpCircle, MessageSquare, BrickWall, Megaphone, Mail, ClipboardList, GraduationCap, CalendarRange, ShieldCheck, Flag, Gauge, ShieldAlert, Server, Ticket, Landmark, Banknote } from 'lucide-react'
 export const ADMIN_NAVIGATION = [
     ['dashboard', 'Dashboard', LayoutDashboard, ['SuperAdmin','ClubAdmin','Editor','MatchManager','CommunityManager','ShopManager'], 'Tableau de bord'],
+    ['fan-accounts', 'Profils supporters', UserRound, ['SuperAdmin','ClubAdmin','CommunityManager'], 'Communauté'],
 
     ['tickets', 'Billetterie', Ticket, ['SuperAdmin','ClubAdmin','MatchManager','TicketSeller','TicketSupervisor'], 'Billetterie & Abonnements'],
     ['memberships', 'Abonnements', CreditCard, ['SuperAdmin','ClubAdmin','SeasonManager'], 'Billetterie & Abonnements'],
@@ -53,6 +54,7 @@ export const ADMIN_NAVIGATION = [
 ]
 export const ADMIN_PERMISSION_BY_ID = Object.freeze({
   dashboard: 'dashboard:view',
+  'fan-accounts': 'community:moderate',
   tickets: 'tickets:admin',
   memberships: 'memberships:manage',
   finance: 'finance:view',

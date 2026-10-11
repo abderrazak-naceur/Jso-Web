@@ -149,7 +149,7 @@ export default function CustomerDashboardPage() {
       <NavItem icon={Ticket} label="Mes billets" href="#mes-billets" onClick={() => jumpTo('mes-billets')} />
       <NavItem icon={Crown} label="Mes abonnements" href="#mes-abonnements" onClick={() => jumpTo('mes-abonnements')} />
       <NavItem icon={ShoppingBag} label="Mes commandes" href="#mes-commandes" onClick={() => jumpTo('mes-commandes')} />
-      <NavItem icon={UserRound} label="Mon profil" onClick={() => setAuthOpen(true)} />
+      <NavItem icon={UserRound} label="Mon profil" onClick={() => { window.location.href = "/profil" }} />
       <NavItem icon={Settings} label="Paramètres" onClick={() => setAuthOpen(true)} />
       <NavItem icon={LogOut} label="Se déconnecter" onClick={fan.signOut} />
     </nav>

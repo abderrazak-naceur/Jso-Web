@@ -85,11 +85,29 @@ async function requestJson(path, method, body, token) {
   return response.status === 204 ? null : response.json()
 }
 
+async function uploadProfilePhoto(file, token) {
+  const body = new FormData()
+  body.append('file', file)
+  const response = await fetch(API_BASE_URL + '/account/me/photo', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' },
+    body,
+  })
+  if (!response.ok) {
+    let message = 'Impossible de téléverser la photo (' + response.status + ').'
+    try { message = (await response.json()).message || message } catch {}
+    throw new Error(message)
+  }
+  return response.json()
+}
+
 export const accountApi = {
   register: (data) => requestJson('/account/register', 'POST', data),
   login: (data) => requestJson('/account/login', 'POST', data),
   me: (token) => requestJson('/account/me', 'GET', null, token),
   updateProfile: (data, token) => requestJson('/account/me', 'PUT', data, token),
+  uploadPhoto: (file, token) => uploadProfilePhoto(file, token),
+  deletePhoto: (token) => requestJson('/account/me/photo', 'DELETE', null, token),
   changePassword: (data, token) => requestJson('/account/change-password', 'POST', data, token),
 }
 
