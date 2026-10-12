@@ -68,11 +68,15 @@ class PublicApiRepository {
 
   /// Starts the provider checkout for a pay-per-view stream.
   Future<Map<String, dynamic>> startMatchStreamAccess(
-    String id, {required String country, required String token}
+    String id, {required String country, required String token, String? promoCode}
   ) async {
+    final code = promoCode?.trim();
     final json = await _client.postJson(
       '/matches/$id/stream/access',
-      body: {'country': country},
+      body: {
+        'country': country,
+        if (code != null && code.isNotEmpty) 'promoCode': code,
+      },
       bearerToken: token,
     );
     return _asMap(json);
