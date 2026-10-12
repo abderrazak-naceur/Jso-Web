@@ -5,6 +5,7 @@ public sealed class MatchStreamPromoCode
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid MatchStreamId { get; set; }
+    public MatchStream? MatchStream { get; set; }
     public string Code { get; set; } = string.Empty;
     public int DiscountPercent { get; set; }
     public DateTimeOffset? ExpiresAt { get; set; }
