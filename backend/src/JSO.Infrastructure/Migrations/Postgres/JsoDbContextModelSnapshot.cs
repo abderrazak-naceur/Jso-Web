@@ -2612,6 +2612,47 @@ namespace JSO.Infrastructure.Migrations.Postgres
 
                     b.ToTable("Volunteers");
                 });
+
+            modelBuilder.Entity("JSO.Domain.MatchStreamPromoCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DiscountPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("MaxUses")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("MatchStreamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Uses")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MatchStreamId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("MatchStreamPromoCodes");
+                });
+
 #pragma warning restore 612, 618
         }
     }
