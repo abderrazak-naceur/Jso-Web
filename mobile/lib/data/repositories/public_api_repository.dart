@@ -61,15 +61,24 @@ class PublicApiRepository {
   }
 
   /// Stream entitlement metadata: the server only returns the playback URL when allowed.
-  Future<Map<String, dynamic>> getMatchStream(String id, {String? token}) async {
-    final json = await _client.getJson('/matches/$id/stream', bearerToken: token);
+  Future<Map<String, dynamic>> getMatchStream(
+    String id, {
+    String? token,
+  }) async {
+    final json = await _client.getJson(
+      '/matches/$id/stream',
+      bearerToken: token,
+    );
     return _asMap(json);
   }
 
   /// Starts the provider checkout for a pay-per-view stream.
   Future<Map<String, dynamic>> startMatchStreamAccess(
-    String id, {required String country, required String token, String? promoCode}
-  ) async {
+    String id, {
+    required String country,
+    required String token,
+    String? promoCode,
+  }) async {
     final code = promoCode?.trim();
     final json = await _client.postJson(
       '/matches/$id/stream/access',
@@ -84,8 +93,9 @@ class PublicApiRepository {
 
   /// Reads the current fan's access state after checkout.
   Future<Map<String, dynamic>> getMatchStreamAccess(
-    String accessId, {required String token}
-  ) async {
+    String accessId, {
+    required String token,
+  }) async {
     final json = await _client.getJson(
       '/matches/stream-access/$accessId',
       bearerToken: token,
