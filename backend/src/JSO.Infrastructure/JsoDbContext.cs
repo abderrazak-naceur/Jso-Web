@@ -249,7 +249,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<MatchStreamPromoCode>().HasIndex(x => new { x.MatchStreamId, x.Code }).IsUnique();
   modelBuilder.Entity<MatchStreamPromoCode>().Property(x => x.Code).HasMaxLength(40).IsRequired();
   modelBuilder.Entity<MatchStreamPromoCode>().Property(x => x.DiscountPercent).IsRequired();
-  modelBuilder.Entity<MatchStreamPromoCode>().HasOne<MatchStream>().WithMany().HasForeignKey(x => x.MatchStreamId).OnDelete(DeleteBehavior.Cascade);
+  modelBuilder.Entity<MatchStreamPromoCode>().HasOne(x => x.MatchStream).WithMany().HasForeignKey(x => x.MatchStreamId).OnDelete(DeleteBehavior.Cascade);
   modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.PaymentProvider).HasMaxLength(32);
   modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.Country).HasMaxLength(64);
   modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.ChargedAmount).HasPrecision(14,2);
