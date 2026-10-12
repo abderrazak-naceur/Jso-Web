@@ -244,6 +244,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<MatchStreamAccess>().HasIndex(x=>new{x.FanUserId,x.MatchStreamId}).IsUnique();
   modelBuilder.Entity<MatchStreamAccess>().HasIndex(x=>x.MatchStreamId);
   modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.Status).HasDefaultValue("Pending");
+  modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.DiscountPercent).HasDefaultValue(0);
   modelBuilder.Entity<MatchStreamAccess>().HasIndex(x=>x.ProviderRef).IsUnique().HasFilter("\"ProviderRef\" IS NOT NULL");
   modelBuilder.Entity<MatchStreamPromoCode>().HasIndex(x => new { x.MatchStreamId, x.Code }).IsUnique();
   modelBuilder.Entity<MatchStreamPromoCode>().Property(x => x.Code).HasMaxLength(40).IsRequired();
