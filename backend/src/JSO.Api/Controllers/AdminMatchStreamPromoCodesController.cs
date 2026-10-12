@@ -52,7 +52,7 @@ public sealed class AdminMatchStreamPromoCodesController(JsoDbContext db) : Cont
     public async Task<IActionResult> Update(Guid matchId, Guid promoId, [FromBody] PromoCodeUpdateRequest request, CancellationToken ct)
     {
         var item = await db.MatchStreamPromoCodes.Include(x => x.MatchStream)
-            .SingleOrDefaultAsync(x => x.Id == promoId && x.MatchStream.MatchId == matchId, ct);
+            .SingleOrDefaultAsync(x => x.Id == promoId && x.MatchStream != null && x.MatchStream.MatchId == matchId, ct);
         if (item is null) return NotFound();
         if (request.DiscountPercent is < 1 or > 100 || request.MaxUses is <= 0 || (request.ExpiresAt.HasValue && request.ExpiresAt.Value <= DateTimeOffset.UtcNow))
             return BadRequest(new { message = "Controlla percentuale, limite utilizzi e scadenza." });
