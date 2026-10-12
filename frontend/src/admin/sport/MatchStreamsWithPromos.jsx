@@ -88,7 +88,7 @@ export default function MatchStreamsWithPromos({ onError }) {
   return <div className="space-y-6">
     <MatchStreamsModule onError={onError} />
     <section className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-black">Codici promo per partita</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-black">Codici promo per partita</h2><button type="button" onClick={refreshMatches} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold">Aggiorna partite</button></div>
       <p className="mt-1 text-sm text-slate-500">Crea sconti per una singola diretta, imposta una scadenza e limita il numero di utilizzi. Il 100% concede accesso senza registrare ricavi di pagamento.</p>
       <label className="mt-5 block text-sm font-bold">Partita
         <select value={matchId} onChange={e => setMatchId(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
