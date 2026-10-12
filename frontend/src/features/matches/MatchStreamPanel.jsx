@@ -10,6 +10,8 @@ export default function MatchStreamPanel({ matchId, token, onRequireLogin }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [polling, setPolling] = useState(false)
+  const [promoCode, setPromoCode] = useState('')
+  const [promoGranted, setPromoGranted] = useState(false)
 
   const load = useCallback(async (signal) => {
     setLoading(true)
@@ -53,7 +55,13 @@ export default function MatchStreamPanel({ matchId, token, onRequireLogin }) {
 
   async function pay(country) {
     if (!token) { onRequireLogin?.(); return {} }
-    const res = await matchStreamApi.startAccess(matchId, country, token)
+    const res = await matchStreamApi.startAccess(matchId, country, token, promoCode.trim())
+    if (res?.granted) {
+      setPromoGranted(true)
+      try { sessionStorage.setItem('jso_stream_access_' + matchId, res.accessId) } catch { /* ignore */ }
+      await load()
+      return res
+    }
     if (res?.accessId) {
       try { sessionStorage.setItem('jso_stream_access_' + matchId, res.accessId) } catch { /* ignore */ }
     }
@@ -123,7 +131,12 @@ export default function MatchStreamPanel({ matchId, token, onRequireLogin }) {
             </div>
             <p className="text-lg font-black text-slate-900">{money(stream.price, stream.currency)}</p>
             {polling && <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800">Vérification du paiement en cours…</p>}
-            <div className="mt-3"><PayOnlineButton pay={pay} label="Payer pour regarder" /></div>
+
+            <label className="mt-4 block text-sm font-bold text-slate-700">Code promo (facoltativo)
+              <input value={promoCode} onChange={event => setPromoCode(event.target.value.toUpperCase())} maxLength={40} autoComplete="off" placeholder="ES. JSO100" className="mt-1 w-full max-w-xs rounded-xl border border-slate-200 px-3 py-2 uppercase" />
+            </label>
+            <div className="mt-3"><PayOnlineButton pay={pay} label="Applica codice / procedi al pagamento" onSuccess={() => { setPromoGranted(true); load() }} /></div>
+            {promoGranted && <p role="status" className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-700">Codice promo applicato: accesso concesso senza pagamento.</p>}
             <p className="mt-2 text-xs text-slate-400">Le flux n’est accessible qu’après confirmation du paiement.</p>
           </div>
         ) : (
