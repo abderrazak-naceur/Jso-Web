@@ -35,7 +35,7 @@ public sealed class AdminMatchStreamPromoCodesController(JsoDbContext db) : Cont
             return BadRequest(new { message = "Lo sconto deve essere compreso tra 1% e 100%." });
         if (request.MaxUses is <= 0)
             return BadRequest(new { message = "Il limite utilizzi deve essere maggiore di zero." });
-        if (request.ExpiresAt <= DateTimeOffset.UtcNow)
+        if (request.ExpiresAt.HasValue && request.ExpiresAt.Value <= DateTimeOffset.UtcNow)
             return BadRequest(new { message = "La scadenza deve essere futura." });
         if (await db.MatchStreamPromoCodes.AnyAsync(x => x.MatchStreamId == stream.Id && x.Code == code, ct))
             return Conflict(new { message = "Questo codice esiste già per la partita selezionata." });
@@ -54,7 +54,7 @@ public sealed class AdminMatchStreamPromoCodesController(JsoDbContext db) : Cont
         var item = await db.MatchStreamPromoCodes.Include(x => x.MatchStream)
             .SingleOrDefaultAsync(x => x.Id == promoId && x.MatchStream.MatchId == matchId, ct);
         if (item is null) return NotFound();
-        if (request.DiscountPercent is < 1 or > 100 || request.MaxUses is <= 0 || request.ExpiresAt <= DateTimeOffset.UtcNow)
+        if (request.DiscountPercent is < 1 or > 100 || request.MaxUses is <= 0 || (request.ExpiresAt.HasValue && request.ExpiresAt.Value <= DateTimeOffset.UtcNow))
             return BadRequest(new { message = "Controlla percentuale, limite utilizzi e scadenza." });
         if (request.MaxUses is not null && request.MaxUses < item.Uses)
             return BadRequest(new { message = "Il limite non può essere inferiore agli utilizzi già effettuati." });
