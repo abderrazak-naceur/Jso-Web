@@ -8,6 +8,7 @@ namespace JSO.Infrastructure.Migrations.Postgres
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<int>(name: "DiscountPercent", table: "MatchStreamAccesses", type: "integer", nullable: false, defaultValue: 0);
             migrationBuilder.CreateTable(
                 name: "MatchStreamPromoCodes",
                 columns: table => new
@@ -41,6 +42,7 @@ namespace JSO.Infrastructure.Migrations.Postgres
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropColumn(name: "DiscountPercent", table: "MatchStreamAccesses");
             migrationBuilder.DropTable(name: "MatchStreamPromoCodes");
         }
     }
