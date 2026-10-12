@@ -1385,6 +1385,10 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int>("DiscountPercent")
+                        .HasDefaultValue(0)
+                        .HasColumnType("integer");
+
                     b.Property<decimal?>("ChargedAmount")
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)");
