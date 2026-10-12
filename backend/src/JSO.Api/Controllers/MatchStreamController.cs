@@ -94,7 +94,7 @@ public sealed class MatchStreamController(
 
         var access = await db.MatchStreamAccesses
             .SingleOrDefaultAsync(x => x.MatchStreamId == stream.Id && x.FanUserId == fanId, ct);
-        if (access is { Status: "Paid" })
+        if (access is { Status: "Paid" or "Promo" })
             return BadRequest(new { message = "Vous avez déjà accès à cette diffusion." });
         if (access is null)
         {
