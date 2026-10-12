@@ -2650,6 +2650,12 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.HasIndex("MatchStreamId", "Code")
                         .IsUnique();
 
+                    b.HasOne("JSO.Domain.MatchStream", null)
+                        .WithMany()
+                        .HasForeignKey("MatchStreamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.ToTable("MatchStreamPromoCodes");
                 });
 
