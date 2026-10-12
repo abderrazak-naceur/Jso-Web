@@ -119,7 +119,7 @@ class AccountDashboardScreen extends StatelessWidget {
                             const SizedBox(height: 3),
                             Text(
                               signedIn
-                                  ? (user.email ?? '')
+                                  ? (user.email)
                                   : 'La tua passione, la nostra squadra.',
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
