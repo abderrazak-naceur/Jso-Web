@@ -23,6 +23,9 @@ public sealed class MatchStreamAccess
     // Access state: Pending (awaiting payment) -> Paid (confirmed server-side).
     public string Status { get; set; } = "Pending";
 
+    // Percent discount used to validate the amount in the payment webhook.
+    public int DiscountPercent { get; set; }
+
     // Online payment routing/reconciliation (additive, nullable), mirroring the
     // other payables. Provider's session/payment id used to reconcile the
     // webhook; the routed provider ("Flouci"/"Stripe"); the ISO country chosen
