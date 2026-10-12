@@ -53,9 +53,9 @@ void main() {
       orderedEquals(const [
         'Accueil',
         'Matchs',
-        'Boutique',
+        'Biglietti',
         'Actualités',
-        'Plus',
+        'Profilo',
       ]),
     );
     expect(navigation.backgroundColor, Colors.white);
@@ -65,9 +65,9 @@ void main() {
     for (final label in const [
       'Accueil',
       'Matchs',
-      'Boutique',
+      'Biglietti',
       'Actualités',
-      'Plus',
+      'Profilo',
     ]) {
       expect(
         find.descendant(of: navigationFinder, matching: find.text(label)),
