@@ -61,20 +61,40 @@ class _MatchLiveStreamTabState extends State<MatchLiveStreamTab> {
       return;
     }
     final countryController = TextEditingController(text: 'TN');
-    final country = await showDialog<String>(context: context, builder: (context) => AlertDialog(
-      title: const Text('Paiement du direct'),
-      content: TextField(controller: countryController, maxLength: 2, textCapitalization: TextCapitalization.characters,
-        decoration: const InputDecoration(labelText: 'Pays (code ISO)', helperText: 'TN pour Tunisie, FR pour France')),
+    final promoController = TextEditingController();
+    final checkout = await showDialog<Map<String, String>>(context: context, builder: (context) => AlertDialog(
+      title: const Text('Pagamento del direct'),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(controller: countryController, maxLength: 2, textCapitalization: TextCapitalization.characters,
+          decoration: const InputDecoration(labelText: 'Paese (codice ISO)', helperText: 'TN per Tunisia, FR per France')),
+        TextField(controller: promoController, maxLength: 40, textCapitalization: TextCapitalization.characters,
+          decoration: const InputDecoration(labelText: 'Codice promo (facoltativo)', helperText: 'Lascia vuoto se non hai un codice')),
+      ]),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
-        FilledButton(onPressed: () => Navigator.pop(context, countryController.text.trim().toUpperCase()), child: const Text('Continuer')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annulla')),
+        FilledButton(onPressed: () => Navigator.pop(context, {
+          'country': countryController.text.trim().toUpperCase(),
+          'promoCode': promoController.text.trim().toUpperCase(),
+        }), child: const Text('Continua')),
       ],
     ));
     countryController.dispose();
-    if (country == null || country.length != 2 || !mounted) return;
+    promoController.dispose();
+    if (checkout == null) return;
+    final country = checkout['country'] ?? '';
+    if (country.length != 2 || !mounted) return;
     setState(() { paying = true; error = null; });
     try {
-      final result = await context.read<PublicApiRepository>().startMatchStreamAccess(widget.matchId, country: country, token: token);
+      final result = await context.read<PublicApiRepository>().startMatchStreamAccess(
+        widget.matchId,
+        country: country,
+        token: token,
+        promoCode: checkout['promoCode'],
+      );
+      if (result['granted'] == true) {
+        await load();
+        return;
+      }
       final redirect = Uri.tryParse(result['redirectUrl']?.toString() ?? '');
       final id = result['accessId']?.toString();
       if (redirect == null || redirect.scheme != 'https' || id == null || id.isEmpty) {
