@@ -47,13 +47,15 @@ class _MobileTicketingScreenState extends State<MobileTicketingScreen> {
         body: FutureBuilder<List<Match>>(
           future: _future,
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting)
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return const LoadingView(message: 'Chargement des matchs…');
-            if (snapshot.hasError)
+            }
+            if (snapshot.hasError) {
               return ErrorView(
                 message: 'Impossible de charger les matchs.',
                 onRetry: () => setState(_load),
               );
+            }
             final matches =
                 (snapshot.data ?? const <Match>[])
                     .where(
@@ -63,11 +65,12 @@ class _MobileTicketingScreenState extends State<MobileTicketingScreen> {
                     )
                     .toList()
                   ..sort((a, b) => a.kickoffAt.compareTo(b.kickoffAt));
-            if (matches.isEmpty)
+            if (matches.isEmpty) {
               return const EmptyView(
                 message: 'Aucune partie à venir pour le moment.',
                 icon: Icons.confirmation_number_outlined,
               );
+            }
             return RefreshIndicator(
               color: JsoColors.blue,
               onRefresh: () async => setState(_load),
