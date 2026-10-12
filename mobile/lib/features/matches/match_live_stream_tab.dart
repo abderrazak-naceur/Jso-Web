@@ -165,8 +165,9 @@ class _MatchLiveStreamTabState extends State<MatchLiveStreamTab> {
           'Il servizio di pagamento non ha restituito un link sicuro valido.',
         );
       }
-      if (!await launchUrl(redirect, mode: LaunchMode.externalApplication))
+      if (!await launchUrl(redirect, mode: LaunchMode.externalApplication)) {
         throw StateError('Impossibile aprire il pagamento.');
+      }
       if (!mounted) return;
       setState(() {
         accessId = id;
@@ -208,11 +209,12 @@ class _MatchLiveStreamTabState extends State<MatchLiveStreamTab> {
     if (checks >= 30) {
       timer?.cancel();
       timer = null;
-      if (mounted)
+      if (mounted) {
         setState(() {
           checking = false;
           error = 'Pagamento ancora in verifica. Tocca Aggiorna tra poco.';
         });
+      }
     }
   }
 
@@ -220,8 +222,9 @@ class _MatchLiveStreamTabState extends State<MatchLiveStreamTab> {
   Widget build(BuildContext context) {
     if (loading) return const Center(child: CircularProgressIndicator());
     final s = stream;
-    if (s == null)
+    if (s == null) {
       return _empty(error ?? 'Nessuna diretta disponibile.', onRetry: load);
+    }
     final hasAccess = s['hasAccess'] == true;
     final url = s['streamUrl']?.toString();
     final paid = s['isPaid'] == true;
