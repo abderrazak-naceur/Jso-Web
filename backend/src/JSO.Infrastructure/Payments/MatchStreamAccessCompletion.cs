@@ -18,9 +18,12 @@ public sealed class MatchStreamAccessCompletion(JsoDbContext db) : IPayableCompl
     {
         var row = await db.MatchStreamAccesses.AsNoTracking()
             .Where(x => x.Id == payableId)
-            .Join(db.MatchStreams.AsNoTracking(), a => a.MatchStreamId, s => s.Id, (a, s) => (decimal?)decimal.Round(s.Price * (100 - a.DiscountPercent) / 100m, 2, MidpointRounding.AwayFromZero))
+            .Join(db.MatchStreams.AsNoTracking(), a => a.MatchStreamId, s => s.Id,
+                (a, s) => new { s.Price, a.DiscountPercent })
             .SingleOrDefaultAsync(ct);
-        return row;
+        return row is null
+            ? null
+            : decimal.Round(row.Price * (100 - row.DiscountPercent) / 100m, 2, MidpointRounding.AwayFromZero);
     }
 
     public async Task<PayableCompletionResult> CompleteAsync(
