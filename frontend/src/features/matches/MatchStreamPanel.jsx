@@ -16,8 +16,11 @@ export default function MatchStreamPanel({ matchId, token, onRequireLogin }) {
     try {
       const s = await matchStreamApi.get(matchId, token)
       if (!signal?.aborted) { setStream(s); setError('') }
-    } catch {
-      if (!signal?.aborted) { setStream(null); setError('') }
+    } catch (err) {
+      if (!signal?.aborted) {
+        setStream(null)
+        setError(err?.message || 'Impossible de charger la diffusion. Réessayez plus tard.')
+      }
     } finally {
       if (!signal?.aborted) setLoading(false)
     }
@@ -79,8 +82,8 @@ export default function MatchStreamPanel({ matchId, token, onRequireLogin }) {
         <div className="flex items-start gap-3 p-5">
           <div className="rounded-xl bg-slate-100 p-3 text-slate-500"><PlayCircle size={22} aria-hidden="true" /></div>
           <div>
-            <p className="font-bold text-slate-900">La diretta non è ancora disponibile</p>
-            <p className="mt-1 text-sm leading-6 text-slate-600">Il video comparirà qui quando la diretta sarà configurata e pubblicata dall’amministratore per questa partita.</p>
+            <p className="font-bold text-slate-900">{error ? 'Impossible de charger la diffusion' : 'La diretta non è ancora disponibile'}</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">{error || 'Il video comparirà qui quando la diretta sarà configurata e pubblicata dall’amministratore per questa partita.'}</p>
           </div>
         </div>
       </section>
