@@ -112,6 +112,7 @@ public sealed class MatchStreamController(
         {
             promo.Uses++;
             access.Status = "Promo";
+            access.DiscountPercent = promo.DiscountPercent;
             access.PaymentProvider = null;
             access.ProviderRef = null;
             access.Country = country;
@@ -162,6 +163,7 @@ public sealed class MatchStreamController(
         }
 
         if (promo is not null) promo.Uses++;
+        access.DiscountPercent = promo?.DiscountPercent ?? 0;
         access.PaymentProvider = provider.Name;
         access.Country = country;
         access.ProviderRef = initiation.ProviderRef;
