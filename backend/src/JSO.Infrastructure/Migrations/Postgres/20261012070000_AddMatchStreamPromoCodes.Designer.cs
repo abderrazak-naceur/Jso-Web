@@ -32,7 +32,7 @@ namespace JSO.Infrastructure.Migrations.Postgres
                 b.Property<int>("Uses").HasColumnType("integer");
                 b.HasKey("Id");
                 b.HasIndex("MatchStreamId", "Code").IsUnique();
-                b.HasOne("JSO.Domain.MatchStream", null)
+                b.HasOne("JSO.Domain.MatchStream", "MatchStream")
                     .WithMany()
                     .HasForeignKey("MatchStreamId")
                     .OnDelete(DeleteBehavior.Cascade)
