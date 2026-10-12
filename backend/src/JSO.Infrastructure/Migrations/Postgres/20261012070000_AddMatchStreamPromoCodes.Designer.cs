@@ -32,6 +32,11 @@ namespace JSO.Infrastructure.Migrations.Postgres
                 b.Property<int>("Uses").HasColumnType("integer");
                 b.HasKey("Id");
                 b.HasIndex("MatchStreamId", "Code").IsUnique();
+                b.HasOne("JSO.Domain.MatchStream", null)
+                    .WithMany()
+                    .HasForeignKey("MatchStreamId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
                 b.ToTable("MatchStreamPromoCodes");
             });
 #pragma warning restore 612, 618
