@@ -10,13 +10,11 @@ import 'data/repositories/shop_repository.dart';
 import 'data/repositories/tickets_repository.dart';
 import 'features/auth/admin_auth_controller.dart';
 import 'features/auth/auth_controller.dart';
-import 'features/club/club_screen.dart';
 import 'features/account/account_dashboard_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/matches/matches_screen.dart';
 import 'features/news/news_screen.dart';
 import 'features/shop/cart_controller.dart';
-import 'features/shop/shop_screen.dart';
 import 'features/tickets/mobile_ticketing_screen.dart';
 
 /// Root widget: installs the global dark theme for legacy and pushed screens,
