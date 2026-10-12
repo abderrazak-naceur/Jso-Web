@@ -70,7 +70,7 @@ public sealed class AdminMatchStreamPromoCodesController(JsoDbContext db) : Cont
     public async Task<IActionResult> Delete(Guid matchId, Guid promoId, CancellationToken ct)
     {
         var item = await db.MatchStreamPromoCodes.Include(x => x.MatchStream)
-            .SingleOrDefaultAsync(x => x.Id == promoId && x.MatchStream.MatchId == matchId, ct);
+            .SingleOrDefaultAsync(x => x.Id == promoId && x.MatchStream != null && x.MatchStream.MatchId == matchId, ct);
         if (item is null) return NotFound();
         db.MatchStreamPromoCodes.Remove(item);
         await db.SaveChangesAsync(ct);
