@@ -155,7 +155,7 @@ export const membershipApi = {
 
 export const matchStreamApi = {
   get: (matchId, token) => requestJson('/matches/' + matchId + '/stream', 'GET', null, token),
-  startAccess: (matchId, country, token) => requestJson('/matches/' + matchId + '/stream/access', 'POST', { country }, token),
+  startAccess: (matchId, country, token, promoCode) => requestJson('/matches/' + matchId + '/stream/access', 'POST', { country, promoCode }, token),
   access: (accessId, token) => requestJson('/matches/stream-access/' + accessId, 'GET', null, token),
 }
 

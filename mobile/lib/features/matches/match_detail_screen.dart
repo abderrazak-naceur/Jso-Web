@@ -377,6 +377,12 @@ class _LiveBlogTabState extends State<_LiveBlogTab> {
     super.dispose();
   }
 
+  Future<List<LiveBlogEntry>> _fetchLiveBlog() async {
+    // A shared repository interface keeps the liveblog tab compatible with the
+    // same injected API client used throughout the mobile app and its tests.
+    return context.read<PublicApiRepository>().getMatchLiveBlog(widget.matchId);
+  }
+
   Future<void> _refresh() async {
     if (_isFetching) return;
     _isFetching = true;
@@ -387,9 +393,7 @@ class _LiveBlogTabState extends State<_LiveBlogTab> {
       });
     }
     try {
-      final entries = await context
-          .read<PublicApiRepository>()
-          .getMatchLiveBlog(widget.matchId);
+      final entries = await _fetchLiveBlog();
       if (!mounted) return;
       setState(() {
         _entries = entries;

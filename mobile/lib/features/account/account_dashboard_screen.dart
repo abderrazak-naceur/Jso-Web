@@ -20,7 +20,14 @@ class AccountDashboardScreen extends StatelessWidget {
     final user = auth.user;
     final signedIn = auth.status == AuthStatus.authenticated && user != null;
     final name = user?.displayName ?? 'Supporter JSO';
-    final initials = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).take(2).map((part) => part[0]).join().toUpperCase();
+    final initials = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .take(2)
+        .map((part) => part[0])
+        .join()
+        .toUpperCase();
 
     return Theme(
       data: JsoTheme.paper(),
@@ -38,7 +45,12 @@ class AccountDashboardScreen extends StatelessWidget {
           ],
         ),
         body: ListView(
-          padding: const EdgeInsets.fromLTRB(JsoSpacing.md, JsoSpacing.sm, JsoSpacing.md, JsoSpacing.xl),
+          padding: const EdgeInsets.fromLTRB(
+            JsoSpacing.md,
+            JsoSpacing.sm,
+            JsoSpacing.md,
+            JsoSpacing.xl,
+          ),
           children: [
             Container(
               padding: const EdgeInsets.all(JsoSpacing.lg),
@@ -65,19 +77,57 @@ class AccountDashboardScreen extends StatelessWidget {
                         ),
                         alignment: Alignment.center,
                         child: signedIn
-                            ? Text(initials, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 22))
-                            : const Icon(Icons.person_outline, color: Colors.white, size: 34),
+                            ? Text(
+                                initials,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 22,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.person_outline,
+                                color: Colors.white,
+                                size: 34,
+                              ),
                       ),
                       const SizedBox(width: JsoSpacing.md),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('BENVENUTO NELLA FAMIGLIA JSO', style: TextStyle(color: JsoColors.gold, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.1)),
+                            const Text(
+                              'BENVENUTO NELLA FAMIGLIA JSO',
+                              style: TextStyle(
+                                color: JsoColors.gold,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.1,
+                              ),
+                            ),
                             const SizedBox(height: JsoSpacing.xs),
-                            Text(name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w900)),
+                            Text(
+                              name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 21,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
                             const SizedBox(height: 3),
-                            Text(signedIn ? (user?.email ?? '') : 'La tua passione, la nostra squadra.', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                            Text(
+                              signedIn
+                                  ? (user.email)
+                                  : 'La tua passione, la nostra squadra.',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -86,9 +136,26 @@ class AccountDashboardScreen extends StatelessWidget {
                   const SizedBox(height: JsoSpacing.md),
                   Row(
                     children: [
-                      Icon(signedIn ? Icons.verified_rounded : Icons.shield_outlined, size: 17, color: signedIn ? const Color(0xFF5AF0B1) : JsoColors.gold),
+                      Icon(
+                        signedIn
+                            ? Icons.verified_rounded
+                            : Icons.shield_outlined,
+                        size: 17,
+                        color: signedIn
+                            ? const Color(0xFF5AF0B1)
+                            : JsoColors.gold,
+                      ),
                       const SizedBox(width: JsoSpacing.xs),
-                      Text(signedIn ? 'Account connesso' : 'Accedi per gestire i tuoi acquisti', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+                      Text(
+                        signedIn
+                            ? 'Account connesso'
+                            : 'Accedi per gestire i tuoi acquisti',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                   if (!signedIn) ...[
@@ -96,9 +163,19 @@ class AccountDashboardScreen extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton(
-                        style: FilledButton.styleFrom(backgroundColor: JsoColors.gold, foregroundColor: JsoColors.navy),
-                        onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ProfileScreen())),
-                        child: const Text('Accedi / Registrati', style: TextStyle(fontWeight: FontWeight.w900)),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: JsoColors.gold,
+                          foregroundColor: JsoColors.navy,
+                        ),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const ProfileScreen(),
+                          ),
+                        ),
+                        child: const Text(
+                          'Accedi / Registrati',
+                          style: TextStyle(fontWeight: FontWeight.w900),
+                        ),
                       ),
                     ),
                   ],
@@ -106,50 +183,94 @@ class AccountDashboardScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: JsoSpacing.lg),
-            const Text('IL TUO SPAZIO', style: TextStyle(color: JsoColors.blue, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+            const Text(
+              'IL TUO SPAZIO',
+              style: TextStyle(
+                color: JsoColors.blue,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.5,
+              ),
+            ),
             const SizedBox(height: JsoSpacing.sm),
             _AccountAction(
               icon: Icons.confirmation_number_rounded,
               title: 'I miei biglietti',
               subtitle: 'Prenotazioni e QR code dei biglietti confermati',
               color: const Color(0xFF1769E0),
-              onTap: () => _openProtected(context, signedIn, const MyTicketsScreen(), 'Accedi per consultare i tuoi biglietti.'),
+              onTap: () => _openProtected(
+                context,
+                signedIn,
+                const MyTicketsScreen(),
+                'Accedi per consultare i tuoi biglietti.',
+              ),
             ),
             _AccountAction(
               icon: Icons.receipt_long_rounded,
               title: 'I miei ordini',
               subtitle: 'Acquisti e stato degli ordini',
               color: const Color(0xFF00875A),
-              onTap: () => _openProtected(context, signedIn, const MyOrdersScreen(), 'Accedi per consultare i tuoi ordini.'),
+              onTap: () => _openProtected(
+                context,
+                signedIn,
+                const MyOrdersScreen(),
+                'Accedi per consultare i tuoi ordini.',
+              ),
             ),
             _AccountAction(
               icon: Icons.person_rounded,
               title: 'Profilo e sicurezza',
               subtitle: 'Dati personali, password e privacy',
               color: const Color(0xFF5B36C8),
-              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ProfileScreen())),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const ProfileScreen()),
+              ),
             ),
             _AccountAction(
               icon: Icons.workspace_premium_rounded,
               title: 'Abbonamenti',
               subtitle: 'Informazioni sulle iniziative e i servizi del club',
               color: const Color(0xFFB58100),
-              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ClubScreen())),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const ClubScreen()),
+              ),
             ),
             const SizedBox(height: JsoSpacing.md),
             Container(
               padding: const EdgeInsets.all(JsoSpacing.md),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(JsoRadius.card), border: Border.all(color: JsoColors.borderLight)),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(JsoRadius.card),
+                border: Border.all(color: JsoColors.borderLight),
+              ),
               child: const Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(Icons.lock_rounded, color: JsoColors.blue),
                   SizedBox(width: JsoSpacing.sm),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Acquisti più sicuri', style: TextStyle(fontWeight: FontWeight.w900, color: JsoColors.inkText)),
-                    SizedBox(height: 4),
-                    Text('La disponibilità dei biglietti e lo stato delle prenotazioni sono verificati tramite i servizi JSO.', style: TextStyle(color: JsoColors.inkMuted, height: 1.4, fontSize: 12)),
-                  ])),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Acquisti più sicuri',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: JsoColors.inkText,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'La disponibilità dei biglietti e lo stato delle prenotazioni sono verificati tramite i servizi JSO.',
+                          style: TextStyle(
+                            color: JsoColors.inkMuted,
+                            height: 1.4,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -167,10 +288,17 @@ class AccountDashboardScreen extends StatelessWidget {
     );
   }
 
-  static void _openProtected(BuildContext context, bool signedIn, Widget page, String message) {
+  static void _openProtected(
+    BuildContext context,
+    bool signedIn,
+    Widget page,
+    String message,
+  ) {
     if (!signedIn) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ProfileScreen()));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
+      Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => const ProfileScreen()));
       return;
     }
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
@@ -178,7 +306,13 @@ class AccountDashboardScreen extends StatelessWidget {
 }
 
 class _AccountAction extends StatelessWidget {
-  const _AccountAction({required this.icon, required this.title, required this.subtitle, required this.color, required this.onTap});
+  const _AccountAction({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String title;
@@ -192,18 +326,42 @@ class _AccountAction extends StatelessWidget {
       color: Colors.white,
       elevation: 0,
       margin: const EdgeInsets.only(bottom: JsoSpacing.sm),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(JsoRadius.card), side: const BorderSide(color: JsoColors.borderLight)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(JsoRadius.card),
+        side: const BorderSide(color: JsoColors.borderLight),
+      ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: JsoSpacing.md, vertical: JsoSpacing.xs),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: JsoSpacing.md,
+          vertical: JsoSpacing.xs,
+        ),
         leading: Container(
           width: 46,
           height: 46,
-          decoration: BoxDecoration(color: color.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(14)),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(14),
+          ),
           child: Icon(icon, color: color),
         ),
-        title: Text(title, style: const TextStyle(color: JsoColors.inkText, fontWeight: FontWeight.w900)),
-        subtitle: Padding(padding: const EdgeInsets.only(top: 4), child: Text(subtitle, style: const TextStyle(color: JsoColors.inkMuted, fontSize: 12))),
-        trailing: const Icon(Icons.chevron_right_rounded, color: JsoColors.inkMuted),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: JsoColors.inkText,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            subtitle,
+            style: const TextStyle(color: JsoColors.inkMuted, fontSize: 12),
+          ),
+        ),
+        trailing: const Icon(
+          Icons.chevron_right_rounded,
+          color: JsoColors.inkMuted,
+        ),
         onTap: onTap,
       ),
     );

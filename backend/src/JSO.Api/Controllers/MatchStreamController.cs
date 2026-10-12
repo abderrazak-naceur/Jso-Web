@@ -35,7 +35,7 @@ public sealed class MatchStreamController(
         var previewAccess = HasPreviewRole();
         var fanId = CurrentFanId();
         var hasPaidAccess = fanId is not null && await db.MatchStreamAccesses.AsNoTracking()
-            .AnyAsync(a => a.MatchStreamId == stream.Id && a.FanUserId == fanId && a.Status == "Paid", ct);
+            .AnyAsync(a => a.MatchStreamId == stream.Id && a.FanUserId == fanId && (a.Status == "Paid" || a.Status == "Promo"), ct);
 
         var entitled = !stream.IsPaid || hasPaidAccess || previewAccess;
 
@@ -76,9 +76,25 @@ public sealed class MatchStreamController(
         if (stream.Price <= 0)
             return BadRequest(new { message = "Le montant de l'accès doit être supérieur à zéro." });
 
+        // Promo codes are validated by the server; clients never submit a price.
+        // A full discount grants a Promo entitlement, not a fake paid transaction.
+        var promoInput = NormalizePromo(request.PromoCode);
+        MatchStreamPromoCode? promo = null;
+        decimal payableAmount = stream.Price;
+        if (promoInput.Length > 0)
+        {
+            promo = await db.MatchStreamPromoCodes.SingleOrDefaultAsync(
+                x => x.MatchStreamId == stream.Id && x.Code == promoInput, ct);
+            if (promo is null || !promo.IsEnabled ||
+                (promo.ExpiresAt.HasValue && promo.ExpiresAt.Value <= DateTimeOffset.UtcNow) ||
+                (promo.MaxUses.HasValue && promo.Uses >= promo.MaxUses.Value))
+                return BadRequest(new { message = "Codice promo non valido, scaduto o esaurito." });
+            payableAmount = decimal.Round(stream.Price * (100 - promo.DiscountPercent) / 100m, 2, MidpointRounding.AwayFromZero);
+        }
+
         var access = await db.MatchStreamAccesses
             .SingleOrDefaultAsync(x => x.MatchStreamId == stream.Id && x.FanUserId == fanId, ct);
-        if (access is { Status: "Paid" })
+        if (access is { Status: "Paid" or "Promo" })
             return BadRequest(new { message = "Vous avez déjà accès à cette diffusion." });
         if (access is null)
         {
@@ -90,6 +106,23 @@ public sealed class MatchStreamController(
             };
             db.MatchStreamAccesses.Add(access);
             await db.SaveChangesAsync(ct);
+        }
+
+        if (promo is not null && payableAmount == 0m)
+        {
+            promo.Uses++;
+            access.Status = "Promo";
+            access.DiscountPercent = promo.DiscountPercent;
+            access.PaymentProvider = null;
+            access.ProviderRef = null;
+            access.Country = country;
+            access.ChargedAmount = 0m;
+            access.ChargedCurrency = stream.Currency;
+            await db.SaveChangesAsync(ct);
+            await audit.LogAsync("MATCH_STREAM_ACCESS_PROMO_REDEEMED", "MatchStreamAccess", access.Id.ToString(), fanId.Value.ToString(),
+                User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(),
+                new { promo.Code, promo.DiscountPercent, stream.MatchId }, ct);
+            return Ok(new { accessId = access.Id, status = access.Status, granted = true, redirectUrl = (string?)null });
         }
 
         var provider = paymentSelector.Select(country);
@@ -111,8 +144,8 @@ public sealed class MatchStreamController(
         var cancelUrl = $"{baseUrl}/payment/cancel?payableType=MatchStreamAccess&payableId={access.Id}";
 
         var paymentRequest = new PaymentRequest(
-            PayableTypes.MatchStreamAccess, access.Id, fanId.Value, stream.Price,
-            "Accès direct JSO");
+            PayableTypes.MatchStreamAccess, access.Id, fanId.Value, payableAmount,
+            promo is null ? "Accès direct JSO" : $"Accès direct JSO — promo {promo.Code} ({promo.DiscountPercent}%)");
 
         PaymentInitiation initiation;
         try
@@ -129,6 +162,8 @@ public sealed class MatchStreamController(
             return StatusCode(StatusCodes.Status502BadGateway, new { message = ex.Message });
         }
 
+        if (promo is not null) promo.Uses++;
+        access.DiscountPercent = promo?.DiscountPercent ?? 0;
         access.PaymentProvider = provider.Name;
         access.Country = country;
         access.ProviderRef = initiation.ProviderRef;
@@ -172,6 +207,8 @@ public sealed class MatchStreamController(
         return Ok(row);
     }
 
+    private static string NormalizePromo(string? code) => (code ?? string.Empty).Trim().ToUpperInvariant();
+
     private bool HasPreviewRole() =>
         User.Identity?.IsAuthenticated == true &&
         (User.IsInRole("Developer") || User.IsInRole("Admin") || User.IsInRole("SuperAdmin"));
@@ -183,4 +220,4 @@ public sealed class MatchStreamController(
     }
 }
 
-public sealed record MatchStreamAccessRequest(string Country);
+public sealed record MatchStreamAccessRequest(string Country, string? PromoCode = null);
