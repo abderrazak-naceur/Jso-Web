@@ -117,7 +117,7 @@ export default function ClassifiedsModule({ onError }) {
   }, [modalOpen])
   return <div className="space-y-6">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-      <div className="flex items-center gap-2"><Megaphone className="text-jso-blue" size={20}/><h2 className="text-xl font-black">Petites annonces</h2></div>
+      <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2"><Megaphone className="text-jso-blue" size={20}/><h2 className="text-xl font-black">Petites annonces</h2></div><button type="button" onClick={() => { setForm(emptyAd); setEditing(null); setModalOpen(true) }} className="rounded-xl bg-jso-navy px-3 py-2 font-bold text-white"><Plus size={16} className="inline mr-1"/>Nouvelle annonce</button></div>
       <p className="mt-1 text-xs text-slate-400">Modération obligatoire avant publication : seules les annonces approuvées et non expirées apparaissent sur le tableau public. Les coordonnées ne sont visibles qu'avec le consentement de l'auteur. Paiements hors périmètre (le prix est la valeur déclarée de l'objet — TODO : passerelle TND).</p>
       <div className="mt-5 flex flex-wrap gap-2">
         {FILTERS.map(f => <button key={f || 'all'} onClick={() => setFilter(f)} className={'rounded-full px-3 py-1.5 text-xs font-bold transition-colors ' + (filter === f ? 'bg-jso-navy text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}>{f ? STATUS_LABELS[f] : 'Toutes'}</button>)}
@@ -192,7 +192,5 @@ export default function ClassifiedsModule({ onError }) {
         </form>
       </section>
     </div>}
-      </div>
-    </div>
   </div>
 }
