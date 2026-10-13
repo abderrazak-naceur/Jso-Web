@@ -149,9 +149,7 @@ export default function ClassifiedsModule({ onError }) {
               </div>)}
         </div>
       </div>
-      <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-        <h2 className="text-xl font-black">{editing ? 'Modifier l’annonce' : 'Nouvelle annonce'}</h2>
-        {modalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 sm:p-6" onMouseDown={e => { if(e.target===e.currentTarget) reset() }}>
+  {modalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 sm:p-6" onMouseDown={e => { if(e.target===e.currentTarget) reset() }}>
       <section role="dialog" aria-modal="true" aria-labelledby="admin-form-title" className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-7">
         <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
           <h2 id="admin-form-title" className="text-xl font-black">{editing ? 'Modifier' : 'Créer'} · annonce</h2>
