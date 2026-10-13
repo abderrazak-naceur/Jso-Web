@@ -4,9 +4,9 @@ import { adminApi } from '../api'
 
 const TEMPLATES = [
   { id: 'classic', name: 'Classique JSO', badge: 'Actuel', description: 'Conserve la homepage actuelle et ses couleurs.', preview: 'bg-slate-100', hero: 'bg-jso-navy', accent: 'bg-jso-gold', layout: 'grid' },
-  { id: 'modern-2026', name: 'Modern 2026', badge: 'Recommandé', description: 'Style des grands clubs : typographie forte, espace généreux, cartes premium et accent bleu.', preview: 'bg-white', hero: 'bg-slate-900', accent: 'bg-jso-blue', layout: 'modern' },
-  { id: 'stadium', name: 'Stadium', badge: 'Matchday', description: 'Une expérience centrée sur le prochain match, le score et l’ambiance du stade.', preview: 'bg-jso-navy', hero: 'bg-slate-900', accent: 'bg-jso-gold', layout: 'stadium' },
-  { id: 'magazine', name: 'Club Magazine', badge: 'Editorial', description: 'Actualités, photos, vidéos et histoires du club au premier plan.', preview: 'bg-white', hero: 'bg-jso-navy', accent: 'bg-jso-gold', layout: 'magazine' },
+  { id: 'modern-2026', name: 'Modern 2026', badge: 'Recommandé', description: 'Design premium et lumineux : hiérarchie nette, cartes soignées et palette officielle bleu, jaune et blanc.', preview: 'bg-white', hero: 'bg-jso-navy', accent: 'bg-jso-gold', layout: 'modern' },
+  { id: 'stadium', name: 'Stadium', badge: 'Matchday', description: 'Ambiance stade, tableau de match et priorité aux résultats, aux vidéos et à la journée de championnat.', preview: 'bg-jso-navy', hero: 'bg-jso-navy', accent: 'bg-jso-gold', layout: 'stadium' },
+  { id: 'magazine', name: 'Club Magazine', badge: 'Editorial', description: 'Mise en page éditoriale claire : grands titres, actualités, photos et archives au premier plan.', preview: 'bg-white', hero: 'bg-white', accent: 'bg-jso-blue', layout: 'magazine' },
 ]
 
 export default function HomepageTemplatesModule({ onError = () => {} }) {
@@ -48,13 +48,25 @@ export default function HomepageTemplatesModule({ onError = () => {} }) {
       {TEMPLATES.map(template => <article key={template.id} className={'overflow-hidden rounded-3xl border bg-white transition ' + (draft === template.id ? 'border-jso-blue ring-2 ring-yellow-100' : 'border-slate-200')}>
         <button type="button" onClick={() => { setDraft(template.id); setMessage('') }} aria-pressed={draft === template.id} className="block w-full text-left">
           <div className={'relative aspect-[4/3] overflow-hidden p-3 ' + template.preview}>
-            <div className={'h-[58%] rounded-xl p-3 ' + template.hero}>
-              <div className={'h-1.5 w-1/3 rounded-full ' + template.accent}/>
-              <div className="mt-3 h-3 w-4/5 rounded bg-white/80"/>
-              <div className="mt-2 h-2 w-1/2 rounded bg-white/35"/>
-              <div className="mt-4 flex gap-2"><div className={'h-7 w-12 rounded ' + template.accent}/><div className="h-7 w-12 rounded border border-white/30"/></div>
-            </div>
-            <div className="mt-2 grid grid-cols-3 gap-2">{[0,1,2].map(i => <div key={i} className="rounded-lg border border-slate-200 bg-white p-2 shadow-sm"><div className={'h-2 rounded ' + template.accent}/><div className="mt-2 h-2 rounded bg-slate-200"/><div className="mt-1 h-2 w-2/3 rounded bg-slate-100"/></div>)}</div>
+            {template.layout === 'classic' && <div className="h-full rounded-xl bg-slate-100 p-2">
+              <div className="h-[48%] rounded-lg bg-jso-navy p-3"><div className="h-1.5 w-1/3 rounded-full bg-jso-gold"/><div className="mt-3 h-3 w-4/5 rounded bg-white/90"/><div className="mt-2 h-2 w-1/2 rounded bg-white/40"/></div>
+              <div className="mt-2 grid grid-cols-3 gap-2">{[0,1,2].map(i => <div key={i} className="rounded-md bg-white p-2"><div className="h-2 rounded bg-jso-gold"/><div className="mt-2 h-2 rounded bg-slate-200"/></div>)}</div>
+            </div>}
+            {template.layout === 'modern' && <div className="h-full rounded-xl bg-white p-2 shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2"><div className="h-2 w-1/4 rounded bg-jso-navy"/><div className="flex gap-1"><i className="h-1.5 w-4 rounded bg-jso-blue"/><i className="h-1.5 w-4 rounded bg-jso-gold"/></div></div>
+              <div className="mt-2 grid h-[48%] grid-cols-[1.2fr_.8fr] gap-2"><div className="rounded-lg bg-jso-navy p-2"><div className="h-2 w-1/3 rounded bg-jso-gold"/><div className="mt-2 h-3 w-full rounded bg-white"/><div className="mt-1 h-2 w-3/4 rounded bg-white/50"/><div className="mt-3 h-4 w-1/2 rounded bg-jso-blue"/></div><div className="rounded-lg bg-blue-50 p-2"><div className="mx-auto mt-2 h-9 w-9 rounded-full border-4 border-jso-gold bg-jso-navy"/><div className="mx-auto mt-2 h-2 w-2/3 rounded bg-jso-blue"/></div></div>
+              <div className="mt-2 grid grid-cols-2 gap-2"><div className="h-7 rounded-lg bg-slate-50 ring-1 ring-slate-100"/><div className="h-7 rounded-lg bg-slate-50 ring-1 ring-slate-100"/></div>
+            </div>}
+            {template.layout === 'stadium' && <div className="h-full rounded-xl bg-jso-navy p-2 text-white">
+              <div className="flex items-center justify-between"><div className="h-2 w-1/3 rounded bg-jso-gold"/><div className="h-2 w-1/5 rounded bg-white/30"/></div>
+              <div className="mt-2 flex h-[48%] items-center justify-around rounded-lg border border-white/15 bg-blue-950 p-2"><div className="h-8 w-8 rounded-full border-2 border-jso-gold bg-white/10"/><div className="text-center"><div className="text-[9px] font-black text-jso-gold">MATCHDAY</div><div className="mt-1 h-3 w-10 rounded bg-white"/></div><div className="h-8 w-8 rounded-full border-2 border-jso-blue bg-white/10"/></div>
+              <div className="mt-2 grid grid-cols-3 gap-2">{[0,1,2].map(i => <div key={i} className="rounded-md bg-white/10 p-2"><div className="h-2 rounded bg-jso-gold"/><div className="mt-2 h-2 rounded bg-white/30"/></div>)}</div>
+            </div>}
+            {template.layout === 'magazine' && <div className="h-full rounded-xl bg-white p-2">
+              <div className="border-b-2 border-jso-gold pb-2"><div className="h-1.5 w-1/3 rounded bg-jso-blue"/><div className="mt-2 h-4 w-4/5 rounded-sm bg-jso-navy"/><div className="mt-1 h-2 w-1/2 rounded-sm bg-slate-300"/></div>
+              <div className="mt-2 grid h-[45%] grid-cols-[1.2fr_.8fr] gap-2"><div className="rounded-lg bg-blue-50 p-2"><div className="h-full rounded-md bg-jso-navy"/></div><div className="space-y-2 pt-1"><div className="h-2 rounded bg-jso-blue"/><div className="h-2 rounded bg-slate-200"/><div className="h-2 w-2/3 rounded bg-slate-200"/><div className="h-2 rounded bg-jso-gold"/></div></div>
+              <div className="mt-2 grid grid-cols-3 gap-2">{[0,1,2].map(i => <div key={i} className="h-4 rounded-sm bg-slate-100"/> )}</div>
+            </div>}
             <span className="absolute right-5 top-5 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-black text-slate-700 shadow">{template.badge}</span>
             {draft === template.id && <span className="absolute left-5 top-5 grid h-7 w-7 place-items-center rounded-full bg-jso-gold text-jso-navy"><Check size={16}/></span>}
           </div>
