@@ -96,6 +96,5 @@ export default function SponsorsModule({ onError }) {
       </form>
       </section>
     </div>}
-    </div>
   </div>
 }
