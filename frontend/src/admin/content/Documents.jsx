@@ -100,6 +100,5 @@ export default function DocumentsModule({ onError }) {
       </form>
       </section>
     </div>}
-    </div>
   </div>
 }
