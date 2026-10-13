@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'jso_api_base_url'
-const BUILD_DEFAULT = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
+const BUILD_DEFAULT = (import.meta.env?.VITE_API_URL || '/api').replace(/\/$/, '')
+const API_ORIGIN_FALLBACK = 'https://jso-api.onrender.com'
 
 function normalize(value) {
   return String(value || '').trim().replace(/\/$/, '')
@@ -48,4 +49,41 @@ export function setApiBaseUrl(value) {
 
 export function resetApiBaseUrl() {
   return setApiBaseUrl('')
+}
+
+/**
+ * Resolve media paths emitted by the backend into browser-loadable URLs.
+ * Kept centralized so admin previews and public match cards use identical rules.
+ *
+ * Uploaded files live on the API service, not the static frontend host. Paths
+ * returned by the API are therefore rooted at that API's origin, even when the
+ * configured API base URL is the relative same-origin "/api" path.
+ */
+export function resolveMediaUrl(value, { apiBaseUrl = API_BASE_URL, origin, mediaOrigin } = {}) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  if (/^(?:data:|blob:)/i.test(raw)) return raw
+
+  const base = normalize(apiBaseUrl)
+  const pageOrigin = origin || (typeof window !== 'undefined' ? window.location.origin : '')
+  const explicitApiOrigin = (() => {
+    try {
+      if (/^https?:\/\//i.test(base)) return new URL(base).origin
+      return ''
+    } catch {
+      return ''
+    }
+  })()
+  const storageOrigin = mediaOrigin || explicitApiOrigin || API_ORIGIN_FALLBACK
+
+  try {
+    if (/^https?:\/\//i.test(raw)) return new URL(raw).href
+    if (raw.startsWith('//')) return new URL(raw, pageOrigin || storageOrigin).href
+    if (raw.startsWith('/uploads/')) return new URL(raw, storageOrigin).href
+    if (raw.startsWith('/api/uploads/')) return new URL(raw.replace(/^\/api/, ''), storageOrigin).href
+    if (raw.startsWith('/')) return new URL(raw, pageOrigin || storageOrigin).href
+    return new URL(raw, base ? (base + '/') : (pageOrigin || storageOrigin) + '/').href
+  } catch {
+    return raw
+  }
 }
