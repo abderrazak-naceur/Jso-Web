@@ -20,7 +20,7 @@ export default function HomepageTemplatesModule({ onError = () => {} }) {
     let active = true
     adminApi('/admin/content').then(items => {
       const saved = items?.find(item => item.key === 'home_template')?.value
-      const selected = TEMPLATES.some(template => template.id === saved) ? saved : 'classic'
+      const selected = TEMPLATES.some(template => template.id === saved) ? saved : 'modern-2026'
       if (active) { setCurrent(selected); setDraft(selected) }
     }).catch(error => onError(error.message || 'Impossible de charger les modèles.'))
       .finally(() => { if (active) setLoading(false) })
