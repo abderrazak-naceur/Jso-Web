@@ -12,9 +12,10 @@ export default function ContentModule({ onError }) {
     try {
       setLoading(true)
       const data = await adminApi('/admin/content')
-      setItems(Array.isArray(data) ? data : [])
+      const editableItems = Array.isArray(data) ? data.filter(item => item.key !== 'home_template') : []
+      setItems(editableItems)
       if (selected) {
-        const current = data.find(x => x.key === selected.key)
+        const current = editableItems.find(x => x.key === selected.key)
         if (current) setValue(current.value)
         else { setSelected(null); setValue('') }
       }
