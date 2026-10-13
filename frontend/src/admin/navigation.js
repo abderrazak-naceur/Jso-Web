@@ -1,6 +1,7 @@
-import { LayoutDashboard, Trophy, CreditCard, Wallet, HeartHandshake, ShoppingBag, Receipt, Handshake, QrCode, Users, CalendarDays, Radio, BarChart3, HeartPulse, ScanSearch, ListChecks, Newspaper, CalendarClock, Images, Pencil, PartyPopper, FileText, HelpCircle, MessageSquare, BrickWall, Megaphone, Mail, ClipboardList, GraduationCap, CalendarRange, ShieldCheck, Flag, Gauge, ShieldAlert, Server, Ticket, Landmark, Banknote } from 'lucide-react'
+import { LayoutDashboard, Trophy, CreditCard, UserRound, Wallet, HeartHandshake, ShoppingBag, Receipt, Handshake, QrCode, Users, CalendarDays, Radio, BarChart3, HeartPulse, ScanSearch, ListChecks, Newspaper, CalendarClock, Images, Pencil, PartyPopper, FileText, HelpCircle, MessageSquare, BrickWall, Megaphone, Mail, ClipboardList, GraduationCap, CalendarRange, ShieldCheck, Flag, Gauge, ShieldAlert, Server, Ticket, Landmark, Banknote } from 'lucide-react'
 export const ADMIN_NAVIGATION = [
     ['dashboard', 'Dashboard', LayoutDashboard, ['SuperAdmin','ClubAdmin','Editor','MatchManager','CommunityManager','ShopManager'], 'Tableau de bord'],
+    ['fan-accounts', 'Profils supporters', UserRound, ['SuperAdmin','ClubAdmin','CommunityManager'], 'Communauté'],
 
     ['tickets', 'Billetterie', Ticket, ['SuperAdmin','ClubAdmin','MatchManager','TicketSeller','TicketSupervisor'], 'Billetterie & Abonnements'],
     ['memberships', 'Abonnements', CreditCard, ['SuperAdmin','ClubAdmin','SeasonManager'], 'Billetterie & Abonnements'],
@@ -19,7 +20,7 @@ export const ADMIN_NAVIGATION = [
     ['formations', 'Formations', Users, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
     ['teams', 'Équipes & joueurs', Users, ['SuperAdmin','ClubAdmin'], 'Équipe & Matchs'],
     ['seasons-competitions', 'Saisons & compétitions', CalendarDays, ['SuperAdmin','ClubAdmin'], 'Équipe & Matchs'],
-    ['match-streams', 'Diffusion en direct', Radio, ['ClubAdmin','MatchManager'], 'Équipe & Matchs'],
+    ['match-streams', 'Diffusion en direct', Radio, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
     ['analytics', 'Analytics joueurs', BarChart3, ['SuperAdmin','ClubAdmin','MatchManager'], 'Équipe & Matchs'],
     ['injuries', 'Infirmerie', HeartPulse, ['ClubAdmin','MatchManager'], 'Équipe & Matchs'],
     ['scouting', 'Scouting', ScanSearch, ['ClubAdmin','MatchManager'], 'Équipe & Matchs'],
@@ -28,6 +29,7 @@ export const ADMIN_NAVIGATION = [
     ['news', 'News CMS', Newspaper, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
     ['editorial', 'Calendrier éditorial', CalendarClock, ['Editor','ClubAdmin'], 'Contenu & Site'],
     ['media', 'Médias', Images, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
+    ['homepage-templates', 'Template homepage', LayoutDashboard, ['SuperAdmin','ClubAdmin'], 'Contenu & Site'],
     ['content', 'Contenus', Pencil, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
     ['club-events', 'Agenda du club', PartyPopper, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
     ['documents', 'Documents', FileText, ['SuperAdmin','ClubAdmin','Editor'], 'Contenu & Site'],
@@ -53,6 +55,7 @@ export const ADMIN_NAVIGATION = [
 ]
 export const ADMIN_PERMISSION_BY_ID = Object.freeze({
   dashboard: 'dashboard:view',
+  'fan-accounts': 'community:moderate',
   tickets: 'tickets:admin',
   memberships: 'memberships:manage',
   finance: 'finance:view',
@@ -76,6 +79,7 @@ export const ADMIN_PERMISSION_BY_ID = Object.freeze({
   news: 'content:news',
   editorial: 'content:calendar',
   media: 'content:media',
+  'homepage-templates': 'content:manage',
   content: 'content:manage',
   'club-events': 'content:events',
   documents: 'content:documents',

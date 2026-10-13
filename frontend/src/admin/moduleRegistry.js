@@ -3,6 +3,7 @@ import { lazy } from 'react'
 // Each section is loaded only when opened. The sidebar and dashboard remain
 // available even when an individual module or its API is unavailable.
 export const ADMIN_MODULES = {
+  'fan-accounts': lazy(() => import('./community/FanAccounts')),
   club: lazy(() => import('./club/ClubSettingsModule')),
   teams: lazy(() => import('./sport/TeamsModule')),
   matches: lazy(() => import('./sport/MatchesModule')),
@@ -13,6 +14,7 @@ export const ADMIN_MODULES = {
   news: lazy(() => import('./content/NewsModule')),
   security: lazy(() => import('./system/SecurityModule')),
   media: lazy(() => import('./content/MediaModule')),
+  'homepage-templates': lazy(() => import('./content/HomepageTemplatesModule')),
   content: lazy(() => import('./content/ContentModule')),
   sponsors: lazy(() => import('./commerce/SponsorsModule')),
   sponsorqr: lazy(() => import('./commerce/SponsorQr')),
@@ -20,7 +22,7 @@ export const ADMIN_MODULES = {
   orders: lazy(() => import('./commerce/Orders')),
   tickets: lazy(() => import('./commerce/Tickets')),
   memberships: lazy(() => import('./commerce/Memberships')),
-  'match-streams': lazy(() => import('./sport/MatchStreams')),
+  'match-streams': lazy(() => import('./sport/MatchStreamsWithPromos')),
   analytics: lazy(() => import('./sport/PlayerAnalyticsModule')),
   finance: lazy(() => import('./commerce/Finance')),
   donations: lazy(() => import('./commerce/Donations')),

@@ -16,12 +16,13 @@ import MatchdaySection from './MatchdaySection'
 import NewsSection from './NewsSection'
 import HighlightsCarousel from './HighlightsCarousel'
 import SellingBand from './SellingBand'
-import { HeartHandshake } from 'lucide-react'
+import { Download, HeartHandshake, Apple } from 'lucide-react'
 import ProductDetail from '../shop/ProductDetail'
 import EventDetail from './EventDetail'
 import Reveal from '../site/Reveal'
 import { formatDate } from '../../lib/format'
 import { orderHomeSections } from './useHomeLayout'
+import { getHomeTemplate, HOME_TEMPLATE_IDS } from './homeTemplates'
 
 function buildHighlights({ data, onOpenMatch, onOpenArticle }) {
   const items = []
@@ -92,10 +93,40 @@ export default function HomePage({
   focusSection,
   productSlug,
   eventSlug,
+  templatePreview = null,
 }) {
   const sectionById = Object.fromEntries(sections.map((section) => [section.id, section]))
 
   const sectionRenderers = {
+    hero: () => <HeroSection variant={template} content={data.content} club={data.club} />,
+    'selling-band': () => <SellingBand nextMatch={data.nextMatch} />,
+    highlights: () => (
+      <HighlightsCarousel
+        items={buildHighlights({ data, onOpenMatch, onOpenArticle })}
+      />
+    ),
+    'app-download': () => (
+      <section aria-labelledby="mobile-app-download-title" className="mx-auto max-w-7xl px-5 pb-8 lg:px-8">
+        <div className="rounded-[2rem] bg-jso-navy p-6 text-white shadow-sm sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-gold">JSO Mobile</p>
+              <h2 id="mobile-app-download-title" className="mt-2 text-2xl font-black">La JSO dans votre poche</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-white/75">Téléchargez l’application Android ou consultez la build iOS de test.</p>
+            </div>
+            <div className="flex flex-col gap-3 sm:shrink-0">
+              <a href="https://github.com/abderrazak-naceur/Jso-Web/releases/download/android-latest/app-release.apk" className="inline-flex items-center justify-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy transition hover:bg-white">
+                <Download size={18} aria-hidden="true" /> Télécharger Android (APK)
+              </a>
+              <a href="https://github.com/abderrazak-naceur/Jso-Web/releases/tag/ios-latest" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-6 py-3 font-extrabold text-white transition hover:bg-white hover:text-jso-navy">
+                <Apple size={18} aria-hidden="true" /> Build iPhone (test)
+              </a>
+              <p className="max-w-xs text-xs leading-5 text-white/60">La build iOS de test nécessite une signature Apple pour être installée sur un iPhone réel.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    ),
     matches: () => (
       <MatchdaySection
         key="matches"
@@ -206,48 +237,26 @@ export default function HomePage({
     ),
   }
 
-  const defaultSectionOrder = [
-    'matches',
-    'news',
-    'team',
-    'media',
-    'club',
-    'events',
-    'shop',
-    'donation',
-    'memberships',
-    'community',
-    'sponsors',
-    'archive',
-    'mobile',
-    'infos',
-  ]
-
+  const requestedTemplate = templatePreview || data.content?.home_template
+  const template = HOME_TEMPLATE_IDS.has(requestedTemplate) ? requestedTemplate : 'modern-2026'
+  const defaultSectionOrder = getHomeTemplate(template).sectionOrder
   const orderedSections = orderHomeSections(defaultSectionOrder, homeLayout)
     .filter((key) => !hiddenSections.includes(key))
+
   const pageSections = focusSection
     ? defaultSectionOrder.filter((key) => key === focusSection && !hiddenSections.includes(key))
     : orderedSections
 
   return (
-    <main id="main-content" tabIndex={-1}>
-      {focusSection ? <div className="mx-auto max-w-7xl px-5 pt-8 lg:px-8"><a href="/" className="text-sm font-bold text-jso-blue underline">← Accueil</a></div> : <>
-      <HeroSection content={data.content} club={data.club} />
-      <Reveal><SellingBand nextMatch={data.nextMatch} /></Reveal>
-      <Reveal>
-        <HighlightsCarousel
-          items={buildHighlights({
-            data,
-            onOpenMatch,
-            onOpenArticle,
-          })}
-        />
-      </Reveal>
-      </>}
+    <main id="main-content" tabIndex={-1} className={`home-template-${template}`}>
+      {templatePreview && <div className="mx-auto max-w-7xl px-5 pt-4 lg:px-8"><p role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-900">Anteprima del modello · non ancora pubblicata</p></div>}
+      {focusSection && <div className="mx-auto max-w-7xl px-5 pt-8 lg:px-8"><a href="/" className="text-sm font-bold text-jso-blue underline">← Accueil</a></div>}
       {focusSection && !pageSections.includes(focusSection) && <div role="alert" className="mx-auto max-w-7xl px-5 py-16 text-slate-600 lg:px-8">Cette page n'est pas disponible pour le moment.</div>}
       {pageSections.map((key) => {
         const rendered = sectionRenderers[key]?.()
-        return rendered ? <Reveal key={key}>{rendered}</Reveal> : null
+        if (!rendered) return null
+        const content = key === 'hero' ? rendered : <Reveal>{rendered}</Reveal>
+        return <div key={key} data-home-section={key}>{content}</div>
       })}
     </main>
   )

@@ -1,0 +1,52 @@
+name: Main Versioning
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'frontend/src/version.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: main-versioning
+  cancel-in-progress: false
+
+jobs:
+  version:
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[version-bot]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Calculate next version and create tag
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          current=$(node -p "require('./frontend/src/version.json').version")
+          if [[ "$current" =~ ^V([0-9]+)\.([0-9]+)$ ]]; then
+            major="${BASH_REMATCH[1]}"
+            minor=$((10#${BASH_REMATCH[2]} + 1))
+          else
+            major=1
+            minor=1
+          fi
+          next="V${major}.$(printf '%02d' "$minor")"
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Tag the code commit that triggered this workflow.
+          git tag -a "$next" "$GITHUB_SHA" -m "Release $next"
+          git push origin "$next"
+          printf '{\n  "version": "%s"\n}\n' "$next" > frontend/src/version.json
+          git add frontend/src/version.json
+          git commit -m "chore(version): update site to $next [version-bot]"
+          git push origin HEAD:main

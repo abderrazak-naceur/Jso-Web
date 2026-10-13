@@ -64,6 +64,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<Membership> Memberships => Set<Membership>();
  public DbSet<MatchStream> MatchStreams => Set<MatchStream>();
  public DbSet<MatchStreamAccess> MatchStreamAccesses => Set<MatchStreamAccess>();
+ public DbSet<MatchStreamPromoCode> MatchStreamPromoCodes => Set<MatchStreamPromoCode>();
  public DbSet<FinanceCategory> FinanceCategories => Set<FinanceCategory>();
  public DbSet<FinanceTransaction> FinanceTransactions => Set<FinanceTransaction>();
  protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
@@ -243,7 +244,12 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<MatchStreamAccess>().HasIndex(x=>new{x.FanUserId,x.MatchStreamId}).IsUnique();
   modelBuilder.Entity<MatchStreamAccess>().HasIndex(x=>x.MatchStreamId);
   modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.Status).HasDefaultValue("Pending");
+  modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.DiscountPercent).HasDefaultValue(0);
   modelBuilder.Entity<MatchStreamAccess>().HasIndex(x=>x.ProviderRef).IsUnique().HasFilter("\"ProviderRef\" IS NOT NULL");
+  modelBuilder.Entity<MatchStreamPromoCode>().HasIndex(x => new { x.MatchStreamId, x.Code }).IsUnique();
+  modelBuilder.Entity<MatchStreamPromoCode>().Property(x => x.Code).HasMaxLength(40).IsRequired();
+  modelBuilder.Entity<MatchStreamPromoCode>().Property(x => x.DiscountPercent).IsRequired();
+  modelBuilder.Entity<MatchStreamPromoCode>().HasOne(x => x.MatchStream).WithMany().HasForeignKey(x => x.MatchStreamId).OnDelete(DeleteBehavior.Cascade);
   modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.PaymentProvider).HasMaxLength(32);
   modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.Country).HasMaxLength(64);
   modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.ChargedAmount).HasPrecision(14,2);

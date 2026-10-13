@@ -22,7 +22,7 @@ async function api(path, options = {}) {
   return response.json()
 }
 
-const SECTION_TYPES = ['Hero', 'News', 'Matches', 'Media', 'Sponsors', 'CustomHtml', 'Text']
+const SECTION_TYPES = ['Hero', 'Highlights', 'SellingBand', 'AppDownload', 'News', 'Matches', 'Media', 'Sponsors']
 const POSITIONS = ['Header', 'Footer']
 
 const emptySection = { type: 'Hero', title: '', payloadJson: '', displayOrder: 0, isPublished: false }
@@ -205,7 +205,7 @@ export default function HomepageBuilderModule({ onError }) {
     <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
       <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
         <div className="flex items-center justify-between"><h2 className="text-xl font-black">Sections de la page d\u2019accueil</h2><button onClick={resetSection} className="rounded-xl bg-jso-navy p-2 text-white"><Plus size={18}/></button></div>
-        <p className="mt-2 text-xs text-slate-400">Le contenu JSON est stock\u00e9 tel quel et n\u2019est jamais affich\u00e9 en HTML brut (protection anti-XSS).</p>
+        <p className="mt-2 text-xs text-slate-400">Les sections disponibles sont réellement affichées sur la page d’accueil. L’ordre défini ici complète celui du modèle ; les autres sections gardent leur position.</p>
         <div className="mt-5 space-y-2">
           {sections.length === 0 ? <p className="text-sm text-slate-400">Aucune section pour le moment.</p>
             : sections.map((x, i) => <div key={x.id} className="flex items-center justify-between rounded-xl bg-slate-50 p-3">

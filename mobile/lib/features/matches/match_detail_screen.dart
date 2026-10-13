@@ -16,6 +16,7 @@ import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../tickets/tickets_screen.dart';
 import 'match_lineup_tab.dart';
+import 'match_live_stream_tab.dart';
 import 'match_stats_tab.dart';
 import 'match_weather_card.dart';
 
@@ -87,13 +88,14 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Match'),
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Résumé'),
+              Tab(text: 'Live'),
               Tab(text: 'Direct'),
               Tab(text: 'Compos'),
               Tab(text: 'Stats'),
@@ -125,6 +127,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
               children: [
                 _MatchSummaryTab(data: data, weatherFuture: _weatherFuture),
                 _LiveBlogTab(matchId: widget.matchId),
+                MatchLiveStreamTab(matchId: widget.matchId),
                 MatchLineupTab(matchId: widget.matchId),
                 MatchStatsTab(matchId: widget.matchId, match: data.match),
               ],
@@ -374,6 +377,12 @@ class _LiveBlogTabState extends State<_LiveBlogTab> {
     super.dispose();
   }
 
+  Future<List<LiveBlogEntry>> _fetchLiveBlog() async {
+    // A shared repository interface keeps the liveblog tab compatible with the
+    // same injected API client used throughout the mobile app and its tests.
+    return context.read<PublicApiRepository>().getMatchLiveBlog(widget.matchId);
+  }
+
   Future<void> _refresh() async {
     if (_isFetching) return;
     _isFetching = true;
@@ -384,9 +393,7 @@ class _LiveBlogTabState extends State<_LiveBlogTab> {
       });
     }
     try {
-      final entries = await context
-          .read<PublicApiRepository>()
-          .getMatchLiveBlog(widget.matchId);
+      final entries = await _fetchLiveBlog();
       if (!mounted) return;
       setState(() {
         _entries = entries;

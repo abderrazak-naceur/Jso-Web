@@ -23,6 +23,38 @@
 - Le squadre selezionate sono persistite.
 - La home usa le preferenze salvate.
 
+## Epic 1A — Area personale cliente e acquisti
+
+### US-015 — Dashboard personale
+**As a** tifoso autenticato
+**I want** una dashboard personale unica
+**So that** posso trovare biglietti, abbonamenti, ordini e documenti senza contattare l'amministratore.
+
+**Acceptance Criteria**
+- L'area è accessibile da una voce chiara del menu dopo il login.
+- La dashboard mostra solo dati del cliente autenticato.
+- Loading, errore e stato senza acquisti sono gestiti.
+
+### US-016 — Biglietti digitali
+**As a** tifoso che ha acquistato un biglietto
+**I want** vedere e aprire il mio biglietto digitale
+**So that** posso presentare il QR all'ingresso.
+
+**Acceptance Criteria**
+- Sono mostrati stato, partita e quantità.
+- Il QR è disponibile solo dopo conferma server-side del pagamento.
+- Un cliente non può leggere il biglietto di un altro cliente modificando l'ID.
+
+### US-017 — Ordini e abbonamenti
+**As a** cliente
+**I want** consultare i miei ordini e abbonamenti
+**So that** posso verificare lo stato e la validità dei miei acquisti.
+
+**Acceptance Criteria**
+- Ordini e dettagli sono filtrati sul proprietario autenticato.
+- Abbonamenti mostrati solo se presenti nei dati persistiti.
+- Download disponibili solo per documenti realmente generati e autorizzati.
+
 ## Epic 2 — Match Center
 
 ### US-003 — Partite delle mie squadre

@@ -26,7 +26,7 @@ Future<void> _pumpDetail(WidgetTester tester, FakeRepository repository) {
 Future<void> _openDirectTab(WidgetTester tester) async {
   await tester.pump();
   await tester.pump();
-  await tester.tap(find.text('Direct'));
+  await tester.tap(find.text('Live'));
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
   await tester.pump();
@@ -46,7 +46,7 @@ void main() {
 
       await _pumpDetail(tester, repository);
       await tester.pump(const Duration(seconds: 1, milliseconds: 50));
-      await tester.tap(find.text('Direct'));
+      await tester.tap(find.text('Live'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 

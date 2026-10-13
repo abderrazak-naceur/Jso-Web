@@ -278,6 +278,30 @@
 - integration health;
 - admin operational metrics.
 
+## Phase 8.1 — Customer Account Area (planned)
+
+See [CUSTOMER_DASHBOARD_PLAN.md](CUSTOMER_DASHBOARD_PLAN.md) for detailed scope, tasks and acceptance criteria.
+
+### ACCOUNT-DASH-001 — Audit API contracts and data models
+- Verify Fan authentication and ownership checks for tickets and shop orders.
+- Confirm the persisted membership/subscription model and identify missing endpoints.
+
+### ACCOUNT-DASH-002 — Customer dashboard shell and routing
+- Protected `/account` route and entry point in the public user menu.
+- Keep the customer area separate from admin routes and permissions.
+
+### ACCOUNT-DASH-003 — Overview, tickets and orders
+- Real API-backed overview with loading/empty/error states.
+- Ticket list and QR only after server-side payment confirmation.
+- Shop order history and order detail for the owning customer only.
+
+### ACCOUNT-DASH-004 — Memberships and document downloads
+- Show persisted memberships and validity.
+- Download only real generated documents; enforce authentication and ownership.
+
+### ACCOUNT-DASH-005 — Security and E2E tests
+- Cover anonymous access, cross-customer ID access, pending payments, confirmed tickets, and empty/error states.
+
 ## Target Architecture
 
 ```text

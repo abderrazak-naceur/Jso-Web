@@ -4,6 +4,7 @@ import { adminApi } from './api'
 import { ADMIN_CATEGORY_ORDER, ADMIN_PUBLIC_PATHS, visibleAdminItems } from './navigation'
 import { adminSectionFromPath, adminSectionUrl } from './adminRoutes'
 import { ADMIN_MODULES } from './moduleRegistry'
+import './admin-responsive.css'
 
 function Login({ onLogin }) {
   const [email, setEmail] = useState('admin@jso.tn')
@@ -21,7 +22,7 @@ function Login({ onLogin }) {
     } catch (e) { setError(e.message || 'Identifiants invalides ou API indisponible.') }
   }
 
-  return <main className="grid min-h-screen place-items-center bg-jso-navy px-5 py-10">
+  return <main className="jso-admin-login grid min-h-screen place-items-center bg-jso-navy px-5 py-10">
     <form onSubmit={submit} className="w-full max-w-md rounded-[2rem] bg-white p-8 shadow-2xl">
       <div className="grid h-14 w-14 place-items-center rounded-2xl bg-jso-navy text-xl font-black text-jso-gold">JSO</div>
       <p className="mt-8 text-xs font-extrabold tracking-[0.2em] text-jso-blue">ADMINISTRATION</p>
@@ -133,7 +134,7 @@ function AdminDashboard({ user, onLogout }) {
     onLogout()
   }
 
-  return <main className="min-h-screen bg-jso-paper text-jso-ink">
+  return <main className="jso-admin-shell min-h-screen bg-jso-paper text-jso-ink">
     {open && <button type="button" aria-label="Fermer la navigation" onClick={() => setOpen(false)} className="fixed inset-0 z-30 bg-jso-navy/60 lg:hidden" />}
     <aside id="admin-sidebar" className={'fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-slate-200 bg-white transition-transform ' + (open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0')}>
       <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">

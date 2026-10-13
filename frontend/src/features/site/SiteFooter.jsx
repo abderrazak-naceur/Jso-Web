@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { ArrowUp, ArrowUpRight, Check, Copy, Facebook, Instagram, Music2, Shield } from 'lucide-react'
 import { newsletterApi } from '../../lib/api'
-import { CLUB_FULL_NAME, CLUB_SOCIALS, CREST_SRC } from './brand'
+import { CLUB_SOCIALS, CREST_SRC } from './brand'
 import { useI18n } from '../../i18n/index.jsx'
 import { sectionUrl } from './publicRoutes'
+import appVersion from '../../version.json'
 
 const SOCIAL_ICONS = { facebook: Facebook, instagram: Instagram, tiktok: Music2 }
 
@@ -140,10 +141,12 @@ export default function SiteFooter({ sections, extraLinks = [], homeHref = '' })
         <div className="flex flex-col justify-between gap-4 pt-6 text-sm text-white/45 sm:flex-row sm:items-center">
           <p>© {new Date().getFullYear()} JSO. {t('common.allRightsReserved')}</p>
           <div className="flex flex-wrap items-center gap-5">
+            <span className="text-xs text-white/45" title="Versione del sito">{appVersion.version}</span>
             <a href="/admin" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-1.5 font-semibold transition hover:border-white/40 hover:text-white"><Shield size={15} aria-hidden="true" />{t('common.admin')}</a>
             <a href={`${homeHref}#home`} className="inline-flex items-center gap-2 transition hover:text-white">{t('common.backToTop')} <ArrowUp size={15} aria-hidden="true" /></a>
           </div>
         </div>
+        <p className="mt-4 text-center text-xs text-white/45">Sito generato e sviluppato by Abderrazak Naceur</p>
       </div>
     </footer>
   )

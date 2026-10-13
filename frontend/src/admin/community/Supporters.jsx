@@ -49,6 +49,7 @@ export default function SupportersModule({ onError }) {
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState(emptyBrick)
   const [editing, setEditing] = useState(null)
+  const [modalOpen, setModalOpen] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -61,7 +62,7 @@ export default function SupportersModule({ onError }) {
   }
   useEffect(() => { load() }, [filter])
 
-  function edit(brick) {
+  function edit(brick) { setModalOpen(true);
     setEditing(brick.id)
     setForm({
       displayName: brick.displayName || '',
@@ -70,7 +71,7 @@ export default function SupportersModule({ onError }) {
       status: brick.status || 'Pending',
     })
   }
-  function reset() { setForm(emptyBrick); setEditing(null) }
+  function reset() { setForm(emptyBrick); setEditing(null); setModalOpen(false) }
 
   async function save(e) {
     e.preventDefault()
@@ -99,40 +100,35 @@ export default function SupportersModule({ onError }) {
     catch (err) { onError(err.message) }
   }
 
+  useEffect(() => {
+    if (!modalOpen) return
+    const closeOnEscape = event => { if (event.key === 'Escape') reset() }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [modalOpen])
   return <div className="space-y-6">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-      <div className="flex items-center gap-2"><BrickWall className="text-jso-blue" size={20}/><h2 className="text-xl font-black">Mur des supporters</h2></div>
+      <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2"><BrickWall className="text-jso-blue" size={20}/><h2 className="text-xl font-black">Mur des supporters</h2></div><button type="button" onClick={() => { setForm(emptyBrick); setEditing(null); setModalOpen(true) }} className="rounded-xl bg-jso-navy px-3 py-2 font-bold text-white"><Plus size={16} className="inline mr-1"/>Nouvelle brique</button></div>
       <p className="mt-1 text-xs text-slate-400">Modération obligatoire avant publication : seules les briques approuvées apparaissent sur le mur public. Aucune donnée personnelle publiée hormis le nom et le message. Paiements hors périmètre (montant déclaratif, paiement simulé — TODO : prestataire certifié).</p>
-      <div className="mt-5 flex flex-wrap gap-2">
-        {FILTERS.map(f => <button key={f || 'all'} onClick={() => setFilter(f)} className={'rounded-full px-3 py-1.5 text-xs font-bold transition-colors ' + (filter === f ? 'bg-jso-navy text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}>{f ? STATUS_LABELS[f] : 'Toutes'}</button>)}
+      <div className="mt-5 flex flex-wrap gap-2">{FILTERS.map(f => <button key={f || 'all'} onClick={() => setFilter(f)} className={'rounded-full px-3 py-1.5 text-xs font-bold transition-colors ' + (filter === f ? 'bg-jso-navy text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}>{f ? STATUS_LABELS[f] : 'Toutes'}</button>)}</div>
+    </div>
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+      <h2 className="text-xl font-black">Briques {filter && '— ' + STATUS_LABELS[filter]}</h2>
+      <div className="mt-5 space-y-2">
+        {loading ? <p className="text-sm text-slate-400">Chargement…</p>
+          : bricks.length === 0 ? <p className="text-sm text-slate-500">Aucune brique dans cette file.</p>
+          : bricks.map(b => <div key={b.id} className="flex items-start justify-between gap-3 rounded-xl bg-slate-50 p-3">
+              <div><b>{b.displayName}</b><span className={'ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ' + (STATUS_STYLES[b.status] || 'bg-slate-200 text-slate-600')}>{STATUS_LABELS[b.status] || b.status}</span><span className="ml-2 text-xs font-bold text-jso-blue">{fmtAmount(b.amount)}</span>{b.message && <p className="mt-1 text-xs text-slate-500">{b.message}</p>}<p className="mt-1 text-xs text-slate-400">Reçue le {fmtDate(b.createdAt)}{b.paidAt ? ' · Payée le ' + fmtDate(b.paidAt) : ''}</p></div>
+              <div className="flex shrink-0 items-center gap-2">{b.status !== 'Approved' && <button type="button" onClick={() => moderate(b.id, 'approve')} title="Approuver" className="text-emerald-600"><Check size={16}/></button>}{b.status !== 'Rejected' && <button type="button" onClick={() => moderate(b.id, 'reject')} title="Refuser" className="text-amber-600"><Ban size={16}/></button>}<button type="button" onClick={() => edit(b)} title="Modifier" className="text-jso-blue"><Pencil size={16}/></button><button type="button" onClick={() => remove(b.id)} title="Supprimer" className="text-red-600"><X size={16}/></button></div>
+            </div>)}
       </div>
     </div>
-
-    <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
-      <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-        <h2 className="text-xl font-black">Briques {filter && '— ' + STATUS_LABELS[filter]}</h2>
-        <div className="mt-5 space-y-2">
-          {loading ? <p className="text-sm text-slate-400">Chargement…</p>
-            : bricks.length === 0 ? <p className="text-sm text-slate-500">Aucune brique dans cette file.</p>
-            : bricks.map(b => <div key={b.id} className="flex items-start justify-between gap-3 rounded-xl bg-slate-50 p-3">
-                <div>
-                  <b>{b.displayName}</b>
-                  <span className={'ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ' + (STATUS_STYLES[b.status] || 'bg-slate-200 text-slate-600')}>{STATUS_LABELS[b.status] || b.status}</span>
-                  <span className="ml-2 text-xs font-bold text-jso-blue">{fmtAmount(b.amount)}</span>
-                  {b.message && <p className="mt-1 text-xs text-slate-500">{b.message}</p>}
-                  <p className="mt-1 text-xs text-slate-400">Reçue le {fmtDate(b.createdAt)}{b.paidAt ? ' · Payée le ' + fmtDate(b.paidAt) : ''}</p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  {b.status !== 'Approved' && <button onClick={() => moderate(b.id, 'approve')} title="Approuver" className="text-emerald-600"><Check size={16}/></button>}
-                  {b.status !== 'Rejected' && <button onClick={() => moderate(b.id, 'reject')} title="Refuser" className="text-amber-600"><Ban size={16}/></button>}
-                  <button onClick={() => edit(b)} title="Modifier" className="text-jso-blue"><Pencil size={16}/></button>
-                  <button onClick={() => remove(b.id)} title="Supprimer" className="text-red-600"><X size={16}/></button>
-                </div>
-              </div>)}
+    {modalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 sm:p-6" onMouseDown={e => { if(e.target===e.currentTarget) reset() }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="admin-form-title" className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-7">
+        <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+          <h2 id="admin-form-title" className="text-xl font-black">{editing ? 'Modifier' : 'Créer'} · brique supporter</h2>
+          <button type="button" aria-label="Fermer" onClick={reset} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X size={20}/></button>
         </div>
-      </div>
-      <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-        <h2 className="text-xl font-black">{editing ? 'Modifier la brique' : 'Nouvelle brique'}</h2>
         <form onSubmit={save} className="mt-5 space-y-3">
           <label className="block text-sm font-bold">Nom affiché
             <input value={form.displayName} onChange={e => setForm({ ...form, displayName: e.target.value })} required maxLength="80" placeholder="ex. Famille Ben Salah" className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-jso-blue"/>
@@ -153,7 +149,7 @@ export default function SupportersModule({ onError }) {
             {editing && <button type="button" onClick={reset} className="rounded-xl px-4 py-2.5 font-bold text-slate-500 hover:bg-slate-100">Annuler</button>}
           </div>
         </form>
-      </div>
-    </div>
+      </section>
+    </div>}
   </div>
 }

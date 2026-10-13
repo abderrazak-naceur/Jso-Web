@@ -9,6 +9,8 @@ import { useFanSession } from './features/account/useFanSession'
 import HomePage from './features/home/HomePage'
 import { useHomeData } from './features/home/useHomeData'
 import MatchCenterModal from './features/matches/MatchCenterModal'
+import { normalizeMatch } from './features/matches/matchUtils'
+import { publicApi } from './lib/api'
 import ArticleModal from './features/news/ArticleModal'
 import { pushArticleUrl, restoreHomeUrl, slugFromPath } from './features/news/articleUrl'
 import CartDrawer from './features/shop/CartDrawer'
@@ -16,11 +18,12 @@ import { useCart } from './features/shop/useCart'
 import SiteFooter from './features/site/SiteFooter'
 import SiteHeader from './features/site/SiteHeader'
 import { visibleSections } from './features/site/navigation'
-import { eventSlugFromPath, matchIdFromPath, productSlugFromPath, sectionFromPath } from './features/site/publicRoutes'
+import { eventSlugFromPath, matchIdFromPath, matchSlugFromPath, matchSlugFor, productSlugFromPath, sectionFromPath } from './features/site/publicRoutes'
 import { useDocumentTitle } from './lib/useDocumentTitle'
 import { useActiveSection } from './features/site/useActiveSection'
 import { useNavigation } from './features/site/useNavigation'
 import { useHomeLayout } from './features/home/useHomeLayout'
+import { HOME_TEMPLATE_IDS } from './features/home/homeTemplates'
 import { useI18n } from './i18n/index.jsx'
 
 function App() {
@@ -28,11 +31,46 @@ function App() {
   const data = useHomeData()
   const cart = useCart()
   const fan = useFanSession()
+  const requestedTemplatePreview = new URLSearchParams(window.location.search).get('templatePreview')
+  const templatePreview = HOME_TEMPLATE_IDS.has(requestedTemplatePreview) ? requestedTemplatePreview : null
 
   const [selectedMatch, setSelectedMatch] = useState(() => {
     const id = matchIdFromPath()
     return id ? { id } : null
   })
+
+  // Resolve readable `/matchs/jso-vs-opponent` links against the public matches API.
+  useEffect(() => {
+    const slug = matchSlugFromPath()
+    if (!slug || matchIdFromPath()) return
+    const controller = new AbortController()
+    publicApi.getMatches(controller.signal)
+      .then((items) => {
+        if (controller.signal.aborted || !Array.isArray(items)) return
+        const matches = items.map(normalizeMatch)
+        const matchesForSlug = matches.filter((item) => matchSlugFor(item) === slug)
+        if (matchesForSlug.length === 1) setSelectedMatch(matchesForSlug[0])
+        else if (matchesForSlug.length > 1 || (slug === 'jso-vs-' && matches.length > 0)) {
+          // Recover legacy malformed links while preserving the normalized match payload.
+          const candidates = matchesForSlug.length ? matchesForSlug : matches;
+          const now = Date.now()
+          const ordered = [...candidates].sort((x, y) => {
+            const xd = new Date(x.kickoffAt || 0).getTime()
+            const yd = new Date(y.kickoffAt || 0).getTime()
+            const xf = xd >= now ? 0 : 1
+            const yf = yd >= now ? 0 : 1
+            return xf - yf || (xf === 0 ? xd - yd : yd - xd)
+          })
+          const match = ordered[0]
+          setSelectedMatch(match)
+          if (slug === 'jso-vs-' && match?.id) {
+            window.history.replaceState({ matchId: match.id }, '', '/matchs/' + encodeURIComponent(matchSlugFor(match)))
+          }
+        }
+      })
+      .catch(() => {})
+    return () => controller.abort()
+  }, [])
   // Seed the open article from a `/actualites/{slug}` deep-link so a shared
   // link (e.g. from Facebook) reopens the exact article. Only the slug is known
   // up front; ArticleModal fetches the full article by slug.
@@ -52,14 +90,15 @@ function App() {
   }
 
   function openMatch(match) {
-    if (!match?.id) return
-    setSelectedMatch(match)
-    const url = '/matchs/' + encodeURIComponent(match.id)
-    if (window.location.pathname !== url) window.history.pushState({ matchId: match.id }, '', url)
+    const normalizedMatch = normalizeMatch(match)
+    if (!normalizedMatch?.id) return
+    setSelectedMatch(normalizedMatch)
+    const url = '/matchs/' + encodeURIComponent(matchSlugFor(normalizedMatch))
+    if (window.location.pathname !== url) window.history.pushState({ matchId: normalizedMatch.id }, '', url)
   }
   function closeMatch() {
     setSelectedMatch(null)
-    if (matchIdFromPath()) window.history.replaceState({}, '', '/matchs')
+    if (matchIdFromPath() || matchSlugFromPath()) window.history.replaceState({}, '', '/matchs')
   }
 
   // Keep the modal in sync with browser Back/Forward: navigating away from a
@@ -69,7 +108,16 @@ function App() {
       const slug = slugFromPath()
       setSelectedArticle(slug ? { slug } : null)
       const matchId = matchIdFromPath()
+      const matchSlug = matchSlugFromPath()
       setSelectedMatch(matchId ? { id: matchId } : null)
+      if (matchSlug && !matchId) {
+        const controller = new AbortController()
+        publicApi.getMatches(controller.signal).then((items) => {
+          if (controller.signal.aborted || !Array.isArray(items)) return
+          const matches = items.map(normalizeMatch).filter((item) => matchSlugFor(item) === matchSlug)
+          if (matches.length) setSelectedMatch(matches[0])
+        }).catch(() => {})
+      }
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
@@ -102,6 +150,7 @@ function App() {
   const footerLinks = useNavigation('Footer')
   const homeLayout = useHomeLayout()
   const focusSection = sectionFromPath()
+  const isAdminStreamsRoute = window.location.pathname === '/admin/live-streams'
   const productSlug = productSlugFromPath()
   const eventSlug = eventSlugFromPath()
   useDocumentTitle(focusSection ? sections.find((item) => item.id === focusSection)?.label : null)
@@ -124,28 +173,40 @@ function App() {
         user={fan.user}
         onLogin={() => openAuth('login')}
         onRegister={() => openAuth('register')}
-        onOpenProfile={() => setProfileOpen(true)}
+        onOpenProfile={() => { window.location.href = '/profil' }}
         onOpenSettings={() => setSettingsOpen(true)}
         onLogout={fan.signOut}
       />
 
-      <HomePage
-        data={data}
-        cart={cart}
-        fan={fan}
-        onOpenCart={() => setCartOpen(true)}
-        onOpenAuth={openAuth}
-        onOpenMatch={openMatch}
-        onOpenArticle={openArticle}
-        sections={sections}
-        hiddenSections={hiddenSections}
-        homeLayout={homeLayout}
-        focusSection={focusSection}
-        productSlug={productSlug}
-        eventSlug={eventSlug}
-      />
-
-      <SiteFooter sections={sections} extraLinks={footerLinks} />
+      {isAdminStreamsRoute ? (
+        <main className="mx-auto flex min-h-[70vh] max-w-2xl flex-col items-start justify-center px-6 py-16">
+          <p className="text-xs font-extrabold tracking-[0.2em] text-jso-blue">JSO ADMIN</p>
+          <h1 className="mt-3 text-3xl font-black">Gestione delle dirette</h1>
+          <p className="mt-3 text-slate-600">Per salvare il link della diretta serve l’accesso amministratore. La pagina pubblica usava l’accesso utente e non aveva i permessi necessari.</p>
+          <a href="/admin/match-streams" className="mt-6 inline-flex rounded-xl bg-jso-navy px-5 py-3 font-bold text-white">Apri gestione dirette admin</a>
+          <a href="/admin" className="mt-3 font-bold text-jso-blue underline">Accedi al pannello amministratore</a>
+        </main>
+      ) : (
+        <>
+          <HomePage
+            data={data}
+            cart={cart}
+            fan={fan}
+            onOpenCart={() => setCartOpen(true)}
+            onOpenAuth={openAuth}
+            onOpenMatch={openMatch}
+            onOpenArticle={openArticle}
+            sections={sections}
+            hiddenSections={hiddenSections}
+            homeLayout={homeLayout}
+            focusSection={focusSection}
+            productSlug={productSlug}
+            eventSlug={eventSlug}
+            templatePreview={templatePreview}
+          />
+          <SiteFooter sections={sections} extraLinks={footerLinks} />
+        </>
+      )}
 
       {selectedMatch && (
         <MatchCenterModal

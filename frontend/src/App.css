@@ -22,7 +22,7 @@
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; background: var(--ink); }
-body { margin: 0; min-width: 320px; background: var(--ink); color: var(--white); font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+body { margin: 0; min-width: 0; background: var(--ink); color: var(--white); font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 button, a { font: inherit; }
 button { cursor: pointer; }
 a { color: inherit; text-decoration: none; }

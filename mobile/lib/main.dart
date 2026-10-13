@@ -5,6 +5,7 @@ import 'core/api/api_client.dart';
 import 'data/auth/token_store.dart';
 import 'data/repositories/admin_auth_repository.dart';
 import 'data/repositories/admin_tickets_repository.dart';
+import 'data/repositories/admin_fan_accounts_repository.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/club_content_repository.dart';
 import 'data/repositories/match_center_repository.dart';
@@ -23,6 +24,7 @@ void main() {
   final repository = PublicApiRepository(apiClient);
   final ticketsRepository = TicketsRepository(apiClient);
   final adminTicketsRepository = AdminTicketsRepository(apiClient);
+  final adminFanAccountsRepository = AdminFanAccountsRepository(apiClient);
   final clubContentRepository = ClubContentRepository(apiClient);
   final shopRepository = ShopRepository(apiClient);
   final matchCenterRepository = MatchCenterRepository(apiClient);
@@ -44,6 +46,7 @@ void main() {
       repository: repository,
       ticketsRepository: ticketsRepository,
       adminTicketsRepository: adminTicketsRepository,
+      adminFanAccountsRepository: adminFanAccountsRepository,
       clubContentRepository: clubContentRepository,
       shopRepository: shopRepository,
       matchCenterRepository: matchCenterRepository,

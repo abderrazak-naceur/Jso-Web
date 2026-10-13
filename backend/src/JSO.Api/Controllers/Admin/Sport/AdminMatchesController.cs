@@ -39,6 +39,7 @@ public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) 
             CompetitionId = request.CompetitionId,
             TeamId = request.TeamId,
             OpponentName = request.OpponentName.Trim(),
+            OpponentLogoUrl = NormalizeLogoUrl(request.OpponentLogoUrl),
             KickoffAt = request.KickoffAt,
             Venue = request.Venue?.Trim(),
             IsHome = request.IsHome,
@@ -64,6 +65,7 @@ public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) 
         if (!await db.Competitions.AnyAsync(x => x.Id == request.CompetitionId, ct)) return BadRequest(new { message = "Competition not found." });
 
         match.OpponentName = request.OpponentName.Trim();
+        match.OpponentLogoUrl = NormalizeLogoUrl(request.OpponentLogoUrl);
         match.KickoffAt = request.KickoffAt;
         match.Venue = request.Venue?.Trim();
         match.IsHome = request.IsHome;
@@ -130,6 +132,8 @@ public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) 
         return Ok(matchEvent);
     }
 
+    private static string? NormalizeLogoUrl(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
     private static bool TryNormalizeTeam(string? value, out string? team)
     {
         if (string.IsNullOrWhiteSpace(value)) { team = null; return true; }
@@ -151,5 +155,5 @@ public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) 
     }
 }
 
-public sealed record MatchRequest(Guid SeasonId, Guid CompetitionId, Guid TeamId, string OpponentName, DateTimeOffset KickoffAt, string? Venue, bool IsHome, int? HomeScore, int? AwayScore, string? Status, bool IsPublished);
+public sealed record MatchRequest(Guid SeasonId, Guid CompetitionId, Guid TeamId, string OpponentName, DateTimeOffset KickoffAt, string? Venue, bool IsHome, int? HomeScore, int? AwayScore, string? Status, bool IsPublished, string? OpponentLogoUrl = null);
 public sealed record MatchEventRequest(int Minute, string Type, string? PlayerName, string? SecondaryPlayerName, string? Team, string? Notes);

@@ -4,6 +4,7 @@ import 'package:jso_mobile/app.dart';
 import 'package:jso_mobile/core/api/api_client.dart';
 import 'package:jso_mobile/core/config/jso_theme.dart';
 import 'package:jso_mobile/data/repositories/admin_tickets_repository.dart';
+import 'package:jso_mobile/data/repositories/admin_fan_accounts_repository.dart';
 import 'package:jso_mobile/data/repositories/match_center_repository.dart';
 import 'package:jso_mobile/data/repositories/tickets_repository.dart';
 import 'package:jso_mobile/features/shop/cart_controller.dart';
@@ -33,6 +34,7 @@ void main() {
         repository: FakeRepository(homeData: Sample.home()),
         ticketsRepository: TicketsRepository(apiClient),
         adminTicketsRepository: AdminTicketsRepository(apiClient),
+        adminFanAccountsRepository: AdminFanAccountsRepository(apiClient),
         clubContentRepository: FakeClubContentRepository(),
         shopRepository: FakeShopRepository(),
         matchCenterRepository: MatchCenterRepository(apiClient),
@@ -53,9 +55,9 @@ void main() {
       orderedEquals(const [
         'Accueil',
         'Matchs',
-        'Boutique',
+        'Biglietti',
         'Actualités',
-        'Plus',
+        'Profilo',
       ]),
     );
     expect(navigation.backgroundColor, Colors.white);
@@ -65,9 +67,9 @@ void main() {
     for (final label in const [
       'Accueil',
       'Matchs',
-      'Boutique',
+      'Biglietti',
       'Actualités',
-      'Plus',
+      'Profilo',
     ]) {
       expect(
         find.descendant(of: navigationFinder, matching: find.text(label)),

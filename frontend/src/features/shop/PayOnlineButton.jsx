@@ -24,7 +24,7 @@ const COUNTRIES = [
   { code: 'XX', label: 'Autre pays' },
 ]
 
-export default function PayOnlineButton({ pay, label = 'Payer en ligne', disabled = false, defaultCountry = 'TN', fixedCountry = false, providerLabel }) {
+export default function PayOnlineButton({ pay, label = 'Payer en ligne', disabled = false, defaultCountry = 'TN', fixedCountry = false, providerLabel, onSuccess }) {
   const [country, setCountry] = useState(defaultCountry)
   const [paying, setPaying] = useState(false)
   const [error, setError] = useState('')
@@ -34,6 +34,10 @@ export default function PayOnlineButton({ pay, label = 'Payer en ligne', disable
     setPaying(true)
     try {
       const res = await pay(country)
+      if (res?.granted) {
+        onSuccess?.(res)
+        return
+      }
       const redirectUrl = res?.redirectUrl
       if (redirectUrl) {
         window.location.assign(redirectUrl)

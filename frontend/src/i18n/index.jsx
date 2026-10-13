@@ -22,12 +22,6 @@ function getInitialLanguage() {
   }
 }
 
-function preserveWhitespace(source, translated) {
-  const leading = source.match(/^\s*/)?.[0] ?? ''
-  const trailing = source.match(/\s*$/)?.[0] ?? ''
-  return leading + translated.trim() + trailing
-}
-
 function translateLegacy(source, language) {
   if (typeof source !== 'string' || !source.trim()) return source
   const leading = source.match(/^\s*/)?.[0] ?? ''

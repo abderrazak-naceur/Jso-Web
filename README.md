@@ -37,14 +37,14 @@ L'obiettivo è creare un ecosistema unico per:
 - 🛍️ preparare una futura area shop
 - 📱 estendere successivamente l'esperienza a iOS e Android
 
-## 📍 Stato dell'attività — 7 ottobre 2026
+## 📍 Stato dell'attività — 13 ottobre 2026
 
-**Fase attuale: preparazione dell'MVP web per la produzione.** Il sito e il backend sono nel repository; un deploy pubblico sul dominio reale non risulta ancora verificato.
+**Fase attuale: verifica e rifinitura della piattaforma.** Il branch `main` contiene il codice fino a V1.26. In locale passano build e controlli frontend, e i test API; il deploy Render corrente e i flussi con dati/credenziali reali non sono stati verificati in questa sessione. Vedere [l'audit del sito](docs/SITE_AUDIT_2026-10-13.md) per risultati e limiti.
 
 | Area | Raggiunto e verificato | Ancora da completare |
 |---|---|---|
 | Sito e admin | Logo JSO, interfaccia responsive, sezione Équipe professionale « Les visages de la JSO » e back-office modulare. Il build Vite passa; le modifiche recenti aggiungono controlli di visibilità per le sezioni home, gestione dei portrait giocatore e avvio locale coordinato di API e frontend. | Verificare URL API, CORS e HTTPS sul dominio reale; collaudare i flussi completi nel browser. |
-| Backend e dati | API .NET 10 e PostgreSQL 17. Build Release backend superata e 24 test API superati. Il run CI del 7 ottobre ha però fallito la verifica EF: le due migration più recenti non venivano scoperte e il controllo ha trovato 37 migration applicate invece delle 39 attese. La correzione degli attributi EF è stata verificata localmente ed è disponibile nel branch `fix/postgres-migration-discovery` (commit `c116762`). | Integrare la correzione migration in `main` e verificare di nuovo il workflow CI; ripetere avvio e migration sull'ambiente Oracle; eseguire un backup reale e provare il ripristino di database e media. |
+| Backend e dati | API .NET 10, PostgreSQL 17 e test automatici presenti. La suite API è stata eseguita in Release durante l'audit locale. | Verificare CI, migrazioni e backup/restore sull'ambiente di produzione; nessun esito locale sostituisce il collaudo dei dati reali. |
 | Infrastruttura | Docker Compose production predisposto con attesa di PostgreSQL pronto; Nginx accetta il limite upload dell'API. Build Docker di frontend e backend ARM64 e controllo Nginx riusciti in CI. Script di backup, verifica, retention (dry-run di default) e procedura di restore disponibili in [deploy/oracle](deploy/oracle/README.md); tutti gli script superano il controllo di sintassi in CI. Script di collaudo `check-config.sh`, `check-local.sh` e `check-domain.sh` pronti. | Preparare VM Oracle, dominio, certificato HTTPS, backup automatico con copia esterna e monitoraggio; eseguire il deploy reale. |
 | App mobile | Progetto Flutter in `mobile/` con schermate pubbliche, account, shop, biglietti e test nel repository. | Verificare build e flussi su dispositivi Android/iOS, configurare l'API di produzione e preparare la distribuzione. |
 
@@ -62,14 +62,15 @@ Verifiche: [CI frontend, backend e PostgreSQL con flussi notizie/media](https://
 
 ## 🆕 Attività completate recentemente
 
-### Interventi tecnici — 7 ottobre 2026
+### Interventi tecnici recenti — verificati il 13 ottobre 2026
 
 - [x] Aggiunti script PowerShell per avviare API e frontend insieme in locale; il frontend Vite espone il server alla rete locale e inoltra anche le richieste `/uploads`.
 - [x] Spostata la policy CORS prima di autenticazione e rate limiting, così le richieste preflight possono ricevere gli header CORS.
 - [x] Estesa la gestione delle sezioni home visibili/nascoste alla fascia « À la une » e alla billetteria.
 - [x] Rinnovate le card squadra con numero, ruolo, stemma e fallback maillot; aggiunta la risoluzione dei portrait locali e il trattamento delle immagini cutout.
-- [x] Verificati build frontend, build backend Release e 24 test API.
-- [x] Individuato il motivo del fallimento della verifica PostgreSQL CI: le due migration delle donazioni non avevano gli attributi EF di registrazione. La correzione è nel commit `c116762` sul branch `fix/postgres-migration-discovery`; deve ancora essere integrata in `main` e verificata in CI.
+- [x] Build frontend, lint senza avvisi e test frontend eseguiti localmente.
+- [x] Build Release API e 29 test API superati durante l'audit locale.
+- [x] Aggiornato il registro `VERSIONE.md` fino a V1.26; i deploy Render non verificati sono esplicitamente distinti dai tag Git.
 
 ### Équipe — « Les visages de la JSO »
 
@@ -114,7 +115,7 @@ Documentation de référence : [docs/AGENT_ORGANIZATION.md](docs/AGENT_ORGANIZAT
 
 ## 🧭 Cosa manca da sviluppare
 
-Questa sezione riflette le **funzioni presenti nel codice** all'8 ottobre 2026. Legenda: ✅ implementato · 🟡 parziale o da collaudare · ⛔ assente. La presenza di API e UI non equivale a un servizio attivo in produzione.
+Questa sezione riflette le **funzioni presenti nel codice** al 13 ottobre 2026. Legenda: ✅ implementato · 🟡 parziale o da collaudare · ⛔ assente. La presenza di API e UI non equivale a un servizio attivo in produzione.
 
 ### Riepilogo per feature
 

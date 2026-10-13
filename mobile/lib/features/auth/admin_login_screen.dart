@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/config/jso_theme.dart';
 import '../../shared/widgets/jso_crest.dart';
+import '../admin/fan_accounts_screen.dart';
 import '../tickets/staff_scanner_screen.dart';
 import 'admin_auth_controller.dart';
 import 'login_screen.dart' show validateEmail;
@@ -250,13 +251,33 @@ class _AdminConnectedView extends StatelessWidget {
           // Staff ticket scanner: available to any authenticated admin; the
           // backend endpoints enforce the SuperAdmin/ClubAdmin/MatchManager
           // roles, so a lower-privileged token simply gets a 403 there.
-          ElevatedButton.icon(
-            onPressed: () =>
-                Navigator.of(context).push(StaffScannerScreen.route()),
-            icon: const Icon(Icons.qr_code_scanner_rounded),
-            label: const Text('Contrôle des billets (scanner)'),
-          ),
-          const SizedBox(height: JsoSpacing.md),
+          if (const {
+            'SuperAdmin',
+            'ClubAdmin',
+            'CommunityManager',
+          }.contains(user?.role)) ...[
+            ElevatedButton.icon(
+              onPressed: () =>
+                  Navigator.of(context).push(FanAccountsScreen.route()),
+              icon: const Icon(Icons.manage_accounts_rounded),
+              label: const Text('Gestion des supporters'),
+            ),
+            const SizedBox(height: JsoSpacing.sm),
+          ],
+          // Match the roles authorized by the ticket scan API.
+          if (const {
+            'SuperAdmin',
+            'ClubAdmin',
+            'MatchManager',
+          }.contains(user?.role)) ...[
+            ElevatedButton.icon(
+              onPressed: () =>
+                  Navigator.of(context).push(StaffScannerScreen.route()),
+              icon: const Icon(Icons.qr_code_scanner_rounded),
+              label: const Text('Contrôle des billets (scanner)'),
+            ),
+            const SizedBox(height: JsoSpacing.md),
+          ],
           const Text(
             'La gestion complète du club se fait depuis le back office web. '
             'D’autres actions administrateur arriveront prochainement dans '

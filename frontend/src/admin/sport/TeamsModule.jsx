@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Save, Upload } from 'lucide-react'
+import { Plus, Pencil, Save } from 'lucide-react'
 import Field from '../components/Field'
 import { adminApi } from '../api'
 import { emptyTeam, emptyPlayer } from '../constants'
