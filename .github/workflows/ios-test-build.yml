@@ -47,9 +47,10 @@ jobs:
       - name: Package unsigned Xcode archive
         run: |
           set -euo pipefail
-          source_archive="$(find build/ios/archive -maxdepth 1 -type d -name '*.xcarchive' -print -quit)"
-          test -n "$source_archive"
-          ditto -c -k --sequesterRsrc --keepParent "$source_archive" build/ios/archive/JSO-iOS-unsigned.xcarchive.zip
+          shopt -s nullglob
+          archives=(build/ios/archive/*.xcarchive)
+          test ${#archives[@]} -gt 0
+          ditto -c -k --sequesterRsrc --keepParent "${archives[0]}" build/ios/archive/JSO-iOS-unsigned.xcarchive.zip
 
       - name: Package iOS Simulator app
         run: |
