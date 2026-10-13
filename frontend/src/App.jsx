@@ -9,6 +9,8 @@ import { useFanSession } from './features/account/useFanSession'
 import HomePage from './features/home/HomePage'
 import { useHomeData } from './features/home/useHomeData'
 import MatchCenterModal from './features/matches/MatchCenterModal'
+import { normalizeMatch } from './features/matches/matchUtils'
+import { publicApi } from './lib/api'
 import ArticleModal from './features/news/ArticleModal'
 import { pushArticleUrl, restoreHomeUrl, slugFromPath } from './features/news/articleUrl'
 import CartDrawer from './features/shop/CartDrawer'
@@ -16,7 +18,7 @@ import { useCart } from './features/shop/useCart'
 import SiteFooter from './features/site/SiteFooter'
 import SiteHeader from './features/site/SiteHeader'
 import { visibleSections } from './features/site/navigation'
-import { eventSlugFromPath, matchIdFromPath, productSlugFromPath, sectionFromPath } from './features/site/publicRoutes'
+import { eventSlugFromPath, matchIdFromPath, matchSlugFromPath, matchSlugFor, productSlugFromPath, sectionFromPath } from './features/site/publicRoutes'
 import { useDocumentTitle } from './lib/useDocumentTitle'
 import { useActiveSection } from './features/site/useActiveSection'
 import { useNavigation } from './features/site/useNavigation'
@@ -33,6 +35,33 @@ function App() {
     const id = matchIdFromPath()
     return id ? { id } : null
   })
+
+  // Resolve readable `/matchs/jso-vs-opponent` links against the public matches API.
+  useEffect(() => {
+    const slug = matchSlugFromPath()
+    if (!slug || matchIdFromPath()) return
+    const controller = new AbortController()
+    publicApi.getMatches(controller.signal)
+      .then((items) => {
+        if (controller.signal.aborted || !Array.isArray(items)) return
+        const matches = items.map(normalizeMatch)
+        const matchesForSlug = matches.filter((item) => matchSlugFor(item) === slug)
+        if (matchesForSlug.length === 1) setSelectedMatch(matchesForSlug[0])
+        else if (matchesForSlug.length > 1) {
+          const now = Date.now()
+          const ordered = [...matchesForSlug].sort((x, y) => {
+            const xd = new Date(x.kickoffAt || 0).getTime()
+            const yd = new Date(y.kickoffAt || 0).getTime()
+            const xf = xd >= now ? 0 : 1
+            const yf = yd >= now ? 0 : 1
+            return xf - yf || (xf === 0 ? xd - yd : yd - xd)
+          })
+          setSelectedMatch(ordered[0])
+        }
+      })
+      .catch(() => {})
+    return () => controller.abort()
+  }, [])
   // Seed the open article from a `/actualites/{slug}` deep-link so a shared
   // link (e.g. from Facebook) reopens the exact article. Only the slug is known
   // up front; ArticleModal fetches the full article by slug.
@@ -54,12 +83,12 @@ function App() {
   function openMatch(match) {
     if (!match?.id) return
     setSelectedMatch(match)
-    const url = '/matchs/' + encodeURIComponent(match.id)
+    const url = '/matchs/' + encodeURIComponent(matchSlugFor(match))
     if (window.location.pathname !== url) window.history.pushState({ matchId: match.id }, '', url)
   }
   function closeMatch() {
     setSelectedMatch(null)
-    if (matchIdFromPath()) window.history.replaceState({}, '', '/matchs')
+    if (matchIdFromPath() || matchSlugFromPath()) window.history.replaceState({}, '', '/matchs')
   }
 
   // Keep the modal in sync with browser Back/Forward: navigating away from a
@@ -69,7 +98,16 @@ function App() {
       const slug = slugFromPath()
       setSelectedArticle(slug ? { slug } : null)
       const matchId = matchIdFromPath()
+      const matchSlug = matchSlugFromPath()
       setSelectedMatch(matchId ? { id: matchId } : null)
+      if (matchSlug && !matchId) {
+        const controller = new AbortController()
+        publicApi.getMatches(controller.signal).then((items) => {
+          if (controller.signal.aborted || !Array.isArray(items)) return
+          const matches = items.map(normalizeMatch).filter((item) => matchSlugFor(item) === matchSlug)
+          if (matches.length) setSelectedMatch(matches[0])
+        }).catch(() => {})
+      }
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)

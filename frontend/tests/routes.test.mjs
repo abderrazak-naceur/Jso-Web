@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { adminEditIdFromPath, adminEditUrl, adminSectionFromPath, adminSectionUrl } from '../src/admin/adminRoutes.js'
 import { ADMIN_CATEGORY_ORDER, ADMIN_NAVIGATION, ADMIN_PERMISSION_BY_ID, ADMIN_PUBLIC_PATHS, visibleAdminItems } from '../src/admin/navigation.js'
 import { ADMIN_MODULES } from '../src/admin/moduleRegistry.js'
-import { SECTION_PATHS, eventSlugFromPath, matchIdFromPath, productSlugFromPath, sectionFromPath, sectionUrl } from '../src/features/site/publicRoutes.js'
+import { SECTION_PATHS, eventSlugFromPath, matchIdFromPath, matchSlugFromPath, matchSlugFor, productSlugFromPath, sectionFromPath, sectionUrl } from '../src/features/site/publicRoutes.js'
 
 test('admin sections and edit links survive a direct page load', () => {
   assert.equal(adminSectionFromPath('/admin'), 'dashboard')
@@ -53,5 +53,8 @@ test('public sections and content have stable paths', () => {
   const match = '123e4567-e89b-12d3-a456-426614174000'
   assert.equal(matchIdFromPath(`/matchs/${match}`), match)
   assert.equal(sectionFromPath(`/matchs/${match}`), 'matches')
+  assert.equal(matchSlugFor({ opponentName: 'Altra Squadra' }), 'jso-vs-altra-squadra')
+  assert.equal(matchSlugFromPath('/matchs/jso-vs-altra-squadra'), 'jso-vs-altra-squadra')
+  assert.equal(sectionFromPath('/matchs/jso-vs-altra-squadra'), 'matches')
   assert.equal(sectionFromPath('/boutique/slug/extra'), null)
 })

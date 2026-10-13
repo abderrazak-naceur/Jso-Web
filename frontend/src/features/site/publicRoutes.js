@@ -19,7 +19,7 @@ const sectionByPath = Object.fromEntries(Object.entries(SECTION_PATHS).map(([id,
 
 export function sectionFromPath(pathname = window.location.pathname) {
   if (productSlugFromPath(pathname)) return 'shop'
-  if (matchIdFromPath(pathname)) return 'matches'
+  if (matchIdFromPath(pathname) || matchSlugFromPath(pathname)) return 'matches'
   if (eventSlugFromPath(pathname)) return 'events'
   return sectionByPath[pathname.replace(/\/+$/, '')] || null
 }
@@ -34,8 +34,26 @@ export function productSlugFromPath(pathname = window.location.pathname) {
 }
 
 export function matchIdFromPath(pathname = window.location.pathname) {
-  const match = /^\/matchs\/([0-9a-f]{8}-[0-9a-f-]{27,})\/?$/i.exec(pathname)
+  // Accept both legacy /matchs/{uuid} links and readable SEO slugs ending in the UUID.
+  const match = /^\/matchs\/(?:.*-)?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/?$/i.exec(pathname)
   return match?.[1] || null
+}
+export function slugifyMatchPart(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+export function matchSlugFor(match) {
+  return 'jso-vs-' + slugifyMatchPart(match?.opponentName || match?.OpponentName || 'adversaire')
+}
+
+export function matchSlugFromPath(pathname = window.location.pathname) {
+  const match = /^\/matchs\/(jso-vs-[a-z0-9-]+)\/?$/i.exec(pathname)
+  return match?.[1]?.toLowerCase() || null
 }
 
 export function eventSlugFromPath(pathname = window.location.pathname) {
