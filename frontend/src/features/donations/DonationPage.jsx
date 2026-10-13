@@ -57,7 +57,6 @@ export default function DonationPage() {
       .then((value) => {
         setCampaign(value)
         setError('')
-        setAmount((current) => current ?? Number(value.suggestedMonthlyContributionTnd || 10))
       })
       .catch((e) => { if (!controller.signal.aborted) setError(e?.message || 'Impossible de charger la campagne.') })
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
@@ -253,7 +252,7 @@ export default function DonationPage() {
             </div>
             <div className="mt-8 rounded-2xl bg-slate-50 p-5">
               <p className="text-sm font-bold text-slate-600">Montant choisi</p>
-              <p className="mt-1 text-4xl font-black text-jso-navy">{formatMoney(effectiveAmount, 'TND')}</p>
+              <p className="mt-1 text-4xl font-black text-jso-navy">{effectiveAmount >= 1 ? formatMoney(effectiveAmount, 'TND') : 'Sélectionnez un montant'}</p>
             </div>
 
             <div className="mt-4 rounded-2xl border border-jso-gold/40 bg-jso-gold/10 p-4 text-sm">
