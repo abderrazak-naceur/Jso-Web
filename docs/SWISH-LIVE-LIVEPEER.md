@@ -1,6 +1,6 @@
 # Swish Live + Livepeer + JSO Web
 
-This integration uses Swish Live as the mobile production app (camera + scoreboard burned into the video) and Livepeer Studio as the RTMP ingest/transcoding/playback service. JSO Web remains responsible for match configuration, checkout, and entitlement checks.
+This integration uses Swish Live as the mobile production app (camera + scoreboard burned into the video). In JSO admin you can choose Livepeer (RTMP ingest), Mux (existing setup), or Custom HTTPS player/embed. JSO Web remains responsible for match configuration, checkout, and entitlement checks.
 
 ## One-time provider setup
 
@@ -12,7 +12,7 @@ This integration uses Swish Live as the mobile production app (camera + scoreboa
 
 The RTMP ingest URL and stream key are production credentials. Do not put them in the JSO playback URL field, frontend code, public pages, screenshots or commits. Restrict them to trusted match operators and rotate the stream key if it is exposed.
 
-## Paid access
+## Provider options\n\n- **Livepeer**: recommended first RTMP receiver for Swish Live; configure the playback URL from the Livepeer Playback ID.\n- **Mux**: retained for existing matches and configurations.\n- **Custom HTTPS player/embed**: for another provider's embeddable player. Supply the HTTPS embed URL, not the RTMP ingest URL or stream key. The provider must permit iframe embedding. A direct `.m3u8` HLS URL is not necessarily an embeddable player URL and may require a dedicated HLS player.\n\nAn RTMP ingest address is where Swish Live sends the broadcast; it is not the playback URL viewers watch. Keep those two values separate.\n\n## Paid access
 
 The existing JSO pay-per-view flow is retained. Unpaid viewers receive metadata without the playback URL; the API reveals it only for a free stream, a server-confirmed Paid/Promo entitlement, or an authorized staff preview. Payment remains confirmed by the configured payment-provider webhook, not by the browser redirect.
 
@@ -26,7 +26,7 @@ Security limitation: this is application-level link gating, not DRM. A public Li
 - [ ] Verify an unpaid authenticated fan cannot obtain the playback URL.
 - [ ] Verify paid and valid Promo users can play after server-side entitlement is confirmed.
 - [ ] Verify an administrator can preview without generating a paid transaction.
-- [ ] Verify the legacy Mux configuration still renders for existing streams.
+- [ ] Verify the legacy Mux configuration still renders for existing streams.\n- [ ] Verify a Custom HTTPS player is embeddable and does not bypass the chosen provider's access control.
 - [ ] Run backend Release build, backend tests, frontend build/lint and GitHub Actions.
 - [ ] Confirm Render API and frontend deployment only after all checks pass.
 
