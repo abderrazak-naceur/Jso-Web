@@ -1157,10 +1157,10 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("OpponentName")
-                    b.Property<string>("OpponentLogoUrl")
+                        .IsRequired()
                         .HasColumnType("text");
 
-                        .IsRequired()
+                    b.Property<string>("OpponentLogoUrl")
                         .HasColumnType("text");
 
                     b.Property<Guid>("SeasonId")
