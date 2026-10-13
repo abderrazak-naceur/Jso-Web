@@ -83,9 +83,7 @@ export default function FaqModule({ onError }) {
           : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Question</th><th className="p-2">Catégorie</th><th className="p-2">Ordre</th><th className="p-2">Publié</th><th className="p-2"></th></tr></thead><tbody>{items.map(x => <tr key={x.id} className="border-b last:border-0"><td className="p-2 font-bold">{x.question}</td><td className="p-2">{x.category || '—'}</td><td className="p-2">{x.sortOrder}</td><td className="p-2">{x.isPublished ? 'Oui' : 'Non'}</td><td className="p-2 whitespace-nowrap"><button onClick={() => edit(x)} className="mr-2 text-jso-blue"><Pencil size={16}/></button><button onClick={() => remove(x.id)} className="text-red-600"><X size={16}/></button></td></tr>)}</tbody></table>}
       </div>
     </div>
-    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-black">{editing ? 'Modifier la question' : 'Nouvelle question'}</h2>
-      {modalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 sm:p-6" onMouseDown={e => { if(e.target===e.currentTarget) reset() }}>
+{modalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 sm:p-6" onMouseDown={e => { if(e.target===e.currentTarget) reset() }}>
       <section role="dialog" aria-modal="true" aria-labelledby="admin-form-title" className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-7">
         <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
           <h2 id="admin-form-title" className="text-xl font-black">{editing ? 'Modifier' : 'Créer'} · question FAQ</h2>
