@@ -79,16 +79,16 @@ export default function ShopModule({ onError }) {
   }, [modalOpen])
   return <div className="space-y-6">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-black">Boutique — Produits</h2>
+      <div className="flex items-center justify-between"><h2 className="text-xl font-black">Boutique — Produits</h2><button type="button" onClick={() => { setForm(emptyProduct); setEditing(null); setModalOpen(true) }} className="rounded-xl bg-jso-navy px-3 py-2 font-bold text-white"><Plus size={16} className="inline mr-1"/>Nouveau produit</button></div>
       <div className="mt-5 overflow-x-auto">
         {loading ? <p className="text-sm text-slate-400">Chargement…</p>
           : products.length === 0 ? <p className="text-sm text-slate-400">Aucun produit. Créez le premier avec le formulaire.</p>
           : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Produit</th><th className="p-2">Prix</th><th className="p-2">Stock</th><th className="p-2">Actif</th><th className="p-2"></th></tr></thead><tbody>{products.map(p => <tr key={p.id} className="border-b last:border-0"><td className="p-2"><b>{p.name}</b><div className="text-xs text-slate-400">{p.category || '—'}</div></td><td className="p-2 whitespace-nowrap">{money(p.price, p.currency)}</td><td className="p-2">{p.stock}</td><td className="p-2">{p.isActive ? 'Oui' : 'Non'}</td><td className="p-2 whitespace-nowrap"><button onClick={() => edit(p)} title="Modifier" className="mr-2 text-jso-blue"><Pencil size={16}/></button><button onClick={() => copyAdminLink(p)} title="Copier le lien admin" className="mr-2 text-jso-blue"><Link2 size={16}/></button>{p.isActive && p.slug && <><a href={'/boutique/' + encodeURIComponent(p.slug)} target="_blank" rel="noopener noreferrer" title="Voir le produit" className="mr-2 text-jso-blue">Voir</a><button onClick={() => copyPublicLink(p)} title="Copier le lien public" className="mr-2 text-xs font-bold text-jso-blue">Copier</button></>}<button onClick={() => remove(p.id)} title="Supprimer" className="text-red-600"><X size={16}/></button></td></tr>)}</tbody></table>}
       </div>
     </div>
-    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-black">{editing ? 'Modifier le produit' : 'Nouveau produit'}</h2>
-      {modalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 sm:p-6" onMouseDown={e => { if(e.target===e.currentTarget) reset() }}>
+
+    </div>
+    {modalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 sm:p-6" onMouseDown={e => { if(e.target===e.currentTarget) reset() }}>
       <section role="dialog" aria-modal="true" aria-labelledby="admin-form-title" className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-7">
         <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
           <h2 id="admin-form-title" className="text-xl font-black">{editing ? 'Modifier' : 'Créer'} · produit</h2>
@@ -112,6 +112,5 @@ export default function ShopModule({ onError }) {
       </form>
       </section>
     </div>}
-    </div>
   </div>
 }
