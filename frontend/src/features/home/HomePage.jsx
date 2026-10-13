@@ -239,7 +239,7 @@ export default function HomePage({
     : orderedSections
 
   return (
-    <main id="main-content" tabIndex={-1}>
+    <main id="main-content" tabIndex={-1} className={`home-template-${template}`}>
       {focusSection ? <div className="mx-auto max-w-7xl px-5 pt-8 lg:px-8"><a href="/" className="text-sm font-bold text-jso-blue underline">← Accueil</a></div> : <>
       <HeroSection content={data.content} club={data.club} />
       <Reveal><SellingBand nextMatch={data.nextMatch} /></Reveal>
