@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Plus, EyeOff, Eye, Pencil, X, Link2, Facebook, Send, Save, ImagePlus, Images, Bold, Italic, List, Quote, Eye as PreviewIcon, ChevronLeft, Search, ExternalLink } from 'lucide-react'
+import { Plus, EyeOff, Eye, Pencil, X, Link2, Facebook, Send, Save, ImagePlus, Images, Bold, Italic, List, Quote, Eye as PreviewIcon, ChevronLeft, Search } from 'lucide-react'
 import Field from '../components/Field'
 import { adminApi } from '../api'
 import { emptyNews } from '../constants'
