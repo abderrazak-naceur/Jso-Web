@@ -51,6 +51,7 @@ export function matchOpponentName(match) {
   const candidates = [
     match?.opponentName, match?.OpponentName,
     match?.opponent, match?.Opponent,
+    match?.opponent?.name, match?.Opponent?.Name,
     match?.opponentTeamName, match?.OpponentTeamName,
     match?.awayTeamName, match?.AwayTeamName,
     match?.homeTeamName, match?.HomeTeamName,
