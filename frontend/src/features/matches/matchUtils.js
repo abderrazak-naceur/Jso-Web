@@ -1,6 +1,7 @@
-import { pick } from '../../lib/format.js'
-import { CLUB_NAME } from '../site/brand.js'
-import { matchOpponentName } from '../site/publicRoutes.js'
+import { pick } from '../../lib/format'
+import { API_BASE_URL, resolveMediaUrl } from '../../lib/apiConfig'
+import { CLUB_NAME } from '../site/brand'
+import { matchOpponentName } from '../site/publicRoutes'
 
 const STATUS_LABELS = {
   Scheduled: 'À venir',
@@ -30,10 +31,11 @@ export const RESULT_SHORT = { win: 'V', draw: 'N', loss: 'D' }
 
 export function normalizeMatch(raw) {
   if (!raw) return null
+  const logo = pick(raw, 'OpponentLogoUrl', 'opponentLogoUrl')
   return {
     id: pick(raw, 'Id', 'id'),
     opponentName: matchOpponentName(raw) || 'Adversaire à confirmer',
-    opponentLogoUrl: pick(raw, 'OpponentLogoUrl', 'opponentLogoUrl') || '',
+    opponentLogoUrl: resolveMediaUrl(logo, { apiBaseUrl: API_BASE_URL }),
     kickoffAt: pick(raw, 'KickoffAt', 'kickoffAt'),
     venue: pick(raw, 'Venue', 'venue'),
     isHome: Boolean(pick(raw, 'IsHome', 'isHome')),
