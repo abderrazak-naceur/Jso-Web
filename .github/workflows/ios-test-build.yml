@@ -38,18 +38,18 @@ jobs:
       - name: Run Flutter tests
         run: flutter test
 
-      - name: Build unsigned iOS IPA
+      - name: Build unsigned iOS archive
         run: >-
           flutter build ipa --release --no-codesign
           --dart-define=JSO_API_BASE_URL=https://jso-api.onrender.com/api
           --dart-define=JSO_WEB_BASE_URL=https://jso-web.onrender.com
 
-      - name: Name unsigned IPA
+      - name: Package unsigned Xcode archive
         run: |
           set -euo pipefail
-          source_ipa="$(find build/ios/ipa -maxdepth 1 -type f -name '*.ipa' ! -name 'JSO-iOS-unsigned.ipa' -print -quit)"
-          test -n "$source_ipa"
-          cp "$source_ipa" build/ios/ipa/JSO-iOS-unsigned.ipa
+          source_archive="$(find build/ios/archive -maxdepth 1 -type d -name '*.xcarchive' -print -quit)"
+          test -n "$source_archive"
+          ditto -c -k --sequesterRsrc --keepParent "$source_archive" build/ios/archive/JSO-iOS-unsigned.xcarchive.zip
 
       - name: Package iOS Simulator app
         run: |
@@ -62,7 +62,7 @@ jobs:
         with:
           name: JSO-iOS-Test-Builds
           path: |
-            mobile/build/ios/ipa/JSO-iOS-unsigned.ipa
+            mobile/build/ios/archive/JSO-iOS-unsigned.xcarchive.zip
             mobile/build/ios/iphonesimulator/JSO-iOS-Simulator.zip
           if-no-files-found: error
           retention-days: 14
@@ -71,14 +71,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ios-latest
-          name: JSO iOS Test Build (unsigned)
+          name: JSO iOS Test Build (unsigned archive)
           body: |
             iOS test build for JSO.
 
-            IMPORTANT: JSO-iOS-unsigned.ipa is an unsigned package and cannot be installed directly on a physical iPhone. Installation on a physical iPhone requires valid Apple signing/provisioning (typically Apple Developer + TestFlight or an Ad Hoc profile). JSO-iOS-Simulator.zip is a debug build intended for the iOS Simulator on a Mac with Xcode; it does not run on Windows.
+            JSO-iOS-unsigned.xcarchive.zip contains an unsigned Xcode archive. Sign and export it with a valid Apple provisioning profile to create an installable IPA for a physical iPhone. JSO-iOS-Simulator.zip is a debug build for the iOS Simulator on a Mac with Xcode; it does not run on a physical iPhone.
           target_commitish: main
           files: |
-            mobile/build/ios/ipa/JSO-iOS-unsigned.ipa
+            mobile/build/ios/archive/JSO-iOS-unsigned.xcarchive.zip
             mobile/build/ios/iphonesimulator/JSO-iOS-Simulator.zip
           overwrite_files: true
           prerelease: true
