@@ -33,6 +33,7 @@ export function normalizeMatch(raw) {
   return {
     id: pick(raw, 'Id', 'id'),
     opponentName: matchOpponentName(raw) || 'Adversaire à confirmer',
+    opponentLogoUrl: pick(raw, 'OpponentLogoUrl', 'opponentLogoUrl') || '',
     kickoffAt: pick(raw, 'KickoffAt', 'kickoffAt'),
     venue: pick(raw, 'Venue', 'venue'),
     isHome: Boolean(pick(raw, 'IsHome', 'isHome')),
@@ -62,7 +63,7 @@ export function hasScore(match) {
 // away, the opponent comes first so the score reads in the right order.
 export function matchSides(match) {
   const club = { name: CLUB_NAME, isClub: true, score: match.isHome ? match.homeScore : match.awayScore }
-  const opponent = { name: match.opponentName, isClub: false, score: match.isHome ? match.awayScore : match.homeScore }
+  const opponent = { name: match.opponentName, isClub: false, logoUrl: match.opponentLogoUrl, score: match.isHome ? match.awayScore : match.homeScore }
   return match.isHome ? { home: club, away: opponent } : { home: opponent, away: club }
 }
 
