@@ -14,6 +14,7 @@ export const ADMIN_MODULES = {
   news: lazy(() => import('./content/NewsModule')),
   security: lazy(() => import('./system/SecurityModule')),
   media: lazy(() => import('./content/MediaModule')),
+  'homepage-templates': lazy(() => import('./content/HomepageTemplatesModule')),
   content: lazy(() => import('./content/ContentModule')),
   sponsors: lazy(() => import('./commerce/SponsorsModule')),
   sponsorqr: lazy(() => import('./commerce/SponsorQr')),

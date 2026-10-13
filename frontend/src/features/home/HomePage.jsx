@@ -223,14 +223,23 @@ export default function HomePage({
     'infos',
   ]
 
-  const orderedSections = orderHomeSections(defaultSectionOrder, homeLayout)
+  const template = ['classic', 'modern-2026', 'stadium', 'magazine'].includes(data.content?.home_template) ? data.content.home_template : 'modern-2026'
+  const templateSectionOrders = {
+    classic: defaultSectionOrder,
+    'modern-2026': defaultSectionOrder,
+    stadium: ['matches', 'media', 'news', 'team', 'club', 'events', 'sponsors', 'shop', 'memberships', 'donation', 'community', 'archive', 'mobile', 'infos'],
+    magazine: ['news', 'media', 'archive', 'club', 'team', 'matches', 'events', 'community', 'sponsors', 'shop', 'donation', 'memberships', 'mobile', 'infos'],
+  }
+  const templateOrder = templateSectionOrders[template] || defaultSectionOrder
+  const orderedSections = orderHomeSections(templateOrder, homeLayout)
     .filter((key) => !hiddenSections.includes(key))
+
   const pageSections = focusSection
     ? defaultSectionOrder.filter((key) => key === focusSection && !hiddenSections.includes(key))
     : orderedSections
 
   return (
-    <main id="main-content" tabIndex={-1}>
+    <main id="main-content" tabIndex={-1} className={`home-template-${template}`}>
       {focusSection ? <div className="mx-auto max-w-7xl px-5 pt-8 lg:px-8"><a href="/" className="text-sm font-bold text-jso-blue underline">← Accueil</a></div> : <>
       <HeroSection content={data.content} club={data.club} />
       <Reveal><SellingBand nextMatch={data.nextMatch} /></Reveal>

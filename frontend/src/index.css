@@ -317,3 +317,165 @@ html[dir="rtl"] .jso-a11y-launcher {
   left: auto;
   right: 1.25rem;
 }
+
+
+/* Homepage template skins: shared content and features, distinct club identities. */
+.home-template-modern-2026 > section,
+.home-template-modern-2026 > main > section {
+  scroll-margin-top: 6rem;
+}
+.home-template-modern-2026 h1,
+.home-template-modern-2026 h2,
+.home-template-modern-2026 h3 {
+  letter-spacing: -0.035em;
+}
+.home-template-modern-2026 [class*="rounded-[2rem]"],
+.home-template-modern-2026 [class*="rounded-2xl"] {
+  box-shadow: 0 12px 36px rgb(15 23 42 / 7%);
+}
+.home-template-modern-2026 .home-template-card {
+  border: 1px solid #e8edf5;
+  background: linear-gradient(145deg, #fff, #f8fbff);
+}
+.home-template-stadium {
+  background: #080f1f;
+  color: #f8fafc;
+}
+.home-template-stadium > section {
+  color: #f8fafc;
+}
+.home-template-stadium [class*="bg-white"] {
+  border-color: rgb(255 255 255 / 12%);
+}
+.home-template-stadium h1,
+.home-template-stadium h2,
+.home-template-stadium h3 {
+  letter-spacing: -0.04em;
+}
+.home-template-magazine h1,
+.home-template-magazine h2,
+.home-template-magazine h3 {
+  letter-spacing: -0.025em;
+}
+.home-template-magazine > section {
+  scroll-margin-top: 6rem;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .home-template-modern-2026 a,
+  .home-template-modern-2026 button,
+  .home-template-stadium a,
+  .home-template-magazine a {
+    transition-duration: 180ms;
+  }
+}
+
+
+/* Template-specific visual systems. The official JSO palette is navy/blue,
+   yellow and white; the classic skin deliberately keeps the original layout. */
+.home-template-modern-2026 .jso-hero {
+  background-image: url('/jso-stadium-hero.png');
+  background-position: center 42%;
+}
+.home-template-modern-2026 .jso-hero > .absolute.inset-0 {
+  background-image: linear-gradient(100deg, #071a3a 0%, rgb(7 26 58 / 92%) 48%, rgb(23 105 224 / 38%) 100%);
+}
+.home-template-modern-2026 .jso-hero h1 {
+  max-width: 12ch;
+  text-wrap: balance;
+}
+.home-template-modern-2026 .jso-hero .relative.mx-auto {
+  min-height: 600px;
+}
+.home-template-modern-2026 .home-template-card {
+  border-color: rgb(23 105 224 / 14%);
+  box-shadow: 0 14px 36px rgb(7 26 58 / 7%);
+}
+
+.home-template-stadium .jso-hero {
+  background-image: url('/jso-stadium-hero.png');
+  background-position: center;
+}
+.home-template-stadium .jso-hero > .absolute.inset-0 {
+  background-image: linear-gradient(90deg, rgb(7 26 58 / 98%) 0%, rgb(7 26 58 / 88%) 45%, rgb(7 26 58 / 35%) 100%);
+}
+.home-template-stadium .jso-hero .relative.mx-auto {
+  min-height: 560px;
+}
+.home-template-stadium .jso-hero h1 {
+  text-transform: uppercase;
+  letter-spacing: -0.055em;
+}
+.home-template-stadium .jso-hero h1 span {
+  text-shadow: 0 3px 28px rgb(255 215 0 / 20%);
+}
+.home-template-stadium > section {
+  border-bottom: 1px solid rgb(255 255 255 / 8%);
+}
+.home-template-stadium > section:nth-of-type(even) {
+  background-color: rgb(23 105 224 / 8%);
+}
+
+.home-template-magazine {
+  background: #fff;
+  color: #071a3a;
+}
+.home-template-magazine .jso-hero {
+  background-image: none;
+  background-color: #fff;
+  color: #071a3a;
+  border-bottom: 5px solid #ffd700;
+}
+.home-template-magazine .jso-hero > .absolute.inset-0,
+.home-template-magazine .jso-hero > .absolute.inset-x-0 {
+  display: none;
+}
+.home-template-magazine .jso-hero .relative.mx-auto {
+  min-height: 520px;
+}
+.home-template-magazine .jso-hero h1 {
+  color: #071a3a;
+  max-width: 11ch;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 900;
+  letter-spacing: -0.045em;
+}
+.home-template-magazine .jso-hero h1 span {
+  color: #1769e0;
+}
+.home-template-magazine .jso-hero p {
+  color: #334155;
+}
+.home-template-magazine .jso-hero .text-jso-gold {
+  color: #1769e0;
+}
+.home-template-magazine .jso-hero .border-white\/15,
+.home-template-magazine .jso-hero .border-white\/20,
+.home-template-magazine .jso-hero .border-white\/30 {
+  border-color: rgb(7 26 58 / 18%);
+}
+.home-template-magazine .jso-hero .bg-white\/10,
+.home-template-magazine .jso-hero .bg-jso-navy\/75 {
+  background-color: #f6f8fc;
+}
+.home-template-magazine .jso-hero .text-white,
+.home-template-magazine .jso-hero .text-white\/60,
+.home-template-magazine .jso-hero .text-white\/72 {
+  color: #071a3a;
+}
+.home-template-magazine .jso-hero .bg-jso-gold {
+  background-color: #ffd700;
+  color: #071a3a;
+}
+.home-template-magazine .jso-hero .border-t {
+  border-color: rgb(7 26 58 / 15%);
+}
+.home-template-magazine > section {
+  border-bottom: 1px solid #e8edf5;
+}
+.home-template-magazine > section:nth-of-type(even) {
+  background-color: #f6f8fc;
+}
+.home-template-magazine h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.035em;
+}
