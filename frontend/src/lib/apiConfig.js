@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'jso_api_base_url'
 const BUILD_DEFAULT = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
-const API_ORIGIN_FALLBACK = ''
+const API_ORIGIN_FALLBACK = 'https://jso-api.onrender.com'
 
 function normalize(value) {
   return String(value || '').trim().replace(/\/$/, '')
@@ -73,7 +73,7 @@ export function resolveMediaUrl(value, { apiBaseUrl = API_BASE_URL, origin, medi
       return ''
     }
   })()
-  const storageOrigin = mediaOrigin || explicitApiOrigin || API_ORIGIN_FALLBACK || pageOrigin
+  const storageOrigin = mediaOrigin || explicitApiOrigin || API_ORIGIN_FALLBACK
 
   try {
     if (/^https?:\/\//i.test(raw)) return new URL(raw).href
