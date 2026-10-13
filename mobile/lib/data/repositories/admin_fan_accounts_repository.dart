@@ -22,7 +22,9 @@ class AdminFanAccountsRepository {
     if (json is! List) return const [];
     return json
         .whereType<Map>()
-        .map((item) => AdminFanAccount.fromJson(Map<String, dynamic>.from(item)))
+        .map(
+          (item) => AdminFanAccount.fromJson(Map<String, dynamic>.from(item)),
+        )
         .toList(growable: false);
   }
 
@@ -51,8 +53,9 @@ class AdminFanAccountsRepository {
       body: {'stars': stars},
       bearerToken: adminToken,
     );
-    final response =
-        json is Map ? Map<String, dynamic>.from(json) : <String, dynamic>{};
+    final response = json is Map
+        ? Map<String, dynamic>.from(json)
+        : <String, dynamic>{};
     final resultStars = response['fanRatingStars'];
     final resultVip = response['isVip'];
     return account.copyWith(

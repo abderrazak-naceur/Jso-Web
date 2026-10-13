@@ -251,8 +251,11 @@ class _AdminConnectedView extends StatelessWidget {
           // Staff ticket scanner: available to any authenticated admin; the
           // backend endpoints enforce the SuperAdmin/ClubAdmin/MatchManager
           // roles, so a lower-privileged token simply gets a 403 there.
-          if (const {'SuperAdmin', 'ClubAdmin', 'CommunityManager'}
-              .contains(user?.role)) ...[
+          if (const {
+            'SuperAdmin',
+            'ClubAdmin',
+            'CommunityManager',
+          }.contains(user?.role)) ...[
             ElevatedButton.icon(
               onPressed: () =>
                   Navigator.of(context).push(FanAccountsScreen.route()),

@@ -241,9 +241,7 @@ class AccountDashboardScreen extends StatelessWidget {
               title: 'Accesso amministratore',
               subtitle: 'Gestione del club e controllo dei biglietti',
               color: JsoColors.navy,
-              onTap: () => Navigator.of(context).push(
-                AdminLoginScreen.route(),
-              ),
+              onTap: () => Navigator.of(context).push(AdminLoginScreen.route()),
             ),
             const SizedBox(height: JsoSpacing.md),
             Container(

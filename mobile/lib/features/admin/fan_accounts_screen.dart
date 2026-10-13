@@ -71,8 +71,7 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error =
-            'Impossible de charger les supporters. Vérifiez votre accès puis réessayez.';
+        _error = 'Impossible de charger les supporters. Vérifiez votre accès puis réessayez.';
       });
     } catch (_) {
       if (!mounted) return;
@@ -83,17 +82,19 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
     }
   }
 
-  List<AdminFanAccount> get _filtered => _accounts.where((account) {
-    final statusMatch =
-        _status == 'all' ||
-        (_status == 'active' && account.isActive) ||
-        (_status == 'blocked' && !account.isActive);
-    final vipMatch =
-        _vip == 'all' ||
-        (_vip == 'vip' && account.isVip) ||
-        (_vip == 'standard' && !account.isVip);
-    return statusMatch && vipMatch;
-  }).toList(growable: false);
+  List<AdminFanAccount> get _filtered => _accounts
+      .where((account) {
+        final statusMatch =
+            _status == 'all' ||
+            (_status == 'active' && account.isActive) ||
+            (_status == 'blocked' && !account.isActive);
+        final vipMatch =
+            _vip == 'all' ||
+            (_vip == 'vip' && account.isVip) ||
+            (_vip == 'standard' && !account.isVip);
+        return statusMatch && vipMatch;
+      })
+      .toList(growable: false);
 
   Future<void> _toggleStatus(AdminFanAccount account) async {
     final next = !account.isActive;
@@ -136,9 +137,8 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
       setState(() {
         _accounts = _accounts
             .map(
-              (item) => item.id == account.id
-                  ? item.copyWith(isActive: next)
-                  : item,
+              (item) =>
+                  item.id == account.id ? item.copyWith(isActive: next) : item,
             )
             .toList(growable: false);
         _notice = next ? 'Compte réactivé.' : 'Compte bloqué.';
@@ -432,12 +432,11 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
     );
   }
 
-  Widget _filter(String label, bool selected, VoidCallback onTap) =>
-      ChoiceChip(
-        label: Text(label),
-        selected: selected,
-        onSelected: (_) => onTap(),
-      );
+  Widget _filter(String label, bool selected, VoidCallback onTap) => ChoiceChip(
+    label: Text(label),
+    selected: selected,
+    onSelected: (_) => onTap(),
+  );
 
   Widget _message(String message, Color color, IconData icon) => Container(
     margin: const EdgeInsets.only(bottom: JsoSpacing.sm),

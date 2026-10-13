@@ -53,7 +53,9 @@ class JsoApp extends StatelessWidget {
         Provider<PublicApiRepository>.value(value: repository),
         Provider<TicketsRepository>.value(value: ticketsRepository),
         Provider<AdminTicketsRepository>.value(value: adminTicketsRepository),
-        Provider<AdminFanAccountsRepository>.value(value: adminFanAccountsRepository),
+        Provider<AdminFanAccountsRepository>.value(
+          value: adminFanAccountsRepository,
+        ),
         Provider<ClubContentRepository>.value(value: clubContentRepository),
         Provider<ShopRepository>.value(value: shopRepository),
         Provider<MatchCenterRepository>.value(value: matchCenterRepository),
