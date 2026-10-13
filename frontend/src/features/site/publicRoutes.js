@@ -47,8 +47,42 @@ export function slugifyMatchPart(value) {
     .replace(/^-+|-+$/g, '')
 }
 
+function teamDisplayName(value) {
+  if (typeof value === 'string' && value.trim()) return value.trim()
+  if (!value || typeof value !== 'object') return ''
+  const name = value.name || value.Name || value.shortName || value.ShortName || value.displayName || value.DisplayName
+  return typeof name === 'string' ? name.trim() : ''
+}
+
+// Match payloads have existed in a few shapes across the public API and older
+// cached responses. Always resolve the opponent from the explicit field first,
+// then from the home/away team based on whether JSO is playing at home.
+export function matchOpponentName(match) {
+  if (!match || typeof match !== 'object') return ''
+  const directFields = [
+    match.opponentName, match.OpponentName,
+    match.opponentTeamName, match.OpponentTeamName,
+    match.opponent, match.Opponent,
+    match.opponentTeam, match.OpponentTeam,
+    match.opponentShortName, match.OpponentShortName,
+  ]
+  for (const value of directFields) {
+    const name = teamDisplayName(value)
+    if (name) return name
+  }
+
+  const isHome = match.isHome ?? match.IsHome ?? true
+  const opponent = isHome
+    ? (match.awayTeam ?? match.AwayTeam ?? match.awayTeamName ?? match.AwayTeamName)
+    : (match.homeTeam ?? match.HomeTeam ?? match.homeTeamName ?? match.HomeTeamName)
+  return teamDisplayName(opponent)
+}
+
 export function matchSlugFor(match) {
-  return 'jso-vs-' + slugifyMatchPart(match?.opponentName || match?.OpponentName || 'adversaire')
+  const opponent = slugifyMatchPart(matchOpponentName(match))
+  if (opponent) return 'jso-vs-' + opponent
+  const id = String(match?.id || match?.Id || '').replace(/[^a-z0-9]/gi, '').slice(0, 8).toLowerCase()
+  return 'jso-vs-' + (id ? 'match-' + id : 'adversaire')
 }
 
 export function matchSlugFromPath(pathname = window.location.pathname) {
