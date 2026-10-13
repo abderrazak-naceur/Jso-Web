@@ -229,7 +229,7 @@ export default function HomePage({
     ? defaultSectionOrder.filter((key) => key === focusSection && !hiddenSections.includes(key))
     : orderedSections
 
-  const template = ['classic', 'modern-2026', 'stadium', 'magazine'].includes(data.content?.home_template) ? data.content.home_template : 'classic'
+  const template = ['classic', 'modern-2026', 'stadium', 'magazine'].includes(data.content?.home_template) ? data.content.home_template : 'modern-2026'
 
   return (
     <main id="main-content" data-home-template={template} className={'home-template home-template-' + template} tabIndex={-1}>
