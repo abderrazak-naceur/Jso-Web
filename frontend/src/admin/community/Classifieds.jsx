@@ -50,6 +50,7 @@ export default function ClassifiedsModule({ onError }) {
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState(emptyAd)
   const [editing, setEditing] = useState(null)
+  const [modalOpen, setModalOpen] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -62,7 +63,7 @@ export default function ClassifiedsModule({ onError }) {
   }
   useEffect(() => { load() }, [filter])
 
-  function edit(ad) {
+  function edit(ad) { setModalOpen(true);
     setEditing(ad.id)
     setForm({
       title: ad.title || '',
@@ -75,7 +76,7 @@ export default function ClassifiedsModule({ onError }) {
       status: ad.status || 'Pending',
     })
   }
-  function reset() { setForm(emptyAd); setEditing(null) }
+  function reset() { setForm(emptyAd); setEditing(null); setModalOpen(false) }
 
   async function save(e) {
     e.preventDefault()
@@ -108,6 +109,12 @@ export default function ClassifiedsModule({ onError }) {
     catch (err) { onError(err.message) }
   }
 
+  useEffect(() => {
+    if (!modalOpen) return
+    const closeOnEscape = event => { if (event.key === 'Escape') reset() }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [modalOpen])
   return <div className="space-y-6">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
       <div className="flex items-center gap-2"><Megaphone className="text-jso-blue" size={20}/><h2 className="text-xl font-black">Petites annonces</h2></div>
@@ -144,6 +151,12 @@ export default function ClassifiedsModule({ onError }) {
       </div>
       <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
         <h2 className="text-xl font-black">{editing ? 'Modifier l’annonce' : 'Nouvelle annonce'}</h2>
+        {modalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 sm:p-6" onMouseDown={e => { if(e.target===e.currentTarget) reset() }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="admin-form-title" className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-7">
+        <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+          <h2 id="admin-form-title" className="text-xl font-black">{editing ? 'Modifier' : 'Créer'} · annonce</h2>
+          <button type="button" aria-label="Fermer" onClick={reset} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X size={20}/></button>
+        </div>
         <form onSubmit={save} className="mt-5 space-y-3">
           <label className="block text-sm font-bold">Titre
             <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required maxLength="120" placeholder="ex. Vélo enfant en bon état" className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-jso-blue"/>
@@ -177,6 +190,8 @@ export default function ClassifiedsModule({ onError }) {
             {editing && <button type="button" onClick={reset} className="rounded-xl px-4 py-2.5 font-bold text-slate-500 hover:bg-slate-100">Annuler</button>}
           </div>
         </form>
+      </section>
+    </div>}
       </div>
     </div>
   </div>
