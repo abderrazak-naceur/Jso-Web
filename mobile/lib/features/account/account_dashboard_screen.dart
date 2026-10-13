@@ -35,7 +35,7 @@ class AccountDashboardScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: JsoColors.paper,
         appBar: AppBar(
-          title: const Text('Il mio account'),
+          title: const Text('Mon compte'),
           backgroundColor: JsoColors.paper,
           foregroundColor: JsoColors.inkText,
           actions: [
@@ -98,7 +98,7 @@ class AccountDashboardScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'BENVENUTO NELLA FAMIGLIA JSO',
+                              'BIENVENUE DANS LA FAMILLE JSO',
                               style: TextStyle(
                                 color: JsoColors.gold,
                                 fontSize: 10,
@@ -121,7 +121,7 @@ class AccountDashboardScreen extends StatelessWidget {
                             Text(
                               signedIn
                                   ? (user.email)
-                                  : 'La tua passione, la nostra squadra.',
+                                  : 'Votre passion, notre équipe.',
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -149,8 +149,8 @@ class AccountDashboardScreen extends StatelessWidget {
                       const SizedBox(width: JsoSpacing.xs),
                       Text(
                         signedIn
-                            ? 'Account connesso'
-                            : 'Accedi per gestire i tuoi acquisti',
+                            ? 'Compte connecté'
+                            : 'Connectez-vous pour gérer vos achats',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
@@ -174,7 +174,7 @@ class AccountDashboardScreen extends StatelessWidget {
                           ),
                         ),
                         child: const Text(
-                          'Accedi / Registrati',
+                          'Se connecter / S’inscrire',
                           style: TextStyle(fontWeight: FontWeight.w900),
                         ),
                       ),
@@ -185,7 +185,7 @@ class AccountDashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: JsoSpacing.lg),
             const Text(
-              'IL TUO SPAZIO',
+              'VOTRE ESPACE',
               style: TextStyle(
                 color: JsoColors.blue,
                 fontSize: 11,
@@ -196,32 +196,32 @@ class AccountDashboardScreen extends StatelessWidget {
             const SizedBox(height: JsoSpacing.sm),
             _AccountAction(
               icon: Icons.confirmation_number_rounded,
-              title: 'I miei biglietti',
-              subtitle: 'Prenotazioni e QR code dei biglietti confermati',
+              title: 'Mes billets',
+              subtitle: 'Réservations et QR codes des billets confirmés',
               color: const Color(0xFF1769E0),
               onTap: () => _openProtected(
                 context,
                 signedIn,
                 const MyTicketsScreen(),
-                'Accedi per consultare i tuoi biglietti.',
+                'Connectez-vous pour consulter vos billets.',
               ),
             ),
             _AccountAction(
               icon: Icons.receipt_long_rounded,
-              title: 'I miei ordini',
-              subtitle: 'Acquisti e stato degli ordini',
+              title: 'Mes commandes',
+              subtitle: 'Achats et suivi des commandes',
               color: const Color(0xFF00875A),
               onTap: () => _openProtected(
                 context,
                 signedIn,
                 const MyOrdersScreen(),
-                'Accedi per consultare i tuoi ordini.',
+                'Connectez-vous pour consulter vos commandes.',
               ),
             ),
             _AccountAction(
               icon: Icons.person_rounded,
-              title: 'Profilo e sicurezza',
-              subtitle: 'Dati personali, password e privacy',
+              title: 'Profil et sécurité',
+              subtitle: 'Données personnelles, mot de passe et confidentialité',
               color: const Color(0xFF5B36C8),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => const ProfileScreen()),
@@ -229,8 +229,8 @@ class AccountDashboardScreen extends StatelessWidget {
             ),
             _AccountAction(
               icon: Icons.workspace_premium_rounded,
-              title: 'Abbonamenti',
-              subtitle: 'Informazioni sulle iniziative e i servizi del club',
+              title: 'Abonnements',
+              subtitle: 'Les offres et les services du club',
               color: const Color(0xFFB58100),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => const ClubScreen()),
@@ -238,9 +238,10 @@ class AccountDashboardScreen extends StatelessWidget {
             ),
             _AccountAction(
               icon: Icons.admin_panel_settings_rounded,
-              title: 'Accesso amministratore',
-              subtitle: 'Gestione del club e controllo dei biglietti',
-              color: JsoColors.navy,
+              title: 'Administration du club',
+              subtitle: 'Gestion complète, dons, contenus et billets',
+              color: JsoColors.gold,
+              featured: true,
               onTap: () => Navigator.of(context).push(AdminLoginScreen.route()),
             ),
             const SizedBox(height: JsoSpacing.md),
@@ -261,7 +262,7 @@ class AccountDashboardScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Acquisti più sicuri',
+                          'Des achats plus sûrs',
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             color: JsoColors.inkText,
@@ -269,7 +270,7 @@ class AccountDashboardScreen extends StatelessWidget {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'La disponibilità dei biglietti e lo stato delle prenotazioni sono verificati tramite i servizi JSO.',
+                          'La disponibilité des billets et les réservations sont vérifiées par les services JSO.',
                           style: TextStyle(
                             color: JsoColors.inkMuted,
                             height: 1.4,
@@ -287,7 +288,7 @@ class AccountDashboardScreen extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: () => context.read<AuthController>().logout(),
                 icon: const Icon(Icons.logout_rounded),
-                label: const Text('Esci dal tuo account'),
+                label: const Text('Se déconnecter'),
               ),
             ],
           ],
@@ -320,6 +321,7 @@ class _AccountAction extends StatelessWidget {
     required this.subtitle,
     required this.color,
     required this.onTap,
+    this.featured = false,
   });
 
   final IconData icon;
@@ -327,16 +329,17 @@ class _AccountAction extends StatelessWidget {
   final String subtitle;
   final Color color;
   final VoidCallback onTap;
+  final bool featured;
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Colors.white,
+      color: featured ? JsoColors.navy : Colors.white,
       elevation: 0,
       margin: const EdgeInsets.only(bottom: JsoSpacing.sm),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(JsoRadius.card),
-        side: const BorderSide(color: JsoColors.borderLight),
+        side: BorderSide(color: featured ? JsoColors.navy2 : JsoColors.borderLight),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(
@@ -347,7 +350,7 @@ class _AccountAction extends StatelessWidget {
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.10),
+            color: color.withValues(alpha: featured ? 0.17 : 0.10),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Icon(icon, color: color),
@@ -355,7 +358,7 @@ class _AccountAction extends StatelessWidget {
         title: Text(
           title,
           style: const TextStyle(
-            color: JsoColors.inkText,
+            color: featured ? JsoColors.white : JsoColors.inkText,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -363,12 +366,12 @@ class _AccountAction extends StatelessWidget {
           padding: const EdgeInsets.only(top: 4),
           child: Text(
             subtitle,
-            style: const TextStyle(color: JsoColors.inkMuted, fontSize: 12),
+            style: TextStyle(color: featured ? JsoColors.muted : JsoColors.inkMuted, fontSize: 12),
           ),
         ),
-        trailing: const Icon(
+        trailing: Icon(
           Icons.chevron_right_rounded,
-          color: JsoColors.inkMuted,
+          color: featured ? JsoColors.gold : JsoColors.inkMuted,
         ),
         onTap: onTap,
       ),

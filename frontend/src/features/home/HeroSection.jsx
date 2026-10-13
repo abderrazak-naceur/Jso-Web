@@ -1,29 +1,23 @@
 import { ArrowDown, ArrowUpRight } from 'lucide-react'
 import { CLUB_FOUNDED, CLUB_FULL_NAME, CLUB_NAME, CREST_SRC } from '../site/brand'
 
-// Big club crest, always present in the hero right column (as in the previous
-// version): shown on its own when there is no next match, and above the match
-// card when a match is scheduled.
-function HeroCrest() {
-  return (
-    <div className="relative flex flex-col items-center text-center">
-      <div className="absolute inset-8 rounded-full bg-jso-gold/20 blur-3xl" aria-hidden="true" />
-      <img
-        src={CREST_SRC}
-        alt="Blason de la Jeunesse Sportive de Oudhref"
-        className="relative max-h-72 w-auto max-w-[78%] object-contain drop-shadow-[0_24px_38px_rgba(0,0,0,0.7)] sm:max-h-96"
-      />
-      <p className="relative mt-4 rounded-full border border-white/20 bg-jso-navy/75 px-5 py-3 text-xs font-extrabold tracking-[0.2em] text-jso-gold backdrop-blur-md">
-        FIERTÉ · PASSION · OUDHREF
-      </p>
-    </div>
-  )
-}
-
 function HeroMatchCard() {
   return (
-    <div className="relative flex min-h-[360px] min-w-0 flex-col items-center justify-center overflow-hidden px-4 py-8 text-center text-white sm:min-h-[430px]">
-      <HeroCrest />
+    <div className="group relative min-h-[330px] min-w-0 overflow-hidden rounded-[2rem] border border-white/15 bg-jso-navy shadow-2xl shadow-black/25 sm:min-h-[430px]">
+      <img
+        src="/img/Jso-match-amicale/842696586_1810495486651698_3199140919906579583_n.jpg"
+        alt="Les joueurs de la JSO se saluent après une séquence du match amical."
+        fetchPriority="high"
+        className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-jso-navy via-jso-navy/25 to-transparent" aria-hidden="true" />
+      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 sm:p-7">
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-jso-gold">La JSO en action</p>
+          <p className="mt-2 text-xl font-black text-white sm:text-2xl">Fierté · Passion · Oudhref</p>
+        </div>
+        <img src={CREST_SRC} alt="" className="h-14 w-14 shrink-0 rounded-full bg-jso-navy/75 p-2 object-contain ring-1 ring-white/20 backdrop-blur sm:h-16 sm:w-16" />
+      </div>
     </div>
   )
 }

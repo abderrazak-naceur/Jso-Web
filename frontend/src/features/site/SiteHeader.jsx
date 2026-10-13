@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, ChevronDown, LayoutDashboard, LogIn, LogOut, Menu, Newspaper, Settings, ShoppingBag, Ticket, User, UserPlus, X } from 'lucide-react'
+import { ArrowUpRight, ChevronDown, LayoutDashboard, LogIn, LogOut, Menu, Newspaper, Settings, ShieldCheck, ShoppingBag, Ticket, User, UserPlus, X } from 'lucide-react'
 import UserMenu from '../account/UserMenu'
 import { NEWS_LIST_PATH } from '../news/articleUrl'
 import { BILLETTERIE_PATH } from '../tickets/ticketsUrl'
@@ -247,6 +247,10 @@ export default function SiteHeader({
         <div id="jso-mobile-menu" className="absolute inset-x-0 top-full h-[calc(100dvh-4.5rem)] overflow-y-auto overscroll-contain border-t border-white/10 bg-jso-navy lg:hidden">
           <div className="mx-auto max-w-3xl px-5 pb-12 pt-2">
             <nav aria-label={t('common.mainNavigation')}>
+              <a href="/admin" onClick={closeMenus} className="mb-2 flex items-center justify-between gap-3 rounded-2xl border border-jso-gold/40 bg-jso-gold/10 px-4 py-3 font-extrabold text-jso-gold transition hover:bg-jso-gold/20">
+                <span className="flex items-center gap-3"><ShieldCheck size={19} aria-hidden="true" /> Espace administration</span>
+                <ArrowUpRight size={17} aria-hidden="true" />
+              </a>
               <ul className="divide-y divide-white/10">
                 <li>
                   <a href="/" onClick={closeMenus} aria-current={current('home')} className={`flex items-center justify-between py-4 text-xl font-black ${activeId === 'home' ? 'text-jso-gold' : 'text-white'}`}>

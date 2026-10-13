@@ -159,14 +159,14 @@ class _HomeShellState extends State<HomeShell> {
             BottomNavigationBarItem(
               icon: _BottomTabIcon(
                 icon: Icons.confirmation_number_outlined,
-                semanticLabel: 'Biglietti',
+                semanticLabel: 'Billets',
               ),
               activeIcon: _BottomTabIcon(
                 icon: Icons.confirmation_number,
-                semanticLabel: 'Biglietti',
+                semanticLabel: 'Billets',
                 selected: true,
               ),
-              label: 'Biglietti',
+              label: 'Billets',
             ),
             BottomNavigationBarItem(
               icon: _BottomTabIcon(
@@ -183,14 +183,14 @@ class _HomeShellState extends State<HomeShell> {
             BottomNavigationBarItem(
               icon: _BottomTabIcon(
                 icon: Icons.person_outline_rounded,
-                semanticLabel: 'Profilo',
+                semanticLabel: 'Compte',
               ),
               activeIcon: _BottomTabIcon(
                 icon: Icons.person_rounded,
-                semanticLabel: 'Profilo',
+                semanticLabel: 'Compte',
                 selected: true,
               ),
-              label: 'Profilo',
+              label: 'Compte',
             ),
           ],
         ),
@@ -199,7 +199,7 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
-/// Accessible icon with the gold selection marker from the mobile reference.
+/// Accessible icon with a clear, touch-friendly selected state.
 class _BottomTabIcon extends StatelessWidget {
   const _BottomTabIcon({
     required this.icon,
@@ -221,15 +221,12 @@ class _BottomTabIcon extends StatelessWidget {
       child: Tooltip(
         message: semanticLabel,
         child: Container(
-          width: 44,
-          padding: const EdgeInsets.only(top: 7),
+          width: 48,
+          height: 38,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            border: Border(
-              top: BorderSide(
-                color: selected ? JsoColors.gold : Colors.transparent,
-                width: 3,
-              ),
-            ),
+            color: selected ? JsoColors.gold.withValues(alpha: 0.28) : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Icon(icon),
         ),

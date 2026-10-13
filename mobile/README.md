@@ -457,15 +457,25 @@ and the brand-reference redesign.
 
 ## Administrator access and web/mobile parity
 
-The administrator sign-in is also available directly from **Il mio account** via
-**Accesso amministratore**. The entry is intentionally discoverable; access to
+The administrator sign-in is also available directly from **Mon compte** via
+**Administration du club**. The entry is intentionally discoverable; access to
 protected actions must still be enforced by the API and the signed-in
 administrator's role. The existing crest long-press in the Plus/club hub remains
 as a secondary shortcut.
 
-The current mobile administrator area is not yet a complete replacement for
-the web back office. It currently provides administrator sign-in, session
-information, logout, and the staff ticket scanner. See
+After administrator sign-in, **Ouvrir l’administration** opens the full
+role-gated web console within the Android/iPhone app. The app passes the native
+administrator session to the configured JSO website origin only, and clears
+the WebView's local storage when the console closes. The native staff ticket
+scanner and supporter management remain available as quick tools.
+
+Build production packages with `JSO_API_BASE_URL` for the API and
+`JSO_WEB_BASE_URL` for its paired website. The website defaults to
+`https://jso-web.onrender.com`; development builds can override it with
+`--dart-define=JSO_WEB_BASE_URL=...`.
+
+The full console is embedded, but individual web modules have not been rebuilt
+as native Flutter screens. See
 [`docs/MOBILE_WEB_PARITY_AUDIT.md`](../docs/MOBILE_WEB_PARITY_AUDIT.md) for
 the web-to-mobile feature inventory, API coverage gaps, and the implementation
 sequence. Do not treat a web module as mobile-complete until the corresponding

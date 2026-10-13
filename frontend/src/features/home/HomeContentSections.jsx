@@ -171,30 +171,36 @@ export function ArchiveSection({ section, archive }) {
 export function MobileSection({ section }) {
   return (
     <section id="mobile" aria-labelledby="mobile-title" className="overflow-hidden bg-jso-navy text-white">
-      <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 py-20 lg:grid-cols-[0.7fr_1.3fr] lg:px-8">
+      <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 py-16 lg:grid-cols-[0.85fr_1.15fr] lg:px-8 lg:py-24">
         <div>
-          <SectionHeading section={section} title="La JSO" muted="dans ta poche." description="Le Match Center, les actualités et la vie du club dans une expérience pensée pour iOS et Android." light />
-          <div className="mt-6 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap">
+          <span className="inline-flex rounded-full border border-jso-gold/40 bg-jso-gold/10 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-jso-gold">JSO Mobile</span>
+          <div className="mt-5"><SectionHeading section={section} title="La JSO" muted="dans ta poche." description="Match Center, billets, actualités et vie du club sur votre téléphone. Les responsables peuvent aussi gérer le club directement dans l’application." light /></div>
+          <div className="mt-7 grid gap-3 sm:grid-cols-2">
             <a
               href="https://github.com/abderrazak-naceur/Jso-Web/releases/download/android-latest/app-release.apk"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy transition hover:bg-white"
+              className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-jso-gold px-5 py-3 text-center font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-white"
             >
-              <Download size={18} aria-hidden="true" /> Télécharger pour Android (APK)
+              <Download size={18} aria-hidden="true" /> Android · APK de test
             </a>
             <a
               href="https://github.com/abderrazak-naceur/Jso-Web/actions/workflows/ios-test-build.yml"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/35 px-6 py-3 font-extrabold text-white transition hover:bg-white hover:text-jso-navy"
+              className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-white/35 px-5 py-3 text-center font-extrabold text-white transition hover:bg-white hover:text-jso-navy"
             >
-              <Apple size={18} aria-hidden="true" /> Build iPhone (test)
+              <Apple size={18} aria-hidden="true" /> iPhone · builds de test
             </a>
           </div>
-          <p className="mt-3 max-w-xl text-xs leading-5 text-white/60">
-            Sur iPhone, l’installation directe nécessite une version signée par Apple. Consultez la page iOS pour vérifier les fichiers de test disponibles.
+          <p className="mt-4 max-w-xl text-sm leading-6 text-white/65">
+            La version iPhone n’est pas encore distribuée sur l’App Store. Son installation nécessite une build signée par Apple.
           </p>
+          <a href="/admin" className="mt-7 inline-flex items-center gap-2 text-sm font-extrabold text-jso-gold underline decoration-jso-gold/45 underline-offset-4 hover:text-white">Vous gérez le club ? Ouvrir l’administration <ArrowUpRight size={16} aria-hidden="true" /></a>
         </div>
-        <div className="grid grid-cols-2 items-end gap-3 sm:gap-6">
-          <img src="/jso-flutter-home-concept.png" alt="Aperçu de l’écran d’accueil de l’application JSO" loading="lazy" className="w-full rounded-[1.5rem] shadow-2xl shadow-black/35" />
-          <img src="/jso-flutter-match-concept.png" alt="Aperçu du Match Center de l’application JSO" loading="lazy" className="w-full rounded-[1.5rem] shadow-2xl shadow-black/35" />
+        <div className="relative mx-auto w-full max-w-[38rem] rounded-[2.5rem] border border-white/10 bg-white/5 px-4 pb-4 pt-7 shadow-2xl shadow-black/25 sm:px-8 sm:pb-8">
+          <div className="absolute inset-x-8 top-0 h-28 rounded-full bg-jso-blue/40 blur-3xl" aria-hidden="true" />
+          <p className="relative mb-5 text-center text-xs font-black uppercase tracking-[0.2em] text-jso-gold">Une expérience pour les supporters</p>
+          <div className="relative grid grid-cols-2 items-end gap-3 sm:gap-6">
+            <img src="/jso-flutter-home-concept.png" alt="Aperçu de l’accueil de l’application JSO" loading="lazy" className="w-full rounded-[1.5rem] border border-white/15 shadow-2xl shadow-black/35" />
+            <img src="/jso-flutter-match-concept.png" alt="Aperçu du Match Center sur mobile" loading="lazy" className="w-full rounded-[1.5rem] border border-white/15 shadow-2xl shadow-black/35" />
+          </div>
         </div>
       </div>
     </section>

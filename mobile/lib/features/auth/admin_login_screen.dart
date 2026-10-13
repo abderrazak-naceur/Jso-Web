@@ -3,14 +3,13 @@ import 'package:provider/provider.dart';
 
 import '../../core/config/jso_theme.dart';
 import '../../shared/widgets/jso_crest.dart';
+import '../admin/admin_web_screen.dart';
 import '../admin/fan_accounts_screen.dart';
 import '../tickets/staff_scanner_screen.dart';
 import 'admin_auth_controller.dart';
 import 'login_screen.dart' show validateEmail;
 
-/// Hidden administrator area, reached via a long-press on the JSO crest in the
-/// "Plus" tab. Shows a login form when signed out, and a compact panel with
-/// the connected admin's role and a logout button when signed in.
+/// Administrator entry from the account area (also available via the crest).
 class AdminLoginScreen extends StatelessWidget {
   const AdminLoginScreen({super.key});
 
@@ -163,7 +162,7 @@ class _AdminLoginFormState extends State<_AdminLoginForm> {
   }
 }
 
-/// Compact panel shown once an administrator is authenticated.
+/// Native entry to the full administrator console and staff tools.
 class _AdminConnectedView extends StatelessWidget {
   const _AdminConnectedView();
 
@@ -247,6 +246,49 @@ class _AdminConnectedView extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: JsoSpacing.lg),
+          Container(
+            padding: const EdgeInsets.all(JsoSpacing.lg),
+            decoration: BoxDecoration(
+              color: JsoColors.gold,
+              borderRadius: BorderRadius.circular(JsoRadius.largeCard),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.dashboard_customize_rounded, color: JsoColors.navy, size: 30),
+                const SizedBox(height: JsoSpacing.md),
+                const Text(
+                  'Gérer le club depuis l’application',
+                  style: TextStyle(color: JsoColors.navy, fontSize: 21, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: JsoSpacing.sm),
+                const Text(
+                  'Actualités, matchs, billetterie, dons, boutique et configuration selon vos droits.',
+                  style: TextStyle(color: JsoColors.navy, height: 1.4),
+                ),
+                const SizedBox(height: JsoSpacing.md),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () => Navigator.of(context).push(AdminWebScreen.route()),
+                    icon: const Icon(Icons.arrow_forward_rounded),
+                    label: const Text('Ouvrir l’administration'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: JsoColors.navy,
+                      foregroundColor: JsoColors.white,
+                      padding: const EdgeInsets.symmetric(vertical: JsoSpacing.md),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: JsoSpacing.lg),
+          const Text(
+            'OUTILS RAPIDES',
+            style: TextStyle(color: JsoColors.gold, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.5),
+          ),
           const SizedBox(height: JsoSpacing.md),
           // Staff ticket scanner: available to any authenticated admin; the
           // backend endpoints enforce the SuperAdmin/ClubAdmin/MatchManager
@@ -278,13 +320,7 @@ class _AdminConnectedView extends StatelessWidget {
             ),
             const SizedBox(height: JsoSpacing.md),
           ],
-          const Text(
-            'La gestion complète du club se fait depuis le back office web. '
-            'D’autres actions administrateur arriveront prochainement dans '
-            'l’application.',
-            style: TextStyle(color: JsoColors.muted, height: 1.4),
-          ),
-          const SizedBox(height: JsoSpacing.lg),
+          const SizedBox(height: JsoSpacing.md),
           OutlinedButton.icon(
             onPressed: () async {
               await context.read<AdminAuthController>().logout();

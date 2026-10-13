@@ -42,6 +42,7 @@ jobs:
         run: >-
           flutter build ipa --release --no-codesign
           --dart-define=JSO_API_BASE_URL=https://jso-api.onrender.com/api
+          --dart-define=JSO_WEB_BASE_URL=https://jso-web.onrender.com
 
       - name: Name unsigned IPA
         run: |
@@ -52,7 +53,7 @@ jobs:
 
       - name: Package iOS Simulator app
         run: |
-          flutter build ios --simulator --debug --dart-define=JSO_API_BASE_URL=https://jso-api.onrender.com/api
+          flutter build ios --simulator --debug --dart-define=JSO_API_BASE_URL=https://jso-api.onrender.com/api --dart-define=JSO_WEB_BASE_URL=https://jso-web.onrender.com
           cd build/ios/iphonesimulator
           ditto -c -k --sequesterRsrc --keepParent Runner.app JSO-iOS-Simulator.zip
 

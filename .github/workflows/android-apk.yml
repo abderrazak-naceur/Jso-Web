@@ -47,6 +47,7 @@ jobs:
         run: >-
           flutter build apk --release
           --dart-define=JSO_API_BASE_URL=https://jso-api.onrender.com/api
+          --dart-define=JSO_WEB_BASE_URL=https://jso-web.onrender.com
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

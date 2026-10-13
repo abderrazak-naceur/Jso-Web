@@ -131,6 +131,7 @@ function AdminDashboard({ user, onLogout }) {
   function logout() {
     localStorage.removeItem('jso_admin_token')
     localStorage.removeItem('jso_admin_user')
+    window.JsoAdminBridge?.postMessage('logout')
     onLogout()
   }
 
@@ -268,7 +269,10 @@ function DashboardStats({ stats, loading, onRetry }) {
 export default function AdminApp() {
   const [user,setUser]=useState(()=>{try{return JSON.parse(localStorage.getItem('jso_admin_user')||'null')}catch{return null}})
   useEffect(() => {
-    const onSessionExpired = () => setUser(null)
+    const onSessionExpired = () => {
+      setUser(null)
+      window.JsoAdminBridge?.postMessage('logout')
+    }
     window.addEventListener('jso:admin-session-expired', onSessionExpired)
     return () => window.removeEventListener('jso:admin-session-expired', onSessionExpired)
   }, [])
