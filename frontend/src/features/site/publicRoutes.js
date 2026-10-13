@@ -61,6 +61,22 @@ function teamShortName(value) {
   return typeof name === 'string' ? name.trim() : ''
 }
 
+const KNOWN_OPPONENT_ABBREVIATIONS = new Map([
+  ['stade sportif sidi makhlouf', 'SSSM'],
+  ['stade sportif de sidi makhlouf', 'SSSM'],
+  ['الملعب الرياضي بسيدي مخلوف', 'SSSM'],
+])
+
+function knownOpponentAbbreviation(name) {
+  const key = String(name || '')
+    .normalize('NFD')
+    .replace(/[\\u0300-\\u036f]/g, '')
+    .toLocaleLowerCase()
+    .replace(/\\s+/g, ' ')
+    .trim()
+  return KNOWN_OPPONENT_ABBREVIATIONS.get(key) || ''
+}
+
 // Prefer the club's official short name/abbreviation for the URL slug, while
 // keeping the full opponent name available for display in the match UI.
 export function matchOpponentShortName(match) {
@@ -107,7 +123,8 @@ export function matchOpponentName(match) {
 }
 
 export function matchSlugFor(match) {
-  const opponent = slugifyMatchPart(matchOpponentShortName(match) || matchOpponentName(match))
+  const fullName = matchOpponentName(match)
+  const opponent = slugifyMatchPart(matchOpponentShortName(match) || knownOpponentAbbreviation(fullName) || fullName)
   if (opponent) return 'jso-vs-' + opponent
   const id = String(match?.id || match?.Id || '').replace(/[^a-z0-9]/gi, '').slice(0, 8).toLowerCase()
   return 'jso-vs-' + (id ? 'match-' + id : 'adversaire')
