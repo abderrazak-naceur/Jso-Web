@@ -1,22 +1,15 @@
 import { ArrowDown, ArrowUpRight } from 'lucide-react'
 import { CLUB_FOUNDED, CLUB_FULL_NAME, CLUB_NAME, CREST_SRC } from '../site/brand'
 
-function HeroMatchCard() {
+function HeroClubEmblem() {
   return (
-    <div className="group relative min-h-[330px] min-w-0 overflow-hidden rounded-[2rem] border border-white/15 bg-jso-navy shadow-2xl shadow-black/25 sm:min-h-[430px]">
-      <img
-        src="/img/Jso-match-amicale/842696586_1810495486651698_3199140919906579583_n.jpg"
-        alt="Les joueurs de la JSO se saluent après une séquence du match amical."
-        fetchPriority="high"
-        className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-jso-navy via-jso-navy/25 to-transparent" aria-hidden="true" />
-      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 sm:p-7">
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-jso-gold">La JSO en action</p>
-          <p className="mt-2 text-xl font-black text-white sm:text-2xl">Fierté · Passion · Oudhref</p>
-        </div>
-        <img src={CREST_SRC} alt="" className="h-14 w-14 shrink-0 rounded-full bg-jso-navy/75 p-2 object-contain ring-1 ring-white/20 backdrop-blur sm:h-16 sm:w-16" />
+    <div className="relative grid min-h-[330px] min-w-0 place-items-center overflow-hidden rounded-[2rem] border border-white/15 bg-gradient-to-br from-[#102b50] via-jso-navy to-[#061329] shadow-2xl shadow-black/25 sm:min-h-[430px]">
+      <div className="absolute left-1/2 top-1/2 h-[78%] aspect-square -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" aria-hidden="true" />
+      <div className="absolute left-1/2 top-1/2 h-[62%] aspect-square -translate-x-1/2 -translate-y-1/2 rounded-full border border-jso-gold/20" aria-hidden="true" />
+      <img src={CREST_SRC} alt="Emblème de la Jeunesse Sportive de Oudhref" fetchPriority="high" className="relative z-10 h-52 w-52 rounded-full object-contain drop-shadow-[0_20px_45px_rgba(0,0,0,0.45)] sm:h-72 sm:w-72 lg:h-80 lg:w-80" />
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-jso-navy/95 to-transparent px-5 pb-5 pt-16 text-center sm:pb-7">
+        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-jso-gold">Notre blason · Notre ville</p>
+        <p className="mt-2 text-xl font-black text-white sm:text-2xl">Fierté · Passion · Oudhref</p>
       </div>
     </div>
   )
@@ -54,7 +47,7 @@ export default function HeroSection({ content, club }) {
             <span><strong className="text-white">Depuis {CLUB_FOUNDED}</strong> · Fierté locale</span>
           </div>
         </div>
-        <HeroMatchCard />
+        <HeroClubEmblem />
       </div>
     </section>
   )
