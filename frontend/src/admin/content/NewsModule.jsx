@@ -56,7 +56,14 @@ export default function NewsModule({ onError }) {
           <h2 id="admin-form-title" className="text-xl font-black">{editing ? 'Modifier' : 'Créer'} · article</h2>
           <button type="button" aria-label="Fermer" onClick={reset} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X size={20}/></button>
         </div>
-        <form onSubmit={save} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 space-y-3"><h2 className="text-xl font-black">{editing?'Modifier l’article':'Nouvel article'}</h2><Field label="Titre" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required/><Field label="Slug" value={form.slug} onChange={e=>setForm({...form,slug:e.target.value})} required/><Field label="Extrait" value={form.excerpt} onChange={e=>setForm({...form,excerpt:e.target.value})}/><label className="block text-sm font-bold">Contenu<textarea value={form.body} onChange={e=>setForm({...form,body:e.target.value})} rows="9" className="mt-2 w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-jso-blue"/></label><Field label="Cover URL" value={form.coverImageUrl} onChange={e=>setForm({...form,coverImageUrl:e.target.value})}/><button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/>Enregistrer</button></form>
+        <form onSubmit={save} className="mt-5 space-y-3">
+          <Field label="Titre" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required/>
+          <Field label="Slug" value={form.slug} onChange={e=>setForm({...form,slug:e.target.value})} required/>
+          <Field label="Extrait" value={form.excerpt} onChange={e=>setForm({...form,excerpt:e.target.value})}/>
+          <label className="block text-sm font-bold">Contenu<textarea value={form.body} onChange={e=>setForm({...form,body:e.target.value})} rows="9" className="mt-2 w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-jso-blue"/></label>
+          <Field label="Cover URL" value={form.coverImageUrl} onChange={e=>setForm({...form,coverImageUrl:e.target.value})}/>
+          <div className="flex justify-end gap-2 pt-2"><button type="button" onClick={reset} className="rounded-xl border border-slate-200 px-4 py-2.5 font-bold text-slate-600">Annuler</button><button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/>Enregistrer</button></div>
+        </form>
       </section>
     </div>}
   </div>
