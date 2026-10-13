@@ -10,7 +10,7 @@ const int kMinPasswordLength = 12;
 
 /// French registration form for a new fan account.
 ///
-/// Collects email, display name and password, mirrors the backend rule that a
+/// Collects the supporter's identity and contact details, mirrors the backend rule that a
 /// password must be at least [kMinPasswordLength] characters (client-side hint
 /// plus validation), and still surfaces the server-provided error on a 400. A
 /// 409 conflict is shown as "Un compte existe déjà avec cet email.". On success
@@ -25,8 +25,12 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final _displayNameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  DateTime? _birthDate;
+  bool _anniversaryOptIn = false;
 
   bool _submitting = false;
   String? _error;
@@ -34,7 +38,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     _emailController.dispose();
-    _displayNameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -44,12 +50,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+    if (_birthDate == null) {
+      setState(() => _error = 'La date de naissance est obligatoire.');
+      return;
+    }
     final auth = context.read<AuthController>();
     setState(() => _submitting = true);
     final ok = await auth.register(
       _emailController.text.trim(),
-      _displayNameController.text.trim(),
+      '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
       _passwordController.text,
+      firstName: _firstNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
+      birthDate: _birthDate,
+      phoneNumber: _phoneController.text.trim(),
+      anniversaryOptIn: _anniversaryOptIn,
     );
     if (!mounted) {
       return;
@@ -60,6 +75,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } else {
       setState(() => _error = frenchAuthError(auth.errorMessage));
     }
+  }
+
+  Future<void> _pickBirthDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _birthDate ?? DateTime(now.year - 20, 1, 1),
+      firstDate: DateTime(1900),
+      lastDate: now,
+      helpText: 'Date de naissance',
+    );
+    if (picked != null) setState(() => _birthDate = picked);
   }
 
   @override
@@ -83,6 +110,82 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: JsoSpacing.lg),
+                const Text(
+                  'Vos informations personnelles',
+                  style: TextStyle(
+                    color: JsoColors.gold,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: JsoSpacing.md),
+                TextFormField(
+                  controller: _firstNameController,
+                  enabled: !_submitting,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.givenName],
+                  decoration: const InputDecoration(labelText: 'Prénom'),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Le prénom est obligatoire.'
+                      : null,
+                ),
+                const SizedBox(height: JsoSpacing.md),
+                TextFormField(
+                  controller: _lastNameController,
+                  enabled: !_submitting,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.familyName],
+                  decoration: const InputDecoration(labelText: 'Nom'),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Le nom est obligatoire.'
+                      : null,
+                ),
+                const SizedBox(height: JsoSpacing.md),
+                OutlinedButton.icon(
+                  onPressed: _submitting ? null : _pickBirthDate,
+                  icon: const Icon(Icons.cake_outlined),
+                  label: Text(
+                    _birthDate == null
+                        ? 'Choisir la date de naissance'
+                        : '${_birthDate!.day.toString().padLeft(2, '0')}/${_birthDate!.month.toString().padLeft(2, '0')}/${_birthDate!.year}',
+                  ),
+                ),
+                const SizedBox(height: JsoSpacing.md),
+                TextFormField(
+                  controller: _phoneController,
+                  enabled: !_submitting,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.telephoneNumber],
+                  decoration: const InputDecoration(
+                    labelText: 'Téléphone',
+                    hintText: '+216 XX XXX XXX',
+                  ),
+                  validator: (value) =>
+                      (value ?? '').replaceAll(RegExp(r'\D'), '').length < 7
+                      ? 'Saisissez un numéro de téléphone valide.'
+                      : null,
+                ),
+                const SizedBox(height: JsoSpacing.md),
+                SwitchListTile(
+                  value: _anniversaryOptIn,
+                  onChanged: _submitting
+                      ? null
+                      : (value) => setState(() => _anniversaryOptIn = value),
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Recevoir un message d’anniversaire'),
+                  subtitle: const Text(
+                    'Facultatif, modifiable dans votre profil.',
+                  ),
+                ),
+                const SizedBox(height: JsoSpacing.lg),
+                const Text(
+                  'Connexion',
+                  style: TextStyle(
+                    color: JsoColors.gold,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: JsoSpacing.md),
                 if (_error != null) ...[
                   _RegisterErrorBanner(message: _error!),
                   const SizedBox(height: JsoSpacing.md),
@@ -97,17 +200,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     labelText: 'Adresse e-mail',
                   ),
                   validator: validateEmail,
-                ),
-                const SizedBox(height: JsoSpacing.md),
-                TextFormField(
-                  controller: _displayNameController,
-                  enabled: !_submitting,
-                  textInputAction: TextInputAction.next,
-                  autofillHints: const [AutofillHints.name],
-                  decoration: const InputDecoration(labelText: "Nom affiché"),
-                  validator: (value) => (value == null || value.trim().isEmpty)
-                      ? 'Le nom affiché est obligatoire.'
-                      : null,
                 ),
                 const SizedBox(height: JsoSpacing.md),
                 TextFormField(

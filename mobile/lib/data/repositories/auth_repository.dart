@@ -28,11 +28,24 @@ class AuthRepository {
     required String email,
     required String displayName,
     required String password,
-  }) => _post('/account/register', {
-    'email': email,
-    'displayName': displayName,
-    'password': password,
-  });
+    String? firstName,
+    String? lastName,
+    DateTime? birthDate,
+    String? phoneNumber,
+    bool anniversaryOptIn = false,
+  }) {
+    final body = <String, Object?>{
+      'email': email,
+      'displayName': displayName,
+      'password': password,
+      'anniversaryOptIn': anniversaryOptIn,
+    };
+    if (firstName != null) body['firstName'] = firstName;
+    if (lastName != null) body['lastName'] = lastName;
+    if (birthDate != null) body['birthDate'] = _dateOnly(birthDate);
+    if (phoneNumber != null) body['phoneNumber'] = phoneNumber;
+    return _post('/account/register', body);
+  }
 
   /// `POST /api/account/login` — exchanges credentials for a JWT.
   Future<AuthResult> login({required String email, required String password}) =>
@@ -49,17 +62,23 @@ class AuthRepository {
   /// `PUT /api/account/me` — updates the signed-in fan's profile (idea A3).
   ///
   /// Every field is optional so partial updates are supported. [birthDate] is
-  /// personal data retained only while [anniversaryOptIn] is on; sending the
-  /// opt-in off clears the stored date server-side. Returns the refreshed
+  /// personal data in the profile; anniversary messages use a separate opt-in.
+  /// Returns the refreshed
   /// [FanUser]. A 400 surfaces the backend message via [ApiHttpException].
   Future<FanUser> updateProfile(
     String token, {
     String? displayName,
+    String? firstName,
+    String? lastName,
+    String? phoneNumber,
     DateTime? birthDate,
     bool? anniversaryOptIn,
   }) async {
     final body = <String, Object?>{};
     if (displayName != null) body['displayName'] = displayName;
+    if (firstName != null) body['firstName'] = firstName;
+    if (lastName != null) body['lastName'] = lastName;
+    if (phoneNumber != null) body['phoneNumber'] = phoneNumber;
     if (birthDate != null) body['birthDate'] = _dateOnly(birthDate);
     if (anniversaryOptIn != null) body['anniversaryOptIn'] = anniversaryOptIn;
     final json = await _client.putJson(

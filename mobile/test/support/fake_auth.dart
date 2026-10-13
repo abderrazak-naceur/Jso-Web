@@ -65,6 +65,11 @@ class FakeAuthRepository extends AuthRepository {
     required String email,
     required String displayName,
     required String password,
+    String? firstName,
+    String? lastName,
+    DateTime? birthDate,
+    String? phoneNumber,
+    bool anniversaryOptIn = false,
   }) async {
     if (registerError != null) {
       throw registerError!;
@@ -95,11 +100,17 @@ class FakeAuthRepository extends AuthRepository {
   Future<FanUser> updateProfile(
     String token, {
     String? displayName,
+    String? firstName,
+    String? lastName,
+    String? phoneNumber,
     DateTime? birthDate,
     bool? anniversaryOptIn,
   }) async {
     profileUpdates.add({
       'displayName': displayName,
+      'firstName': firstName,
+      'lastName': lastName,
+      'phoneNumber': phoneNumber,
       'birthDate': birthDate,
       'anniversaryOptIn': anniversaryOptIn,
     });

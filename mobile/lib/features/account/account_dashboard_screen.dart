@@ -7,6 +7,7 @@ import '../auth/admin_login_screen.dart';
 import '../auth/auth_controller.dart';
 import '../auth/profile_screen.dart';
 import '../shop/my_orders_screen.dart';
+import '../shop/shop_screen.dart';
 import '../tickets/my_tickets_screen.dart';
 import '../club/club_screen.dart';
 
@@ -195,6 +196,14 @@ class AccountDashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: JsoSpacing.sm),
             _AccountAction(
+              icon: Icons.admin_panel_settings_rounded,
+              title: 'Administration du club',
+              subtitle: 'Gestion complète, dons, contenus et billets',
+              color: JsoColors.gold,
+              featured: true,
+              onTap: () => Navigator.of(context).push(AdminLoginScreen.route()),
+            ),
+            _AccountAction(
               icon: Icons.confirmation_number_rounded,
               title: 'Mes billets',
               subtitle: 'Réservations et QR codes des billets confirmés',
@@ -229,20 +238,19 @@ class AccountDashboardScreen extends StatelessWidget {
             ),
             _AccountAction(
               icon: Icons.workspace_premium_rounded,
-              title: 'Abonnements',
-              subtitle: 'Les offres et les services du club',
+              title: 'Explorer le club',
+              subtitle: 'Équipe, agenda, médias, documents et partenaires',
               color: const Color(0xFFB58100),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => const ClubScreen()),
               ),
             ),
             _AccountAction(
-              icon: Icons.admin_panel_settings_rounded,
-              title: 'Administration du club',
-              subtitle: 'Gestion complète, dons, contenus et billets',
-              color: JsoColors.gold,
-              featured: true,
-              onTap: () => Navigator.of(context).push(AdminLoginScreen.route()),
+              icon: Icons.storefront_rounded,
+              title: 'Boutique officielle',
+              subtitle: 'Maillots et articles de la JSO',
+              color: const Color(0xFF126D8F),
+              onTap: () => Navigator.of(context).push(ShopScreen.route()),
             ),
             const SizedBox(height: JsoSpacing.md),
             Container(

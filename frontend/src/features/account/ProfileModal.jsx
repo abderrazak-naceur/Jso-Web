@@ -17,6 +17,9 @@ export default function ProfileModal({ open, token, user, onClose, onUpdated }) 
   const [error, setError] = useState('')
   const [profile, setProfile] = useState(null)
   const [displayName, setDisplayName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [anniversaryOptIn, setAnniversaryOptIn] = useState(false)
   const [birthDate, setBirthDate] = useState('')
   const [profilePhoto, setProfilePhoto] = useState(getProfilePhoto)
@@ -34,6 +37,9 @@ export default function ProfileModal({ open, token, user, onClose, onUpdated }) 
         if (cancelled) return
         setProfile(data)
         setDisplayName(data?.displayName ?? '')
+        setFirstName(data?.firstName ?? '')
+        setLastName(data?.lastName ?? '')
+        setPhoneNumber(data?.phoneNumber ?? '')
         setAnniversaryOptIn(Boolean(data?.anniversaryOptIn))
         setBirthDate(data?.birthDate ?? '')
       })
@@ -70,9 +76,11 @@ export default function ProfileModal({ open, token, user, onClose, onUpdated }) 
     try {
       const updated = await accountApi.updateProfile(
         {
-          displayName,
+          firstName,
+          lastName,
+          phoneNumber,
           anniversaryOptIn,
-          birthDate: anniversaryOptIn ? birthDate || null : null,
+          birthDate: birthDate || null,
         },
         token,
       )
@@ -98,7 +106,7 @@ export default function ProfileModal({ open, token, user, onClose, onUpdated }) 
       aria-modal="true"
       aria-label="Mon profil"
     >
-      <div className="w-full max-w-md rounded-[2rem] bg-white p-8 text-jso-ink shadow-2xl">
+      <div className="max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-[2rem] bg-white p-5 text-jso-ink shadow-2xl sm:p-8">
         <div className="flex items-start justify-between gap-5">
           <div>
             <p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">MON PROFIL</p>
@@ -179,18 +187,13 @@ export default function ProfileModal({ open, token, user, onClose, onUpdated }) 
               />
             </div>
 
-            <div>
-              <label className="text-sm font-bold" htmlFor="profile-display-name">
-                Nom affiché
-              </label>
-              <input
-                id="profile-display-name"
-                type="text"
-                required
-                value={displayName}
-                onChange={(event) => setDisplayName(event.target.value)}
-                className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue"
-              />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div><label className="text-sm font-bold" htmlFor="profile-first-name">Prénom</label><input id="profile-first-name" required maxLength={100} autoComplete="given-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></div>
+              <div><label className="text-sm font-bold" htmlFor="profile-last-name">Nom</label><input id="profile-last-name" required maxLength={100} autoComplete="family-name" value={lastName} onChange={(event) => setLastName(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div><label className="text-sm font-bold" htmlFor="profile-birth-date">Date de naissance</label><input id="profile-birth-date" type="date" value={birthDate} min="1900-01-01" max={new Date().toISOString().slice(0,10)} onChange={(event) => setBirthDate(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></div>
+              <div><label className="text-sm font-bold" htmlFor="profile-phone">Téléphone</label><input id="profile-phone" type="tel" value={phoneNumber} minLength={7} maxLength={32} autoComplete="tel" onChange={(event) => setPhoneNumber(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></div>
             </div>
 
             <label className="flex items-center gap-3 text-sm font-semibold">
@@ -202,20 +205,6 @@ export default function ProfileModal({ open, token, user, onClose, onUpdated }) 
               Recevoir un message d’anniversaire
             </label>
 
-            {anniversaryOptIn && (
-              <div>
-                <label className="text-sm font-bold" htmlFor="profile-birth-date">
-                  Date de naissance
-                </label>
-                <input
-                  id="profile-birth-date"
-                  type="date"
-                  value={birthDate}
-                  onChange={(event) => setBirthDate(event.target.value)}
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue"
-                />
-              </div>
-            )}
 
             <p className="text-sm font-semibold text-slate-500">
               Membre depuis&nbsp;: {formatMemberSince(memberSince)}

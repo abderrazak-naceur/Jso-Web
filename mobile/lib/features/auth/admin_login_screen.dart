@@ -297,7 +297,43 @@ class _AdminConnectedView extends StatelessWidget {
           ),
           const SizedBox(height: JsoSpacing.lg),
           const Text(
-            'OUTILS RAPIDES',
+            'ACCÈS DIRECT',
+            style: TextStyle(
+              color: JsoColors.gold,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: JsoSpacing.md),
+          Wrap(
+            spacing: JsoSpacing.sm,
+            runSpacing: JsoSpacing.sm,
+            children: _adminShortcuts
+                .where((shortcut) => shortcut.roles.contains(user?.role))
+                .map(
+                  (shortcut) => ActionChip(
+                    avatar: Icon(
+                      shortcut.icon,
+                      size: 18,
+                      color: JsoColors.gold,
+                    ),
+                    label: Text(shortcut.label),
+                    backgroundColor: JsoColors.navy3,
+                    side: const BorderSide(color: JsoColors.border),
+                    labelStyle: const TextStyle(
+                      color: JsoColors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    onPressed: () => Navigator.of(context)
+                        .push(AdminWebScreen.route(section: shortcut.section)),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: JsoSpacing.lg),
+          const Text(
+            'OUTILS SUR LE TERRAIN',
             style: TextStyle(
               color: JsoColors.gold,
               fontSize: 12,
@@ -374,6 +410,67 @@ class _AdminConnectedView extends StatelessWidget {
     }
   }
 }
+
+class _AdminShortcut {
+  const _AdminShortcut(this.section, this.label, this.icon, this.roles);
+
+  final String section;
+  final String label;
+  final IconData icon;
+  final Set<String> roles;
+}
+
+const _adminShortcuts = [
+  _AdminShortcut('tickets', 'Billetterie', Icons.confirmation_number_rounded, {
+    'SuperAdmin',
+    'ClubAdmin',
+    'MatchManager',
+    'TicketSeller',
+    'TicketSupervisor',
+  }),
+  _AdminShortcut('matches', 'Matchs', Icons.sports_soccer_rounded, {
+    'SuperAdmin',
+    'ClubAdmin',
+    'MatchManager',
+  }),
+  _AdminShortcut('news', 'Actualités', Icons.article_rounded, {
+    'SuperAdmin',
+    'ClubAdmin',
+    'Editor',
+  }),
+  _AdminShortcut('donations', 'Dons', Icons.volunteer_activism_rounded, {
+    'SuperAdmin',
+    'ClubAdmin',
+    'FinanceManager',
+  }),
+  _AdminShortcut('cash-donations', 'Dons en espèces', Icons.payments_rounded, {
+    'SuperAdmin',
+    'ClubAdmin',
+    'FinanceManager',
+    'ShopManager',
+    'TicketSeller',
+    'TicketSupervisor',
+  }),
+  _AdminShortcut('orders', 'Commandes', Icons.receipt_long_rounded, {
+    'SuperAdmin',
+    'ClubAdmin',
+    'ShopManager',
+  }),
+  _AdminShortcut('media', 'Médias', Icons.photo_library_rounded, {
+    'SuperAdmin',
+    'ClubAdmin',
+    'Editor',
+  }),
+  _AdminShortcut('fan-accounts', 'Supporters', Icons.groups_rounded, {
+    'SuperAdmin',
+    'ClubAdmin',
+    'CommunityManager',
+  }),
+  _AdminShortcut('settings', 'Configuration', Icons.settings_rounded, {
+    'SuperAdmin',
+    'ClubAdmin',
+  }),
+];
 
 class _AdminErrorBanner extends StatelessWidget {
   const _AdminErrorBanner({required this.message});

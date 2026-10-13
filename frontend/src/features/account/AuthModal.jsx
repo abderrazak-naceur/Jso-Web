@@ -5,7 +5,11 @@ import { accountApi } from '../../lib/api'
 export default function AuthModal({ open, initialMode = 'login', onClose, onAuthenticated }) {
   const [mode, setMode] = useState(initialMode)
   const [email, setEmail] = useState('')
-  const [displayName, setDisplayName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [birthDate, setBirthDate] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [anniversaryOptIn, setAnniversaryOptIn] = useState(false)
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -22,7 +26,16 @@ export default function AuthModal({ open, initialMode = 'login', onClose, onAuth
     setError('')
     try {
       const result = isRegister
-        ? await accountApi.register({ email, displayName, password })
+        ? await accountApi.register({
+            email: email.trim(),
+            displayName: `${firstName.trim()} ${lastName.trim()}`,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            birthDate,
+            phoneNumber: phoneNumber.trim(),
+            anniversaryOptIn,
+            password,
+          })
         : await accountApi.login({ email, password })
       onAuthenticated?.(result)
       onClose?.()
@@ -40,12 +53,12 @@ export default function AuthModal({ open, initialMode = 'login', onClose, onAuth
 
   return (
     <div
-      className="fixed inset-0 z-[80] grid place-items-center bg-jso-navy/60 p-5 backdrop-blur-sm"
+      className="fixed inset-0 z-[80] grid place-items-center bg-jso-navy/60 p-3 backdrop-blur-sm sm:p-5"
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-title"
     >
-      <div className="w-full max-w-md rounded-[2rem] bg-white p-8 text-jso-ink shadow-2xl">
+      <div className="max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-[2rem] bg-white p-5 text-jso-ink shadow-2xl sm:p-8">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-extrabold tracking-[0.2em] text-jso-gold">ESPACE SUPPORTER</p>
@@ -63,6 +76,7 @@ export default function AuthModal({ open, initialMode = 'login', onClose, onAuth
           </button>
         </div>
 
+        {isRegister && <p className="mt-3 text-sm text-slate-500">Renseignez vos coordonnées pour créer votre profil supporter. Les messages d’anniversaire sont facultatifs.</p>}
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           {error ? (
             <div className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
@@ -78,6 +92,7 @@ export default function AuthModal({ open, initialMode = 'login', onClose, onAuth
               id="auth-email"
               type="email"
               required
+              autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue"
@@ -85,19 +100,17 @@ export default function AuthModal({ open, initialMode = 'login', onClose, onAuth
           </div>
 
           {isRegister ? (
-            <div className="space-y-1.5">
-              <label htmlFor="auth-display-name" className="text-sm font-bold">
-                Nom affiché
-              </label>
-              <input
-                id="auth-display-name"
-                type="text"
-                required
-                value={displayName}
-                onChange={(event) => setDisplayName(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue"
-              />
-            </div>
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5"><label htmlFor="auth-first-name" className="text-sm font-bold">Prénom</label><input id="auth-first-name" required maxLength={100} autoComplete="given-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></div>
+                <div className="space-y-1.5"><label htmlFor="auth-last-name" className="text-sm font-bold">Nom</label><input id="auth-last-name" required maxLength={100} autoComplete="family-name" value={lastName} onChange={(event) => setLastName(event.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5"><label htmlFor="auth-birth-date" className="text-sm font-bold">Date de naissance</label><input id="auth-birth-date" type="date" required min="1900-01-01" max={new Date().toISOString().slice(0, 10)} autoComplete="bday" value={birthDate} onChange={(event) => setBirthDate(event.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></div>
+                <div className="space-y-1.5"><label htmlFor="auth-phone" className="text-sm font-bold">Téléphone</label><input id="auth-phone" type="tel" required minLength={7} maxLength={32} autoComplete="tel" inputMode="tel" placeholder="+216 XX XXX XXX" value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></div>
+              </div>
+              <label className="flex items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm"><input type="checkbox" checked={anniversaryOptIn} onChange={(event) => setAnniversaryOptIn(event.target.checked)} className="mt-1 h-5 w-5 shrink-0" /><span>Je souhaite recevoir un message pour mon anniversaire. <span className="text-slate-500">Ce choix peut être modifié dans mon profil.</span></span></label>
+            </>
           ) : null}
 
           <div className="space-y-1.5">
@@ -112,6 +125,7 @@ export default function AuthModal({ open, initialMode = 'login', onClose, onAuth
                 id="auth-password"
                 type={showPassword ? 'text' : 'password'}
                 required
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
                 minLength={isRegister ? 12 : undefined}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}

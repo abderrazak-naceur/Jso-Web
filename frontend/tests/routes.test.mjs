@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { adminEditIdFromPath, adminEditUrl, adminSectionFromPath, adminSectionUrl } from '../src/admin/adminRoutes.js'
-import { ADMIN_CATEGORY_ORDER, ADMIN_NAVIGATION, ADMIN_PERMISSION_BY_ID, ADMIN_PUBLIC_PATHS, visibleAdminItems } from '../src/admin/navigation.js'
+import { ADMIN_CATEGORY_ORDER, ADMIN_NAVIGATION, ADMIN_PERMISSION_BY_ID, ADMIN_PUBLIC_PATHS, ADMIN_QUICK_SECTION_IDS, visibleAdminItems } from '../src/admin/navigation.js'
 import { ADMIN_MODULES } from '../src/admin/moduleRegistry.js'
 import { SECTION_PATHS, eventSlugFromPath, matchIdFromPath, matchSlugFromPath, matchSlugFor, matchOpponentName, productSlugFromPath, sectionFromPath, sectionUrl } from '../src/features/site/publicRoutes.js'
 
@@ -31,6 +31,15 @@ test('admin search only shows sections available to the role', () => {
   assert.deepEqual(visibleAdminItems('FinanceManager', 'dons').map(([id]) => id), ['finance', 'donations', 'cash-donations'])
   assert.equal(visibleAdminItems('Editor', 'sécurité').length, 0)
   assert.ok(visibleAdminItems('MatchManager', 'matchs').some(([id]) => id === 'matches'))
+})
+
+test('admin quick destinations exist and remain role gated', () => {
+  const ids = new Set(ADMIN_NAVIGATION.map(([id]) => id))
+  assert.equal(new Set(ADMIN_QUICK_SECTION_IDS).size, ADMIN_QUICK_SECTION_IDS.length)
+  for (const id of ADMIN_QUICK_SECTION_IDS) assert.ok(ids.has(id), `${id} is not an admin section`)
+  const editorIds = new Set(visibleAdminItems('Editor').map(([id]) => id))
+  assert.ok(editorIds.has('news'))
+  assert.ok(!editorIds.has('donations'))
 })
 
 test('admin public links lead to known site pages', () => {

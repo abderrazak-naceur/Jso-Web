@@ -121,6 +121,11 @@ public sealed class FanPrivacyController(JsoDbContext db, AuditService audit) : 
                 fan.Id,
                 fan.Email,
                 fan.DisplayName,
+                fan.FirstName,
+                fan.LastName,
+                fan.PhoneNumber,
+                fan.BirthDate,
+                fan.AnniversaryOptIn,
                 fan.EmailVerified,
                 fan.IsActive,
                 fan.CreatedAt,
@@ -157,6 +162,11 @@ public sealed class FanPrivacyController(JsoDbContext db, AuditService audit) : 
             fan.Email = $"deleted+{fan.Id:N}@deleted.local";
             fan.PasswordHash = string.Empty;
             fan.DisplayName = "Utilisateur supprimé";
+            fan.FirstName = null;
+            fan.LastName = null;
+            fan.PhoneNumber = null;
+            fan.BirthDate = null;
+            fan.AnniversaryOptIn = false;
             fan.EmailVerified = false;
             fan.IsActive = false;
         }

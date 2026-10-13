@@ -1,7 +1,7 @@
 import { Component, Suspense, useEffect, useRef, useState } from 'react'
-import { Copy, CreditCard, ExternalLink, LogOut, Menu, Newspaper, Search, ShoppingBag, Ticket, Trophy, Users, X } from 'lucide-react'
+import { ChevronDown, Copy, CreditCard, ExternalLink, LayoutDashboard, LogOut, Menu, Newspaper, Search, ShoppingBag, Ticket, Trophy, Users, X } from 'lucide-react'
 import { adminApi } from './api'
-import { ADMIN_CATEGORY_ORDER, ADMIN_PUBLIC_PATHS, visibleAdminItems } from './navigation'
+import { ADMIN_CATEGORY_ORDER, ADMIN_PUBLIC_PATHS, ADMIN_QUICK_SECTION_IDS, visibleAdminItems } from './navigation'
 import { adminSectionFromPath, adminSectionUrl } from './adminRoutes'
 import { ADMIN_MODULES } from './moduleRegistry'
 import './admin-responsive.css'
@@ -56,6 +56,7 @@ function AdminDashboard({ user, onLogout }) {
   const [open, setOpen] = useState(false)
   const [section, setSection] = useState(() => adminSectionFromPath())
   const [search, setSearch] = useState('')
+  const [expandedCategories, setExpandedCategories] = useState({})
   const [stats, setStats] = useState(null)
   const [dashboardLoading, setDashboardLoading] = useState(true)
   const [error, setError] = useState('')
@@ -67,11 +68,17 @@ function AdminDashboard({ user, onLogout }) {
   const visibleItems = visibleAdminItems(role)
   const filteredItems = visibleAdminItems(role, search)
   const currentItem = visibleItems.find(([id]) => id === section)
+  const activeCategory = currentItem?.[4]
   const publicPath = ADMIN_PUBLIC_PATHS[section] || '/'
   const ActiveModule = ADMIN_MODULES[section]
   const groupedItems = ADMIN_CATEGORY_ORDER
     .map((category) => [category, filteredItems.filter((item) => item[4] === category)])
     .filter(([, list]) => list.length > 0)
+  const quickItems = ADMIN_QUICK_SECTION_IDS.map((id) => visibleItems.find((item) => item[0] === id)).filter(Boolean)
+
+  useEffect(() => {
+    if (activeCategory) setExpandedCategories((previous) => ({ ...previous, [activeCategory]: true }))
+  }, [activeCategory])
 
   async function loadDashboard() {
     setDashboardLoading(true)
@@ -120,6 +127,11 @@ function AdminDashboard({ user, onLogout }) {
     setError('')
   }
 
+  function openSearch() {
+    setOpen(true)
+    window.requestAnimationFrame(() => searchRef.current?.focus())
+  }
+
   async function copyCurrentLink() {
     try {
       await navigator.clipboard.writeText(window.location.href)
@@ -151,13 +163,20 @@ function AdminDashboard({ user, onLogout }) {
         <p className="mt-2 text-xs text-slate-400">{filteredItems.length} rubrique{filteredItems.length > 1 ? 's' : ''} · Ctrl+K pour chercher</p>
       </div>
       <nav aria-label="Rubriques d’administration" className="jso-scroll flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4">
+        {!search && <div className="space-y-1 border-b border-slate-100 pb-4">
+          <p className="px-4 pb-1 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Accès rapide</p>
+          {quickItems.slice(0, 6).map(([id, label, Icon]) => <a key={id} href={adminSectionUrl(id)} onClick={(event) => navigate(event, id)} aria-current={section === id ? 'page' : undefined} className={'flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-bold ' + (section === id ? 'bg-jso-navy text-white' : 'text-slate-600 hover:bg-slate-100')}><Icon size={17} aria-hidden="true" />{label}</a>)}
+        </div>}
         {groupedItems.length === 0 && <p className="px-4 py-3 text-sm text-slate-500">Aucune rubrique trouvée.</p>}
         {groupedItems.map(([category, list]) => <div key={category} className="space-y-1">
-          <p className="px-4 pb-1 pt-2 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">{category}</p>
-          {list.map(([id, label, Icon]) => <a key={id} href={adminSectionUrl(id)} onClick={(event) => navigate(event, id)} aria-current={section === id ? 'page' : undefined} className={'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold transition-colors ' + (section === id ? 'bg-jso-navy text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100')}><Icon size={18} aria-hidden="true" />{label}</a>)}
+          <button type="button" aria-expanded={Boolean(search || (expandedCategories[category] ?? (currentItem?.[4] === category)))} onClick={() => setExpandedCategories((previous) => ({ ...previous, [category]: !(previous[category] ?? (currentItem?.[4] === category)) }))} className="flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-left text-xs font-black text-jso-navy hover:bg-slate-100">
+            <span>{category} <span className="font-semibold text-slate-400">({list.length})</span></span><ChevronDown size={16} className={'transition-transform ' + (search || (expandedCategories[category] ?? (currentItem?.[4] === category)) ? 'rotate-180' : '')} aria-hidden="true" />
+          </button>
+          {(search || (expandedCategories[category] ?? (currentItem?.[4] === category))) && list.map(([id, label, Icon]) => <a key={id} href={adminSectionUrl(id)} onClick={(event) => navigate(event, id)} aria-current={section === id ? 'page' : undefined} className={'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold transition-colors ' + (section === id ? 'bg-jso-navy text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100')}><Icon size={18} aria-hidden="true" />{label}</a>)}
         </div>)}
       </nav>
       <div className="border-t border-slate-100 px-4 py-4">
+        <button type="button" onClick={copyCurrentLink} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-jso-navy hover:bg-slate-100"><Copy size={18} aria-hidden="true" />{copied ? 'Lien copié' : 'Copier le lien de cette rubrique'}</button>
         <a href={publicPath} className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-jso-blue hover:bg-slate-100"><ExternalLink size={18} aria-hidden="true" />Voir sur le site</a>
         <button type="button" onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 transition-colors hover:bg-red-50 hover:text-red-700"><LogOut size={18} aria-hidden="true" />Déconnexion</button>
       </div>
@@ -174,22 +193,31 @@ function AdminDashboard({ user, onLogout }) {
         {!section && <div role="alert" className="rounded-[1.5rem] bg-white p-8 text-slate-600">Page admin introuvable. <a href="/admin" className="font-bold text-jso-blue underline">Ouvrir le tableau de bord</a></div>}
         {section && !visibleItems.some(([id]) => id === section) && <div role="alert" className="rounded-[1.5rem] bg-white p-8 text-slate-600">Accès refusé à cette section.</div>}
         {currentItem && section === 'dashboard' && <>
-          <AdminQuickLinks items={visibleItems} onNavigate={navigate} />
+          <AdminQuickLinks items={visibleItems} quickItems={quickItems} onNavigate={navigate} />
           <DashboardStats stats={stats} loading={dashboardLoading} onRetry={loadDashboard} />
         </>}
         {currentItem && ActiveModule && <AdminModuleBoundary key={section}><Suspense fallback={<div role="status" className="rounded-[1.5rem] bg-white p-8 text-slate-500">Chargement de la rubrique…</div>}><ActiveModule onError={setError} /></Suspense></AdminModuleBoundary>}
       </section>
     </div>
+    <nav aria-label="Navigation admin mobile" className="jso-admin-mobile-nav lg:hidden">
+      <a href="/admin" onClick={(event) => navigate(event, 'dashboard')} aria-current={section === 'dashboard' ? 'page' : undefined}><LayoutDashboard size={20} aria-hidden="true" /><span>Accueil</span></a>
+      <button type="button" onClick={() => setOpen(true)} aria-expanded={open} aria-controls="admin-sidebar"><Menu size={20} aria-hidden="true" /><span>Rubriques</span></button>
+      <button type="button" onClick={openSearch}><Search size={20} aria-hidden="true" /><span>Chercher</span></button>
+      <a href={publicPath}><ExternalLink size={20} aria-hidden="true" /><span>Voir le site</span></a>
+    </nav>
   </main>
 }
 
-function AdminQuickLinks({ items, onNavigate }) {
+function AdminQuickLinks({ items, quickItems, onNavigate }) {
   const groups = ADMIN_CATEGORY_ORDER.filter((category) => category !== 'Tableau de bord')
     .map((category) => [category, items.filter((item) => item[4] === category).slice(0, 3)])
     .filter(([, links]) => links.length > 0)
 
   return <section aria-labelledby="admin-quick-links" className="mb-8">
     <h2 id="admin-quick-links" className="mb-3 text-lg font-black">Accès rapide</h2>
+    <div className="mb-5 flex gap-2 overflow-x-auto pb-2">
+      {quickItems.map(([id, label, Icon]) => <a key={id} href={adminSectionUrl(id)} onClick={(event) => onNavigate(event, id)} className="inline-flex shrink-0 items-center gap-2 rounded-full bg-jso-navy px-4 py-2.5 text-sm font-bold text-white hover:bg-jso-blue"><Icon size={16} aria-hidden="true" />{label}</a>)}
+    </div>
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {groups.map(([category, links]) => <div key={category} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 className="mb-3 text-xs font-black uppercase tracking-[0.12em] text-jso-blue">{category}</h3>
@@ -208,6 +236,8 @@ function DashboardStats({ stats, loading, onRetry }) {
   const sales = stats.sales || { enabled: false, currency: 'TND', revenue: 0, orders: 0, activeProducts: 0, productsSold: 0 }
   const tickets = stats.tickets || { currency: 'TND', revenue: 0, orders: 0, ticketsSold: 0, pending: 0 }
   const memberships = stats.memberships || { currency: 'TND', revenue: 0, active: 0, total: 0 }
+  const matches = stats.matches || {}
+  const news = stats.news || {}
   const money = (n, c = 'TND') => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: c || 'TND', maximumFractionDigits: 0 }).format(n || 0)
   const totalRevenue = (tickets.revenue || 0) + (memberships.revenue || 0) + (sales.revenue || 0)
 
@@ -219,9 +249,9 @@ function DashboardStats({ stats, loading, onRetry }) {
   ]
 
   const clubCards = [
-    ['Parties à venir', stats.matches.upcoming, Trophy], ['Résultats', stats.matches.finished, Trophy],
-    ['News publiées', stats.news.published, Newspaper], ['Brouillons', stats.news.drafts, Newspaper],
-    ['Équipes', stats.teams, Users], ['Joueurs actifs', stats.players, Users],
+    ['Parties à venir', matches.upcoming ?? 0, Trophy], ['Résultats', matches.finished ?? 0, Trophy],
+    ['News publiées', news.published ?? 0, Newspaper], ['Brouillons', news.drafts ?? 0, Newspaper],
+    ['Équipes', stats.teams ?? 0, Users], ['Joueurs actifs', stats.players ?? 0, Users],
   ]
   const today = stats.todayActivity
   const todayFigures = today ? [

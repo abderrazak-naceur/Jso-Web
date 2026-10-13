@@ -7,7 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace JSO.Api.Controllers;
 
-public sealed record FanRegisterRequest(string Email, string DisplayName, string Password);
+public sealed record FanRegisterRequest(
+    string Email, string? DisplayName, string Password,
+    string? FirstName = null, string? LastName = null,
+    DateOnly? BirthDate = null, string? PhoneNumber = null,
+    bool AnniversaryOptIn = false);
 public sealed record FanLoginRequest(string Email, string Password);
 
 [ApiController]
@@ -18,9 +22,24 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
     [EnableRateLimiting("auth-login")]
     public async Task<IActionResult> Register(FanRegisterRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.DisplayName)
+        var hasPersonalDetails = request.FirstName is not null || request.LastName is not null
+            || request.PhoneNumber is not null || request.BirthDate is not null;
+        var displayName = hasPersonalDetails
+            ? $"{request.FirstName?.Trim()} {request.LastName?.Trim()}".Trim()
+            : request.DisplayName?.Trim();
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(displayName)
             || string.IsNullOrWhiteSpace(request.Password))
-            return BadRequest(new { message = "Email, display name and password are required." });
+            return BadRequest(new { message = "Email, name and password are required." });
+        if (hasPersonalDetails && (string.IsNullOrWhiteSpace(request.FirstName)
+            || string.IsNullOrWhiteSpace(request.LastName) || string.IsNullOrWhiteSpace(request.PhoneNumber)
+            || request.BirthDate is null))
+            return BadRequest(new { message = "First name, last name, birth date and phone are required." });
+        if (displayName.Length > 100 || request.FirstName?.Trim().Length > 100 || request.LastName?.Trim().Length > 100)
+            return BadRequest(new { message = "Name is too long." });
+        if (request.BirthDate is DateOnly birthDate && !ValidBirthDate(birthDate))
+            return BadRequest(new { message = "A valid birth date is required." });
+        if (request.PhoneNumber is not null && !ValidPhone(request.PhoneNumber))
+            return BadRequest(new { message = "A valid phone number is required." });
 
         if (request.Password.Length < 12)
             return BadRequest(new { message = "Password must contain at least 12 characters." });
@@ -35,7 +54,12 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
         var fan = new FanUser
         {
             Email = email,
-            DisplayName = request.DisplayName.Trim(),
+            DisplayName = displayName,
+            FirstName = request.FirstName?.Trim(),
+            LastName = request.LastName?.Trim(),
+            PhoneNumber = request.PhoneNumber?.Trim(),
+            BirthDate = request.BirthDate,
+            AnniversaryOptIn = request.AnniversaryOptIn,
             PasswordHash = PasswordHasher.Hash(request.Password),
             IsActive = true,
             LoginDaysCount = 1,
@@ -50,7 +74,7 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
         return Created($"/api/account/me", new
         {
             accessToken = tokens.CreateForFan(fan),
-            user = new { fan.Id, fan.Email, fan.DisplayName }
+            user = new { fan.Id, fan.Email, fan.DisplayName, fan.FirstName, fan.LastName, fan.PhoneNumber, fan.BirthDate, fan.AnniversaryOptIn }
         });
     }
 
@@ -82,7 +106,7 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
         return Ok(new
         {
             accessToken = tokens.CreateForFan(fan),
-            user = new { fan.Id, fan.Email, fan.DisplayName }
+            user = new { fan.Id, fan.Email, fan.DisplayName, fan.FirstName, fan.LastName, fan.PhoneNumber, fan.BirthDate, fan.AnniversaryOptIn }
         });
     }
 
@@ -105,6 +129,9 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
             fan.Id,
             fan.Email,
             fan.DisplayName,
+            fan.FirstName,
+            fan.LastName,
+            fan.PhoneNumber,
             fan.ProfilePhotoUrl,
             fan.EmailVerified,
             // Idea A3: expose the birthday/anniversary opt-in state and the
@@ -120,10 +147,8 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
     // older clients that never send them keep working unchanged. The fan can
     // only act on their OWN profile (identity read from the JWT claims).
     //
-    // Privacy/GDPR: BirthDate is personal data. It is processed only with the
-    // fan's explicit consent (AnniversaryOptIn). When the fan turns the opt-in
-    // off we also clear the stored BirthDate (data minimisation), and a fan may
-    // clear the date at any time by sending an empty value.
+    // Profile details and optional anniversary messages have separate purposes.
+    // Turning anniversary messages off never removes the account's birth date.
     [HttpPut("me")]
     [Authorize(Roles = "Fan")]
     public async Task<IActionResult> UpdateMe(FanProfileUpdateRequest request, CancellationToken ct)
@@ -142,26 +167,38 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
             fan.DisplayName = name;
         }
 
+        if (request.FirstName is not null || request.LastName is not null)
+        {
+            var firstName = (request.FirstName ?? fan.FirstName)?.Trim();
+            var lastName = (request.LastName ?? fan.LastName)?.Trim();
+            if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName)
+                || firstName.Length > 100 || lastName.Length > 100)
+                return BadRequest(new { message = "First and last name are required." });
+            fan.FirstName = firstName;
+            fan.LastName = lastName;
+            fan.DisplayName = $"{firstName} {lastName}";
+        }
+
+        if (request.PhoneNumber is not null)
+        {
+            if (!ValidPhone(request.PhoneNumber))
+                return BadRequest(new { message = "A valid phone number is required." });
+            fan.PhoneNumber = request.PhoneNumber.Trim();
+        }
+
         if (request.AnniversaryOptIn is bool optIn)
         {
             fan.AnniversaryOptIn = optIn;
-            // Consent withdrawn: minimise data by dropping the stored birth date.
-            if (!optIn) fan.BirthDate = null;
         }
 
         if (request.BirthDate is not null)
         {
             var birth = request.BirthDate.Value;
             // Reject impossible dates (future or unrealistically old).
-            var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.UtcDateTime);
-            if (birth > today || birth.Year < 1900)
+            if (!ValidBirthDate(birth))
                 return BadRequest(new { message = "A valid birth date is required." });
             fan.BirthDate = birth;
         }
-
-        // Keep the birth date consistent with the current consent state: it is
-        // only retained while the opt-in is (or becomes) active.
-        if (!fan.AnniversaryOptIn) fan.BirthDate = null;
 
         await db.SaveChangesAsync(ct);
 
@@ -174,6 +211,9 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
             fan.Id,
             fan.Email,
             fan.DisplayName,
+            fan.FirstName,
+            fan.LastName,
+            fan.PhoneNumber,
             fan.ProfilePhotoUrl,
             fan.EmailVerified,
             fan.BirthDate,
@@ -181,6 +221,16 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
             fan.LoginDaysCount,
             MemberSince = fan.CreatedAt
         });
+    }
+
+    private static bool ValidBirthDate(DateOnly birth) =>
+        birth.Year >= 1900 && birth <= DateOnly.FromDateTime(DateTimeOffset.UtcNow.UtcDateTime);
+
+    private static bool ValidPhone(string phone)
+    {
+        var value = phone.Trim();
+        return value.Length <= 32 && value.Count(char.IsDigit) is >= 7 and <= 15
+            && value.All(c => char.IsDigit(c) || c is '+' or ' ' or '-' or '(' or ')');
     }
 
     // Change password for the signed-in fan: verify the current password, then
@@ -217,12 +267,14 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
 }
 
 // Retrocompatible profile update payload (idea A3): all fields optional so
-// existing clients that omit them keep the current behaviour. BirthDate uses a
-// nullable DateOnly; sending null leaves it untouched, and clearing it happens
-// automatically when AnniversaryOptIn is turned off.
+// existing clients that omit them keep the current behaviour. Null leaves a
+// field unchanged; anniversary consent is independent from the birth date.
 public sealed record FanProfileUpdateRequest(
     string? DisplayName = null,
     DateOnly? BirthDate = null,
-    bool? AnniversaryOptIn = null);
+    bool? AnniversaryOptIn = null,
+    string? FirstName = null,
+    string? LastName = null,
+    string? PhoneNumber = null);
 
 public sealed record FanChangePasswordRequest(string CurrentPassword, string NewPassword);

@@ -12,6 +12,9 @@ class FanUser {
     required this.id,
     required this.email,
     required this.displayName,
+    this.firstName,
+    this.lastName,
+    this.phoneNumber,
     this.emailVerified = false,
     this.birthDate,
     this.anniversaryOptIn = false,
@@ -21,9 +24,12 @@ class FanUser {
   final String id;
   final String email;
   final String displayName;
+  final String? firstName;
+  final String? lastName;
+  final String? phoneNumber;
   final bool emailVerified;
 
-  /// Optional birthday (personal data, kept only with [anniversaryOptIn]).
+  /// Optional birthday for older accounts; anniversary messaging is separate.
   /// The API serializes a `DateOnly` as `yyyy-MM-dd`.
   final DateTime? birthDate;
 
@@ -37,6 +43,9 @@ class FanUser {
     id: asString(json['id']),
     email: asString(json['email']),
     displayName: asString(json['displayName']),
+    firstName: json['firstName'] as String?,
+    lastName: json['lastName'] as String?,
+    phoneNumber: json['phoneNumber'] as String?,
     emailVerified: asBool(json['emailVerified']),
     birthDate: asDateTimeOrNull(json['birthDate']),
     anniversaryOptIn: asBool(json['anniversaryOptIn']),

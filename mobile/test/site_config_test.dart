@@ -5,6 +5,12 @@ void main() {
   test('admin console uses the configured website', () {
     expect(SiteConfig.origin, isNotNull);
     expect(SiteConfig.adminUrl, SiteConfig.origin!.resolve('/admin'));
+    expect(
+      SiteConfig.adminSectionUrl('cash-donations'),
+      SiteConfig.origin!.resolve('/admin/cash-donations'),
+    );
+    expect(SiteConfig.adminSectionUrl('../shop'), isNull);
+    expect(SiteConfig.adminSectionUrl('shop?token=bad'), isNull);
   });
 
   test('admin session bridge only trusts the exact website origin', () {

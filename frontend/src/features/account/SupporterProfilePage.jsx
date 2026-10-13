@@ -25,6 +25,9 @@ export default function SupporterProfilePage() {
   const [notice, setNotice] = useState('')
   const [profile, setProfile] = useState(null)
   const [displayName, setDisplayName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [anniversaryOptIn, setAnniversaryOptIn] = useState(false)
   const [birthDate, setBirthDate] = useState('')
   const [photo, setPhoto] = useState('')
@@ -43,6 +46,9 @@ export default function SupporterProfilePage() {
       setProfile(data)
       setPhoto(data?.profilePhotoUrl ? new URL(data.profilePhotoUrl, API_BASE_URL).href : '')
       setDisplayName(data?.displayName || '')
+      setFirstName(data?.firstName || '')
+      setLastName(data?.lastName || '')
+      setPhoneNumber(data?.phoneNumber || '')
       setAnniversaryOptIn(Boolean(data?.anniversaryOptIn))
       setBirthDate(data?.birthDate ? String(data.birthDate).slice(0, 10) : '')
       setError('')
@@ -97,11 +103,14 @@ export default function SupporterProfilePage() {
     setNotice('')
     try {
       const updated = await accountApi.updateProfile({
-        displayName,
+        firstName,
+        lastName,
+        phoneNumber,
         anniversaryOptIn,
-        birthDate: anniversaryOptIn ? birthDate || null : null,
+        birthDate: birthDate || null,
       }, fan.token)
       setProfile((previous) => ({ ...previous, ...updated }))
+      setDisplayName(updated.displayName)
       fan.updateUser({ ...updated })
       setNotice('Votre profil a été enregistré.')
     } catch (err) {
@@ -144,9 +153,10 @@ export default function SupporterProfilePage() {
           {notice && <div role="status" className="mt-5 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800"><CheckCircle2 size={17} />{notice}</div>}
           {photoError && <p role="alert" className="mt-3 text-sm font-semibold text-red-700">{photoError}</p>}
           <form onSubmit={submit} className="mt-6 space-y-5">
-            <div><label htmlFor="supporter-name" className="mb-2 block text-sm font-bold">Nom affiché</label><input id="supporter-name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} required maxLength={100} autoComplete="name" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-jso-blue focus:ring-4 focus:ring-blue-100" /></div>
+            <div className="grid gap-4 sm:grid-cols-2"><div><label htmlFor="supporter-first-name" className="mb-2 block text-sm font-bold">Prénom</label><input id="supporter-first-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} required maxLength={100} autoComplete="given-name" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-jso-blue focus:ring-4 focus:ring-blue-100" /></div><div><label htmlFor="supporter-last-name" className="mb-2 block text-sm font-bold">Nom</label><input id="supporter-last-name" value={lastName} onChange={(event) => setLastName(event.target.value)} required maxLength={100} autoComplete="family-name" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-jso-blue focus:ring-4 focus:ring-blue-100" /></div></div>
+            <div className="grid gap-4 sm:grid-cols-2"><div><label htmlFor="supporter-birthdate" className="mb-2 block text-sm font-bold">Date de naissance</label><input id="supporter-birthdate" type="date" value={birthDate} min="1900-01-01" max={new Date().toISOString().slice(0,10)} onChange={(event) => setBirthDate(event.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></div><div><label htmlFor="supporter-phone" className="mb-2 block text-sm font-bold">Téléphone</label><input id="supporter-phone" type="tel" value={phoneNumber} minLength={7} maxLength={32} autoComplete="tel" onChange={(event) => setPhoneNumber(event.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></div></div>
             <div><label htmlFor="supporter-email" className="mb-2 flex items-center justify-between gap-3 text-sm font-bold">Adresse e-mail<span className={`rounded-full px-2.5 py-1 text-[11px] font-extrabold ${profile?.emailVerified ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{profile?.emailVerified ? 'Vérifiée' : 'Non vérifiée'}</span></label><input id="supporter-email" type="email" value={profile?.email || fan.user?.email || ''} readOnly disabled className="w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-500" /></div>
-            <div className="rounded-2xl border border-slate-200 p-4 sm:p-5"><label className="flex cursor-pointer items-start gap-3"><input type="checkbox" checked={anniversaryOptIn} onChange={(event) => setAnniversaryOptIn(event.target.checked)} className="mt-1 h-4 w-4 accent-blue-600" /><span><span className="block text-sm font-extrabold">Recevoir un message pour votre anniversaire</span><span className="mt-1 block text-sm leading-5 text-slate-500">Puoi scegliere se condividere la data per ricevere un augurio dal club.</span></span></label>{anniversaryOptIn && <div className="mt-4"><label htmlFor="supporter-birthdate" className="mb-2 block text-sm font-bold">Data di nascita</label><input id="supporter-birthdate" type="date" value={birthDate} max={new Date().toISOString().slice(0,10)} onChange={(event) => setBirthDate(event.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue focus:ring-4 focus:ring-blue-100" /></div>}</div>
+            <div className="rounded-2xl border border-slate-200 p-4 sm:p-5"><label className="flex cursor-pointer items-start gap-3"><input type="checkbox" checked={anniversaryOptIn} onChange={(event) => setAnniversaryOptIn(event.target.checked)} className="mt-1 h-4 w-4 accent-blue-600" /><span><span className="block text-sm font-extrabold">Recevoir un message pour votre anniversaire</span><span className="mt-1 block text-sm leading-5 text-slate-500">Choix facultatif, modifiable à tout moment.</span></span></label></div>
             <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between"><button type="button" onClick={removePhoto} disabled={!photo} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-40"><Trash2 size={16} /> Rimuovi foto</button><button type="submit" disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-xl bg-jso-blue px-5 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-jso-navy disabled:cursor-wait disabled:opacity-60"><Save size={17} /> {saving ? 'Enregistrement en cours…' : 'Enregistrer le profil'}</button></div>
           </form>
         </section>

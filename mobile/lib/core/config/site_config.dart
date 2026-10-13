@@ -29,6 +29,11 @@ class SiteConfig {
 
   static Uri? get adminUrl => origin?.resolve('/admin');
 
+  static Uri? adminSectionUrl(String section) {
+    if (!RegExp(r'^[a-z][a-z0-9-]*$').hasMatch(section)) return null;
+    return origin?.resolve('/admin/$section');
+  }
+
   static bool sameOrigin(Uri target, Uri origin) =>
       target.scheme == origin.scheme &&
       target.host == origin.host &&

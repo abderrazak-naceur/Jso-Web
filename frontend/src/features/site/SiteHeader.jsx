@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, ChevronDown, LayoutDashboard, LogIn, LogOut, Menu, Newspaper, Settings, ShieldCheck, ShoppingBag, Ticket, User, UserPlus, X } from 'lucide-react'
+import { ArrowUpRight, ChevronDown, HeartHandshake, LayoutDashboard, LogIn, LogOut, Menu, Newspaper, Settings, ShieldCheck, ShoppingBag, Ticket, User, UserPlus, X } from 'lucide-react'
 import UserMenu from '../account/UserMenu'
 import { NEWS_LIST_PATH } from '../news/articleUrl'
 import { BILLETTERIE_PATH } from '../tickets/ticketsUrl'
@@ -39,6 +39,12 @@ export default function SiteHeader({
   const primary = sections.filter((section) => section.primary)
   const secondary = sections.filter((section) => !section.primary)
   const moreActive = secondary.some((section) => section.id === activeId)
+  const mobileQuickLinks = [
+    [t('common.ticketing'), BILLETTERIE_PATH, Ticket],
+    [t('common.news'), NEWS_LIST_PATH, Newspaper],
+    ...(sections.some((section) => section.id === 'shop') ? [['Boutique', sectionUrl('shop'), ShoppingBag]] : []),
+    ...(sections.some((section) => section.id === 'donation') ? [['Soutenir', sectionUrl('donation'), HeartHandshake]] : []),
+  ]
 
   // Escape closes whichever menu is open (and gives focus back to its button);
   // a click outside closes the "Plus" dropdown.
@@ -251,7 +257,12 @@ export default function SiteHeader({
                 <span className="flex items-center gap-3"><ShieldCheck size={19} aria-hidden="true" /> Espace administration</span>
                 <ArrowUpRight size={17} aria-hidden="true" />
               </a>
-              <ul className="divide-y divide-white/10">
+              <div className="mb-3 grid grid-cols-2 gap-2" aria-label="Accès rapide">
+                {mobileQuickLinks.map(([label, url, Icon]) => <a key={label} href={url} onClick={closeMenus} className="flex min-h-12 items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm font-bold text-white hover:bg-white/20"><Icon size={17} aria-hidden="true" />{label}</a>)}
+              </div>
+              <details className="group mt-4 rounded-2xl border border-white/15 bg-white/5 px-4">
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between text-sm font-extrabold">Toutes les rubriques <ChevronDown size={18} className="transition group-open:rotate-180" aria-hidden="true" /></summary>
+              <ul className="divide-y divide-white/10 border-t border-white/10">
                 <li>
                   <a href="/" onClick={closeMenus} aria-current={current('home')} className={`flex items-center justify-between py-4 text-xl font-black ${activeId === 'home' ? 'text-jso-gold' : 'text-white'}`}>
                     {t('common.home')}</a>
@@ -269,24 +280,6 @@ export default function SiteHeader({
                     </a>
                   </li>
                 ))}
-                <li>
-                  <a
-                    href={BILLETTERIE_PATH}
-                    onClick={closeMenus}
-                    className="flex items-center justify-between py-4 text-xl font-black text-white"
-                  >
-                    {t('common.ticketing')}                    <Ticket size={18} aria-hidden="true" className="text-white/45" />
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href={NEWS_LIST_PATH}
-                    onClick={closeMenus}
-                    className="flex items-center justify-between py-4 text-xl font-black text-white"
-                  >
-                    {t('common.news')}                    <Newspaper size={18} aria-hidden="true" className="text-white/45" />
-                  </a>
-                </li>
               </ul>
 
               {(secondary.length > 0 || extraLinks.length > 0) && (
@@ -322,6 +315,7 @@ export default function SiteHeader({
                   </ul>
                 </>
               )}
+              </details>
             </nav>
 
             <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5">

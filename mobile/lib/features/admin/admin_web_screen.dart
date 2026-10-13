@@ -12,10 +12,12 @@ import '../auth/admin_auth_controller.dart';
 /// The native login is reused; its token is only given to the configured JSO
 /// website origin. The web app and API continue to enforce every permission.
 class AdminWebScreen extends StatefulWidget {
-  const AdminWebScreen({super.key});
+  const AdminWebScreen({super.key, this.section});
 
-  static Route<void> route() =>
-      MaterialPageRoute<void>(builder: (_) => const AdminWebScreen());
+  final String? section;
+
+  static Route<void> route({String? section}) =>
+      MaterialPageRoute<void>(builder: (_) => AdminWebScreen(section: section));
 
   @override
   State<AdminWebScreen> createState() => _AdminWebScreenState();
@@ -40,7 +42,9 @@ class _AdminWebScreenState extends State<AdminWebScreen> {
     if (!mounted) return;
     final admin = context.read<AdminAuthController>();
     final origin = SiteConfig.origin;
-    final url = SiteConfig.adminUrl;
+    final url = widget.section == null
+        ? SiteConfig.adminUrl
+        : SiteConfig.adminSectionUrl(widget.section!);
     if (!admin.isAuthenticated ||
         admin.accessToken == null ||
         admin.user == null) {

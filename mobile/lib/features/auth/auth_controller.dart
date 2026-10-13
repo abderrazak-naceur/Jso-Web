@@ -66,12 +66,26 @@ class AuthController extends ChangeNotifier {
 
   /// Registers a new account and persists the token. Returns true on success;
   /// on failure sets [errorMessage] and returns false.
-  Future<bool> register(String email, String displayName, String password) {
+  Future<bool> register(
+    String email,
+    String displayName,
+    String password, {
+    String? firstName,
+    String? lastName,
+    DateTime? birthDate,
+    String? phoneNumber,
+    bool anniversaryOptIn = false,
+  }) {
     return _run(
       () => _repository.register(
         email: email,
         displayName: displayName,
         password: password,
+        firstName: firstName,
+        lastName: lastName,
+        birthDate: birthDate,
+        phoneNumber: phoneNumber,
+        anniversaryOptIn: anniversaryOptIn,
       ),
     );
   }
@@ -125,6 +139,9 @@ class AuthController extends ChangeNotifier {
   /// screen can show the translated message; returns the updated user.
   Future<FanUser> updateProfile({
     String? displayName,
+    String? firstName,
+    String? lastName,
+    String? phoneNumber,
     DateTime? birthDate,
     bool? anniversaryOptIn,
   }) async {
@@ -133,6 +150,9 @@ class AuthController extends ChangeNotifier {
     final updated = await _repository.updateProfile(
       token,
       displayName: displayName,
+      firstName: firstName,
+      lastName: lastName,
+      phoneNumber: phoneNumber,
       birthDate: birthDate,
       anniversaryOptIn: anniversaryOptIn,
     );

@@ -103,6 +103,10 @@ export const ADMIN_PERMISSION_BY_ID = Object.freeze({
 })
 export const ADMIN_CATEGORY_ORDER = ['Tableau de bord', 'Billetterie & Abonnements', 'Finances & dons', 'Boutique & partenaires', 'Équipe & Matchs', 'Contenu & Site', 'Communauté', 'Système']
 
+// The most common tasks stay one tap away on narrow screens and on the dashboard.
+// Permissions are still resolved through visibleAdminItems before rendering.
+export const ADMIN_QUICK_SECTION_IDS = ['tickets', 'matches', 'news', 'donations', 'cash-donations', 'orders', 'media', 'fan-accounts', 'settings']
+
 export const ADMIN_PUBLIC_PATHS = Object.freeze({
   tickets: '/billetterie',
   memberships: '/abonnements',
