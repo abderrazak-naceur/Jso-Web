@@ -71,7 +71,8 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = 'Impossible de charger les supporters. Vérifiez votre accès puis réessayez.';
+        _error =
+            'Impossible de charger les supporters. Vérifiez votre accès puis réessayez.';
       });
     } catch (_) {
       if (!mounted) return;
@@ -83,10 +84,12 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
   }
 
   List<AdminFanAccount> get _filtered => _accounts.where((account) {
-    final statusMatch = _status == 'all' ||
+    final statusMatch =
+        _status == 'all' ||
         (_status == 'active' && account.isActive) ||
         (_status == 'blocked' && !account.isActive);
-    final vipMatch = _vip == 'all' ||
+    final vipMatch =
+        _vip == 'all' ||
         (_vip == 'vip' && account.isVip) ||
         (_vip == 'standard' && !account.isVip);
     return statusMatch && vipMatch;
@@ -98,9 +101,11 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(next ? 'Réactiver le compte ?' : 'Bloquer le compte ?'),
-        content: Text(next
-            ? 'Le supporter pourra accéder de nouveau à son compte.'
-            : 'Le supporter ne pourra plus utiliser son compte.'),
+        content: Text(
+          next
+              ? 'Le supporter pourra accéder de nouveau à son compte.'
+              : 'Le supporter ne pourra plus utiliser son compte.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -130,14 +135,19 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
       if (!mounted) return;
       setState(() {
         _accounts = _accounts
-            .map((item) =>
-                item.id == account.id ? item.copyWith(isActive: next) : item)
+            .map(
+              (item) => item.id == account.id
+                  ? item.copyWith(isActive: next)
+                  : item,
+            )
             .toList(growable: false);
         _notice = next ? 'Compte réactivé.' : 'Compte bloqué.';
       });
     } on ApiException {
       if (!mounted) return;
-      setState(() => _error = 'Impossible de modifier le statut du compte.');
+      setState(() {
+        _error = 'Impossible de modifier le statut du compte.';
+      });
     } finally {
       if (mounted) setState(() => _busyId = null);
     }
@@ -168,7 +178,9 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
       });
     } on ApiException {
       if (!mounted) return;
-      setState(() => _error = 'Impossible d’enregistrer la notation.');
+      setState(() {
+        _error = 'Impossible d’enregistrer la notation.';
+      });
     } finally {
       if (mounted) setState(() => _busyId = null);
     }
@@ -221,25 +233,57 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
                 spacing: JsoSpacing.sm,
                 runSpacing: JsoSpacing.sm,
                 children: [
-                  _filter('Tous', _status == 'all', () => setState(() => _status = 'all')),
-                  _filter('Actifs', _status == 'active', () => setState(() => _status = 'active')),
-                  _filter('Bloqués', _status == 'blocked', () => setState(() => _status = 'blocked')),
+                  _filter(
+                    'Tous',
+                    _status == 'all',
+                    () => setState(() => _status = 'all'),
+                  ),
+                  _filter(
+                    'Actifs',
+                    _status == 'active',
+                    () => setState(() => _status = 'active'),
+                  ),
+                  _filter(
+                    'Bloqués',
+                    _status == 'blocked',
+                    () => setState(() => _status = 'blocked'),
+                  ),
                 ],
               ),
               const SizedBox(height: JsoSpacing.sm),
               Wrap(
                 spacing: JsoSpacing.sm,
                 children: [
-                  _filter('Tous VIP', _vip == 'all', () => setState(() => _vip = 'all')),
-                  _filter('VIP', _vip == 'vip', () => setState(() => _vip = 'vip')),
-                  _filter('Standard', _vip == 'standard', () => setState(() => _vip = 'standard')),
+                  _filter(
+                    'Tous VIP',
+                    _vip == 'all',
+                    () => setState(() => _vip = 'all'),
+                  ),
+                  _filter(
+                    'VIP',
+                    _vip == 'vip',
+                    () => setState(() => _vip = 'vip'),
+                  ),
+                  _filter(
+                    'Standard',
+                    _vip == 'standard',
+                    () => setState(() => _vip = 'standard'),
+                  ),
                 ],
               ),
               const SizedBox(height: JsoSpacing.md),
               if (_error != null)
-                _message(_error!, const Color(0xFFB42318), Icons.error_outline_rounded),
+                _message(
+                  _error!,
+                  const Color(0xFFB42318),
+                  Icons.error_outline_rounded,
+                ),
               if (_notice != null)
-                _message(_notice!, const Color(0xFF087F5B), Icons.check_circle_outline_rounded),
+                _message(
+                  _notice!,
+                  const Color(0xFF087F5B),
+                  Icons.check_circle_outline_rounded,
+                ),
               if (_loading)
                 const Padding(
                   padding: EdgeInsets.all(JsoSpacing.xl),
@@ -250,15 +294,27 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
                   padding: EdgeInsets.all(JsoSpacing.xl),
                   child: Column(
                     children: [
-                      Icon(Icons.people_outline_rounded, size: 42, color: JsoColors.inkMuted),
+                      Icon(
+                        Icons.people_outline_rounded,
+                        size: 42,
+                        color: JsoColors.inkMuted,
+                      ),
                       SizedBox(height: JsoSpacing.sm),
-                      Text('Aucun supporter trouvé', style: TextStyle(fontWeight: FontWeight.w800)),
+                      Text(
+                        'Aucun supporter trouvé',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
                     ],
                   ),
                 )
               else ...[
-                Text('${filtered.length} supporter(s)',
-                    style: const TextStyle(fontWeight: FontWeight.w900, color: JsoColors.inkText)),
+                Text(
+                  '${filtered.length} supporter(s)',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: JsoColors.inkText,
+                  ),
+                ),
                 const SizedBox(height: JsoSpacing.sm),
                 for (final account in filtered) _accountCard(account),
               ],
@@ -291,7 +347,10 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
                   backgroundColor: JsoColors.navy,
                   child: Text(
                     name.isEmpty ? 'JS' : name.substring(0, 1).toUpperCase(),
-                    style: const TextStyle(color: JsoColors.gold, fontWeight: FontWeight.w900),
+                    style: const TextStyle(
+                      color: JsoColors.gold,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
                 const SizedBox(width: JsoSpacing.sm),
@@ -299,15 +358,28 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name.isEmpty ? 'Supporter JSO' : name,
-                          style: const TextStyle(fontWeight: FontWeight.w900, color: JsoColors.inkText)),
-                      Text(account.email, style: const TextStyle(fontSize: 12, color: JsoColors.inkMuted)),
+                      Text(
+                        name.isEmpty ? 'Supporter JSO' : name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: JsoColors.inkText,
+                        ),
+                      ),
+                      Text(
+                        account.email,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: JsoColors.inkMuted,
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 Chip(
                   label: Text(account.isActive ? 'Actif' : 'Bloqué'),
-                  backgroundColor: account.isActive ? const Color(0xFFE5F8EF) : const Color(0xFFFFE8E8),
+                  backgroundColor: account.isActive
+                      ? const Color(0xFFE5F8EF)
+                      : const Color(0xFFFFE8E8),
                   visualDensity: VisualDensity.compact,
                 ),
               ],
@@ -315,10 +387,19 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
             const SizedBox(height: JsoSpacing.sm),
             Row(
               children: [
-                const Icon(Icons.star_rounded, color: Color(0xFFB58100), size: 18),
+                const Icon(
+                  Icons.star_rounded,
+                  color: Color(0xFFB58100),
+                  size: 18,
+                ),
                 const SizedBox(width: 4),
-                Text('${account.fanRatingStars} étoiles · ${account.isVip ? 'VIP' : 'Standard'}',
-                    style: const TextStyle(fontWeight: FontWeight.w700, color: JsoColors.inkText)),
+                Text(
+                  '${account.fanRatingStars} étoiles · ${account.isVip ? 'VIP' : 'Standard'}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: JsoColors.inkText,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: JsoSpacing.sm),
@@ -335,7 +416,11 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
                   ),
                 OutlinedButton.icon(
                   onPressed: busy ? null : () => _toggleStatus(account),
-                  icon: Icon(account.isActive ? Icons.block_rounded : Icons.check_circle_outline_rounded),
+                  icon: Icon(
+                    account.isActive
+                        ? Icons.block_rounded
+                        : Icons.check_circle_outline_rounded,
+                  ),
                   label: Text(account.isActive ? 'Bloquer' : 'Réactiver'),
                 ),
               ],
@@ -347,11 +432,12 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
     );
   }
 
-  Widget _filter(String label, bool selected, VoidCallback onTap) => ChoiceChip(
-    label: Text(label),
-    selected: selected,
-    onSelected: (_) => onTap(),
-  );
+  Widget _filter(String label, bool selected, VoidCallback onTap) =>
+      ChoiceChip(
+        label: Text(label),
+        selected: selected,
+        onSelected: (_) => onTap(),
+      );
 
   Widget _message(String message, Color color, IconData icon) => Container(
     margin: const EdgeInsets.only(bottom: JsoSpacing.sm),
@@ -365,7 +451,12 @@ class _FanAccountsScreenState extends State<FanAccountsScreen> {
       children: [
         Icon(icon, color: color),
         const SizedBox(width: JsoSpacing.sm),
-        Expanded(child: Text(message, style: TextStyle(color: color, fontWeight: FontWeight.w700))),
+        Expanded(
+          child: Text(
+            message,
+            style: TextStyle(color: color, fontWeight: FontWeight.w700),
+          ),
+        ),
       ],
     ),
   );
