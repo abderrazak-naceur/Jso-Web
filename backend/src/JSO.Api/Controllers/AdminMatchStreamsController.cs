@@ -35,7 +35,7 @@ public sealed class AdminMatchStreamsController(JsoDbContext db) : ControllerBas
             return BadRequest(new { message = "Inserisci il Playback URL prima di pubblicare la diretta." });
         if (!string.IsNullOrWhiteSpace(playbackUrl) && !IsValidPlaybackUrl(provider, playbackUrl))
         {
-            var example = provider.Equals("Mux", StringComparison.OrdinalIgnoreCase) ? "https://player.mux.com/PLAYBACK_ID" : provider.Equals("Custom", StringComparison.OrdinalIgnoreCase) ? "un URL HTTPS del player o HLS" : "https://lvpr.tv/?v=PLAYBACK_ID";
+            var example = provider.Equals("Mux", StringComparison.OrdinalIgnoreCase) ? "https://player.mux.com/PLAYBACK_ID" : provider.Equals("Custom", StringComparison.OrdinalIgnoreCase) ? "un URL HTTPS di un player incorporabile (non un manifest HLS .m3u8/DASH .mpd diretto)" : "https://lvpr.tv/?v=PLAYBACK_ID";
             return BadRequest(new { message = $"URL di riproduzione non valido per {provider}. Usa {example}." });
         }
         if (request.IsPaid && request.Price <= 0)
@@ -61,7 +61,14 @@ public sealed class AdminMatchStreamsController(JsoDbContext db) : ControllerBas
         if (provider.Equals("Mux", StringComparison.OrdinalIgnoreCase))
             return string.Equals(uri.Host, "player.mux.com", StringComparison.OrdinalIgnoreCase);
         if (provider.Equals("Custom", StringComparison.OrdinalIgnoreCase))
-            return uri.IsDefaultPort && !string.IsNullOrWhiteSpace(uri.Host);
+        {
+            // The public UI embeds Custom URLs in an iframe. Raw HLS/DASH
+            // manifests are media files, not embeddable player pages.
+            var path = uri.AbsolutePath;
+            var isRawManifest = path.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ||
+                path.EndsWith(".mpd", StringComparison.OrdinalIgnoreCase);
+            return uri.IsDefaultPort && !string.IsNullOrWhiteSpace(uri.Host) && !isRawManifest;
+        }
         return string.Equals(uri.Host, "lvpr.tv", StringComparison.OrdinalIgnoreCase) && uri.AbsolutePath == "/" &&
             !string.IsNullOrWhiteSpace(Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query)["v"]);
     }
