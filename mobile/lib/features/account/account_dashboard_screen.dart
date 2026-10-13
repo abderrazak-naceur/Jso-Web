@@ -339,7 +339,9 @@ class _AccountAction extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: JsoSpacing.sm),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(JsoRadius.card),
-        side: BorderSide(color: featured ? JsoColors.navy2 : JsoColors.borderLight),
+        side: BorderSide(
+          color: featured ? JsoColors.navy2 : JsoColors.borderLight,
+        ),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(
@@ -357,7 +359,7 @@ class _AccountAction extends StatelessWidget {
         ),
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             color: featured ? JsoColors.white : JsoColors.inkText,
             fontWeight: FontWeight.w900,
           ),
@@ -366,7 +368,10 @@ class _AccountAction extends StatelessWidget {
           padding: const EdgeInsets.only(top: 4),
           child: Text(
             subtitle,
-            style: TextStyle(color: featured ? JsoColors.muted : JsoColors.inkMuted, fontSize: 12),
+            style: TextStyle(
+              color: featured ? JsoColors.muted : JsoColors.inkMuted,
+              fontSize: 12,
+            ),
           ),
         ),
         trailing: Icon(

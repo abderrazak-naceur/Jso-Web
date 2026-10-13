@@ -225,7 +225,9 @@ class _BottomTabIcon extends StatelessWidget {
           height: 38,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? JsoColors.gold.withValues(alpha: 0.28) : Colors.transparent,
+            color: selected
+                ? JsoColors.gold.withValues(alpha: 0.28)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(14),
           ),
           child: Icon(icon),

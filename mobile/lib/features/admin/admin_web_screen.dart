@@ -41,12 +41,19 @@ class _AdminWebScreenState extends State<AdminWebScreen> {
     final admin = context.read<AdminAuthController>();
     final origin = SiteConfig.origin;
     final url = SiteConfig.adminUrl;
-    if (!admin.isAuthenticated || admin.accessToken == null || admin.user == null) {
-      setState(() => _error = 'Connectez-vous comme administrateur pour continuer.');
+    if (!admin.isAuthenticated ||
+        admin.accessToken == null ||
+        admin.user == null) {
+      setState(
+        () => _error = 'Connectez-vous comme administrateur pour continuer.',
+      );
       return;
     }
     if (origin == null || url == null) {
-      setState(() => _error = 'Adresse du site JSO invalide. Vérifiez JSO_WEB_BASE_URL.');
+      setState(
+        () =>
+            _error = 'Adresse du site JSO invalide. Vérifiez JSO_WEB_BASE_URL.',
+      );
       return;
     }
     _token = admin.accessToken;
@@ -68,27 +75,30 @@ class _AdminWebScreenState extends State<AdminWebScreen> {
             if (mounted) Navigator.of(context).pop();
           },
         )
-        ..setNavigationDelegate(NavigationDelegate(
-          onNavigationRequest: (request) {
-            final target = Uri.tryParse(request.url);
-            if (target != null && SiteConfig.sameOrigin(target, origin)) {
-              return NavigationDecision.navigate;
-            }
-            if (target != null && const {'https', 'http'}.contains(target.scheme)) {
-              launchUrl(target, mode: LaunchMode.externalApplication);
-            }
-            return NavigationDecision.prevent;
-          },
-          onPageFinished: (pageUrl) => _onPageFinished(pageUrl),
-          onWebResourceError: (error) {
-            if (error.isForMainFrame == true && mounted) {
-              setState(() {
-                _error = 'Le site d’administration est momentanément indisponible.';
-                _loading = false;
-              });
-            }
-          },
-        ));
+        ..setNavigationDelegate(
+          NavigationDelegate(
+            onNavigationRequest: (request) {
+              final target = Uri.tryParse(request.url);
+              if (target != null && SiteConfig.sameOrigin(target, origin)) {
+                return NavigationDecision.navigate;
+              }
+              if (target != null &&
+                  const {'https', 'http'}.contains(target.scheme)) {
+                launchUrl(target, mode: LaunchMode.externalApplication);
+              }
+              return NavigationDecision.prevent;
+            },
+            onPageFinished: (pageUrl) => _onPageFinished(pageUrl),
+            onWebResourceError: (error) {
+              if (error.isForMainFrame == true && mounted) {
+                setState(() {
+                  _error = 'Le site d’administration est momentanément indisponible.';
+                  _loading = false;
+                });
+              }
+            },
+          ),
+        );
       // A previous WebView session must not be visible before we install the
       // current native user's identity on the trusted origin.
       await controller.clearLocalStorage();
@@ -96,7 +106,9 @@ class _AdminWebScreenState extends State<AdminWebScreen> {
       setState(() => _controller = controller);
       await controller.loadRequest(url);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Impossible d’ouvrir l’administration.');
+      if (mounted) {
+        setState(() => _error = 'Impossible d’ouvrir l’administration.');
+      }
     }
   }
 
@@ -104,7 +116,13 @@ class _AdminWebScreenState extends State<AdminWebScreen> {
     final page = Uri.tryParse(pageUrl);
     final origin = _origin;
     final controller = _controller;
-    if (!mounted || page == null || origin == null || controller == null || !SiteConfig.sameOrigin(page, origin)) return;
+    if (!mounted ||
+        page == null ||
+        origin == null ||
+        controller == null ||
+        !SiteConfig.sameOrigin(page, origin)) {
+      return;
+    }
     if (_ready) {
       setState(() => _loading = false);
       return;
@@ -163,14 +181,18 @@ class _AdminWebScreenState extends State<AdminWebScreen> {
                       const SizedBox(height: 16),
                       Text(_error!, textAlign: TextAlign.center),
                       const SizedBox(height: 16),
-                      FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Retour')),
+                      FilledButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Retour'),
+                      ),
                     ],
                   ),
                 ),
               )
             : Stack(
                 children: [
-                  if (_controller != null) WebViewWidget(controller: _controller!),
+                  if (_controller != null)
+                    WebViewWidget(controller: _controller!),
                   if (_loading)
                     const ColoredBox(
                       color: Colors.white,

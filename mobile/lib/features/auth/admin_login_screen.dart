@@ -256,11 +256,19 @@ class _AdminConnectedView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.dashboard_customize_rounded, color: JsoColors.navy, size: 30),
+                const Icon(
+                  Icons.dashboard_customize_rounded,
+                  color: JsoColors.navy,
+                  size: 30,
+                ),
                 const SizedBox(height: JsoSpacing.md),
                 const Text(
                   'Gérer le club depuis l’application',
-                  style: TextStyle(color: JsoColors.navy, fontSize: 21, fontWeight: FontWeight.w900),
+                  style: TextStyle(
+                    color: JsoColors.navy,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
                 const SizedBox(height: JsoSpacing.sm),
                 const Text(
@@ -271,13 +279,16 @@ class _AdminConnectedView extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    onPressed: () => Navigator.of(context).push(AdminWebScreen.route()),
+                    onPressed: () =>
+                        Navigator.of(context).push(AdminWebScreen.route()),
                     icon: const Icon(Icons.arrow_forward_rounded),
                     label: const Text('Ouvrir l’administration'),
                     style: FilledButton.styleFrom(
                       backgroundColor: JsoColors.navy,
                       foregroundColor: JsoColors.white,
-                      padding: const EdgeInsets.symmetric(vertical: JsoSpacing.md),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: JsoSpacing.md,
+                      ),
                     ),
                   ),
                 ),
@@ -287,7 +298,12 @@ class _AdminConnectedView extends StatelessWidget {
           const SizedBox(height: JsoSpacing.lg),
           const Text(
             'OUTILS RAPIDES',
-            style: TextStyle(color: JsoColors.gold, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.5),
+            style: TextStyle(
+              color: JsoColors.gold,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.5,
+            ),
           ),
           const SizedBox(height: JsoSpacing.md),
           // Staff ticket scanner: available to any authenticated admin; the
