@@ -47,12 +47,29 @@ export function slugifyMatchPart(value) {
     .replace(/^-+|-+$/g, '')
 }
 
+export function matchOpponentName(match) {
+  const candidates = [
+    match?.opponentName, match?.OpponentName,
+    match?.opponent, match?.Opponent,
+    match?.opponent?.name, match?.Opponent?.Name,
+    match?.opponentTeamName, match?.OpponentTeamName,
+    match?.awayTeamName, match?.AwayTeamName,
+    match?.homeTeamName, match?.HomeTeamName,
+    match?.opponentTeam?.name, match?.OpponentTeam?.Name,
+    match?.awayTeam?.name, match?.AwayTeam?.Name,
+    match?.homeTeam?.name, match?.HomeTeam?.Name,
+  ]
+  const value = candidates.find((item) => typeof item === 'string' && item.trim())
+  return value?.trim() || ''
+}
+
 export function matchSlugFor(match) {
-  return 'jso-vs-' + slugifyMatchPart(match?.opponentName || match?.OpponentName || 'adversaire')
+  const opponentSlug = slugifyMatchPart(matchOpponentName(match)) || 'adversaire'
+  return 'jso-vs-' + opponentSlug
 }
 
 export function matchSlugFromPath(pathname = window.location.pathname) {
-  const match = /^\/matchs\/(jso-vs-[a-z0-9-]+)\/?$/i.exec(pathname)
+  const match = /^\/matchs\/(jso-vs(?:-[a-z0-9-]*)?)\/?$/i.exec(pathname)
   return match?.[1]?.toLowerCase() || null
 }
 
