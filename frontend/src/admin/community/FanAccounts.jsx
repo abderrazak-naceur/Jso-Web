@@ -1,17 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, Users, UserRound, CalendarDays, ShieldCheck, RefreshCw, Star, ShieldBan, ShieldCheck as ShieldCheckIcon } from 'lucide-react'
+import { Search, Users, UserRound, CalendarDays, ShieldCheck, RefreshCw, Star, ShieldBan } from 'lucide-react'
 import { adminApi } from '../api'
 import { API_BASE_URL } from '../../lib/apiConfig'
 
 const dateLabel = (value) => value ? new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
-const levelFor = (days = 0) => {
-  if (days >= 100) return { name: 'Légende', stars: 5, tone: 'bg-amber-100 text-amber-800' }
-  if (days >= 50) return { name: 'Or', stars: 4, tone: 'bg-yellow-100 text-yellow-800' }
-  if (days >= 20) return { name: 'Argent', stars: 3, tone: 'bg-slate-100 text-slate-700' }
-  if (days >= 5) return { name: 'Bronze', stars: 2, tone: 'bg-orange-100 text-orange-800' }
-  return { name: 'Débutant', stars: 1, tone: 'bg-blue-100 text-blue-800' }
-}
-
 export default function FanAccounts() {
   const [accounts, setAccounts] = useState([])
   const [query, setQuery] = useState('')
