@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'core/config/jso_theme.dart';
 import 'data/repositories/admin_tickets_repository.dart';
+import 'data/repositories/admin_fan_accounts_repository.dart';
 import 'data/repositories/club_content_repository.dart';
 import 'data/repositories/match_center_repository.dart';
 import 'data/repositories/public_api_repository.dart';
@@ -25,6 +26,7 @@ class JsoApp extends StatelessWidget {
     required this.repository,
     required this.ticketsRepository,
     required this.adminTicketsRepository,
+    required this.adminFanAccountsRepository,
     required this.clubContentRepository,
     required this.shopRepository,
     required this.matchCenterRepository,
@@ -36,6 +38,7 @@ class JsoApp extends StatelessWidget {
   final PublicApiRepository repository;
   final TicketsRepository ticketsRepository;
   final AdminTicketsRepository adminTicketsRepository;
+  final AdminFanAccountsRepository adminFanAccountsRepository;
   final ClubContentRepository clubContentRepository;
   final ShopRepository shopRepository;
   final MatchCenterRepository matchCenterRepository;
@@ -50,6 +53,7 @@ class JsoApp extends StatelessWidget {
         Provider<PublicApiRepository>.value(value: repository),
         Provider<TicketsRepository>.value(value: ticketsRepository),
         Provider<AdminTicketsRepository>.value(value: adminTicketsRepository),
+        Provider<AdminFanAccountsRepository>.value(value: adminFanAccountsRepository),
         Provider<ClubContentRepository>.value(value: clubContentRepository),
         Provider<ShopRepository>.value(value: shopRepository),
         Provider<MatchCenterRepository>.value(value: matchCenterRepository),
