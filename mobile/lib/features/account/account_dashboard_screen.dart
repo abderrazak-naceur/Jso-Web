@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/config/jso_theme.dart';
 import '../../shared/widgets/jso_crest.dart';
 import '../auth/auth_controller.dart';
+import '../auth/admin_login_screen.dart';
 import '../auth/profile_screen.dart';
 import '../shop/my_orders_screen.dart';
 import '../tickets/my_tickets_screen.dart';
@@ -233,6 +234,15 @@ class AccountDashboardScreen extends StatelessWidget {
               color: const Color(0xFFB58100),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => const ClubScreen()),
+              ),
+            ),
+            _AccountAction(
+              icon: Icons.admin_panel_settings_rounded,
+              title: 'Accesso amministratore',
+              subtitle: 'Gestione del club e controllo dei biglietti',
+              color: JsoColors.navy,
+              onTap: () => Navigator.of(context).push(
+                AdminLoginScreen.route(),
               ),
             ),
             const SizedBox(height: JsoSpacing.md),
