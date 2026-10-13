@@ -58,6 +58,7 @@ test('public sections and content have stable paths', () => {
   assert.equal(matchOpponentName({ IsHome: true, AwayTeam: { Name: 'Club Sportif' } }), 'Club Sportif')
   assert.equal(matchOpponentName({ isHome: false, homeTeamName: 'Étoile du Sahel' }), 'Étoile du Sahel')
   assert.equal(matchSlugFor({ id: '123e4567-e89b-12d3-a456-426614174000' }), 'jso-vs-match-123e4567')
+  assert.equal(matchSlugFromPath('/matchs/jso-vs-'), 'jso-vs-')
   assert.equal(matchSlugFromPath('/matchs/jso-vs-altra-squadra'), 'jso-vs-altra-squadra')
   assert.equal(sectionFromPath('/matchs/jso-vs-altra-squadra'), 'matches')
   assert.equal(sectionFromPath('/boutique/slug/extra'), null)
