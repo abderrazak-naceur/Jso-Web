@@ -81,10 +81,11 @@ function App() {
   }
 
   function openMatch(match) {
-    if (!match?.id) return
-    setSelectedMatch(match)
-    const url = '/matchs/' + encodeURIComponent(matchSlugFor(match))
-    if (window.location.pathname !== url) window.history.pushState({ matchId: match.id }, '', url)
+    const normalizedMatch = normalizeMatch(match)
+    if (!normalizedMatch?.id) return
+    setSelectedMatch(normalizedMatch)
+    const url = '/matchs/' + encodeURIComponent(matchSlugFor(normalizedMatch))
+    if (window.location.pathname !== url) window.history.pushState({ matchId: normalizedMatch.id }, '', url)
   }
   function closeMatch() {
     setSelectedMatch(null)
