@@ -317,3 +317,54 @@ html[dir="rtl"] .jso-a11y-launcher {
   left: auto;
   right: 1.25rem;
 }
+
+
+/* Homepage template skins: shared content and features, distinct club identities. */
+.home-template-modern-2026 > section,
+.home-template-modern-2026 > main > section {
+  scroll-margin-top: 6rem;
+}
+.home-template-modern-2026 h1,
+.home-template-modern-2026 h2,
+.home-template-modern-2026 h3 {
+  letter-spacing: -0.035em;
+}
+.home-template-modern-2026 [class*="rounded-[2rem]"],
+.home-template-modern-2026 [class*="rounded-2xl"] {
+  box-shadow: 0 12px 36px rgb(15 23 42 / 7%);
+}
+.home-template-modern-2026 .home-template-card {
+  border: 1px solid #e8edf5;
+  background: linear-gradient(145deg, #fff, #f8fbff);
+}
+.home-template-stadium {
+  background: #080f1f;
+  color: #f8fafc;
+}
+.home-template-stadium > section {
+  color: #f8fafc;
+}
+.home-template-stadium [class*="bg-white"] {
+  border-color: rgb(255 255 255 / 12%);
+}
+.home-template-stadium h1,
+.home-template-stadium h2,
+.home-template-stadium h3 {
+  letter-spacing: -0.04em;
+}
+.home-template-magazine h1,
+.home-template-magazine h2,
+.home-template-magazine h3 {
+  letter-spacing: -0.025em;
+}
+.home-template-magazine > section {
+  scroll-margin-top: 6rem;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .home-template-modern-2026 a,
+  .home-template-modern-2026 button,
+  .home-template-stadium a,
+  .home-template-magazine a {
+    transition-duration: 180ms;
+  }
+}
