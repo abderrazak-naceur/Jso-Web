@@ -50,8 +50,36 @@ export function slugifyMatchPart(value) {
 function teamDisplayName(value) {
   if (typeof value === 'string' && value.trim()) return value.trim()
   if (!value || typeof value !== 'object') return ''
-  const name = value.name || value.Name || value.shortName || value.ShortName || value.displayName || value.DisplayName
+  const name = value.name || value.Name || value.displayName || value.DisplayName || value.shortName || value.ShortName
   return typeof name === 'string' ? name.trim() : ''
+}
+
+function teamShortName(value) {
+  if (!value || typeof value !== 'object') return ''
+  const name = value.shortName || value.ShortName || value.abbreviation || value.Abbreviation ||
+    value.acronym || value.Acronym || value.code || value.Code
+  return typeof name === 'string' ? name.trim() : ''
+}
+
+// Prefer the club's official short name/abbreviation for the URL slug, while
+// keeping the full opponent name available for display in the match UI.
+export function matchOpponentShortName(match) {
+  if (!match || typeof match !== 'object') return ''
+  const directFields = [
+    match.opponentShortName, match.OpponentShortName,
+    match.opponentAbbreviation, match.OpponentAbbreviation,
+    match.opponentAcronym, match.OpponentAcronym,
+  ]
+  for (const value of directFields) {
+    const name = teamDisplayName(value)
+    if (name) return name
+  }
+
+  const isHome = match.isHome ?? match.IsHome ?? true
+  const opponent = isHome
+    ? (match.awayTeam ?? match.AwayTeam ?? match.awayTeamName ?? match.AwayTeamName)
+    : (match.homeTeam ?? match.HomeTeam ?? match.homeTeamName ?? match.HomeTeamName)
+  return teamShortName(opponent)
 }
 
 // Match payloads have existed in a few shapes across the public API and older
@@ -79,7 +107,7 @@ export function matchOpponentName(match) {
 }
 
 export function matchSlugFor(match) {
-  const opponent = slugifyMatchPart(matchOpponentName(match))
+  const opponent = slugifyMatchPart(matchOpponentShortName(match) || matchOpponentName(match))
   if (opponent) return 'jso-vs-' + opponent
   const id = String(match?.id || match?.Id || '').replace(/[^a-z0-9]/gi, '').slice(0, 8).toLowerCase()
   return 'jso-vs-' + (id ? 'match-' + id : 'adversaire')
