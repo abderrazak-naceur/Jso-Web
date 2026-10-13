@@ -47,16 +47,23 @@ function App() {
         const matches = items.map(normalizeMatch)
         const matchesForSlug = matches.filter((item) => matchSlugFor(item) === slug)
         if (matchesForSlug.length === 1) setSelectedMatch(matchesForSlug[0])
-        else if (matchesForSlug.length > 1) {
+        else if (matchesForSlug.length > 1 || (slug === 'jso-vs-' && matches.length > 0)) {
+          // Old malformed links contained no opponent slug. Recover them to the
+          // nearest upcoming match, then replace the URL with the correct slug.
+          const candidates = matchesForSlug.length ? matchesForSlug : matches
           const now = Date.now()
-          const ordered = [...matchesForSlug].sort((x, y) => {
+          const ordered = [...candidates].sort((x, y) => {
             const xd = new Date(x.kickoffAt || 0).getTime()
             const yd = new Date(y.kickoffAt || 0).getTime()
             const xf = xd >= now ? 0 : 1
             const yf = yd >= now ? 0 : 1
             return xf - yf || (xf === 0 ? xd - yd : yd - xd)
           })
-          setSelectedMatch(ordered[0])
+          const match = ordered[0]
+          setSelectedMatch(match)
+          if (slug === 'jso-vs-' && match?.id) {
+            window.history.replaceState({ matchId: match.id }, '', '/matchs/' + encodeURIComponent(matchSlugFor(match)))
+          }
         }
       })
       .catch(() => {})
@@ -104,8 +111,21 @@ function App() {
         const controller = new AbortController()
         publicApi.getMatches(controller.signal).then((items) => {
           if (controller.signal.aborted || !Array.isArray(items)) return
-          const matches = items.map(normalizeMatch).filter((item) => matchSlugFor(item) === matchSlug)
+          const allMatches = items.map(normalizeMatch)
+          const matches = allMatches.filter((item) => matchSlugFor(item) === matchSlug)
           if (matches.length) setSelectedMatch(matches[0])
+          else if (matchSlug === 'jso-vs-' && allMatches.length) {
+            const now = Date.now()
+            const ordered = [...allMatches].sort((x, y) => {
+              const xd = new Date(x.kickoffAt || 0).getTime()
+              const yd = new Date(y.kickoffAt || 0).getTime()
+              const xf = xd >= now ? 0 : 1
+              const yf = yd >= now ? 0 : 1
+              return xf - yf || (xf === 0 ? xd - yd : yd - xd)
+            })
+            setSelectedMatch(ordered[0])
+            if (ordered[0]?.id) window.history.replaceState({ matchId: ordered[0].id }, '', '/matchs/' + encodeURIComponent(matchSlugFor(ordered[0])))
+          }
         }).catch(() => {})
       }
     }
