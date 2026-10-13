@@ -1,6 +1,6 @@
 import { pick } from '../../lib/format.js'
-import { CLUB_NAME } from '../site/brand'
-import { matchOpponentName } from '../site/publicRoutes'
+import { CLUB_NAME } from '../site/brand.js'
+import { matchOpponentName } from '../site/publicRoutes.js'
 
 const STATUS_LABELS = {
   Scheduled: 'À venir',
@@ -75,7 +75,7 @@ export function clubResult(match) {
 }
 
 export function teamInitials(name) {
-  const words = String(name || '').split(/[\s-]+/).filter((word) => /^[A-ZÀ-Ý0-9]/.test(word))
+  const words = String(name || '').split(/[\\s-]+/).filter((word) => /^[A-ZÀ-Ý0-9]/.test(word))
   if (words.length === 0) return String(name || '?').slice(0, 3).toUpperCase()
   if (words.length === 1) return words[0].slice(0, 3).toUpperCase()
   return words
