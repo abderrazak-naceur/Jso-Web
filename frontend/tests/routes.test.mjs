@@ -4,6 +4,16 @@ import { adminEditIdFromPath, adminEditUrl, adminSectionFromPath, adminSectionUr
 import { ADMIN_CATEGORY_ORDER, ADMIN_NAVIGATION, ADMIN_PERMISSION_BY_ID, ADMIN_PUBLIC_PATHS, visibleAdminItems } from '../src/admin/navigation.js'
 import { ADMIN_MODULES } from '../src/admin/moduleRegistry.js'
 import { SECTION_PATHS, eventSlugFromPath, matchIdFromPath, matchSlugFromPath, matchSlugFor, matchOpponentName, productSlugFromPath, sectionFromPath, sectionUrl } from '../src/features/site/publicRoutes.js'
+import { resolveMediaUrl } from '../src/lib/apiConfig.js'
+
+test('media URLs resolve against the API origin without duplicating /api', () => {
+  const options = { apiBaseUrl: 'https://jso-api.onrender.com/api', origin: 'https://jso-web.onrender.com' }
+  assert.equal(resolveMediaUrl('/uploads/media/2026/10/sssm.png', options), 'https://jso-api.onrender.com/uploads/media/2026/10/sssm.png')
+  assert.equal(resolveMediaUrl('/api/uploads/media/2026/10/sssm.png', options), 'https://jso-api.onrender.com/uploads/media/2026/10/sssm.png')
+  assert.equal(resolveMediaUrl('uploads/media/2026/10/sssm.png', options), 'https://jso-api.onrender.com/api/uploads/media/2026/10/sssm.png')
+  assert.equal(resolveMediaUrl('https://cdn.example.test/sssm.png', options), 'https://cdn.example.test/sssm.png')
+  assert.equal(resolveMediaUrl('', options), '')
+})
 
 test('admin sections and edit links survive a direct page load', () => {
   assert.equal(adminSectionFromPath('/admin'), 'dashboard')
