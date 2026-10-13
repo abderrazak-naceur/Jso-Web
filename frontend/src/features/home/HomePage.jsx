@@ -229,8 +229,10 @@ export default function HomePage({
     ? defaultSectionOrder.filter((key) => key === focusSection && !hiddenSections.includes(key))
     : orderedSections
 
+  const template = ['classic', 'modern-2026', 'stadium', 'magazine'].includes(data.content?.home_template) ? data.content.home_template : 'classic'
+
   return (
-    <main id="main-content" tabIndex={-1}>
+    <main id="main-content" data-home-template={template} className={'home-template home-template-' + template} tabIndex={-1}>
       {focusSection ? <div className="mx-auto max-w-7xl px-5 pt-8 lg:px-8"><a href="/" className="text-sm font-bold text-jso-blue underline">← Accueil</a></div> : <>
       <HeroSection content={data.content} club={data.club} />
       <Reveal><SellingBand nextMatch={data.nextMatch} /></Reveal>
