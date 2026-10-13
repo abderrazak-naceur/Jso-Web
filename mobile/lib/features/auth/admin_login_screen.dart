@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../core/config/jso_theme.dart';
 import '../../shared/widgets/jso_crest.dart';
-import '../tickets/staff_scanner_screen.dart';
 import '../admin/fan_accounts_screen.dart';
+import '../tickets/staff_scanner_screen.dart';
 import 'admin_auth_controller.dart';
 import 'login_screen.dart' show validateEmail;
 
@@ -264,13 +264,20 @@ class _AdminConnectedView extends StatelessWidget {
             ),
             const SizedBox(height: JsoSpacing.sm),
           ],
-          ElevatedButton.icon(
-            onPressed: () =>
-                Navigator.of(context).push(StaffScannerScreen.route()),
-            icon: const Icon(Icons.qr_code_scanner_rounded),
-            label: const Text('Contrôle des billets (scanner)'),
-          ),
-          const SizedBox(height: JsoSpacing.md),
+          // Match the roles authorized by the ticket scan API.
+          if (const {
+            'SuperAdmin',
+            'ClubAdmin',
+            'MatchManager',
+          }.contains(user?.role)) ...[
+            ElevatedButton.icon(
+              onPressed: () =>
+                  Navigator.of(context).push(StaffScannerScreen.route()),
+              icon: const Icon(Icons.qr_code_scanner_rounded),
+              label: const Text('Contrôle des billets (scanner)'),
+            ),
+            const SizedBox(height: JsoSpacing.md),
+          ],
           const Text(
             'La gestion complète du club se fait depuis le back office web. '
             'D’autres actions administrateur arriveront prochainement dans '
