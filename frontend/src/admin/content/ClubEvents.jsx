@@ -133,6 +133,5 @@ export default function ClubEventsModule({ onError }) {
       </form>
       </section>
     </div>}
-    </div>
   </div>
 }
