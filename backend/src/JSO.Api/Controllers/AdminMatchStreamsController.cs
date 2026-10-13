@@ -27,15 +27,15 @@ public sealed class AdminMatchStreamsController(JsoDbContext db) : ControllerBas
             return NotFound(new { message = "La partita selezionata non esiste." });
 
         var provider = string.IsNullOrWhiteSpace(request.Provider) ? "Livepeer" : request.Provider.Trim();
-        if (!provider.Equals("Mux", StringComparison.OrdinalIgnoreCase) && !provider.Equals("Livepeer", StringComparison.OrdinalIgnoreCase))
-            return BadRequest(new { message = "Provider non supportato. Usa Livepeer o Mux." });
+        if (!new[] { "Mux", "Livepeer", "Custom" }.Contains(provider, StringComparer.OrdinalIgnoreCase))
+            return BadRequest(new { message = "Provider non supportato. Usa Livepeer, Mux o Custom HTTPS." });
 
         var playbackUrl = request.StreamUrl?.Trim();
         if (request.IsPublished && string.IsNullOrWhiteSpace(playbackUrl))
             return BadRequest(new { message = "Inserisci il Playback URL prima di pubblicare la diretta." });
         if (!string.IsNullOrWhiteSpace(playbackUrl) && !IsValidPlaybackUrl(provider, playbackUrl))
         {
-            var example = provider.Equals("Mux", StringComparison.OrdinalIgnoreCase) ? "https://player.mux.com/PLAYBACK_ID" : "https://lvpr.tv/?v=PLAYBACK_ID";
+            var example = provider.Equals("Mux", StringComparison.OrdinalIgnoreCase) ? "https://player.mux.com/PLAYBACK_ID" : provider.Equals("Custom", StringComparison.OrdinalIgnoreCase) ? "un URL HTTPS del player o HLS" : "https://lvpr.tv/?v=PLAYBACK_ID";
             return BadRequest(new { message = $"URL di riproduzione non valido per {provider}. Usa {example}." });
         }
         if (request.IsPaid && request.Price <= 0)
@@ -43,7 +43,7 @@ public sealed class AdminMatchStreamsController(JsoDbContext db) : ControllerBas
 
         var stream = await db.MatchStreams.SingleOrDefaultAsync(x => x.MatchId == matchId, ct);
         if (stream is null) { stream = new MatchStream { MatchId = matchId }; db.MatchStreams.Add(stream); }
-        stream.Provider = provider.Equals("Mux", StringComparison.OrdinalIgnoreCase) ? "Mux" : "Livepeer";
+        stream.Provider = provider.Equals("Mux", StringComparison.OrdinalIgnoreCase) ? "Mux" : provider.Equals("Custom", StringComparison.OrdinalIgnoreCase) ? "Custom" : "Livepeer";
         stream.StreamUrl = playbackUrl;
         stream.IsPaid = request.IsPaid;
         stream.Price = request.IsPaid ? request.Price : 0;
@@ -60,6 +60,8 @@ public sealed class AdminMatchStreamsController(JsoDbContext db) : ControllerBas
         if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps) return false;
         if (provider.Equals("Mux", StringComparison.OrdinalIgnoreCase))
             return string.Equals(uri.Host, "player.mux.com", StringComparison.OrdinalIgnoreCase);
+        if (provider.Equals("Custom", StringComparison.OrdinalIgnoreCase))
+            return uri.IsDefaultPort && !string.IsNullOrWhiteSpace(uri.Host);
         return string.Equals(uri.Host, "lvpr.tv", StringComparison.OrdinalIgnoreCase) && uri.AbsolutePath == "/" &&
             !string.IsNullOrWhiteSpace(Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query)["v"]);
     }
