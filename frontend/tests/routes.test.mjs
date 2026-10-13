@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { adminEditIdFromPath, adminEditUrl, adminSectionFromPath, adminSectionUrl } from '../src/admin/adminRoutes.js'
 import { ADMIN_CATEGORY_ORDER, ADMIN_NAVIGATION, ADMIN_PERMISSION_BY_ID, ADMIN_PUBLIC_PATHS, visibleAdminItems } from '../src/admin/navigation.js'
 import { ADMIN_MODULES } from '../src/admin/moduleRegistry.js'
-import { SECTION_PATHS, eventSlugFromPath, matchIdFromPath, matchSlugFromPath, matchSlugFor, matchOpponentName, productSlugFromPath, sectionFromPath, sectionUrl } from '../src/features/site/publicRoutes.js'
+import { SECTION_PATHS, eventSlugFromPath, matchIdFromPath, matchSlugFromPath, matchSlugFor, matchOpponentName, matchOpponentShortName, productSlugFromPath, sectionFromPath, sectionUrl } from '../src/features/site/publicRoutes.js'
 
 test('admin sections and edit links survive a direct page load', () => {
   assert.equal(adminSectionFromPath('/admin'), 'dashboard')
@@ -55,6 +55,9 @@ test('public sections and content have stable paths', () => {
   assert.equal(sectionFromPath(`/matchs/${match}`), 'matches')
   assert.equal(matchSlugFor({ opponentName: 'Altra Squadra' }), 'jso-vs-altra-squadra')
   assert.equal(matchSlugFor({ OpponentName: 'Jeunesse Sportive d\'Oudref' }), 'jso-vs-jeunesse-sportive-d-oudref')
+  assert.equal(matchSlugFor({ opponentName: 'Stade Sportif Sidi Makhlouf', opponentShortName: 'SSSM' }), 'jso-vs-sssm')
+  assert.equal(matchSlugFor({ IsHome: true, AwayTeam: { Name: 'Stade Sportif Sidi Makhlouf', ShortName: 'SSSM' } }), 'jso-vs-sssm')
+  assert.equal(matchOpponentShortName({ IsHome: true, AwayTeam: { Name: 'Stade Sportif Sidi Makhlouf', ShortName: 'SSSM' } }), 'SSSM')
   assert.equal(matchOpponentName({ IsHome: true, AwayTeam: { Name: 'Club Sportif' } }), 'Club Sportif')
   assert.equal(matchOpponentName({ isHome: false, homeTeamName: 'Étoile du Sahel' }), 'Étoile du Sahel')
   assert.equal(matchSlugFor({ id: '123e4567-e89b-12d3-a456-426614174000' }), 'jso-vs-match-123e4567')
