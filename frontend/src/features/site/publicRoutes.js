@@ -69,7 +69,7 @@ export function matchSlugFor(match) {
 }
 
 export function matchSlugFromPath(pathname = window.location.pathname) {
-  const match = /^\/matchs\/(jso-vs-[a-z0-9-]+)\/?$/i.exec(pathname)
+  const match = /^\/matchs\/(jso-vs(?:-[a-z0-9-]*)?)\/?$/i.exec(pathname)
   return match?.[1]?.toLowerCase() || null
 }
 
