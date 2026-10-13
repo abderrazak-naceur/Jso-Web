@@ -9,6 +9,7 @@ import { useFanSession } from './features/account/useFanSession'
 import HomePage from './features/home/HomePage'
 import { useHomeData } from './features/home/useHomeData'
 import MatchCenterModal from './features/matches/MatchCenterModal'
+import { matchSides } from './features/matches/matchUtils'
 import ArticleModal from './features/news/ArticleModal'
 import { pushArticleUrl, restoreHomeUrl, slugFromPath } from './features/news/articleUrl'
 import CartDrawer from './features/shop/CartDrawer'
@@ -54,7 +55,17 @@ function App() {
   function openMatch(match) {
     if (!match?.id) return
     setSelectedMatch(match)
-    const url = '/matchs/' + encodeURIComponent(match.id)
+    const sides = matchSides(match)
+    const slugify = (value) => String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+    const homeSlug = slugify(sides.home.name)
+    const awaySlug = slugify(sides.away.name)
+    // Keep the UUID at the end so every match URL is unique and can be opened directly.
+    const url = `/matchs/jso-vs-${homeSlug}-vs-${awaySlug}-${encodeURIComponent(match.id)}`
     if (window.location.pathname !== url) window.history.pushState({ matchId: match.id }, '', url)
   }
   function closeMatch() {
