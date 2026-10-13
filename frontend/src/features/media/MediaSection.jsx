@@ -1,5 +1,6 @@
 import { ArrowUpRight, Play, Sparkles } from 'lucide-react'
 import { pick } from '../../lib/format'
+import { resolveMediaUrl } from '../../lib/apiConfig'
 import SectionHeading from '../home/SectionHeading'
 import { SectionError, SectionLoading } from '../home/SectionState'
 
@@ -17,8 +18,10 @@ export default function MediaSection({ section, media, status = 'ready' }) {
         ) : (
           <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {featured.length > 0 ? featured.map((item, index) => {
-              const url = pick(item, 'url', 'Url')
-              const thumbnail = pick(item, 'thumbnailUrl', 'ThumbnailUrl')
+              const rawUrl = pick(item, 'url', 'Url')
+              const rawThumbnail = pick(item, 'thumbnailUrl', 'ThumbnailUrl')
+              const url = resolveMediaUrl(rawUrl)
+              const thumbnail = resolveMediaUrl(rawThumbnail)
               const title = pick(item, 'title', 'Title') || 'Média JSO'
               const caption = pick(item, 'caption', 'Caption')
               const type = pick(item, 'type', 'Type') || 'Image'
