@@ -1,6 +1,6 @@
-import { pick } from '../../lib/format'
-import { CLUB_NAME } from '../site/brand'
-import { matchOpponentName } from '../site/publicRoutes'
+import { pick } from '../../lib/format.js'
+import { CLUB_NAME } from '../site/brand.js'
+import { matchOpponentName } from '../site/publicRoutes.js'
 
 const STATUS_LABELS = {
   Scheduled: 'À venir',
