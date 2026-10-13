@@ -1,4 +1,4 @@
-import { pick } from '../../lib/format'
+import { pick } from '../../lib/format.js'
 import { CLUB_NAME } from '../site/brand'
 import { matchOpponentName } from '../site/publicRoutes'
 
