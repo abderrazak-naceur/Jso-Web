@@ -34,10 +34,10 @@ export function productSlugFromPath(pathname = window.location.pathname) {
 }
 
 export function matchIdFromPath(pathname = window.location.pathname) {
-  const match = /^\/matchs\/([0-9a-f]{8}-[0-9a-f-]{27,})\/?$/i.exec(pathname)
+  // Accept both legacy /matchs/{uuid} links and readable SEO slugs ending in the UUID.
+  const match = /^\\/matchs\\/(?:.*-)?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\/?$/i.exec(pathname)
   return match?.[1] || null
 }
-
 export function eventSlugFromPath(pathname = window.location.pathname) {
   const match = /^\/agenda\/([^/]+)\/?$/.exec(pathname)
   try { return match ? decodeURIComponent(match[1]) : null } catch { return null }
