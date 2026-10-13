@@ -9,6 +9,7 @@ import { resolveMediaUrl } from '../src/lib/apiConfig.js'
 test('media URLs resolve against the API origin without duplicating /api', () => {
   const options = { apiBaseUrl: 'https://jso-api.onrender.com/api', origin: 'https://jso-web.onrender.com' }
   assert.equal(resolveMediaUrl('/uploads/media/2026/10/sssm.png', options), 'https://jso-api.onrender.com/uploads/media/2026/10/sssm.png')
+  assert.equal(resolveMediaUrl('/uploads/media/2026/10/sssm.png', { apiBaseUrl: '/api', origin: 'https://jso-web.onrender.com' }), 'https://jso-api.onrender.com/uploads/media/2026/10/sssm.png')
   assert.equal(resolveMediaUrl('/api/uploads/media/2026/10/sssm.png', options), 'https://jso-api.onrender.com/uploads/media/2026/10/sssm.png')
   assert.equal(resolveMediaUrl('uploads/media/2026/10/sssm.png', options), 'https://jso-api.onrender.com/api/uploads/media/2026/10/sssm.png')
   assert.equal(resolveMediaUrl('https://cdn.example.test/sssm.png', options), 'https://cdn.example.test/sssm.png')
