@@ -1,5 +1,6 @@
 import { pick } from '../../lib/format'
 import { CLUB_NAME } from '../site/brand'
+import { matchOpponentName } from '../site/publicRoutes'
 
 const STATUS_LABELS = {
   Scheduled: 'À venir',
@@ -10,7 +11,6 @@ const STATUS_LABELS = {
   Cancelled: 'Annulé',
 }
 
-// Match events (admin) and live blog kinds share this dictionary.
 const EVENT_LABELS = {
   Goal: 'But',
   OwnGoal: 'But contre son camp',
@@ -29,9 +29,10 @@ export const RESULT_SHORT = { win: 'V', draw: 'N', loss: 'D' }
 
 export function normalizeMatch(raw) {
   if (!raw) return null
+  const opponentName = matchOpponentName(raw) || 'Adversaire à confirmer'
   return {
     id: pick(raw, 'Id', 'id'),
-    opponentName: pick(raw, 'OpponentName', 'opponentName') || 'Adversaire à confirmer',
+    opponentName,
     kickoffAt: pick(raw, 'KickoffAt', 'kickoffAt'),
     venue: pick(raw, 'Venue', 'venue'),
     isHome: Boolean(pick(raw, 'IsHome', 'isHome')),
@@ -57,15 +58,12 @@ export function hasScore(match) {
   return match?.homeScore != null && match?.awayScore != null
 }
 
-// Football convention: the home team is always shown first/left. When JSO plays
-// away, the opponent comes first so the score reads in the right order.
 export function matchSides(match) {
   const club = { name: CLUB_NAME, isClub: true, score: match.isHome ? match.homeScore : match.awayScore }
   const opponent = { name: match.opponentName, isClub: false, score: match.isHome ? match.awayScore : match.homeScore }
   return match.isHome ? { home: club, away: opponent } : { home: opponent, away: club }
 }
 
-// 'win' | 'draw' | 'loss' from JSO's point of view, or null without a score.
 export function clubResult(match) {
   if (!hasScore(match)) return null
   const { home, away } = matchSides(match)
@@ -76,7 +74,6 @@ export function clubResult(match) {
   return 'draw'
 }
 
-// Short badge for teams without a logo: "AS Gabès" → "ASG", "CS Sfaxien" → "CSS".
 export function teamInitials(name) {
   const words = String(name || '').split(/[\s-]+/).filter((word) => /^[A-ZÀ-Ý0-9]/.test(word))
   if (words.length === 0) return String(name || '?').slice(0, 3).toUpperCase()
