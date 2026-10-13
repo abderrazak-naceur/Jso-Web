@@ -11,9 +11,19 @@ namespace JSO.Api.Controllers;
 [Route("api/admin/content")]
 public sealed class AdminContentController(JsoDbContext db, AuditService audit) : ControllerBase
 {
+    private static bool IsManagedElsewhere(string key) =>
+        key.StartsWith("__system.", StringComparison.OrdinalIgnoreCase) ||
+        key.StartsWith("i18n:", StringComparison.OrdinalIgnoreCase) ||
+        key.Equals(DonationCampaignSettings.ContentKey, StringComparison.OrdinalIgnoreCase);
+
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken ct) =>
-        Ok(await db.SiteContents.AsNoTracking().OrderBy(x => x.Key).ToListAsync(ct));
+        Ok(await db.SiteContents.AsNoTracking()
+            .Where(x => !x.Key.StartsWith("__system.")
+                && !x.Key.StartsWith("i18n:")
+                && x.Key != DonationCampaignSettings.ContentKey)
+            .OrderBy(x => x.Key)
+            .ToListAsync(ct));
 
     [HttpPut("{key}")]
     public async Task<IActionResult> Upsert(string key, ContentRequest request, CancellationToken ct)
@@ -21,8 +31,8 @@ public sealed class AdminContentController(JsoDbContext db, AuditService audit) 
         key = key.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(key) || key.Length > 120)
             return BadRequest(new { message = "Invalid content key." });
-        if (key == DonationCampaignSettings.ContentKey)
-            return BadRequest(new { message = "Utilisez Finance > Dons & collecte pour modifier la campagne." });
+        if (IsManagedElsewhere(key))
+            return BadRequest(new { message = "Cette configuration est gérée depuis sa rubrique dédiée et ne peut pas être modifiée ici." });
 
         var item = await db.SiteContents.SingleOrDefaultAsync(x => x.Key == key, ct);
         var userId = User.FindFirst("sub")?.Value;
