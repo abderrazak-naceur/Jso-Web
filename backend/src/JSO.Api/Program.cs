@@ -135,10 +135,18 @@ if (!builder.Environment.IsDevelopment() && origins.Length == 0)
 
 builder.Services.AddCors(options =>
 {
+    // Always allow the canonical Render frontend origin. The configured list
+    // remains supported for custom domains and preview environments; this
+    // avoids browser CORS failures when the Render env var is missing the
+    // production frontend URL or contains an outdated value.
+    var allowedOrigins = origins
+        .Append("https://jso-web.onrender.com")
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToArray();
+
     options.AddPolicy("Frontend", policy =>
     {
-        if (origins.Length > 0)
-            policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod();
+        policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod();
     });
 });
 
