@@ -53,6 +53,7 @@ export function resetApiBaseUrl() {
 
 /**
  * Resolve media paths emitted by the backend into browser-loadable URLs.
+ * Kept centralized so admin previews and public match cards use identical rules.
  *
  * Uploaded files live on the API service, not the static frontend host. Paths
  * returned by the API are therefore rooted at that API's origin, even when the
