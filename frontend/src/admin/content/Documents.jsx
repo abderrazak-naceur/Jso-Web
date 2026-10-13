@@ -76,7 +76,7 @@ export default function DocumentsModule({ onError }) {
   }, [modalOpen])
   return <div className="space-y-6">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-      <div className="flex items-center justify-between"><h2 className="text-xl font-black">Documents</h2><button onClick={reset} className="rounded-xl bg-jso-navy p-2 text-white"><Plus size={18}/></button></div>
+      <div className="flex items-center justify-between"><h2 className="text-xl font-black">Documents</h2><button onClick={() => { setForm(empty); setEditing(null); setModalOpen(true) }} className="rounded-xl bg-jso-navy p-2 text-white"><Plus size={18}/></button></div>
       <div className="mt-5 overflow-x-auto">
         {loading ? <p className="text-sm text-slate-400">Chargement…</p>
           : items.length === 0 ? <p className="text-sm text-slate-400">Aucun document pour le moment.</p>
