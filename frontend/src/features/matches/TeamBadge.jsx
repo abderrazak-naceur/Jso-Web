@@ -13,8 +13,8 @@ export default function TeamBadge({ team, compact = false, dark = false }) {
   }
 
   return (
-    <span className={`grid ${size} place-items-center border text-base font-black ${dark ? 'border-white/15 bg-white/10 text-white' : 'border-slate-200 bg-slate-50 text-slate-500'}`} aria-hidden="true">
-      {teamInitials(team.name)}
+    <span className={`grid ${size} place-items-center overflow-hidden border text-base font-black ${dark ? 'border-white/15 bg-white/10 text-white' : 'border-slate-200 bg-slate-50 text-slate-500'}`} aria-hidden="true">
+      {team.logoUrl ? <img src={team.logoUrl} alt="" className="h-full w-full object-contain p-1" onError={(event) => { event.currentTarget.style.display = 'none' }} /> : teamInitials(team.name)}
     </span>
   )
 }

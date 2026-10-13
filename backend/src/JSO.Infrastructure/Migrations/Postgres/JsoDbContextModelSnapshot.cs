@@ -1160,6 +1160,9 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("OpponentLogoUrl")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("SeasonId")
                         .HasColumnType("uuid");
 
