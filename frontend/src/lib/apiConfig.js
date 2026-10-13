@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'jso_api_base_url'
-const BUILD_DEFAULT = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
+const BUILD_DEFAULT = (import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'jso-web.onrender.com' ? 'https://jso-api.onrender.com/api' : '/api')).replace(/\/$/, '')
 
 function normalize(value) {
   return String(value || '').trim().replace(/\/$/, '')
