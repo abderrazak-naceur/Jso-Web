@@ -88,7 +88,7 @@ function App() {
   }
   function closeMatch() {
     setSelectedMatch(null)
-    if (matchIdFromPath()) window.history.replaceState({}, '', '/matchs')
+    if (matchIdFromPath() || matchSlugFromPath()) window.history.replaceState({}, '', '/matchs')
   }
 
   // Keep the modal in sync with browser Back/Forward: navigating away from a
@@ -98,7 +98,16 @@ function App() {
       const slug = slugFromPath()
       setSelectedArticle(slug ? { slug } : null)
       const matchId = matchIdFromPath()
+      const matchSlug = matchSlugFromPath()
       setSelectedMatch(matchId ? { id: matchId } : null)
+      if (matchSlug && !matchId) {
+        const controller = new AbortController()
+        publicApi.getMatches(controller.signal).then((items) => {
+          if (controller.signal.aborted || !Array.isArray(items)) return
+          const matches = items.map(normalizeMatch).filter((item) => matchSlugFor(item) === matchSlug)
+          if (matches.length) setSelectedMatch(matches[0])
+        }).catch(() => {})
+      }
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
