@@ -24,7 +24,7 @@ public sealed class MatchDetailsController(JsoDbContext db, ContentTranslationSe
             OpponentName = ContentTranslationService.ResolveFromMap(map, "Match", match.Id, "opponentname", match.OpponentName, language),
             match.KickoffAt,
             Venue = ContentTranslationService.ResolveFromMap(map, "Match", match.Id, "venue", match.Venue, language),
-            match.IsHome, match.HomeScore, match.AwayScore,
+            match.IsHome, match.HomeScore, match.AwayScore, match.OpponentLogoUrl,
             Status = ContentTranslationService.ResolveFromMap(map, "Match", match.Id, "status", match.Status, language)
         });
     }
