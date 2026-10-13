@@ -1157,6 +1157,9 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("OpponentName")
+                    b.Property<string>("OpponentLogoUrl")
+                        .HasColumnType("text");
+
                         .IsRequired()
                         .HasColumnType("text");
 
