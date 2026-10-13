@@ -47,7 +47,7 @@ export default function HomepageTemplatesModule({ onError = () => {} }) {
     {loading ? <p className="rounded-2xl bg-white p-6 text-sm text-slate-500">Chargement des templates…</p> : <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
       {TEMPLATES.map(template => <article key={template.id} className={'overflow-hidden rounded-3xl border bg-white transition ' + (draft === template.id ? 'border-jso-blue ring-2 ring-yellow-100' : 'border-slate-200')}>
         <button type="button" onClick={() => { setDraft(template.id); setMessage('') }} aria-pressed={draft === template.id} className="block w-full text-left">
-          <div className={'relative aspect-[4/3] overflow-hidden p-3 ' + template.preview}>
+          <div aria-label={'Anteprima del template ' + template.name} className={'relative aspect-[4/3] min-h-[220px] overflow-hidden rounded-t-2xl p-3 ' + template.preview + (template.layout === 'modern' ? ' bg-gradient-to-br from-white via-slate-50 to-blue-50' : '')}>
             {template.layout === 'classic' && <div className="h-full rounded-xl bg-slate-100 p-2">
               <div className="h-[48%] rounded-lg bg-jso-navy p-3"><div className="h-1.5 w-1/3 rounded-full bg-jso-gold"/><div className="mt-3 h-3 w-4/5 rounded bg-white/90"/><div className="mt-2 h-2 w-1/2 rounded bg-white/40"/></div>
               <div className="mt-2 grid grid-cols-3 gap-2">{[0,1,2].map(i => <div key={i} className="rounded-md bg-white p-2"><div className="h-2 rounded bg-jso-gold"/><div className="mt-2 h-2 rounded bg-slate-200"/></div>)}</div>
