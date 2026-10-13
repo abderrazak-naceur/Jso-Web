@@ -76,6 +76,30 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ClockSkew = TimeSpan.FromMinutes(1)
         };
+        // Blocked fan accounts must lose access immediately, including requests
+        // made with an already-issued JWT (not only future login attempts).
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var role = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value
+                    ?? context.Principal?.FindFirst("role")?.Value;
+                if (!string.Equals(role, "Fan", StringComparison.OrdinalIgnoreCase)) return;
+
+                var subject = context.Principal?.FindFirst("sub")?.Value
+                    ?? context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!Guid.TryParse(subject, out var fanId))
+                {
+                    context.Fail("Invalid fan identity.");
+                    return;
+                }
+
+                await using var scope = context.HttpContext.RequestServices.CreateAsyncScope();
+                var db = scope.ServiceProvider.GetRequiredService<JsoDbContext>();
+                var isActive = await db.FanUsers.AsNoTracking().AnyAsync(x => x.Id == fanId && x.IsActive);
+                if (!isActive) context.Fail("Fan account is inactive.");
+            }
+        };
     });
 builder.Services.AddAuthorization(options => options.AddAdminPermissionPolicies());
 builder.Services.AddProblemDetails();
