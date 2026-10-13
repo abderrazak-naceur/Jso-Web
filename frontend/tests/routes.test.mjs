@@ -60,6 +60,7 @@ test('public sections and content have stable paths', () => {
   assert.equal(normalizeMatch({ Id: 'm1', Opponent: 'FC Tunis' }).opponentName, 'FC Tunis')
   assert.equal(matchSlugFor(normalizeMatch({ Id: 'm1', Opponent: { Name: 'Étoile du Sahel' } })), 'jso-vs-etoile-du-sahel')
   assert.equal(matchSlugFromPath('/matchs/jso-vs-altra-squadra'), 'jso-vs-altra-squadra')
+  assert.equal(matchSlugFromPath('/matchs/jso-vs-'), 'jso-vs-')
   assert.equal(sectionFromPath('/matchs/jso-vs-altra-squadra'), 'matches')
   assert.equal(sectionFromPath('/boutique/slug/extra'), null)
 })
