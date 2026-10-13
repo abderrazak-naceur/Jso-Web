@@ -70,9 +70,9 @@ const KNOWN_OPPONENT_ABBREVIATIONS = new Map([
 function knownOpponentAbbreviation(name) {
   const key = String(name || '')
     .normalize('NFD')
-    .replace(/[\\u0300-\\u036f]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLocaleLowerCase()
-    .replace(/\\s+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
   return KNOWN_OPPONENT_ABBREVIATIONS.get(key) || ''
 }
