@@ -1,5 +1,6 @@
 import { pick } from '../../lib/format'
 import { CLUB_NAME } from '../site/brand'
+import { matchOpponentName } from '../site/publicRoutes'
 
 const STATUS_LABELS = {
   Scheduled: 'À venir',
@@ -31,7 +32,7 @@ export function normalizeMatch(raw) {
   if (!raw) return null
   return {
     id: pick(raw, 'Id', 'id'),
-    opponentName: pick(raw, 'OpponentName', 'opponentName') || 'Adversaire à confirmer',
+    opponentName: matchOpponentName(raw) || 'Adversaire à confirmer',
     kickoffAt: pick(raw, 'KickoffAt', 'kickoffAt'),
     venue: pick(raw, 'Venue', 'venue'),
     isHome: Boolean(pick(raw, 'IsHome', 'isHome')),
