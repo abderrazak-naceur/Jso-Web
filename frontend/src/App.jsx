@@ -47,16 +47,22 @@ function App() {
         const matches = items.map(normalizeMatch)
         const matchesForSlug = matches.filter((item) => matchSlugFor(item) === slug)
         if (matchesForSlug.length === 1) setSelectedMatch(matchesForSlug[0])
-        else if (matchesForSlug.length > 1) {
+        else if (matchesForSlug.length > 1 || (slug === 'jso-vs-' && matches.length > 0)) {
+          // Recover legacy malformed links while preserving the normalized match payload.
+          const candidates = matchesForSlug.length ? matchesForSlug : matches;
           const now = Date.now()
-          const ordered = [...matchesForSlug].sort((x, y) => {
+          const ordered = [...candidates].sort((x, y) => {
             const xd = new Date(x.kickoffAt || 0).getTime()
             const yd = new Date(y.kickoffAt || 0).getTime()
             const xf = xd >= now ? 0 : 1
             const yf = yd >= now ? 0 : 1
             return xf - yf || (xf === 0 ? xd - yd : yd - xd)
           })
-          setSelectedMatch(ordered[0])
+          const match = ordered[0]
+          setSelectedMatch(match)
+          if (slug === 'jso-vs-' && match?.id) {
+            window.history.replaceState({ matchId: match.id }, '', '/matchs/' + encodeURIComponent(matchSlugFor(match)))
+          }
         }
       })
       .catch(() => {})
