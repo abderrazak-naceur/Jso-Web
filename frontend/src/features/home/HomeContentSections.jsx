@@ -12,7 +12,6 @@ import {
   Landmark,
   MapPin,
   ShoppingBag,
-  Smartphone,
 } from 'lucide-react'
 import { formatDate, formatMoney, formatTime, pick } from '../../lib/format'
 import { CLUB_FOUNDED, CLUB_NAME } from '../site/brand'

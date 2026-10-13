@@ -20,7 +20,7 @@ export default function StandalonePageHeader({ children }) {
           <img src={CREST_SRC} alt="" className="h-11 w-11 object-contain" />
           <span className="leading-none">
             <span className="block text-lg font-black tracking-tight">JSO</span>
-            <span className="mt-1 block whitespace-nowrap text-[10px] font-bold tracking-[0.2em] text-white/55">OUDHREF · TUNISIE</span>
+            <span className="mt-1 hidden whitespace-nowrap text-[10px] font-bold tracking-[0.2em] text-white/55 sm:block">OUDHREF · TUNISIE</span>
           </span>
         </a>
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, CalendarDays, CheckCircle2, CircleAlert, Clock3, Download, LogIn, Package, RefreshCw, ShieldCheck, Ticket, UserRound, X, LayoutDashboard, Crown, ShoppingBag, Settings, LogOut, Menu, ChevronDown, ChevronRight } from 'lucide-react'
+import { ArrowLeft, CalendarDays, CheckCircle2, CircleAlert, Download, LogIn, RefreshCw, ShieldCheck, Ticket, UserRound, LayoutDashboard, Crown, ShoppingBag, Settings, LogOut, Menu, ChevronDown, ChevronRight } from 'lucide-react'
 import { membershipApi, shopOrderApi, ticketApi } from '../../lib/api'
 import { useFanSession } from './useFanSession'
 import AuthModal from './AuthModal'
@@ -32,17 +32,6 @@ const prettyStatus = (status) => ({
   Paid: 'Payé', Confirmed: 'Confirmé', Active: 'Actif', Pending: 'En attente',
   Cancelled: 'Annulé', Failed: 'Échoué', Expired: 'Expiré', Used: 'Utilisé',
 }[status] || status)
-const statusClass = (status) => ['Paid', 'Confirmed', 'Active', 'Used'].includes(status)
-  ? 'bg-emerald-50 text-emerald-700'
-  : ['Pending', 'Created', 'Processing'].includes(status)
-    ? 'bg-amber-50 text-amber-700'
-    : ['Cancelled', 'Failed', 'Expired', 'Rejected'].includes(status)
-      ? 'bg-red-50 text-red-700' : 'bg-slate-100 text-slate-600'
-
-function SectionHeading({ eyebrow, title, count, icon: Icon }) {
-  return <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-jso-navy text-jso-gold"><Icon size={20} aria-hidden="true" /></span><div><p className="text-xs font-extrabold tracking-[0.16em] text-jso-blue">{eyebrow}</p><h2 className="mt-1 text-xl font-black sm:text-2xl">{title}</h2></div></div>{count !== undefined && <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-extrabold text-slate-600">{count}</span>}</div>
-}
-
 function EmptyState({ title, detail }) {
   return <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center"><p className="font-extrabold text-jso-ink">{title}</p><p className="mt-1 text-sm text-slate-500">{detail}</p></div>
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ArrowUp, ArrowUpRight, Check, Copy, Facebook, Instagram, Music2, Shield } from 'lucide-react'
 import { newsletterApi } from '../../lib/api'
-import { CLUB_FULL_NAME, CLUB_SOCIALS, CREST_SRC } from './brand'
+import { CLUB_SOCIALS, CREST_SRC } from './brand'
 import { useI18n } from '../../i18n/index.jsx'
 import { sectionUrl } from './publicRoutes'
 import appVersion from '../../version.json'

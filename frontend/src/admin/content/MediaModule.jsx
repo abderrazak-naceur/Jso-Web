@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Images, X, Pencil, Save, Upload } from 'lucide-react'
+import { X, Pencil, Save, Upload } from 'lucide-react'
 import Field from '../components/Field'
 import { adminApi } from '../api'
 export default function MediaModule({ onError }) {
@@ -45,6 +45,3 @@ export default function MediaModule({ onError }) {
     </div>}
   </div>
 }
-
-const emptyEvent = { minute: 0, type: 'Goal', playerName: '', secondaryPlayerName: '', team: '', notes: '' }
-const EVENT_TEAM_LABELS = { Home: 'Domicile', Away: 'Extérieur' }

@@ -23,6 +23,7 @@ import { useDocumentTitle } from './lib/useDocumentTitle'
 import { useActiveSection } from './features/site/useActiveSection'
 import { useNavigation } from './features/site/useNavigation'
 import { useHomeLayout } from './features/home/useHomeLayout'
+import { HOME_TEMPLATE_IDS } from './features/home/homeTemplates'
 import { useI18n } from './i18n/index.jsx'
 
 function App() {
@@ -30,6 +31,8 @@ function App() {
   const data = useHomeData()
   const cart = useCart()
   const fan = useFanSession()
+  const requestedTemplatePreview = new URLSearchParams(window.location.search).get('templatePreview')
+  const templatePreview = HOME_TEMPLATE_IDS.has(requestedTemplatePreview) ? requestedTemplatePreview : null
 
   const [selectedMatch, setSelectedMatch] = useState(() => {
     const id = matchIdFromPath()
@@ -199,6 +202,7 @@ function App() {
             focusSection={focusSection}
             productSlug={productSlug}
             eventSlug={eventSlug}
+            templatePreview={templatePreview}
           />
           <SiteFooter sections={sections} extraLinks={footerLinks} />
         </>

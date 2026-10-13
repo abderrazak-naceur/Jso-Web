@@ -1,6 +1,100 @@
 # JSO Web — Cronologia delle versioni
 
-Questo documento registra le modifiche rilasciate in JSO Web. Le voci sono basate sui commit e sui deploy verificati; le versioni più vecchie non ancora ricostruite in modo affidabile sono indicate come da completare, invece di inventare funzionalità.
+Questo documento registra le versioni presenti nel repository e indica separatamente quando un deploy è stato verificato. Un tag o un numero versione non significa che Render sia aggiornato; le versioni più vecchie non ricostruite in modo affidabile restano da completare.
+
+## V1.26 — Template homepage: API e anteprime
+
+**Versione nel codice:** `frontend/src/version.json` riporta V1.26.
+
+**Commit funzionale/tag:** [9bd945c](https://github.com/abderrazak-naceur/Jso-Web/commit/9bd945ce5f5b1769f8e1066507221086dfb0ff66) · [tag V1.26](https://github.com/abderrazak-naceur/Jso-Web/releases/tag/V1.26)
+
+**Commit versione:** [ed7f928](https://github.com/abderrazak-naceur/Jso-Web/commit/ed7f9282e6831a26bc3cb9c6338bc44cd92998eb)
+
+- Corretto il collegamento API del selettore dei template homepage e migliorate le anteprime.
+- L'audit del 13 ottobre ha portato a quattro ordini di homepage distinti, anteprima della pagina reale desktop/mobile, salvataggio bloccato se la configurazione non si carica, e gestione di ordine/visibilità per le sezioni principali. Questi interventi sono modifiche locali successive a V1.26; il numero di versione non è stato incrementato e non è dichiarato un deploy Render.
+- Corretto anche il taglio orizzontale dell'intestazione sui viewport mobile stretti.
+
+**Deploy Render:** non verificato da questa sessione. Il tag e la versione nel repository non dimostrano che il deploy sia LIVE.
+
+## V1.25 — Editor admin in finestre modali
+
+**Commit funzionale/tag:** [5624af1](https://github.com/abderrazak-naceur/Jso-Web/commit/5624af160d734a5edcc4c6b57036513823a89914) · [tag V1.25](https://github.com/abderrazak-naceur/Jso-Web/releases/tag/V1.25)
+
+- Spostati in finestre modali gli editor CRUD che prima comparivano in linea nelle schermate admin.
+
+## V1.24 — Template homepage Modern 2026
+
+**Commit funzionale/tag:** [d4efe26](https://github.com/abderrazak-naceur/Jso-Web/commit/d4efe2603af5ed6e7ba271d4ce28613df8de045d) · [tag V1.24](https://github.com/abderrazak-naceur/Jso-Web/releases/tag/V1.24)
+
+- Aggiunto il template Modern 2026 alla selezione della homepage.
+
+## V1.23 — Modifica della partita in un modal
+
+**Commit funzionale/tag:** [3c50308](https://github.com/abderrazak-naceur/Jso-Web/commit/3c5030813eebe14577ce1969cdf571319e37637d) · [tag V1.23](https://github.com/abderrazak-naceur/Jso-Web/releases/tag/V1.23)
+
+- Aperto l'editor della partita in una finestra modale nell'admin.
+
+## V1.22 — Logo dell'avversario nelle partite
+
+**Commit funzionale/tag:** [008e7fd](https://github.com/abderrazak-naceur/Jso-Web/commit/008e7fd99947edd6b97f868f2f35213c730af822) · [tag V1.22](https://github.com/abderrazak-naceur/Jso-Web/releases/tag/V1.22)
+
+- Aggiunto nell'admin il caricamento del logo della squadra avversaria.
+
+## V1.21 — Importo selezionato nelle donazioni
+
+**Commit funzionale/tag:** [5bb1f3b](https://github.com/abderrazak-naceur/Jso-Web/commit/5bb1f3ba825aeb8f87efe46a730d6dde4c8dd65a) · [tag V1.21](https://github.com/abderrazak-naceur/Jso-Web/releases/tag/V1.21)
+
+- Corretto il riepilogo dell'importo scelto nel flusso di donazione.
+
+## V1.20 — URL delle partite con il nome dell'avversario
+
+**Commit funzionale/tag:** [e43d80b](https://github.com/abderrazak-naceur/Jso-Web/commit/e43d80bdd79f592e47636ae91c1634d77594fc33) · [tag V1.20](https://github.com/abderrazak-naceur/Jso-Web/releases/tag/V1.20)
+
+- Inclusi i nomi delle squadre avversarie negli URL delle partite.
+
+## V1.19 — Amministrazione dei supporter su mobile
+
+**Commit funzionale/tag:** [8abddac](https://github.com/abderrazak-naceur/Jso-Web/commit/8abddacfc27e459635c19589c1afce7749cc3f98) · [tag V1.19](https://github.com/abderrazak-naceur/Jso-Web/releases/tag/V1.19)
+
+- Aggiunta la gestione dei supporter nell'app mobile.
+
+## V1.18 — Gestione degli account tifosi
+
+**Commit funzionale/tag:** [a98acba](https://github.com/abderrazak-naceur/Jso-Web/commit/a98acba63aa715d4b66bdbb53eabcf8104e82655) · [tag V1.18](https://github.com/abderrazak-naceur/Jso-Web/releases/tag/V1.18)
+
+- Aggiunte nell'admin la gestione degli account, il blocco degli utenti e le stelle VIP.
+
+## V1.17 — URL leggibili per le partite
+
+**Commit funzionale/tag:** [12a84f2](https://github.com/abderrazak-naceur/Jso-Web/commit/12a84f25441a7a68e55cf105d610abd6afbec834) · [tag V1.17](https://github.com/abderrazak-naceur/Jso-Web/releases/tag/V1.17)
+
+- Aggiunti slug leggibili e orientati alla condivisione nelle pagine di dettaglio partita.
+
+## V1.16 — Codici promozionali streaming nell'admin
+
+**Commit funzionale/tag:** [b5fa730](https://github.com/abderrazak-naceur/Jso-Web/commit/b5fa730c74acd4e475dfea56fdb5464d49f5086b) · [tag V1.16](https://github.com/abderrazak-naceur/Jso-Web/releases/tag/V1.16)
+
+- Resi visibili i codici promozionali e corretta la relazione con la diretta nell'admin.
+
+## V1.15 — Codici promozionali per le dirette
+
+**Commit funzionale/tag:** [b91f546](https://github.com/abderrazak-naceur/Jso-Web/commit/b91f546dbf7121a903d467fe3a858dd17dd516da) · [tag V1.15](https://github.com/abderrazak-naceur/Jso-Web/releases/tag/V1.15)
+
+- Aggiunti codici promozionali per singola partita e riscatto gratuito dello streaming.
+
+## V1.14 — Errori API visibili nello streaming
+
+**Commit funzionale/tag:** [7226993](https://github.com/abderrazak-naceur/Jso-Web/commit/72269939e62536142b0421025b2ebfb0aa040437) · [tag V1.14](https://github.com/abderrazak-naceur/Jso-Web/releases/tag/V1.14)
+
+- Le schermate di streaming mostrano gli errori API invece di nasconderli.
+
+## V1.13 — Avvio della cronologia versioni
+
+**Commit funzionale/tag:** [9bba8e6](https://github.com/abderrazak-naceur/Jso-Web/commit/9bba8e65f42092ba23ffcd45b76386badf1fe76b) · [tag V1.13](https://github.com/abderrazak-naceur/Jso-Web/releases/tag/V1.13)
+
+- Aggiunto il documento di cronologia delle versioni.
+
+**Deploy Render delle versioni V1.13–V1.26:** non verificato in questa sessione. Le voci sopra descrivono commit e tag Git, non attestano la pubblicazione online.
 
 ## V1.12 — Navigazione dell'area personale
 
