@@ -4,6 +4,7 @@ import { adminEditIdFromPath, adminEditUrl, adminSectionFromPath, adminSectionUr
 import { ADMIN_CATEGORY_ORDER, ADMIN_NAVIGATION, ADMIN_PERMISSION_BY_ID, ADMIN_PUBLIC_PATHS, visibleAdminItems } from '../src/admin/navigation.js'
 import { ADMIN_MODULES } from '../src/admin/moduleRegistry.js'
 import { SECTION_PATHS, eventSlugFromPath, matchIdFromPath, matchSlugFromPath, matchSlugFor, productSlugFromPath, sectionFromPath, sectionUrl } from '../src/features/site/publicRoutes.js'
+import { normalizeMatch } from '../src/features/matches/matchUtils.js'
 
 test('admin sections and edit links survive a direct page load', () => {
   assert.equal(adminSectionFromPath('/admin'), 'dashboard')
@@ -56,6 +57,8 @@ test('public sections and content have stable paths', () => {
   assert.equal(matchSlugFor({ opponentName: 'Altra Squadra' }), 'jso-vs-altra-squadra')
   assert.equal(matchSlugFor({ Opponent: 'FC Tunis' }), 'jso-vs-fc-tunis')
   assert.equal(matchSlugFor({ opponentName: '---' }), 'jso-vs-adversaire')
+  assert.equal(normalizeMatch({ Id: 'm1', Opponent: 'FC Tunis' }).opponentName, 'FC Tunis')
+  assert.equal(matchSlugFor(normalizeMatch({ Id: 'm1', Opponent: { Name: 'Étoile du Sahel' } })), 'jso-vs-etoile-du-sahel')
   assert.equal(matchSlugFromPath('/matchs/jso-vs-altra-squadra'), 'jso-vs-altra-squadra')
   assert.equal(sectionFromPath('/matchs/jso-vs-altra-squadra'), 'matches')
   assert.equal(sectionFromPath('/boutique/slug/extra'), null)
