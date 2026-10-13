@@ -103,6 +103,5 @@ export default function FaqModule({ onError }) {
       </form>
       </section>
     </div>}
-    </div>
   </div>
 }
