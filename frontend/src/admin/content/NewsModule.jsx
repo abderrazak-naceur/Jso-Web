@@ -6,24 +6,24 @@ import { emptyNews } from '../constants'
 import { adminEditIdFromPath, adminEditUrl, navigateAdminEdit } from '../adminRoutes'
 import { sharePreviewUrl } from '../../lib/sharePreviewUrl'
 export default function NewsModule({ onError }) {
-  const [items,setItems]=useState([]); const [editing,setEditing]=useState(null); const [form,setForm]=useState(emptyNews)
+  const [items,setItems]=useState([]); const [editing,setEditing]=useState(null); const [form,setForm]=useState(emptyNews); const [modalOpen,setModalOpen]=useState(Boolean(adminEditIdFromPath('news')))
   const [copiedId,setCopiedId]=useState(null); const [copiedAdminId,setCopiedAdminId]=useState(null); const [fbBusyId,setFbBusyId]=useState(null); const [notice,setNotice]=useState('')
   async function load(){try{setItems(await adminApi('/admin/news'))}catch(e){onError(e.message)}}
   useEffect(()=>{load()},[])
   useEffect(() => {
     function syncRoute() {
       const id = adminEditIdFromPath('news')
-      if (!id) { setEditing(null); setForm(emptyNews); return }
+      if (!id) { setEditing(null); setModalOpen(false); setForm(emptyNews); return }
       const item = items.find((entry) => String(entry.id) === id)
-      if (item) { setEditing(item.id); setForm({ ...item, publishedAt: item.publishedAt?.slice(0, 16) || '' }) }
+      if (item) { setEditing(item.id); setModalOpen(true); setForm({ ...item, publishedAt: item.publishedAt?.slice(0, 16) || '' }) }
       else if (items.length) onError('Article admin introuvable.')
     }
     syncRoute()
     window.addEventListener('popstate', syncRoute)
     return () => window.removeEventListener('popstate', syncRoute)
   }, [items, onError])
-  function edit(item){navigateAdminEdit('news',item.id);setEditing(item.id);setForm({...item,publishedAt:item.publishedAt?.slice(0,16)||''})}
-  function reset(){navigateAdminEdit('news',null);setEditing(null);setForm(emptyNews)}
+  function edit(item){navigateAdminEdit('news',item.id);setEditing(item.id);setForm({...item,publishedAt:item.publishedAt?.slice(0,16)||''});setModalOpen(true)}
+  function reset(){navigateAdminEdit('news',null);setEditing(null);setForm(emptyNews);setModalOpen(false)}
   async function copyAdminLink(item){try{await navigator.clipboard.writeText(window.location.origin+adminEditUrl('news',item.id));setCopiedAdminId(item.id);setTimeout(()=>setCopiedAdminId(null),2000)}catch{onError('Impossible de copier le lien admin.')}}
   async function save(e){e.preventDefault();try{const body={...form,publishedAt:form.publishedAt?new Date(form.publishedAt).toISOString():null};if(editing)await adminApi('/admin/news/'+editing,{method:'PUT',body:JSON.stringify(body)});else await adminApi('/admin/news',{method:'POST',body:JSON.stringify(body)});reset();await load()}catch(e){onError(e.message)}}
   async function publish(id){try{await adminApi('/admin/news/'+id+'/publish',{method:'POST'});await load()}catch(e){onError(e.message)}}
@@ -38,8 +38,33 @@ export default function NewsModule({ onError }) {
   // configured, the backend replies 400 with a clear message and we fall back
   // to the manual sharer so the editor is never blocked.
   async function publishToFacebook(n){setFbBusyId(n.id);setNotice('');try{const res=await adminApi('/admin/social/facebook/publish',{method:'POST',body:JSON.stringify({articleId:n.id})});setNotice(res?.message||'Publié sur Facebook.')}catch(e){onError(e.message+' — utilisez « Partager » pour publier manuellement.');shareFacebook(n)}finally{setFbBusyId(null)}}
-  return <div className="grid gap-6 xl:grid-cols-[1fr_1.2fr]">
-    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><div className="flex items-center justify-between"><h2 className="text-xl font-black">News CMS</h2><button onClick={reset} className="rounded-xl bg-jso-navy p-2 text-white"><Plus size={18}/></button></div>{notice&&<p className="mt-3 rounded-xl bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">{notice}</p>}<div className="mt-5 space-y-2">{items.map(n=><div key={n.id} className="rounded-xl bg-slate-50 p-4"><div className="flex justify-between gap-3"><div><b>{n.title}</b><p className="text-xs text-slate-500">{n.status} · {n.slug}</p></div><div className="flex gap-2">{n.status==='Published'?<button onClick={()=>unpublish(n.id)} title="Dépublier" className="text-amber-600"><EyeOff size={16}/></button>:<button onClick={()=>publish(n.id)} title="Publier" className="text-emerald-600"><Eye size={16}/></button>}<button onClick={()=>edit(n)} title="Modifier" className="text-jso-blue"><Pencil size={16}/></button><button onClick={()=>copyAdminLink(n)} title="Copier le lien admin" className="text-jso-blue"><Link2 size={16}/>{copiedAdminId===n.id&&<span className="sr-only">Copié</span>}</button><button onClick={()=>remove(n.id)} title="Supprimer" className="text-red-600"><X size={16}/></button></div></div>{n.status==='Published'&&<div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3"><button onClick={()=>copyLink(n)} title="Copier le lien public" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-jso-navy hover:border-jso-blue"><Link2 size={14}/>{copiedId===n.id?'Lien copié':'Copier le lien'}</button><button onClick={()=>shareFacebook(n)} title="Partager sur Facebook" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-jso-navy hover:border-jso-blue"><Facebook size={14}/>Partager</button><button onClick={()=>publishToFacebook(n)} disabled={fbBusyId===n.id} title="Publier automatiquement sur la Page Facebook du club" className="inline-flex items-center gap-1.5 rounded-full bg-jso-navy px-3 py-1.5 text-xs font-bold text-white hover:bg-jso-blue disabled:opacity-50"><Send size={14}/>{fbBusyId===n.id?'Publication…':'Publier sur Facebook'}</button></div>}</div>)}</div></div>
-    <form onSubmit={save} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 space-y-3"><h2 className="text-xl font-black">{editing?'Modifier l’article':'Nouvel article'}</h2><Field label="Titre" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required/><Field label="Slug" value={form.slug} onChange={e=>setForm({...form,slug:e.target.value})} required/><Field label="Extrait" value={form.excerpt} onChange={e=>setForm({...form,excerpt:e.target.value})}/><label className="block text-sm font-bold">Contenu<textarea value={form.body} onChange={e=>setForm({...form,body:e.target.value})} rows="9" className="mt-2 w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-jso-blue"/></label><Field label="Cover URL" value={form.coverImageUrl} onChange={e=>setForm({...form,coverImageUrl:e.target.value})}/><button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/>Enregistrer</button></form>
+  useEffect(() => {
+    if (!modalOpen) return
+    const closeOnEscape = event => { if (event.key === 'Escape') reset() }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [modalOpen])
+  return <div className="space-y-6">
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+      <div className="flex items-center justify-between"><div><h2 className="text-xl font-black">News CMS</h2><p className="mt-1 text-sm text-slate-500">Gérez les articles et leur publication.</p></div><button type="button" onClick={()=>{setEditing(null);setForm(emptyNews);setModalOpen(true)}} className="flex items-center gap-2 rounded-xl bg-jso-navy px-3 py-2 font-bold text-white"><Plus size={18}/>Nouvel article</button></div>
+      {notice&&<p className="mt-3 rounded-xl bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">{notice}</p>}
+      <div className="mt-5 space-y-2">{items.map(n=><div key={n.id} className="rounded-xl bg-slate-50 p-4"><div className="flex justify-between gap-3"><div><b>{n.title}</b><p className="text-xs text-slate-500">{n.status} · {n.slug}</p></div><div className="flex gap-2">{n.status==='Published'?<button type="button" onClick={()=>unpublish(n.id)} title="Dépublier" className="text-amber-600"><EyeOff size={16}/></button>:<button type="button" onClick={()=>publish(n.id)} title="Publier" className="text-emerald-600"><Eye size={16}/></button>}<button type="button" onClick={()=>edit(n)} title="Modifier" className="text-jso-blue"><Pencil size={16}/></button><button type="button" onClick={()=>copyAdminLink(n)} title="Copier le lien admin" className="text-jso-blue"><Link2 size={16}/>{copiedAdminId===n.id&&<span className="sr-only">Copié</span>}</button><button type="button" onClick={()=>remove(n.id)} title="Supprimer" className="text-red-600"><X size={16}/></button></div></div>{n.status==='Published'&&<div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3"><button type="button" onClick={()=>copyLink(n)} title="Copier le lien public" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-jso-navy hover:border-jso-blue"><Link2 size={14}/>{copiedId===n.id?'Lien copié':'Copier le lien'}</button><button type="button" onClick={()=>shareFacebook(n)} title="Partager sur Facebook" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-jso-navy hover:border-jso-blue"><Facebook size={14}/>Partager</button><button type="button" onClick={()=>publishToFacebook(n)} disabled={fbBusyId===n.id} title="Publier automatiquement sur la Page Facebook du club" className="inline-flex items-center gap-1.5 rounded-full bg-jso-navy px-3 py-1.5 text-xs font-bold text-white hover:bg-jso-blue disabled:opacity-50"><Send size={14}/>{fbBusyId===n.id?'Publication…':'Publier sur Facebook'}</button></div>}</div>)}</div>
+    </div>
+    {modalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 sm:p-6" onMouseDown={e => { if(e.target===e.currentTarget) reset() }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="admin-form-title" className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-7">
+        <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+          <h2 id="admin-form-title" className="text-xl font-black">{editing ? 'Modifier' : 'Créer'} · article</h2>
+          <button type="button" aria-label="Fermer" onClick={reset} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X size={20}/></button>
+        </div>
+        <form onSubmit={save} className="mt-5 space-y-3">
+          <Field label="Titre" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required/>
+          <Field label="Slug" value={form.slug} onChange={e=>setForm({...form,slug:e.target.value})} required/>
+          <Field label="Extrait" value={form.excerpt} onChange={e=>setForm({...form,excerpt:e.target.value})}/>
+          <label className="block text-sm font-bold">Contenu<textarea value={form.body} onChange={e=>setForm({...form,body:e.target.value})} rows="9" className="mt-2 w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-jso-blue"/></label>
+          <Field label="Cover URL" value={form.coverImageUrl} onChange={e=>setForm({...form,coverImageUrl:e.target.value})}/>
+          <div className="flex justify-end gap-2 pt-2"><button type="button" onClick={reset} className="rounded-xl border border-slate-200 px-4 py-2.5 font-bold text-slate-600">Annuler</button><button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/>Enregistrer</button></div>
+        </form>
+      </section>
+    </div>}
   </div>
 }

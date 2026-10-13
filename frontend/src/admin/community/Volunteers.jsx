@@ -37,12 +37,13 @@ function Field({ label, ...props }) {
 function VolunteerDirectory({ volunteers, loading, onSaved, onError }) {
   const [form, setForm] = useState(emptyVolunteer)
   const [editing, setEditing] = useState(null)
+  const [modalOpen, setModalOpen] = useState(false)
 
-  function edit(v) {
+  function edit(v) { setModalOpen(true);
     setEditing(v.id)
     setForm({ name: v.name || '', role: v.role || '', contact: v.contact || '', contactConsent: Boolean(v.contactConsent), isActive: Boolean(v.isActive) })
   }
-  function reset() { setForm(emptyVolunteer); setEditing(null) }
+  function reset() { setForm(emptyVolunteer); setEditing(null); setModalOpen(false) }
 
   async function save(e) {
     e.preventDefault()
@@ -67,9 +68,15 @@ function VolunteerDirectory({ volunteers, loading, onSaved, onError }) {
     catch (err) { onError(err.message) }
   }
 
-  return <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+  useEffect(() => {
+    if (!modalOpen) return
+    const closeOnEscape = event => { if (event.key === 'Escape') reset() }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [modalOpen])
+  return <div className="space-y-6">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-black">Bénévoles</h2>
+      <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-black">Bénévoles</h2><button type="button" onClick={() => { setForm(emptyVolunteer); setEditing(null); setModalOpen(true) }} className="flex items-center gap-2 rounded-xl bg-jso-navy px-3 py-2 font-bold text-white"><Plus size={16}/>Nouveau bénévole</button></div>
       <p className="mt-1 text-xs text-slate-400">Coordonnées conservées uniquement avec le consentement du bénévole (minimisation RGPD). Données jamais publiées.</p>
       <div className="mt-5 overflow-x-auto">
         {loading ? <p className="text-sm text-slate-400">Chargement…</p>
@@ -77,9 +84,13 @@ function VolunteerDirectory({ volunteers, loading, onSaved, onError }) {
           : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Nom</th><th className="p-2">Rôle</th><th className="p-2">Contact</th><th className="p-2">Actif</th><th className="p-2"></th></tr></thead><tbody>{volunteers.map(v => <tr key={v.id} className="border-b last:border-0"><td className="p-2 font-bold">{v.name}</td><td className="p-2">{v.role}</td><td className="p-2 text-slate-500">{v.contact || '—'}</td><td className="p-2">{v.isActive ? 'Oui' : 'Non'}</td><td className="p-2 whitespace-nowrap"><button onClick={() => edit(v)} className="mr-2 text-jso-blue"><Pencil size={16}/></button><button onClick={() => remove(v.id)} className="text-red-600"><X size={16}/></button></td></tr>)}</tbody></table>}
       </div>
     </div>
-    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-black">{editing ? 'Modifier le bénévole' : 'Nouveau bénévole'}</h2>
-      <form onSubmit={save} className="mt-5 space-y-3">
+{modalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 sm:p-6" onMouseDown={e => { if(e.target===e.currentTarget) reset() }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="admin-form-title" className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-7">
+        <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+          <h2 id="admin-form-title" className="text-xl font-black">{editing ? 'Modifier' : 'Créer'} · bénévole</h2>
+          <button type="button" aria-label="Fermer" onClick={reset} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X size={20}/></button>
+        </div>
+        <form onSubmit={save} className="mt-5 space-y-3">
         <Field label="Nom" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required maxLength="160"/>
         <Field label="Rôle" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} placeholder="ex. Billetterie, Accueil, Photo, Sécurité" required maxLength="120"/>
         <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={form.contactConsent} onChange={e => setForm({ ...form, contactConsent: e.target.checked })}/> Consentement pour conserver un contact</label>
@@ -87,7 +98,8 @@ function VolunteerDirectory({ volunteers, loading, onSaved, onError }) {
         <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={form.isActive} onChange={e => setForm({ ...form, isActive: e.target.checked })}/> Actif</label>
         <div className="flex gap-2 pt-2"><button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/> {editing ? 'Mettre à jour' : 'Créer'}</button>{editing && <button type="button" onClick={reset} className="rounded-xl px-4 py-2.5 font-bold text-slate-500 hover:bg-slate-100">Annuler</button>}</div>
       </form>
-    </div>
+      </section>
+    </div>}
   </div>
 }
 
