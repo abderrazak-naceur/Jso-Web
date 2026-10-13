@@ -35,7 +35,7 @@ export function productSlugFromPath(pathname = window.location.pathname) {
 
 export function matchIdFromPath(pathname = window.location.pathname) {
   // Accept both legacy /matchs/{uuid} links and readable SEO slugs ending in the UUID.
-  const match = /^\\/matchs\\/(?:.*-)?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\/?$/i.exec(pathname)
+  const match = /^\/matchs\/(?:.*-)?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/?$/i.exec(pathname)
   return match?.[1] || null
 }
 export function eventSlugFromPath(pathname = window.location.pathname) {
