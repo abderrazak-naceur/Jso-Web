@@ -412,6 +412,8 @@ cp .env.prod.example .env.prod
 
 The production Docker frontend build uses `/api` by default, which Nginx proxies to the API container. The Docker build context excludes local `.env` files so development API URLs cannot be embedded in the production bundle.
 
+To enable the sponsor reservation buttons on the public homepage, set `VITE_SPONSOR_CONTACT_EMAIL` to the club's public advertising contact email in the frontend build environment. The buttons open a prefilled email for the selected advertising placement; without this value, the site shows the club contact fallback. Since Vite embeds this value at build time, rebuild and redeploy the frontend after changing it.
+
 Never commit real passwords, JWT secrets or production credentials.
 
 ---

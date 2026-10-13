@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, CalendarDays, CheckCircle2, CircleAlert, Download, LogIn, RefreshCw, ShieldCheck, Ticket, UserRound, LayoutDashboard, Crown, ShoppingBag, Settings, LogOut, Menu, ChevronDown, ChevronRight } from 'lucide-react'
-import { membershipApi, shopOrderApi, ticketApi } from '../../lib/api'
+import { ArrowLeft, CalendarDays, CheckCircle2, CircleAlert, CreditCard, Download, LogIn, RefreshCw, ShieldCheck, Ticket, UserRound, LayoutDashboard, Crown, ShoppingBag, Settings, LogOut, Menu, ChevronDown, ChevronRight } from 'lucide-react'
+import { membershipApi, paymentHistoryApi, shopOrderApi, ticketApi } from '../../lib/api'
 import { useFanSession } from './useFanSession'
 import AuthModal from './AuthModal'
 import StandalonePageHeader from '../site/StandalonePageHeader'
@@ -52,18 +52,19 @@ export default function CustomerDashboardPage() {
     tickets: { status: 'loading', items: [] },
     orders: { status: 'loading', items: [] },
     memberships: { status: 'loading', items: [] },
+    payments: { status: 'loading', items: [] },
   })
   const [digital, setDigital] = useState({})
   const [digitalBusy, setDigitalBusy] = useState({})
   const [digitalErrors, setDigitalErrors] = useState({})
-  useDocumentTitle('La mia area')
+  useDocumentTitle('Mon espace supporter — JSO')
 
   useEffect(() => {
     if (fan.status !== 'authenticated' || !fan.token) return
     let active = true
-    Promise.allSettled([ticketApi.mine(fan.token), shopOrderApi.myOrders(fan.token), membershipApi.mine(fan.token)]).then((tasks) => {
+    Promise.allSettled([ticketApi.mine(fan.token), shopOrderApi.myOrders(fan.token), membershipApi.mine(fan.token), paymentHistoryApi.mine(fan.token)]).then((tasks) => {
       if (!active) return
-      const names = ['tickets', 'orders', 'memberships']
+      const names = ['tickets', 'orders', 'memberships', 'payments']
       setData(Object.fromEntries(names.map((name, index) => {
         const result = tasks[index]
         return [name, result.status === 'fulfilled' ? { status: 'ready', items: listOf(result.value) } : { status: 'error', items: [], message: result.reason?.message || 'Service temporairement indisponible.' }]
@@ -110,7 +111,7 @@ export default function CustomerDashboardPage() {
   const ticketItems = data.tickets.items
   const orderItems = data.orders.items
   const membershipItems = data.memberships.items
-  const allLoading = [data.tickets, data.orders, data.memberships].every((item) => item.status === 'loading')
+  const allLoading = [data.tickets, data.orders, data.memberships, data.payments].every((item) => item.status === 'loading')
   const nextTicket = ticketItems[0]
   const nextTicketId = nextTicket ? idOf(nextTicket) : null
   const nextDigital = nextTicketId ? digital[nextTicketId] : null
@@ -138,6 +139,7 @@ export default function CustomerDashboardPage() {
       <NavItem icon={Ticket} label="Mes billets" href="#mes-billets" onClick={() => jumpTo('mes-billets')} />
       <NavItem icon={Crown} label="Mes abonnements" href="#mes-abonnements" onClick={() => jumpTo('mes-abonnements')} />
       <NavItem icon={ShoppingBag} label="Mes commandes" href="#mes-commandes" onClick={() => jumpTo('mes-commandes')} />
+      <NavItem icon={CreditCard} label="Mes paiements" href="#mes-paiements" onClick={() => jumpTo('mes-paiements')} />
       <NavItem icon={UserRound} label="Mon profil" onClick={() => { window.location.href = "/profil" }} />
       <NavItem icon={Settings} label="Paramètres" onClick={() => setAuthOpen(true)} />
       <NavItem icon={LogOut} label="Se déconnecter" onClick={fan.signOut} />
@@ -181,7 +183,7 @@ export default function CustomerDashboardPage() {
               <div className="jso-membership-actions"><button type="button" onClick={() => setDigitalErrors((s) => ({ ...s, membership: 'La carte sera affichée ici lorsqu’elle sera fournie par l’API.' }))}><Ticket size={15} /> Voir la carte</button><button type="button" className="is-secondary" onClick={() => setDigitalErrors((s) => ({ ...s, membership: 'Le téléchargement sera disponible lorsque l’API fournira le document.' }))}><Download size={15} /> Télécharger</button></div>
               {digitalErrors.membership && <p role="status" className="jso-dashboard-error">{digitalErrors.membership}</p>}
               {membershipItems.length > 1 && <div id="historique-abonnements" className="jso-membership-history"><strong>Historique</strong>{membershipItems.slice(1).map((membership, i) => <div key={idOf(membership) ?? i}><span>{value(membership, 'planName', 'PlanName', 'name', 'Name') || 'Abonnement JSO'}</span><span>{prettyStatus(statusOf(membership))}</span></div>)}</div>}
-            </> : <EmptyState title="Aucun abonnement registrato" detail="Le informazioni sull’abbonamento appariranno qui." />}
+            </> : <EmptyState title="Aucun abonnement enregistré" detail="Les informations sur votre abonnement apparaîtront ici." />}
           </section>
           <section className="jso-panel jso-orders-panel" id="mes-commandes">
             <div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">BOUTIQUE JSO</span><h2>Dernières commandes</h2></div><a href="/boutique">Voir toutes <ChevronRight size={14} /></a></div>
@@ -193,6 +195,18 @@ export default function CustomerDashboardPage() {
             })}</div> : <EmptyState title="Aucune commande pour le moment" detail="Vos achats seront affichés ici avec leur statut et leur montant." />}
           </section>
         </div>
+        <section className="jso-panel mt-4" id="mes-paiements">
+          <div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">SUIVI DE VOS ACHATS</span><h2>Historique des paiements</h2></div><span className="jso-status-pill">{data.payments.items.length} opération{data.payments.items.length === 1 ? '' : 's'}</span></div>
+          <p className="mb-3 text-sm text-slate-500">Billets, boutique, abonnements, dons et accès aux directs, avec le statut et le montant enregistré.</p>
+          {data.payments.status === 'error' ? <DataError message={data.payments.message} onRetry={() => setReload((n) => n + 1)} /> : data.payments.status === 'loading' ? <p className="jso-muted">Chargement de l’historique…</p> : data.payments.items.length ? <div className="divide-y divide-slate-100">
+            {data.payments.items.map((payment) => <article key={idOf(payment)} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3 first:pt-1">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700"><CreditCard size={18} /></span>
+              <span className="min-w-[150px] flex-1"><strong className="block text-sm text-slate-900">{value(payment, 'description', 'Description') || 'Opération JSO'}</strong><small className="text-xs text-slate-500">{dateOf(payment, 'paidAt', 'PaidAt', 'createdAt', 'CreatedAt')}{value(payment, 'provider', 'Provider') ? ` · ${value(payment, 'provider', 'Provider')}` : ''}</small></span>
+              <span className={'jso-status-pill ' + (['Paid', 'Confirmed', 'Active', 'Promo', 'CheckedIn'].includes(statusOf(payment)) ? 'is-ok' : '')}>{prettyStatus(statusOf(payment))}</span>
+              <strong className="min-w-24 text-right text-sm text-slate-900">{moneyOf(payment) || '—'}</strong>
+            </article>)}
+          </div> : <EmptyState title="Aucun paiement enregistré" detail="Vos achats et paiements apparaîtront ici, y compris les billets de match." />}
+        </section>
         <section className="jso-panel jso-news-panel"><div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">JSO FOOTBALL CLUB</span><h2>Actualités pour vous</h2></div><a href="/actualites">Voir toutes les actualités <ChevronRight size={14} /></a></div>
           <div className="jso-news-grid">
             <a href="/actualites" className="jso-news-card"><div className="jso-news-photo jso-news-photo-one" /><strong>Préparez votre venue au stade</strong><small>Infos match · JSO</small></a>

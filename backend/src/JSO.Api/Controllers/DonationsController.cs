@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Security.Claims;
 using JSO.Domain;
 using JSO.Infrastructure;
 using JSO.Infrastructure.Payments;
@@ -87,6 +88,10 @@ public sealed class DonationsController(
 
         var donation = new SupporterBrick
         {
+            // Preserve guest donations while linking a signed-in fan's gift to
+            // their private account history. Never accept the owner id from the
+            // request body.
+            FanUserId = CurrentFanId(),
             DisplayName = string.IsNullOrWhiteSpace(request.DisplayName)
                 ? "Un amoureux de la JSO"
                 : request.DisplayName.Trim(),
@@ -234,6 +239,13 @@ public sealed class DonationsController(
         if (string.IsNullOrWhiteSpace(phone)) return null;
         var value = phone.Trim();
         return value.Length <= 32 ? value : value[..32];
+    }
+
+    private Guid? CurrentFanId()
+    {
+        if (!User.IsInRole("Fan")) return null;
+        var subject = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return Guid.TryParse(subject, out var fanId) ? fanId : null;
     }
 }
 

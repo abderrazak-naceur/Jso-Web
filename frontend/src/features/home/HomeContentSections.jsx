@@ -210,7 +210,14 @@ export function MobileSection({ section }) {
 export function SponsorsSection({ section, sponsors }) {
   // Sponsors that provide a wide advertising banner are featured on top as
   // clickable banners; the rest keep the compact logo grid below.
-  const banners = sponsors.filter((sponsor) => pick(sponsor, 'bannerImageUrl', 'BannerImageUrl'))
+  const visibleSponsors = sponsors.filter((sponsor) => ['Home', 'Footer'].includes(pick(sponsor, 'placement', 'Placement')))
+  const banners = visibleSponsors.filter((sponsor) => pick(sponsor, 'bannerImageUrl', 'BannerImageUrl'))
+  const reservationEmail = import.meta.env.VITE_SPONSOR_CONTACT_EMAIL?.trim()
+  const adSlots = [
+    { title: 'Bannière en page d’accueil', detail: 'Une visibilité grand format auprès des supporters.' },
+    { title: 'Partenaire officiel', detail: 'Votre logo dans la vitrine des partenaires JSO.' },
+    { title: 'Campagne jour de match', detail: 'Associez votre marque aux rendez-vous du club.' },
+  ]
 
   return (
     <section id="sponsors" aria-labelledby="sponsors-title" className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
@@ -223,7 +230,7 @@ export function SponsorsSection({ section, sponsors }) {
             const name = pick(sponsor, 'name', 'Name') || 'Partenaire JSO'
             const bannerUrl = pick(sponsor, 'bannerImageUrl', 'BannerImageUrl')
             const websiteUrl = pick(sponsor, 'websiteUrl', 'WebsiteUrl')
-            const banner = <img src={bannerUrl} alt={`Bannière ${name}`} loading="lazy" className="w-full object-cover" />
+            const banner = <img src={bannerUrl} alt={`Bannière ${name}`} loading="lazy" className="aspect-[3/1] w-full object-contain bg-white" />
             const bannerClass = 'block overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl'
             return websiteUrl
               ? <a key={`banner-${id || name}`} href={websiteUrl} target="_blank" rel="noopener noreferrer" aria-label={`${name} (nouvel onglet)`} className={bannerClass}>{banner}</a>
@@ -233,7 +240,7 @@ export function SponsorsSection({ section, sponsors }) {
       )}
 
       <div className="mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-        {sponsors.map((sponsor) => {
+        {visibleSponsors.map((sponsor) => {
           const id = pick(sponsor, 'id', 'Id')
           const name = pick(sponsor, 'name', 'Name') || 'Partenaire JSO'
           const logoUrl = pick(sponsor, 'logoUrl', 'LogoUrl')
@@ -244,6 +251,24 @@ export function SponsorsSection({ section, sponsors }) {
             ? <a key={id || name} href={websiteUrl} target="_blank" rel="noopener noreferrer" className={className}>{content}</a>
             : <div key={id || name} className={className}>{content}</div>
         })}
+      </div>
+
+      <div className="mt-12 rounded-[2rem] border border-jso-blue/15 bg-gradient-to-br from-white to-blue-50 p-6 sm:p-8">
+        <div className="max-w-2xl">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-jso-blue">Visibilité & partenariat</p>
+          <h3 className="mt-2 text-2xl font-black text-jso-navy sm:text-3xl">Réservez votre espace publicitaire</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Présentez votre entreprise aux supporters de la JSO. Choisissez un emplacement et envoyez au club votre demande avec vos coordonnées et la période souhaitée.</p>
+        </div>
+        <div className="mt-6 grid gap-3 md:grid-cols-3">
+          {adSlots.map((slot) => <article key={slot.title} className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5">
+            <span className="text-[11px] font-black uppercase tracking-wider text-jso-blue">Emplacement à réserver</span>
+            <h4 className="mt-2 font-extrabold text-jso-navy">{slot.title}</h4>
+            <p className="mt-2 flex-1 text-sm leading-5 text-slate-600">{slot.detail}</p>
+            {reservationEmail
+              ? <a href={`mailto:${reservationEmail}?subject=${encodeURIComponent(`Réserver : ${slot.title} · JSO`)}&body=${encodeURIComponent(`Bonjour,\n\nJe souhaite réserver l’emplacement « ${slot.title} » sur le site de la JSO.\n\nEntreprise :\nNom et prénom :\nTéléphone :\nEmail :\nPériode souhaitée :\nMessage :\n\nJe peux transmettre mon logo et mon visuel publicitaire après confirmation des disponibilités.\n`)}`} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-jso-navy px-4 py-2 text-sm font-bold text-white hover:bg-jso-blue">Demander cet emplacement</a>
+              : <p className="mt-4 rounded-xl bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">Les demandes en ligne seront bientôt ouvertes. Contactez le club par ses canaux habituels.</p>}
+          </article>)}
+        </div>
       </div>
     </section>
   )

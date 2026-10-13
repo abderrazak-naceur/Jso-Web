@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { adminEditIdFromPath, adminEditUrl, adminSectionFromPath, adminSectionUrl } from '../src/admin/adminRoutes.js'
 import { ADMIN_CATEGORY_ORDER, ADMIN_NAVIGATION, ADMIN_PERMISSION_BY_ID, ADMIN_PUBLIC_PATHS, ADMIN_QUICK_SECTION_IDS, visibleAdminItems } from '../src/admin/navigation.js'
 import { ADMIN_MODULES } from '../src/admin/moduleRegistry.js'
@@ -71,4 +72,10 @@ test('public sections and content have stable paths', () => {
   assert.equal(matchSlugFromPath('/matchs/jso-vs-altra-squadra'), 'jso-vs-altra-squadra')
   assert.equal(sectionFromPath('/matchs/jso-vs-altra-squadra'), 'matches')
   assert.equal(sectionFromPath('/boutique/slug/extra'), null)
+})
+
+test('account routes use the dashboard that includes payment history', () => {
+  const source = readFileSync(new URL('../src/main.jsx', import.meta.url), 'utf8')
+  assert.match(source, /import\('\.\/features\/account\/CustomerDashboardPage\.jsx'\)/)
+  assert.match(source, /path === '\/account' \|\| path === '\/mon-espace'\) return <CustomerDashboardPage \/>/)
 })

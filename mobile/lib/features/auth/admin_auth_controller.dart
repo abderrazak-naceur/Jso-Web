@@ -1,3 +1,6 @@
+// Public constructor parameters intentionally initialize private fields.
+// ignore_for_file: prefer_initializing_formals
+
 import 'package:flutter/foundation.dart';
 
 import '../../core/api/api_exception.dart';
@@ -15,7 +18,11 @@ enum AdminAuthStatus { unknown, authenticated, anonymous }
 /// under [SecureTokenStore.adminKey], so the two tokens never collide. The
 /// token stays in memory (never logged) for authenticated admin calls.
 class AdminAuthController extends ChangeNotifier {
-  AdminAuthController({required this._repository, required this._tokenStore});
+  AdminAuthController({
+    required AdminAuthRepository repository,
+    required TokenStore tokenStore,
+  }) : _repository = repository,
+       _tokenStore = tokenStore;
 
   final AdminAuthRepository _repository;
   final TokenStore _tokenStore;
@@ -36,21 +43,29 @@ class AdminAuthController extends ChangeNotifier {
   String? get accessToken =>
       _status == AdminAuthStatus.authenticated ? _accessToken : null;
 
-  /// Restores a persisted admin token if present. The token is trusted until
-  /// it expires server-side; there is no admin `/me` endpoint to validate it,
-  /// so we surface the stored session and let any protected call fail with 401
-  /// (which the UI can handle by prompting a fresh login).
+  /// Restores a persisted admin session only after the API confirms the token
+  /// and the account is still active with the same role.
   Future<void> restoreSession() async {
     final token = await _tokenStore.read();
     if (token == null || token.isEmpty) {
       _setAnonymous();
       return;
     }
-    // We keep the token but cannot rebuild the profile without a /me endpoint,
-    // so treat a bare stored token as anonymous until an explicit login. This
-    // keeps the hidden entry point safe (no half-authenticated state).
-    await _tokenStore.clear();
-    _setAnonymous();
+    try {
+      final user = await _repository.me(token);
+      _accessToken = token;
+      _user = user;
+      _status = AdminAuthStatus.authenticated;
+      _errorMessage = null;
+      notifyListeners();
+    } on ApiHttpException catch (e) {
+      if (e.statusCode == 401 || e.statusCode == 403) await _tokenStore.clear();
+      _setAnonymous();
+    } on ApiException {
+      // Keep the encrypted token so a temporary network failure does not
+      // destroy the session; the next app start can validate it again.
+      _setAnonymous();
+    }
   }
 
   /// Logs in via `POST /api/auth/login` and persists the token. Returns true

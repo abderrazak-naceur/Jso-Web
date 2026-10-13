@@ -511,6 +511,53 @@ html[dir="rtl"] .jso-a11y-launcher {
   letter-spacing: -0.035em;
 }
 
+/* Additional selectable homepage identities. These skins retain the same
+   accessible content while giving each club audience a clear visual tone. */
+.home-template-academy { background: #f0fdf4; color: #123127; }
+.home-template-academy [data-home-section="team"],
+.home-template-academy [data-home-section="club"],
+.home-template-academy [data-home-section="events"] { background: #dcfce7; }
+.home-template-academy .jso-hero { background-image: url('/jso-stadium-hero.png'); background-position: center 35%; }
+.home-template-academy .jso-hero > .absolute.inset-0 { background-image: linear-gradient(115deg, rgb(6 45 32 / 94%), rgb(22 101 52 / 68%) 62%, rgb(22 101 52 / 30%)); }
+.home-template-academy .jso-hero h1 span { color: #86efac; }
+.home-template-academy [data-home-section="team"] article { border-color: rgb(22 101 52 / 18%); }
+
+.home-template-supporters { background: #fff7ed; color: #3b1d1d; }
+.home-template-supporters [data-home-section="community"],
+.home-template-supporters [data-home-section="events"] { background: #ffedd5; }
+.home-template-supporters .jso-hero { background-image: url('/jso-stadium-hero.png'); background-position: center 55%; }
+.home-template-supporters .jso-hero > .absolute.inset-0 { background-image: linear-gradient(100deg, rgb(69 10 10 / 96%), rgb(154 52 18 / 76%) 58%, rgb(249 115 22 / 28%)); }
+.home-template-supporters .jso-hero h1 span { color: #fdba74; }
+.home-template-supporters [data-home-section="community"] h2 { color: #9a3412; }
+
+.home-template-matchday { background: #f1f5f9; color: #0f172a; }
+.home-template-matchday [data-home-section="matches"],
+.home-template-matchday [data-home-section="highlights"] { background: #dbeafe; }
+.home-template-matchday .jso-hero { background-image: url('/jso-stadium-hero.png'); background-position: center 48%; }
+.home-template-matchday .jso-hero > .absolute.inset-0 { background-image: linear-gradient(90deg, rgb(2 6 23 / 97%) 0%, rgb(30 64 175 / 86%) 48%, rgb(2 6 23 / 32%) 100%); }
+.home-template-matchday .jso-hero .relative.mx-auto { min-height: 540px; }
+.home-template-matchday .jso-hero h1 { text-transform: uppercase; }
+.home-template-matchday [data-home-section="matches"] { border-top: 5px solid #1769e0; }
+
+.home-template-heritage { background: #faf7ef; color: #2c2417; font-family: Georgia, 'Times New Roman', serif; }
+.home-template-heritage [data-home-section="club"],
+.home-template-heritage [data-home-section="archive"] { background: #eee7d8; }
+.home-template-heritage .jso-hero { background: #f5f0e5; color: #2c2417; border-bottom: 4px double #8b6a32; }
+.home-template-heritage .jso-hero > .absolute.inset-0,
+.home-template-heritage .jso-hero > .absolute.inset-x-0 { display: none; }
+.home-template-heritage .jso-hero .relative.mx-auto { min-height: 500px; }
+.home-template-heritage .jso-hero h1 { color: #2c2417; font-size: clamp(3rem, 7vw, 5.5rem); }
+.home-template-heritage .jso-hero h1 span { color: #8b6a32; }
+.home-template-heritage .jso-hero p,
+.home-template-heritage .jso-hero .text-white\/60,
+.home-template-heritage .jso-hero .text-white\/72 { color: #514735; }
+.home-template-heritage .jso-hero .text-white { color: #2c2417; }
+.home-template-heritage .jso-hero .border-white\/15,
+.home-template-heritage .jso-hero .border-white\/30 { border-color: rgb(44 36 23 / 22%); }
+.home-template-heritage .jso-hero .bg-white\/10 { background: rgb(255 255 255 / 65%); }
+.home-template-heritage .jso-hero .border-t { border-color: rgb(44 36 23 / 18%); }
+.home-template-heritage h2 { letter-spacing: -.02em; }
+
 .home-template-mini { color: #0f172a; background: linear-gradient(145deg, #f8fafc, #e8edf5); }
 .home-template-mini-hero { background: #071a3a; color: #fff; }
 .home-template-mini-side { color: #071a3a; background: #dbeafe; }
@@ -524,3 +571,19 @@ html[dir="rtl"] .jso-a11y-launcher {
 .home-template-mini-magazine { background: #fcfbf8; font-family: Georgia, 'Times New Roman', serif; }
 .home-template-mini-magazine .home-template-mini-hero { background: #fff; color: #071a3a; border-bottom: 3px solid #ffd700; }
 .home-template-mini-magazine .home-template-mini-side { background: #f1f5f9; }
+.home-template-mini-academy { color: #123127; background: linear-gradient(145deg, #f0fdf4, #bbf7d0); }
+.home-template-mini-academy .home-template-mini-hero { background: linear-gradient(135deg, #14532d, #16a34a); }
+.home-template-mini-academy .home-template-mini-side { background: #dcfce7; }
+.home-template-mini-academy .home-template-mini-card { background: #fff; }
+.home-template-mini-supporters { color: #3b1d1d; background: linear-gradient(145deg, #fff7ed, #fed7aa); }
+.home-template-mini-supporters .home-template-mini-hero { background: linear-gradient(135deg, #7c2d12, #ea580c); }
+.home-template-mini-supporters .home-template-mini-side { background: #ffedd5; }
+.home-template-mini-supporters .home-template-mini-card { background: #fff; }
+.home-template-mini-matchday { color: #f8fafc; background: linear-gradient(145deg, #020617, #1d4ed8); }
+.home-template-mini-matchday .home-template-mini-hero { background: linear-gradient(135deg, #0f172a, #2563eb); }
+.home-template-mini-matchday .home-template-mini-side { color: #fff; background: #1e3a8a; }
+.home-template-mini-matchday .home-template-mini-card { color: #fff; background: #172554; }
+.home-template-mini-heritage { color: #2c2417; background: linear-gradient(145deg, #faf7ef, #e7dcc4); font-family: Georgia, 'Times New Roman', serif; }
+.home-template-mini-heritage .home-template-mini-hero { color: #2c2417; background: #f5f0e5; border-bottom: 3px double #8b6a32; }
+.home-template-mini-heritage .home-template-mini-side { color: #2c2417; background: #eee7d8; }
+.home-template-mini-heritage .home-template-mini-card { background: #fffdf7; }

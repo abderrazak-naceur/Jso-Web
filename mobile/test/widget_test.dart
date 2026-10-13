@@ -6,6 +6,7 @@ import 'package:jso_mobile/core/config/jso_theme.dart';
 import 'package:jso_mobile/data/repositories/admin_tickets_repository.dart';
 import 'package:jso_mobile/data/repositories/admin_fan_accounts_repository.dart';
 import 'package:jso_mobile/data/repositories/match_center_repository.dart';
+import 'package:jso_mobile/data/repositories/payment_history_repository.dart';
 import 'package:jso_mobile/data/repositories/tickets_repository.dart';
 import 'package:jso_mobile/features/shop/cart_controller.dart';
 
@@ -38,6 +39,7 @@ void main() {
         clubContentRepository: FakeClubContentRepository(),
         shopRepository: FakeShopRepository(),
         matchCenterRepository: MatchCenterRepository(apiClient),
+        paymentHistoryRepository: PaymentHistoryRepository(apiClient),
         cartController: cartController,
         authController: authController,
         adminAuthController: adminAuthController,

@@ -5,7 +5,15 @@ import { orderHomeSections } from '../src/features/home/homeLayoutOrder.js'
 
 test('each homepage template has one complete, distinct section order', () => {
   const ids = HOME_TEMPLATES.map((template) => template.id)
+  assert.equal(HOME_TEMPLATES.length, 8, 'homepage should offer eight templates')
   assert.equal(new Set(ids).size, ids.length)
+  assert.equal(new Set(HOME_TEMPLATES.map((template) => template.name)).size, 8, 'template names should be distinct')
+  assert.equal(new Set(HOME_TEMPLATES.map((template) => template.preview)).size, 8, 'each choice needs its own visual preview skin')
+  for (const template of HOME_TEMPLATES) {
+    assert.ok(template.name.trim(), `${template.id} needs a name`)
+    assert.ok(template.description.trim(), `${template.id} needs a description`)
+    assert.equal(template.preview, template.id === 'modern-2026' ? 'modern' : template.id)
+  }
 
   const baseline = [...HOME_TEMPLATES[0].sectionOrder].sort()
   for (const template of HOME_TEMPLATES) {

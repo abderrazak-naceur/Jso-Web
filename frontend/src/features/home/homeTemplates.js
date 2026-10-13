@@ -31,6 +31,38 @@ export const HOME_TEMPLATES = [
     preview: 'magazine',
     sectionOrder: ['hero', 'news', 'highlights', 'archive', 'media', 'club', 'team', 'matches', 'events', 'sponsors', 'community', 'shop', 'donation', 'memberships', 'mobile', 'infos', 'selling-band', 'app-download'],
   },
+  {
+    id: 'academy',
+    name: 'Académie & Formation',
+    badge: 'Jeunes',
+    description: 'Une homepage familiale qui met en avant les équipes, la formation et la vie du club.',
+    preview: 'academy',
+    sectionOrder: ['hero', 'team', 'club', 'events', 'matches', 'highlights', 'news', 'media', 'community', 'memberships', 'donation', 'sponsors', 'shop', 'archive', 'infos', 'mobile', 'app-download', 'selling-band'],
+  },
+  {
+    id: 'supporters',
+    name: 'Supporters',
+    badge: 'Communauté',
+    description: 'Une entrée chaleureuse centrée sur les supporters, les événements et les façons de soutenir la JSO.',
+    preview: 'supporters',
+    sectionOrder: ['hero', 'community', 'events', 'matches', 'selling-band', 'highlights', 'news', 'memberships', 'donation', 'shop', 'media', 'team', 'sponsors', 'club', 'archive', 'mobile', 'infos', 'app-download'],
+  },
+  {
+    id: 'matchday',
+    name: 'Matchday',
+    badge: 'Résultats',
+    description: 'Un format énergique pour suivre les rencontres, les temps forts et les prochaines dates.',
+    preview: 'matchday',
+    sectionOrder: ['hero', 'matches', 'highlights', 'events', 'media', 'team', 'selling-band', 'news', 'community', 'sponsors', 'shop', 'memberships', 'donation', 'archive', 'club', 'infos', 'mobile', 'app-download'],
+  },
+  {
+    id: 'heritage',
+    name: 'Héritage',
+    badge: 'Depuis 1973',
+    description: 'Un style intemporel qui raconte l’histoire du club, ses archives et ses générations de joueurs.',
+    preview: 'heritage',
+    sectionOrder: ['hero', 'club', 'archive', 'team', 'news', 'media', 'highlights', 'matches', 'events', 'community', 'memberships', 'sponsors', 'donation', 'shop', 'infos', 'mobile', 'selling-band', 'app-download'],
+  },
 ]
 
 export const HOME_TEMPLATE_IDS = new Set(HOME_TEMPLATES.map(({ id }) => id))

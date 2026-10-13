@@ -134,7 +134,9 @@ export function useHomeData() {
       })
 
     loadList('media', publicApi.getMedia(signal))
-    loadList('sponsors', publicApi.getSponsors('Footer', signal))
+    // Home and Footer campaigns share the public partner showcase; Matchday
+    // placements stay reserved for match-specific surfaces.
+    loadList('sponsors', publicApi.getSponsors(undefined, signal))
     loadList('products', publicApi.getProducts(undefined, signal))
     loadList('events', publicApi.getEvents(signal))
     loadList('documents', publicApi.getDocuments(undefined, signal))

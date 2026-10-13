@@ -9,6 +9,7 @@ import 'data/repositories/admin_fan_accounts_repository.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/club_content_repository.dart';
 import 'data/repositories/match_center_repository.dart';
+import 'data/repositories/payment_history_repository.dart';
 import 'data/repositories/public_api_repository.dart';
 import 'data/repositories/shop_repository.dart';
 import 'data/repositories/tickets_repository.dart';
@@ -50,6 +51,7 @@ void main() {
       clubContentRepository: clubContentRepository,
       shopRepository: shopRepository,
       matchCenterRepository: matchCenterRepository,
+      paymentHistoryRepository: PaymentHistoryRepository(apiClient),
       cartController: cartController,
       authController: authController,
       adminAuthController: adminAuthController,

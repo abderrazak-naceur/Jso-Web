@@ -26,6 +26,7 @@ class AdminWebScreen extends StatefulWidget {
 class _AdminWebScreenState extends State<AdminWebScreen> {
   WebViewController? _controller;
   bool _loading = true;
+  bool _prepared = false;
   bool _ready = false;
   String? _error;
   String? _token;
@@ -103,9 +104,6 @@ class _AdminWebScreenState extends State<AdminWebScreen> {
             },
           ),
         );
-      // A previous WebView session must not be visible before we install the
-      // current native user's identity on the trusted origin.
-      await controller.clearLocalStorage();
       if (!mounted) return;
       setState(() => _controller = controller);
       await controller.loadRequest(url);
@@ -135,6 +133,17 @@ class _AdminWebScreenState extends State<AdminWebScreen> {
       final token = _token;
       final userJson = _userJson;
       if (token == null || userJson == null) return;
+      if (!_prepared) {
+        // Clear only the admin bridge keys. Clearing the entire origin's
+        // localStorage also erases the website's own user session and cart.
+        await controller.runJavaScript(
+          'localStorage.removeItem("jso_admin_token");'
+          'localStorage.removeItem("jso_admin_user");',
+        );
+        _prepared = true;
+        await controller.reload();
+        return;
+      }
       await controller.runJavaScript(
         'localStorage.setItem("jso_admin_token", ${jsonEncode(token)});'
         'localStorage.setItem("jso_admin_user", ${jsonEncode(userJson)});',
@@ -153,9 +162,12 @@ class _AdminWebScreenState extends State<AdminWebScreen> {
 
   @override
   void dispose() {
-    // The native secure store owns the session. Remove the temporary web copy
-    // when leaving this screen; the next opening gets a fresh bridge.
-    _controller?.clearLocalStorage();
+    // The native secure store owns the session. Remove only the temporary
+    // admin bridge values; preserve unrelated website state on this origin.
+    _controller?.runJavaScript(
+      'localStorage.removeItem("jso_admin_token");'
+      'localStorage.removeItem("jso_admin_user");',
+    );
     super.dispose();
   }
 

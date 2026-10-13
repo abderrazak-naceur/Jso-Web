@@ -23,6 +23,12 @@ class AdminAuthRepository {
 
   final ApiClient _client;
 
+  /// `GET /api/auth/me` — validates a stored token and restores its profile.
+  Future<AdminAccount> me(String token) async {
+    final json = await _client.getJson('/auth/me', bearerToken: token);
+    return AdminAccount.fromJson(_asMap(json));
+  }
+
   /// `POST /api/auth/login` — validates credentials and returns the JWT.
   ///
   /// Maps a 401 to [InvalidCredentialsException]; other non-2xx surface the

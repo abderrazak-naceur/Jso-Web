@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../core/config/jso_theme.dart';
 import '../../shared/widgets/jso_crest.dart';
+import '../../data/models/payment_history_item.dart';
+import '../../data/repositories/payment_history_repository.dart';
+import '../../shared/format.dart';
 import '../auth/admin_login_screen.dart';
 import '../auth/auth_controller.dart';
 import '../auth/profile_screen.dart';
@@ -253,6 +256,8 @@ class AccountDashboardScreen extends StatelessWidget {
               onTap: () => Navigator.of(context).push(ShopScreen.route()),
             ),
             const SizedBox(height: JsoSpacing.md),
+            _PaymentHistoryPanel(signedIn: signedIn),
+            const SizedBox(height: JsoSpacing.md),
             Container(
               padding: const EdgeInsets.all(JsoSpacing.md),
               decoration: BoxDecoration(
@@ -319,6 +324,188 @@ class AccountDashboardScreen extends StatelessWidget {
       return;
     }
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+  }
+}
+
+class _PaymentHistoryPanel extends StatefulWidget {
+  const _PaymentHistoryPanel({required this.signedIn});
+
+  final bool signedIn;
+
+  @override
+  State<_PaymentHistoryPanel> createState() => _PaymentHistoryPanelState();
+}
+
+class _PaymentHistoryPanelState extends State<_PaymentHistoryPanel> {
+  Future<List<PaymentHistoryItem>>? _future;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.signedIn) _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant _PaymentHistoryPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.signedIn && !oldWidget.signedIn) _load();
+  }
+
+  void _load() {
+    final token = context.read<AuthController>().accessToken;
+    _future = token == null
+        ? Future.error(StateError('not-authenticated'))
+        : context.read<PaymentHistoryRepository>().mine(token);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.white,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(JsoRadius.card),
+        side: const BorderSide(color: JsoColors.borderLight),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(JsoSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Historique des paiements',
+              style: TextStyle(
+                color: JsoColors.inkText,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Billets, boutique, abonnements, dons et accès aux directs.',
+              style: TextStyle(color: JsoColors.inkMuted, fontSize: 12),
+            ),
+            const SizedBox(height: JsoSpacing.sm),
+            if (!widget.signedIn)
+              const Text('Connectez-vous pour voir vos opérations.')
+            else if (_future == null)
+              const Center(child: CircularProgressIndicator())
+            else
+              FutureBuilder<List<PaymentHistoryItem>>(
+                future: _future,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.all(JsoSpacing.md),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Impossible de charger vos paiements. Réessayez.',
+                          style: TextStyle(color: JsoColors.inkMuted),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => setState(_load),
+                          icon: const Icon(Icons.refresh_rounded),
+                          label: const Text('Réessayer'),
+                        ),
+                      ],
+                    );
+                  }
+                  final items = snapshot.data ?? const <PaymentHistoryItem>[];
+                  if (items.isEmpty) {
+                    return const Text(
+                      'Vos achats et paiements, y compris les billets de match, apparaîtront ici.',
+                      style: TextStyle(color: JsoColors.inkMuted, height: 1.4),
+                    );
+                  }
+                  return Column(
+                    children: [
+                      for (final item in items) _PaymentHistoryRow(item: item),
+                    ],
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentHistoryRow extends StatelessWidget {
+  const _PaymentHistoryRow({required this.item});
+
+  final PaymentHistoryItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final date = item.activityDate;
+    final paid = const [
+      'Paid',
+      'Confirmed',
+      'CheckedIn',
+      'Active',
+    ].contains(item.status);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: JsoSpacing.sm),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: JsoColors.borderLight)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            item.type == 'ticket'
+                ? Icons.confirmation_number_rounded
+                : Icons.credit_card_rounded,
+            color: JsoColors.blue,
+          ),
+          const SizedBox(width: JsoSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: JsoColors.inkText,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  [
+                    if (date != null) JsoFormat.date(date),
+                    if (item.provider?.isNotEmpty == true) item.provider!,
+                    item.statusLabel,
+                  ].join(' · '),
+                  style: const TextStyle(
+                    color: JsoColors.inkMuted,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: JsoSpacing.xs),
+          Text(
+            JsoFormat.money(item.amount, item.currency),
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              color: paid ? const Color(0xFF00875A) : JsoColors.inkText,
+              fontWeight: FontWeight.w900,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

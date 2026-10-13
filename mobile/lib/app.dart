@@ -6,6 +6,7 @@ import 'data/repositories/admin_tickets_repository.dart';
 import 'data/repositories/admin_fan_accounts_repository.dart';
 import 'data/repositories/club_content_repository.dart';
 import 'data/repositories/match_center_repository.dart';
+import 'data/repositories/payment_history_repository.dart';
 import 'data/repositories/public_api_repository.dart';
 import 'data/repositories/shop_repository.dart';
 import 'data/repositories/tickets_repository.dart';
@@ -30,6 +31,7 @@ class JsoApp extends StatelessWidget {
     required this.clubContentRepository,
     required this.shopRepository,
     required this.matchCenterRepository,
+    required this.paymentHistoryRepository,
     required this.cartController,
     required this.authController,
     required this.adminAuthController,
@@ -42,6 +44,7 @@ class JsoApp extends StatelessWidget {
   final ClubContentRepository clubContentRepository;
   final ShopRepository shopRepository;
   final MatchCenterRepository matchCenterRepository;
+  final PaymentHistoryRepository paymentHistoryRepository;
   final CartController cartController;
   final AuthController authController;
   final AdminAuthController adminAuthController;
@@ -59,6 +62,9 @@ class JsoApp extends StatelessWidget {
         Provider<ClubContentRepository>.value(value: clubContentRepository),
         Provider<ShopRepository>.value(value: shopRepository),
         Provider<MatchCenterRepository>.value(value: matchCenterRepository),
+        Provider<PaymentHistoryRepository>.value(
+          value: paymentHistoryRepository,
+        ),
         ChangeNotifierProvider<CartController>.value(value: cartController),
         ChangeNotifierProvider<AuthController>.value(value: authController),
         ChangeNotifierProvider<AdminAuthController>.value(

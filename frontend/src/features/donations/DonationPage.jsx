@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowUpRight, Copy, HeartHandshake, QrCode, Share2, Wallet }
 import QRCode from 'qrcode'
 import PayOnlineButton from '../shop/PayOnlineButton'
 import { donationsApi } from '../../lib/api'
+import { useFanSession } from '../account/useFanSession'
 import { formatMoney } from '../../lib/format'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { useI18n } from '../../i18n/index.jsx'
@@ -21,6 +22,7 @@ const CLUB_FACEBOOK_URL = CLUB_SOCIALS.find((social) => social.key === 'facebook
 
 export default function DonationPage() {
   const { language } = useI18n()
+  const fan = useFanSession()
   useDocumentTitle('Soutenir la JSO')
   const [campaign, setCampaign] = useState(null)
   const [paymentMethods, setPaymentMethods] = useState(null)
@@ -98,7 +100,7 @@ export default function DonationPage() {
       message: message.trim() || null,
       phone: phone.trim() || null,
       whatsappOptIn: Boolean(phone.trim() && whatsappOptIn),
-    })
+    }, fan.token)
     setDonation(created)
     return donationsApi.pay(created.id, country, selectedMethod === 'card' ? 'STRIPE' : selectedMethod.toUpperCase(), email.trim() || null)
   }

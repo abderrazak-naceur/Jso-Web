@@ -119,6 +119,12 @@ public sealed class AdminTicketsController(JsoDbContext db, AuditService audit) 
             type.SoldCount += order.Quantity;
             order.ConfirmedAt = DateTimeOffset.UtcNow;
             order.PaidAt = DateTimeOffset.UtcNow;
+            // Confirmation from this admin endpoint is a manual payment path,
+            // not a provider webhook. Record it explicitly so the fan's payment
+            // history does not show a paid ticket with an unknown method.
+            order.PaymentProvider ??= "Manual";
+            order.ChargedAmount ??= order.Total;
+            order.ChargedCurrency ??= order.Currency;
             if (string.IsNullOrEmpty(order.PublicTicketToken))
             {
                 order.PublicTicketToken = TicketTokenGenerator.Generate();

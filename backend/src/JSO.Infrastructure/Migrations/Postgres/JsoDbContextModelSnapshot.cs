@@ -826,10 +826,16 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .HasColumnType("integer")
                         .HasDefaultValue(1);
 
+                    b.Property<string>("FirstName")
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsVip")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
+
+                    b.Property<string>("LastName")
+                        .HasColumnType("text");
 
                     b.Property<bool>("EmailVerified")
                         .HasColumnType("boolean");
@@ -848,6 +854,9 @@ namespace JSO.Infrastructure.Migrations.Postgres
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhoneNumber")
                         .HasColumnType("text");
 
                     b.Property<string>("ProfilePhotoUrl")

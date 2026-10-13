@@ -133,7 +133,7 @@ export const ticketApi = {
 export const donationsApi = {
   campaign: (signal) => request('/donations/campaign', signal),
   paymentMethods: (signal) => request('/donations/payment-methods', signal),
-  create: (data) => requestJson('/donations', 'POST', data),
+  create: (data, token) => requestJson('/donations', 'POST', data, token),
   status: (id) => requestJson('/donations/' + id, 'GET'),
   pay: (id, country, provider, email) => requestJson('/donations/' + id + '/pay', 'POST', { country, provider, email }),
 }
@@ -151,6 +151,10 @@ export const membershipApi = {
   mine: (token) => requestJson('/memberships/mine', 'GET', null, token),
   myMembership: (id, token) => requestJson('/memberships/' + id, 'GET', null, token),
   pay: (id, country, token) => requestJson('/memberships/' + id + '/pay', 'POST', { country }, token),
+}
+
+export const paymentHistoryApi = {
+  mine: (token) => requestJson('/account/me/payments', 'GET', null, token),
 }
 
 export const matchStreamApi = {
