@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link2, Pencil, X, Save } from 'lucide-react'
+import { Link2, Pencil, X, Save, Plus } from 'lucide-react'
 import Field from '../components/Field'
 import { adminApi } from '../api'
 import { emptyProduct } from '../constants'
