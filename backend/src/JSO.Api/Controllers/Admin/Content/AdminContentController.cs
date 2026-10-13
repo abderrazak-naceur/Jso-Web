@@ -14,16 +14,14 @@ public sealed class AdminContentController(JsoDbContext db, AuditService audit) 
     private static bool IsManagedElsewhere(string key) =>
         key.StartsWith("__system.", StringComparison.OrdinalIgnoreCase) ||
         key.StartsWith("i18n:", StringComparison.OrdinalIgnoreCase) ||
-        key.Equals(DonationCampaignSettings.ContentKey, StringComparison.OrdinalIgnoreCase) ||
-        key.Equals("home_template", StringComparison.OrdinalIgnoreCase);
+        key.Equals(DonationCampaignSettings.ContentKey, StringComparison.OrdinalIgnoreCase);
 
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken ct) =>
         Ok(await db.SiteContents.AsNoTracking()
             .Where(x => !x.Key.StartsWith("__system.")
                 && !x.Key.StartsWith("i18n:")
-                && x.Key != DonationCampaignSettings.ContentKey
-                && x.Key != "home_template")
+                && x.Key != DonationCampaignSettings.ContentKey)
             .OrderBy(x => x.Key)
             .ToListAsync(ct));
 
