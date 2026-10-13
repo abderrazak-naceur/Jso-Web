@@ -49,3 +49,36 @@ export function setApiBaseUrl(value) {
 export function resetApiBaseUrl() {
   return setApiBaseUrl('')
 }
+
+/**
+ * Resolve media paths emitted by the backend into browser-loadable URLs.
+ *
+ * Media assets may be stored as absolute URLs, root-relative paths such as
+ * /uploads/media/2026/10/logo.png, or older paths relative to the API.
+ */
+export function resolveMediaUrl(value, { apiBaseUrl = API_BASE_URL, origin } = {}) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  if (/^(?:data:|blob:)/i.test(raw)) return raw
+
+  const base = normalize(apiBaseUrl)
+  const pageOrigin = origin || (typeof window !== 'undefined' ? window.location.origin : '')
+  const apiOrigin = (() => {
+    try {
+      return new URL(base || '/', pageOrigin || 'http://localhost').origin
+    } catch {
+      return pageOrigin
+    }
+  })()
+
+  try {
+    if (/^https?:\/\//i.test(raw)) return new URL(raw).href
+    if (raw.startsWith('//')) return new URL(raw, pageOrigin || apiOrigin).href
+    if (raw.startsWith('/uploads/')) return new URL(raw, apiOrigin || pageOrigin).href
+    if (raw.startsWith('/api/uploads/')) return new URL(raw.replace(/^\/api/, ''), apiOrigin || pageOrigin).href
+    if (raw.startsWith('/')) return new URL(raw, pageOrigin || apiOrigin).href
+    return new URL(raw, base ? (base + '/') : (pageOrigin + '/')).href
+  } catch {
+    return raw
+  }
+}
