@@ -38,18 +38,17 @@ jobs:
       - name: Run Flutter tests
         run: flutter test
 
-      - name: Build iOS archive without code signing
+      - name: Build unsigned iOS IPA
         run: >-
-          flutter build ios --release --no-codesign
+          flutter build ipa --release --no-codesign
           --dart-define=JSO_API_BASE_URL=https://jso-api.onrender.com/api
 
-      - name: Package unsigned IPA
+      - name: Name unsigned IPA
         run: |
-          mkdir -p build/ios/ipa/Payload
-          cp -R build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app build/ios/ipa/Payload/Runner.app
-          cd build/ios/ipa
-          /usr/bin/zip -qry JSO-iOS-unsigned.ipa Payload
-          rm -rf Payload
+          set -euo pipefail
+          source_ipa="$(find build/ios/ipa -maxdepth 1 -type f -name '*.ipa' ! -name 'JSO-iOS-unsigned.ipa' -print -quit)"
+          test -n "$source_ipa"
+          cp "$source_ipa" build/ios/ipa/JSO-iOS-unsigned.ipa
 
       - name: Package iOS Simulator app
         run: |
