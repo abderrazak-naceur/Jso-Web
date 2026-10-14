@@ -17,7 +17,7 @@ export default function FanAccounts() {
   const [canPromote, setCanPromote] = useState(false)
   const [promoteTarget, setPromoteTarget] = useState(null)
   const [selectedRole, setSelectedRole] = useState('Editor')
-  const promotionRoles = ['ClubAdmin', 'MatchManager', 'FinanceManager', 'ShopManager', 'Editor', 'CommunityManager', 'TicketSeller', 'TicketValidator', 'TicketSupervisor', 'SeasonManager']
+  const promotionRoles = ['SuperAdmin', 'ClubAdmin', 'MatchManager', 'FinanceManager', 'ShopManager', 'Editor', 'CommunityManager', 'TicketSeller', 'TicketValidator', 'TicketSupervisor', 'SeasonManager']
 
   async function load() {
     setLoading(true)
