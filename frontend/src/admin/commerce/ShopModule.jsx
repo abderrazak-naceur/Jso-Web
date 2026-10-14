@@ -32,6 +32,36 @@ export default function ShopModule({ onError }) {
     return () => window.removeEventListener('popstate', syncRoute)
   }, [products, onError])
 
+  async function handleImageFile(file) {
+    if (!file) return
+    if (!file.type.startsWith('image/')) { onError('Sélectionnez un fichier image (JPG, PNG, WebP…).'); return }
+    if (file.size > 8 * 1024 * 1024) { onError('Image trop volumineuse (maximum 8 Mo).'); return }
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = () => reject(new Error('Lecture de l’image impossible.'))
+        reader.readAsDataURL(file)
+      })
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image()
+        img.onload = () => resolve(img)
+        img.onerror = () => reject(new Error('Fichier image invalide.'))
+        img.src = dataUrl
+      })
+      const maxSide = 1400
+      const scale = Math.min(1, maxSide / Math.max(image.width, image.height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(1, Math.round(image.width * scale))
+      canvas.height = Math.max(1, Math.round(image.height * scale))
+      canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height)
+      const compressed = canvas.toDataURL('image/jpeg', 0.82)
+      if (compressed.length > 2_000_000) { onError('L’image reste trop lourde après compression. Choisissez une image plus petite.'); return }
+      setForm(current => ({ ...current, imageUrl: compressed }))
+      onError('')
+    } catch (e) { onError(e.message || 'Impossible de charger cette image.') }
+  }
+
   function slugify(s) { return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') }
   function setSelected(p) {
     setEditing(p.id)
@@ -104,7 +134,17 @@ export default function ShopModule({ onError }) {
           <Field label="Stock" type="number" min="0" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })}/>
           <Field label="Catégorie" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}/>
         </div>
-        <Field label="Image URL" value={form.imageUrl} onChange={e => setForm({ ...form, imageUrl: e.target.value })}/>
+        <div className="space-y-2">
+          <label className="block text-sm font-bold">Photo du produit <span className="font-normal text-slate-500">(choisir depuis votre ordinateur)</span>
+            <input type="file" accept="image/*" onChange={e => handleImageFile(e.target.files?.[0])} className="mt-2 block w-full rounded-xl border border-slate-200 p-3 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:font-bold"/>
+          </label>
+          {form.imageUrl && <div className="flex items-center gap-3 rounded-xl border border-slate-200 p-3">
+            <img src={form.imageUrl} alt="Aperçu du produit" className="h-24 w-24 rounded-lg object-cover" />
+            <div className="flex-1 text-sm text-slate-600">Aperçu de l’image qui sera enregistrée avec le produit.</div>
+            <button type="button" onClick={() => setForm({ ...form, imageUrl: '' })} className="rounded-lg px-3 py-2 text-sm font-bold text-red-600">Supprimer</button>
+          </div>}
+          <details className="text-sm"><summary className="cursor-pointer font-semibold text-slate-500">Ou saisir une URL d’image</summary><div className="mt-2"><Field label="URL de l’image" value={form.imageUrl.startsWith('data:') ? '' : form.imageUrl} onChange={e => setForm({ ...form, imageUrl: e.target.value })}/></div></details>
+        </div>
         <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={form.isActive} onChange={e => setForm({ ...form, isActive: e.target.checked })}/> Actif (visible dans la boutique)</label>
         <div className="flex gap-2 pt-2"><button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white"><Save size={16}/> {editing ? 'Mettre à jour' : 'Créer'}</button>{editing && <button type="button" onClick={reset} className="rounded-xl px-4 py-2.5 font-bold text-slate-500 hover:bg-slate-100">Annuler</button>}</div>
       </form>
