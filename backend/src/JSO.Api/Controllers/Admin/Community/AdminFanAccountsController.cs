@@ -83,7 +83,7 @@ public sealed class AdminFanAccountsController(JsoDbContext db, AuditService aud
         var allowedRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "ClubAdmin", "MatchManager", "FinanceManager", "ShopManager", "Editor",
-            "CommunityManager", "TicketSeller", "TicketValidator", "TicketSupervisor", "SeasonManager", "SuperAdmin", "SuperAdmin"
+            "CommunityManager", "TicketSeller", "TicketValidator", "TicketSupervisor", "SeasonManager", "SuperAdmin"
         };
         if (!allowedRoles.Contains(role))
             return BadRequest(new { message = "Rôle administratif non autorisé pour cette opération." });
