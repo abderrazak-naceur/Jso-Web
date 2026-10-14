@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ImagePlus, Save, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { adminApi } from '../api'
+import { API_BASE_URL } from '../../lib/apiConfig'
+import { useRef } from 'react'
 
 const SETTINGS_KEY = 'membership_card_artwork'
 const DEFAULTS = {
@@ -12,6 +14,8 @@ export default function MembershipCardArtwork({ onError = () => {} }) {
   const [artwork, setArtwork] = useState(DEFAULTS)
   const [files, setFiles] = useState({ front: null, back: null })
   const [previews, setPreviews] = useState(DEFAULTS)
+  const previewsRef = useRef(previews)
+  previewsRef.current = previews
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -38,10 +42,10 @@ export default function MembershipCardArtwork({ onError = () => {} }) {
   }, [])
 
   useEffect(() => () => {
-    Object.values(previews).forEach((url) => {
+    Object.values(previewsRef.current).forEach((url) => {
       if (typeof url === 'string' && url.startsWith('blob:')) URL.revokeObjectURL(url)
     })
-  }, [previews])
+  }, [])
 
   function choose(side, file) {
     if (!file) return
@@ -81,7 +85,7 @@ export default function MembershipCardArtwork({ onError = () => {} }) {
       for (const side of ['front', 'back']) {
         if (files[side]) {
           const media = await upload(side, files[side])
-          next[side] = media.url.startsWith('http') ? media.url : new URL(media.url, window.location.origin.replace('jso-web.onrender.com', 'jso-api.onrender.com')).toString()
+          next[side] = media.url.startsWith('http') ? media.url : new URL(media.url, API_BASE_URL.replace(/\\/api\\/?$/, '')).toString()
         }
       }
       await adminApi('/admin/content/' + encodeURIComponent(SETTINGS_KEY), {
