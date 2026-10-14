@@ -57,25 +57,38 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         var uploadedAtUtc = DateTime.UtcNow;
         var year = uploadedAtUtc.ToString("yyyy");
         var month = uploadedAtUtc.ToString("MM");
-        var relative = Path.Combine("uploads", "media", year, month, safeName);
-        var absolute = Path.Combine(env.ContentRootPath, relative);
-        Directory.CreateDirectory(Path.GetDirectoryName(absolute)!);
-        await using (var stream = System.IO.File.Create(absolute))
-            await file.CopyToAsync(stream, ct);
+
+        string url;
+        string storagePath;
+        try
+        {
+            var mediaStorage = HttpContext.RequestServices.GetRequiredService<JSO.Api.Storage.GitHubRepositoryMediaStorage>();
+            await using var stream = file.OpenReadStream();
+            url = await mediaStorage.SaveAsync(safeName, file.ContentType.ToLowerInvariant(), stream, ct);
+            storagePath = url;
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = ex.Message });
+        }
+        catch (HttpRequestException ex)
+        {
+            return StatusCode(StatusCodes.Status502BadGateway, new { message = ex.Message });
+        }
 
         var asset = new MediaAsset
         {
             Title = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(file.FileName) : title.Trim(),
-            Url = "/uploads/media/" + year + "/" + month + "/" + safeName,
+            Url = url,
             Type = "Image",
             Caption = caption?.Trim(),
             IsPublished = true,
             FileName = Path.GetFileName(file.FileName),
             ContentType = file.ContentType.ToLowerInvariant(),
             FileSize = file.Length,
-            StoragePath = relative.Replace('\\', '/')
+            StoragePath = storagePath
         };
-        // Match-specific uploads are stored on disk for the match, but enter Media House only by explicit opt-in.
+        // Match-specific uploads also persist to the repository, but enter Media House only by explicit opt-in.
         if (!addToMedia)
             return Ok(new { url = asset.Url, title = asset.Title, isPublished = false });
 
@@ -125,10 +138,8 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
     {
         var asset = await db.MediaAssets.FindAsync([id], ct);
         if (asset is null) return NotFound();
-        if (!string.IsNullOrWhiteSpace(asset.StoragePath)) {
-            var absolute=Path.Combine(env.ContentRootPath, asset.StoragePath.Replace('/', Path.DirectorySeparatorChar));
-            if (System.IO.File.Exists(absolute)) System.IO.File.Delete(absolute);
-        }
+        // Repository files are kept in Git history. Removing a media record never
+        // rewrites repository history or creates dangling public content records.
         db.MediaAssets.Remove(asset); await db.SaveChangesAsync(ct);
         await Audit("DELETE", asset.Id, new { asset.Title }, ct);
         return NoContent();
