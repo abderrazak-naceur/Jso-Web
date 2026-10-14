@@ -55,7 +55,7 @@ public sealed class GitHubRepositoryMediaStorage(IConfiguration configuration, I
 
         // Keep repository private/public choice separate from image delivery. The
         // API proxy below streams assets using the server-side token.
-        return "/api/media/files/" + Uri.EscapeDataString(Path.GetFileNameWithoutExtension(safeName)) + Path.GetExtension(safeName).ToLowerInvariant() + "?path=" + Uri.EscapeDataString(path.Split('/').Skip(_directory.Split('/').Length).Aggregate((a, b) => a + "/" + b));
+        return "/api/media/files?path=" + Uri.EscapeDataString(path.Split('/').Skip(_directory.Split('/').Length).Aggregate((a, b) => a + "/" + b));
     }
 
     public async Task<(Stream Content, string ContentType, string? ETag)> OpenReadAsync(string relativePath, CancellationToken ct)
