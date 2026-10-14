@@ -587,3 +587,36 @@ html[dir="rtl"] .jso-a11y-launcher {
 .home-template-mini-heritage .home-template-mini-hero { color: #2c2417; background: #f5f0e5; border-bottom: 3px double #8b6a32; }
 .home-template-mini-heritage .home-template-mini-side { color: #2c2417; background: #eee7d8; }
 .home-template-mini-heritage .home-template-mini-card { background: #fffdf7; }
+
+
+/* Arabic RTL support. Direction is switched by I18nProvider on <html>. */
+html[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+html[dir="rtl"] body {
+  direction: rtl;
+}
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select {
+  text-align: right;
+}
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="url"],
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[type="number"] {
+  direction: ltr;
+  text-align: right;
+}
+html[dir="rtl"] .jso-ltr,
+html[dir="rtl"] [dir="ltr"] {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+html[dir="rtl"] .jso-hero {
+  background-position: center;
+}
+html[dir="rtl"] .jso-scroll {
+  direction: rtl;
+}

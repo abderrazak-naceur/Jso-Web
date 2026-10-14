@@ -98,13 +98,21 @@ function localizePublicDom(language) {
       return
     }
 
-    if (!SOURCE_TEXT.has(node)) SOURCE_TEXT.set(node, current)
-    const original = SOURCE_TEXT.get(node)
-    const translated = translateLegacy(original, language)
+    const previous = SOURCE_TEXT.get(node)
+    // React may reuse a text node for a different label after a state/API update.
+    // Treat that new value as the source unless it is the translation we just wrote.
+    if (!previous || current !== previous.translated) {
+      SOURCE_TEXT.set(node, { original: current, translated: current })
+    }
+    const state = SOURCE_TEXT.get(node)
+    const translated = translateLegacy(state.original, language)
 
     if (translated !== current) {
+      state.translated = translated
       translatingText.add(node)
       node.nodeValue = translated
+    } else {
+      state.translated = current
     }
   }
 
@@ -127,13 +135,19 @@ function localizePublicDom(language) {
         continue
       }
 
-      if (!originals.has(attribute)) originals.set(attribute, current)
-      const original = originals.get(attribute)
-      const translated = translateLegacy(original, language)
+      const previous = originals.get(attribute)
+      if (!previous || current !== previous.translated) {
+        originals.set(attribute, { original: current, translated: current })
+      }
+      const state = originals.get(attribute)
+      const translated = translateLegacy(state.original, language)
 
       if (translated !== current) {
+        state.translated = translated
         translatingAttributes.add(element)
         element.setAttribute(attribute, translated)
+      } else {
+        state.translated = current
       }
     }
   }
