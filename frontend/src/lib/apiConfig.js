@@ -49,3 +49,19 @@ export function setApiBaseUrl(value) {
 export function resetApiBaseUrl() {
   return setApiBaseUrl('')
 }
+
+ 
+// Resolve API-hosted assets (for example /uploads/...) against the API origin,
+// not the frontend origin. Absolute external URLs are preserved unchanged.
+export function getAssetUrl(value) {
+  if (!value) return ''
+  const url = String(value).trim()
+  if (/^(data:|blob:)/i.test(url)) return url
+  try {
+    const base = getApiBaseUrl()
+    const origin = /^https?:\/\//i.test(base) ? new URL(base).origin : window.location.origin
+    return new URL(url, origin).toString()
+  } catch {
+    return url
+  }
+}

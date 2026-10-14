@@ -1,10 +1,11 @@
 import { ArrowUpRight, Newspaper } from 'lucide-react'
 import { formatDate } from '../../lib/format'
+import { getAssetUrl } from '../../lib/apiConfig'
 
 // Shared visual for a news article: cover image, or a branded placeholder.
 function NewsVisual({ article, featured }) {
   if (article.coverImageUrl) {
-    return <img src={article.coverImageUrl} alt={article.title || ''} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+    return <img src={getAssetUrl(article.coverImageUrl)} alt={article.title || ''} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
   }
   return (
     <div className="relative grid h-full min-h-48 place-items-center overflow-hidden bg-gradient-to-br from-jso-navy to-jso-blue">
