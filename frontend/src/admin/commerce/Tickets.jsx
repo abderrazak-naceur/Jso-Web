@@ -36,6 +36,7 @@ export default function TicketsModule({ onError }) {
   const [orders, setOrders] = useState([])
   const [form, setForm] = useState(emptyType)
   const [editing, setEditing] = useState(null)
+  const [modalOpen, setModalOpen] = useState(false)
 
   async function loadMatches() {
     try { const m = await api('/admin/matches'); setMatches(m); if (!matchId && m[0]) setMatchId(m[0].id) }
@@ -55,8 +56,9 @@ export default function TicketsModule({ onError }) {
   useEffect(() => { loadTypes() }, [matchId])
   useEffect(() => { loadOrders() }, [])
 
-  function reset() { setForm(emptyType); setEditing(null) }
-  function edit(t) { setEditing(t.id); setForm({ name: t.name, price: t.price, currency: t.currency, capacity: t.capacity, isActive: t.isActive }) }
+  function reset() { setForm(emptyType); setEditing(null); setModalOpen(false) }
+  function startCreate() { setForm(emptyType); setEditing(null); setModalOpen(true) }
+  function edit(t) { setEditing(t.id); setForm({ name: t.name, price: t.price, currency: t.currency, capacity: t.capacity, isActive: t.isActive }); setModalOpen(true) }
 
   async function save(e) {
     e.preventDefault()
@@ -83,32 +85,18 @@ export default function TicketsModule({ onError }) {
   return <div className="space-y-6">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-black">Billetterie — Types de billets</h2>
+        <div><h2 className="text-xl font-black">Billetterie — Types de billets</h2><p className="mt-1 text-sm text-slate-500">Gérez les tarifs et les capacités par match.</p></div>
+        <div className="flex flex-wrap items-center gap-2"><button type="button" onClick={startCreate} className="inline-flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-black text-white"><Plus size={16}/> Nouveau billet</button>
         <select value={matchId} onChange={(e) => setMatchId(e.target.value)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-jso-blue">
           {matches.map((m) => <option key={m.id} value={m.id}>{matchLabel(m)}</option>)}
-        </select>
+        </select></div>
       </div>
-      <div className="mt-5 grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
+      <div className="mt-5">
         <div className="overflow-x-auto">
           {types.length === 0 ? <p className="text-sm text-slate-400">Aucun type de billet pour ce match.</p>
             : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Type</th><th className="p-2">Prix</th><th className="p-2">Vendus / Capacité</th><th className="p-2">Actif</th><th className="p-2"></th></tr></thead><tbody>{types.map((t) => <tr key={t.id} className="border-b last:border-0"><td className="p-2 font-bold">{t.name}</td><td className="p-2 whitespace-nowrap">{money(t.price, t.currency)}</td><td className="p-2">{t.soldCount} / {t.capacity}</td><td className="p-2">{t.isActive ? 'Oui' : 'Non'}</td><td className="p-2 whitespace-nowrap"><button onClick={() => edit(t)} className="mr-2 text-jso-blue"><Save size={15}/></button><button onClick={() => removeType(t.id)} className="text-red-600"><X size={16}/></button></td></tr>)}</tbody></table>}
         </div>
-        <form onSubmit={save} className="rounded-2xl border border-slate-200 p-4">
-          <h3 className="flex items-center gap-2 font-black">{editing ? 'Modifier' : <><Plus size={16}/> Nouveau type</>}</h3>
-          <div className="mt-3 space-y-3">
-            <label className="block text-sm font-bold">Nom<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-jso-blue"/></label>
-            <div className="grid grid-cols-2 gap-2">
-              <label className="block text-sm font-bold">Prix<input type="number" step="0.01" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-jso-blue"/></label>
-              <label className="block text-sm font-bold">Capacité<input type="number" min="1" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} required className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-jso-blue"/></label>
-            </div>
-            <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })}/> Actif</label>
-            <div className="flex gap-2"><button className="flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2 font-bold text-white"><Save size={15}/> {editing ? 'Mettre à jour' : 'Créer'}</button>{editing && <button type="button" onClick={reset} className="rounded-xl px-3 py-2 font-bold text-slate-500 hover:bg-slate-100">Annuler</button>}</div>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+m] border border-slate-200 bg-white p-6">
       <div className="flex items-center justify-between"><h2 className="text-xl font-black">Réservations</h2><button onClick={loadOrders} className="rounded-xl border border-slate-200 p-2 text-slate-600" aria-label="Actualiser"><RefreshCw size={16}/></button></div>
       <div className="mt-4 overflow-x-auto">
         {orders.length === 0 ? <p className="text-sm text-slate-400">Aucune réservation.</p>
