@@ -10,7 +10,7 @@ namespace JSO.Api.Controllers;
 [ApiController]
 [Route("api/admin/media")]
 [Authorize(Roles = "SuperAdmin,ClubAdmin,Editor")]
-public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment env, AuditService audit) : ControllerBase
+public sealed class AdminMediaController(JsoDbContext db, AuditService audit) : ControllerBase
 {
     private Task Audit(string action, Guid id, object? details, CancellationToken ct) =>
         audit.LogAsync(action, "MediaAsset", id.ToString(), User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value,
