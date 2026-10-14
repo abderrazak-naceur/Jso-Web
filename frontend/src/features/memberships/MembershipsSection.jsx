@@ -1,18 +1,33 @@
 import { useEffect, useState } from 'react'
 import { CalendarDays, CheckCircle2, Heart, LockKeyhole, ShieldCheck, ShoppingCart, Sparkles, Ticket, Trophy, UsersRound } from 'lucide-react'
-import { membershipApi } from '../../lib/api'
+import { membershipApi, publicApi } from '../../lib/api'
 import PayOnlineButton from '../shop/PayOnlineButton'
 
 const CARD_FRONT = 'https://d2ol7oe51mr4n9.cloudfront.net/user_3DuYKVhdmNmMSAGu9ckyEmyckau/3493cf9d-f016-4ba7-beba-6961d763af26.png'
 const CARD_BACK = 'https://d2ol7oe51mr4n9.cloudfront.net/user_3DuYKVhdmNmMSAGu9ckyEmyckau/86cf1566-e2fa-4aee-a76e-77045d22aeb0.png'
+const DEFAULT_CARD_ARTWORK = { front: CARD_FRONT, back: CARD_BACK }
 
 export default function MembershipsSection({ section, token, onRequireLogin }) {
   const [plans, setPlans] = useState([])
+  const [cardArtwork, setCardArtwork] = useState(DEFAULT_CARD_ARTWORK)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selected, setSelected] = useState(null)
   const [pending, setPending] = useState(null)
   const [subscribing, setSubscribing] = useState(false)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    publicApi.getContent(controller.signal)
+      .then((content) => {
+        try {
+          const artwork = JSON.parse(content?.membership_card_artwork || '{}')
+          if (!controller.signal.aborted) setCardArtwork({ front: artwork.front || CARD_FRONT, back: artwork.back || CARD_BACK })
+        } catch { /* Preserve the previous artwork defaults if the stored value is invalid. */ }
+      })
+      .catch(() => {})
+    return () => controller.abort()
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -65,11 +80,11 @@ export default function MembershipsSection({ section, token, onRequireLogin }) {
 
         <div className="mx-auto mt-7 grid max-w-5xl gap-5 sm:mt-9 sm:grid-cols-2 sm:gap-6">
           <figure className="overflow-hidden rounded-[1.75rem] border border-yellow-200/50 bg-[#101b5a]/70 p-2 shadow-[0_20px_70px_rgba(0,0,0,.32)] sm:p-3">
-            <img src={CARD_FRONT} alt="Recto de la carte d’abonnement JSO pour la saison 2026–2027" className="block h-auto w-full rounded-2xl object-contain" loading="eager" decoding="async" />
+            <img src={cardArtwork.front} alt="Recto de la carte d’abonnement JSO pour la saison 2026–2027" className="block h-auto w-full rounded-2xl object-contain" loading="eager" decoding="async" />
             <figcaption className="mt-2 text-center text-xs font-bold uppercase tracking-[0.2em] text-yellow-200">Recto de la carte</figcaption>
           </figure>
           <figure className="overflow-hidden rounded-[1.75rem] border border-yellow-200/50 bg-[#101b5a]/70 p-2 shadow-[0_20px_70px_rgba(0,0,0,.32)] sm:p-3">
-            <img src={CARD_BACK} alt="Verso de la carte d’abonnement JSO pour la saison 2026–2027" className="block h-auto w-full rounded-2xl object-contain" loading="eager" decoding="async" />
+            <img src={cardArtwork.back} alt="Verso de la carte d’abonnement JSO pour la saison 2026–2027" className="block h-auto w-full rounded-2xl object-contain" loading="eager" decoding="async" />
             <figcaption className="mt-2 text-center text-xs font-bold uppercase tracking-[0.2em] text-yellow-200">Verso de la carte</figcaption>
           </figure>
         </div>
