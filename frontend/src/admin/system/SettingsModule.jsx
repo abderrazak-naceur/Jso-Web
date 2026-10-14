@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Save, SlidersHorizontal, Languages, CreditCard } from 'lucide-react'
+import { Save, SlidersHorizontal, Languages, CreditCard, Eye } from 'lucide-react'
 import Field from '../components/Field'
 import { API_BASE_URL, getConfiguredApiBaseUrl, getDefaultApiBaseUrl, setApiBaseUrl, resetApiBaseUrl } from '../../lib/apiConfig'
 import TranslationsModule from './TranslationsModule'
 import PaymentSettingsModule from './PaymentSettingsModule'
+import HomeVisibilitySettingsModule from './HomeVisibilitySettingsModule'
 
 export default function SettingsModule({ onError = () => {} }) {
   const [activeTab, setActiveTab] = useState('payments')
@@ -56,6 +57,12 @@ export default function SettingsModule({ onError = () => {} }) {
       icon: CreditCard,
     },
     {
+      id: 'homepage',
+      label: 'Page d’accueil',
+      description: 'Activer ou masquer les sections du site public.',
+      icon: Eye,
+    },
+    {
       id: 'api',
       label: 'Backend / API',
       description: 'URL de base utilisée par le site et l’administration.',
@@ -71,7 +78,7 @@ export default function SettingsModule({ onError = () => {} }) {
 
   return <div className="space-y-6">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-2 shadow-sm">
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {tabs.map(({ id, label, description, icon: Icon }) => (
           <button
             key={id}
@@ -100,6 +107,10 @@ export default function SettingsModule({ onError = () => {} }) {
 
     {activeTab === 'payments' && (
       <PaymentSettingsModule onError={onError} />
+    )}
+
+    {activeTab === 'homepage' && (
+      <HomeVisibilitySettingsModule onError={onError} />
     )}
 
     {activeTab === 'languages' && (
