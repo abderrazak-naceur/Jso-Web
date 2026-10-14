@@ -85,7 +85,7 @@ export default function MembershipCardArtwork({ onError = () => {} }) {
       for (const side of ['front', 'back']) {
         if (files[side]) {
           const media = await upload(side, files[side])
-          next[side] = media.url.startsWith('http') ? media.url : new URL(media.url, API_BASE_URL.replace(/\\/api\\/?$/, '')).toString()
+          next[side] = media.url.startsWith('http') ? media.url : new URL(media.url, API_BASE_URL.replace(/\/api\/?$/, '')).toString()
         }
       }
       await adminApi('/admin/content/' + encodeURIComponent(SETTINGS_KEY), {
