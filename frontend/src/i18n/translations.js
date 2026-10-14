@@ -311,4 +311,39 @@ export const LEGACY_TRANSLATIONS = {
   'Réservation': { en: 'Reservation', it: 'Prenotazione', ar: 'الحجز' },
 }
 
+// Public-page labels used by the shared DOM translator. Keep all four locales aligned.
+Object.assign(LEGACY_TRANSLATIONS, {
+
+  'Matchs': { en: 'Matches', it: 'Partite', ar: 'المباريات' },
+  'Équipe': { en: 'Squad', it: 'Squadra', ar: 'الفريق' },
+  'Le Club': { en: 'The Club', it: 'Il Club', ar: 'النادي' },
+  'Soutenir': { en: 'Support us', it: 'Sostienici', ar: 'ادعمنا' },
+  'Médias': { en: 'Media', it: 'Media', ar: 'الوسائط' },
+  'Agenda': { en: 'Events', it: 'Eventi', ar: 'الفعاليات' },
+  'Communauté': { en: 'Community', it: 'Comunità', ar: 'المجتمع' },
+  'Musée': { en: 'Museum', it: 'Museo', ar: 'المتحف' },
+  'App mobile': { en: 'Mobile app', it: 'App mobile', ar: 'تطبيق الهاتف' },
+  'Partenaires': { en: 'Partners', it: 'Partner', ar: 'الشركاء' },
+  'Infos pratiques': { en: 'Visitor information', it: 'Informazioni utili', ar: 'معلومات مهمة' },
+  'La mia area': { en: 'My area', it: 'La mia area', ar: 'مساحتي' },
+  'Match Center': { en: 'Match Center', it: 'Centro partite', ar: 'مركز المباريات' },
+  'Plus': { en: 'More', it: 'Altro', ar: 'المزيد' },
+  'Plus qu’un club. Une identité.': { en: 'More than a club. An identity.', it: 'Più di un club. Un’identità.', ar: 'أكثر من نادٍ، إنها هوية.' },
+  'Voir tous les matchs': { en: 'View all matches', it: 'Vedi tutte le partite', ar: 'عرض كل المباريات' },
+  'Aucun match à afficher pour le moment.': { en: 'No matches to display right now.', it: 'Nessuna partita da mostrare al momento.', ar: 'لا توجد مباريات للعرض حاليًا.' },
+  'Le club': { en: 'The club', it: 'Il club', ar: 'النادي' },
+  'Partenaires officiels': { en: 'Official partners', it: 'Partner ufficiali', ar: 'الشركاء الرسميون' },
+  'Rechercher': { en: 'Search', it: 'Cerca', ar: 'بحث' },
+  'Nom': { en: 'Name', it: 'Nome', ar: 'الاسم' },
+  'Téléphone': { en: 'Phone', it: 'Telefono', ar: 'الهاتف' },
+  'Mot de passe': { en: 'Password', it: 'Password', ar: 'كلمة المرور' },
+  'Mot de passe oublié ?': { en: 'Forgot password?', it: 'Password dimenticata?', ar: 'نسيت كلمة المرور؟' },
+  'Créer mon compte': { en: 'Create my account', it: 'Crea il mio account', ar: 'إنشاء حسابي' },
+  'Je confirme avoir lu et accepté les conditions.': { en: 'I confirm that I have read and accepted the terms.', it: 'Confermo di aver letto e accettato i termini.', ar: 'أؤكد أنني قرأت الشروط ووافقت عليها.' },
+  'Mon profil': { en: 'My profile', it: 'Il mio profilo', ar: 'ملفي الشخصي' },
+  'Paramètres': { en: 'Settings', it: 'Impostazioni', ar: 'الإعدادات' },
+  'Se déconnecter': { en: 'Sign out', it: 'Disconnetti', ar: 'تسجيل الخروج' },
+  'La mia area': { en: 'My area', it: 'La mia area', ar: 'مساحتي' },
+})
+
 export const TRANSLATIONS = { fr, en, it, ar }
