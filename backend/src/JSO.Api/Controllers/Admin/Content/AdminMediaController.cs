@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using JSO.Domain;
 using JSO.Infrastructure;
+using JSO.Api.Storage;
 
 namespace JSO.Api.Controllers;
 
@@ -58,7 +59,7 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         string storagePath;
         try
         {
-            var mediaStorage = HttpContext.RequestServices.GetRequiredService<JSO.Api.Storage.GitHubRepositoryMediaStorage>();
+            var mediaStorage = HttpContext.RequestServices.GetRequiredService<GitHubRepositoryMediaStorage>();
             await using var stream = file.OpenReadStream();
             url = await mediaStorage.SaveAsync(safeName, file.ContentType.ToLowerInvariant(), stream, ct);
             storagePath = url;
