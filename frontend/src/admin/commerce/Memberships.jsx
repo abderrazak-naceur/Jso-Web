@@ -88,8 +88,7 @@ export default function MembershipsModule({ onError }) {
   const money = (n, c) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: c || 'TND' }).format(n || 0)
 
   return <div className="space-y-6">
-    <div className="space-y-6">
-      <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black">Abonnements — Formules</h2><p className="mt-1 text-sm text-slate-500">Créez vos formules et choisissez le visuel commun recto/verso de la carte.</p></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => setArtworkOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50"><ImagePlus size={16}/> Visuels recto/verso</button><button type="button" onClick={startCreate} className="inline-flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-black text-white"><Plus size={16}/> Nouvel abonnement</button></div></div>
         <div className="mt-5 overflow-x-auto">
           {loading ? <p className="text-sm text-slate-400">Chargement…</p>
