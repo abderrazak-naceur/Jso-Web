@@ -3,7 +3,8 @@ import { CalendarDays, CheckCircle2, Heart, LockKeyhole, ShieldCheck, ShoppingCa
 import { membershipApi } from '../../lib/api'
 import PayOnlineButton from '../shop/PayOnlineButton'
 
-const CARD_ART = 'https://d2ol7oe51mr4n9.cloudfront.net/user_3DuYKVhdmNmMSAGu9ckyEmyckau/bc085e64-e8a5-4878-8383-da4cdaf30fd5.jpg'
+const CARD_FRONT = '/img/jso-abbonamento-fronte.svg'
+const CARD_BACK = '/img/jso-abbonamento-retro.svg'
 
 export default function MembershipsSection({ section, token, onRequireLogin }) {
   const [plans, setPlans] = useState([])
@@ -62,17 +63,16 @@ export default function MembershipsSection({ section, token, onRequireLogin }) {
           </p>
         </header>
 
-        <figure className="relative mx-auto mt-7 max-w-5xl overflow-hidden rounded-[1.75rem] border border-yellow-200/50 bg-[#101b5a]/70 shadow-[0_20px_70px_rgba(0,0,0,.42)] sm:mt-9">
-          <div className="absolute inset-0 bg-gradient-to-br from-yellow-300/10 via-transparent to-blue-400/10" aria-hidden="true" />
-          <img
-            src={CARD_ART}
-            alt="Recto et verso de la carte d’abonnement JSO pour la saison 2026–2027"
-            className="relative mx-auto block w-full object-contain p-2 sm:p-4"
-            loading="eager"
-            decoding="async"
-          />
-          <figcaption className="sr-only">Carte d’abonnement JSO, saison 2026–2027</figcaption>
-        </figure>
+        <div className="mx-auto mt-7 grid max-w-5xl gap-5 sm:mt-9 sm:grid-cols-2 sm:gap-6">
+          <figure className="overflow-hidden rounded-[1.75rem] border border-yellow-200/50 bg-[#101b5a]/70 p-2 shadow-[0_20px_70px_rgba(0,0,0,.32)] sm:p-3">
+            <img src={CARD_FRONT} alt="Recto de la carte d’abonnement JSO pour la saison 2026–2027" className="block h-auto w-full rounded-2xl object-contain" loading="eager" decoding="async" />
+            <figcaption className="mt-2 text-center text-xs font-bold uppercase tracking-[0.2em] text-yellow-200">Recto de la carte</figcaption>
+          </figure>
+          <figure className="overflow-hidden rounded-[1.75rem] border border-yellow-200/50 bg-[#101b5a]/70 p-2 shadow-[0_20px_70px_rgba(0,0,0,.32)] sm:p-3">
+            <img src={CARD_BACK} alt="Verso de la carte d’abonnement JSO pour la saison 2026–2027" className="block h-auto w-full rounded-2xl object-contain" loading="eager" decoding="async" />
+            <figcaption className="mt-2 text-center text-xs font-bold uppercase tracking-[0.2em] text-yellow-200">Verso de la carte</figcaption>
+          </figure>
+        </div>
 
         <div className="mx-auto mt-7 max-w-5xl rounded-[2rem] border border-white/15 bg-[#071541]/85 p-5 shadow-[0_22px_70px_rgba(0,0,0,.32)] backdrop-blur-xl sm:mt-10 sm:p-8 lg:p-10">
           <div className="grid gap-7 lg:grid-cols-[1.15fr_.85fr] lg:gap-9">
