@@ -74,7 +74,20 @@ degrade gracefully to a placeholder instead of crashing the screen.
    ```sh
    cd mobile
    flutter pub get
+   dart run flutter_launcher_icons
+   dart run flutter_native_splash:create
    ```
+
+The app is branded **JSO Mobile** on Android and iOS. The official crest in
+`assets/jso-crest.png` is the source for launcher icons and native splash
+screens; the Android APK and iOS test-build workflows regenerate these assets before building.
+The app version is maintained in `pubspec.yaml` (`version: 1.0.1+2`): the
+version is shown in Android app information and in the account screen as
+**Version 1.0.1 (Build 2)**. Keep that display string in
+`lib/features/account/account_dashboard_screen.dart` synchronized when
+bumping the version. The internal Dart package name and Android application ID
+are intentionally unchanged to avoid breaking imports or installing upgrades
+as a separate app.
 
 ## Project structure
 

@@ -2,6 +2,11 @@ name: JSO iOS Test Build
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/ios-test-build.yml'
   push:
     branches: [main]
     paths:
@@ -31,6 +36,12 @@ jobs:
 
       - name: Resolve dependencies
         run: flutter pub get
+
+      - name: Generate JSO launcher icons
+        run: dart run flutter_launcher_icons
+
+      - name: Generate branded native splash screens
+        run: dart run flutter_native_splash:create
 
       - name: Analyze Flutter app
         run: flutter analyze
@@ -69,6 +80,7 @@ jobs:
           retention-days: 14
 
       - name: Publish iOS test release
+        if: github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ios-latest

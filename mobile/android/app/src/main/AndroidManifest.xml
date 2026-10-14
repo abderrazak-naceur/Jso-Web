@@ -4,7 +4,7 @@
          debug/profile variants) or release builds lose network access. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="jso_mobile"
+        android:label="JSO Mobile"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
