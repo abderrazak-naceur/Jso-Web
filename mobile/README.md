@@ -80,7 +80,7 @@ degrade gracefully to a placeholder instead of crashing the screen.
 
 The app is branded **JSO Mobile** on Android and iOS. The official crest in
 `assets/jso-crest.png` is the source for launcher icons and native splash
-screens; the Android APK workflow regenerates these assets before building.
+screens; the Android APK and iOS test-build workflows regenerate these assets before building.
 The app version is maintained in `pubspec.yaml` (`version: 1.0.1+2`): the
 version is shown in Android app information and in the account screen as
 **Version 1.0.1 (Build 2)**. Keep that display string in
