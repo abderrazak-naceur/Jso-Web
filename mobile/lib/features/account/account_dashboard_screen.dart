@@ -304,6 +304,18 @@ class AccountDashboardScreen extends StatelessWidget {
                 label: const Text('Se déconnecter'),
               ),
             ],
+            const SizedBox(height: JsoSpacing.xl),
+            const Center(
+              child: Text(
+                'JSO Mobile · Version 1.0.1 (Build 2)',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: JsoColors.inkMuted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ],
         ),
       ),
