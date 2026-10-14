@@ -9,7 +9,7 @@ namespace JSO.Api.Controllers;
 public sealed class MediaController(JsoDbContext db, ContentTranslationService translations) : ControllerBase
 {
     // Public asset proxy for media stored in this repository. The GitHub token stays server-side.
-    [HttpGet("files/{**path}")]
+    [HttpGet("files")]
     public async Task<IActionResult> GetRepositoryFile([FromQuery] string path, [FromServices] JSO.Api.Storage.GitHubRepositoryMediaStorage storage, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(path) || path.Split('/').Any(p => p is "." or ".."))
