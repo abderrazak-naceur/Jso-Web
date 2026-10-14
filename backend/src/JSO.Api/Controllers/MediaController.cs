@@ -8,6 +8,41 @@ namespace JSO.Api.Controllers;
 [Route("api/media")]
 public sealed class MediaController(JsoDbContext db, ContentTranslationService translations) : ControllerBase
 {
+    // Public image proxy: works for public and private repositories without exposing the GitHub token.
+    [HttpGet("files/{**path}")]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
+    public async Task<IActionResult> GetRepositoryFile(string path, [FromServices] JSO.Api.Storage.GitHubRepositoryMediaStorage storage, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(path) || path.Split('/').Any(p => p is "." or ".."))
+            return BadRequest();
+
+        try
+        {
+            var asset = await storage.OpenReadAsync(path, ct);
+            Response.Headers.CacheControl = "public,max-age=3600,stale-while-revalidate=86400";
+            Response.Headers["X-Content-Type-Options"] = "nosniff";
+            if (!string.IsNullOrWhiteSpace(asset.ETag))
+                Response.Headers.ETag = asset.ETag;
+            return File(asset.Content, asset.ContentType, enableRangeProcessing: false);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = ex.Message });
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return NotFound();
+        }
+        catch (HttpRequestException ex)
+        {
+            return StatusCode(StatusCodes.Status502BadGateway, new { message = ex.Message });
+        }
+        catch (ArgumentException)
+        {
+            return BadRequest();
+        }
+    }
+
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken ct)
     {
