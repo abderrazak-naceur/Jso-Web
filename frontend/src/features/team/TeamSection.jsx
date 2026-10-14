@@ -155,20 +155,20 @@ export default function TeamSection({ section, players = [], status = 'ready' })
             </div>
 
             {roster.length > 0 ? (
-              <div className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+              <div className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {roster.map((player) => (
                   <article
                     key={player.id}
-                    className="group overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-300/35"
+                    className="group relative overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-md shadow-slate-200/50 transition duration-500 hover:-translate-y-1.5 hover:border-jso-gold/70 hover:shadow-2xl hover:shadow-jso-navy/15"
                   >
                     <PlayerPortrait player={player} />
-                    <div className="p-4">
+                    <div className="relative p-5 before:absolute before:inset-x-5 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-jso-gold/70 before:to-transparent">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="truncate text-[11px] font-black uppercase tracking-[0.16em] text-jso-blue">
                             {player.position || 'Équipe première'}
                           </p>
-                          <h3 className="mt-1 truncate text-lg font-black tracking-tight text-jso-ink">
+                          <h3 className="mt-1 truncate text-xl font-black tracking-tight text-jso-ink">
                             {player.firstName} {player.lastName}
                           </h3>
                         </div>
