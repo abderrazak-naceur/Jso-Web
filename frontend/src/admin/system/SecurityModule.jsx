@@ -19,6 +19,11 @@ const empty = {
 
 export default function SecurityModule({ onError }) {
   const [users,setUsers] = useState([])
+  const [fanAccounts,setFanAccounts] = useState([])
+  const [selectedFanId,setSelectedFanId] = useState('')
+  const [promotionRole,setPromotionRole] = useState('Editor')
+  const [promoting,setPromoting] = useState(false)
+  const [promotionNotice,setPromotionNotice] = useState('')
   const [logs,setLogs] = useState([])
   const [assignments,setAssignments] = useState([])
   const [references,setReferences] = useState({matches:[],teams:[],facilities:[],gates:[],devices:[]})
@@ -27,13 +32,14 @@ export default function SecurityModule({ onError }) {
 
   async function load() {
     try {
-      const [u,l,a,refs] = await Promise.all([
+      const [u,fanList,l,a,refs] = await Promise.all([
         adminApi('/admin/security/users'),
+        adminApi('/admin/fan-accounts?active=true'),
         adminApi('/admin/audit?take=50'),
         adminApi('/admin/security/staff-assignments?activeOnly=false'),
         adminApi('/admin/security/staff-assignments/references')
       ])
-      setUsers(u); setLogs(l); setAssignments(a); setReferences(refs)
+      setUsers(u); setFanAccounts(fanList); setLogs(l); setAssignments(a); setReferences(refs)
       if (!form.adminUserId && u[0]) setForm(x => ({...x, adminUserId:u[0].id}))
     } catch(e) { onError(e.message) }
   }
@@ -41,6 +47,31 @@ export default function SecurityModule({ onError }) {
   useEffect(()=>{ load() }, [])
 
   const userMap = useMemo(() => Object.fromEntries(users.map(u => [u.id, u])), [users])
+
+  async function promoteRegisteredUser(e) {
+    e.preventDefault()
+    const fan = fanAccounts.find(x => x.id === selectedFanId)
+    if (!fan) { onError('Seleziona un account supporter.'); return }
+    if (!fan.isActive || !fan.emailVerified) { onError('L’account deve essere attivo e avere l’e-mail verificata.'); return }
+    const confirmed = window.confirm(
+      promotionRole === 'SuperAdmin'
+        ? 'Confermi di promuovere ' + fan.displayName + ' (' + fan.email + ') a SUPERADMIN? Avrà accesso completo all’amministrazione.'
+        : 'Confermi di promuovere ' + fan.displayName + ' (' + fan.email + ') al ruolo ' + promotionRole + '?'
+    )
+    if (!confirmed) return
+    setPromoting(true)
+    setPromotionNotice('')
+    try {
+      const created = await adminApi('/admin/fan-accounts/' + fan.id + '/promote', {
+        method: 'POST',
+        body: JSON.stringify({ role: promotionRole })
+      })
+      setPromotionNotice('Account amministrativo creato: ' + created.displayName + ' — ' + created.role + '.')
+      setFanAccounts(current => current.filter(x => x.id !== fan.id))
+      await load()
+    } catch (e) { onError(e.message || 'Impossibile promuovere questo account.') }
+    finally { setPromoting(false) }
+  }
 
   async function createAssignment(e) {
     e.preventDefault()
@@ -70,6 +101,28 @@ export default function SecurityModule({ onError }) {
   }
 
   return <div className="space-y-6">
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+      <div className="flex items-center gap-2"><ShieldCheck className="text-jso-blue"/><h2 className="text-xl font-black">Utenti registrati → Staff</h2></div>
+      <p className="mt-2 text-sm text-slate-500">Promuovi un supporter registrato e verificato a un ruolo amministrativo. L’assegnazione a SuperAdmin richiede una conferma esplicita ed è registrata nell’audit log.</p>
+      {promotionNotice && <p role="status" className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{promotionNotice}</p>}
+      <form onSubmit={promoteRegisteredUser} className="mt-4 grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(180px,1fr)_auto]">
+        <label className="text-sm font-bold">Account registrato
+          <select required value={selectedFanId} onChange={e=>setSelectedFanId(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-3">
+            <option value="">Seleziona un supporter verificato</option>
+            {fanAccounts.filter(x=>x.isActive && x.emailVerified).map(x=><option key={x.id} value={x.id}>{x.displayName} — {x.email}</option>)}
+          </select>
+        </label>
+        <label className="text-sm font-bold">Ruolo da assegnare
+          <select value={promotionRole} onChange={e=>setPromotionRole(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-3">
+            {ROLES.map(x=><option key={x} value={x}>{x}</option>)}
+          </select>
+        </label>
+        <div className="flex items-end"><button type="submit" disabled={promoting || !selectedFanId} className="w-full rounded-xl bg-jso-navy px-4 py-3 text-sm font-extrabold text-white disabled:opacity-50">{promoting ? 'Promozione…' : 'Promuovi account'}</button></div>
+      </form>
+      {promotionRole === 'SuperAdmin' && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Attenzione: SuperAdmin concede accesso completo al pannello amministrativo.</p>}
+      {fanAccounts.filter(x=>x.isActive && x.emailVerified).length === 0 && <p className="mt-3 text-sm text-slate-500">Nessun account attivo con e-mail verificata disponibile per la promozione.</p>}
+    </div>
+
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><h2 className="text-xl font-black">Staff & Permissions</h2><p className="mt-1 text-sm text-slate-500">Affectations par rôle, match, gate et device.</p></div>
