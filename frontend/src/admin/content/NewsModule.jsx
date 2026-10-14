@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Plus, EyeOff, Eye, Pencil, X, Link2, Facebook, Send, Save, ImagePlus, Images, Bold, Italic, List, Quote, Eye as PreviewIcon, ChevronLeft, Search } from 'lucide-react'
+import { Plus, EyeOff, Eye, Pencil, X, Link2, Facebook, Send, Save, ImagePlus, Images, Bold, Italic, List, Quote, Eye as PreviewIcon, ChevronLeft, Search, Upload } from 'lucide-react'
 import Field from '../components/Field'
 import { adminApi } from '../api'
 import { emptyNews } from '../constants'
 import { adminEditIdFromPath, adminEditUrl, navigateAdminEdit } from '../adminRoutes'
 import { sharePreviewUrl } from '../../lib/sharePreviewUrl'
+import { getApiBaseUrl } from '../../lib/apiConfig'
 
 const slugify = (value) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 const insertAtCursor = (textarea, current, insertion) => {
@@ -27,6 +28,10 @@ export default function NewsModule({ onError }) {
   const [mediaOpen,setMediaOpen]=useState(false)
   const [mediaMode,setMediaMode]=useState('body')
   const [mediaQuery,setMediaQuery]=useState('')
+  const [uploadFile,setUploadFile]=useState(null)
+  const [uploadTitle,setUploadTitle]=useState('')
+  const [addUploadToMedia,setAddUploadToMedia]=useState(false)
+  const [uploadBusy,setUploadBusy]=useState(false)
   const [selectedMedia,setSelectedMedia]=useState([])
   const [preview,setPreview]=useState(false)
   const [slugTouched,setSlugTouched]=useState(false)
@@ -60,7 +65,37 @@ export default function NewsModule({ onError }) {
   function shareFacebook(n){window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(publicUrl(n.slug)),'_blank','noopener,noreferrer')}
   async function publishToFacebook(n){setFbBusyId(n.id);setNotice('');try{const res=await adminApi('/admin/social/facebook/publish',{method:'POST',body:JSON.stringify({articleId:n.id})});setNotice(res?.message||'Publié sur Facebook.')}catch(e){onError(e.message+' — utilisez « Partager » pour publier manuellement.');shareFacebook(n)}finally{setFbBusyId(null)}}
   useEffect(() => { if (!modalOpen) return; const closeOnEscape = event => { if (event.key === 'Escape') { if(mediaOpen)setMediaOpen(false);else reset() } }; window.addEventListener('keydown', closeOnEscape); return () => window.removeEventListener('keydown', closeOnEscape) }, [modalOpen,mediaOpen])
-  function openMedia(mode){setMediaMode(mode);setSelectedMedia([]);setMediaQuery('');setMediaOpen(true);loadMedia()}
+  function openMedia(mode){setMediaMode(mode);setSelectedMedia([]);setMediaQuery('');setUploadFile(null);setUploadTitle('');setAddUploadToMedia(false);setMediaOpen(true);loadMedia()}
+  function resolveUploadedImageUrl(value){
+    if(!value)return ''
+    try{
+      const apiBase=getApiBaseUrl()
+      const origin=/^https?:\/\//i.test(apiBase)?new URL(apiBase).origin:window.location.origin
+      return new URL(value,origin).toString()
+    }catch{return value}
+  }
+  async function uploadImageFromCms(event){
+    event.preventDefault()
+    if(!uploadFile||uploadBusy)return
+    setUploadBusy(true)
+    try{
+      const data=new FormData()
+      data.append('file',uploadFile)
+      data.append('title',uploadTitle.trim()||uploadFile.name.replace(/\.[^.]+$/,''))
+      data.append('caption','')
+      data.append('addToMedia',String(addUploadToMedia))
+      const uploaded=await adminApi('/admin/media/upload',{method:'POST',body:data})
+      const url=resolveUploadedImageUrl(uploaded.url)
+      if(mediaMode==='cover')setForm(current=>({...current,coverImageUrl:url}))
+      else {
+        const markdown='!['+(uploaded.title||uploadFile.name)+']('+url+')'
+        setForm(current=>({...current,body:insertAtCursor(bodyRef.current,current.body||'',markdown)}))
+      }
+      setUploadFile(null);setUploadTitle('')
+      await loadMedia()
+    }catch(e){onError(e.message)}
+    finally{setUploadBusy(false)}
+  }
   function chooseCover(item){setForm(current=>({...current,coverImageUrl:item.url}));setMediaOpen(false)}
   function insertImages(){
     const selected=media.filter(m=>selectedMedia.includes(m.id))
@@ -101,7 +136,16 @@ export default function NewsModule({ onError }) {
           </aside>
         </form>}
       </section>
-      {mediaOpen&&<div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/70 p-3 sm:p-6" onMouseDown={e=>{if(e.target===e.currentTarget)setMediaOpen(false)}}><section role="dialog" aria-modal="true" aria-labelledby="media-picker-title" className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"><header className="flex items-center justify-between border-b border-slate-200 p-4 sm:p-5"><div><h3 id="media-picker-title" className="text-lg font-black">Media Library</h3><p className="text-sm text-slate-500">{mediaMode==='cover'?'Scegli la copertina':'Seleziona una o più foto da inserire nell’articolo'}</p></div><button type="button" onClick={()=>setMediaOpen(false)} aria-label="Chiudi media library" className="rounded-lg p-2 hover:bg-slate-100"><X size={20}/></button></header><div className="border-b border-slate-100 p-4"><div className="relative"><Search size={16} className="absolute left-3 top-3 text-slate-400"/><input value={mediaQuery} onChange={e=>setMediaQuery(e.target.value)} placeholder="Cerca foto per titolo o didascalia…" className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 outline-none focus:border-jso-blue"/></div></div><div className="min-h-0 flex-1 overflow-y-auto p-4"><div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">{filteredMedia.map(m=><button type="button" key={m.id} onClick={()=>mediaMode==='cover'?chooseCover(m):setSelectedMedia(old=>old.includes(m.id)?old.filter(id=>id!==m.id):[...old,m.id])} className={'overflow-hidden rounded-xl border text-left '+(selectedMedia.includes(m.id)||mediaMode==='cover'&&form.coverImageUrl===m.url?'border-jso-blue ring-2 ring-jso-blue/20':'border-slate-200')}><img src={m.url} alt={m.caption||m.title} className="aspect-[4/3] w-full bg-slate-100 object-cover"/><div className="p-2"><span className="block truncate text-xs font-bold">{m.title||m.fileName||'Immagine'}</span>{m.caption&&<span className="block truncate text-xs text-slate-500">{m.caption}</span>}</div></button>)}</div>{!filteredMedia.length&&<div className="py-12 text-center text-sm text-slate-500">Nessuna foto disponibile. Carica prima le immagini in Media Library.</div>}</div><footer className="flex items-center justify-between gap-3 border-t border-slate-200 p-4"><span className="text-sm text-slate-500">{mediaMode==='cover'?'Seleziona una copertina':selectedMedia.length+' foto selezionate'}</span><div className="flex gap-2"><button type="button" onClick={()=>setMediaOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2 font-bold">Annulla</button>{mediaMode!=='cover'&&<button type="button" disabled={!selectedMedia.length} onClick={insertImages} className="rounded-xl bg-jso-navy px-4 py-2 font-bold text-white disabled:opacity-40">Inserisci foto</button>}</div></footer></section></div>}
+      {mediaOpen&&<div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/70 p-3 sm:p-6" onMouseDown={e=>{if(e.target===e.currentTarget)setMediaOpen(false)}}><section role="dialog" aria-modal="true" aria-labelledby="media-picker-title" className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"><header className="flex items-center justify-between border-b border-slate-200 p-4 sm:p-5"><div><h3 id="media-picker-title" className="text-lg font-black">Media Library</h3><p className="text-sm text-slate-500">{mediaMode==='cover'?'Scegli la copertina':'Seleziona una o più foto da inserire nell’articolo'}</p></div><button type="button" onClick={()=>setMediaOpen(false)} aria-label="Chiudi media library" className="rounded-lg p-2 hover:bg-slate-100"><X size={20}/></button></header><div className="border-b border-slate-100 p-4">
+<form onSubmit={uploadImageFromCms} className="mb-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3">
+<div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
+<label className="text-xs font-bold text-slate-600">Carica dal computer<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e=>{const file=e.target.files?.[0]||null;setUploadFile(file);if(file&&!uploadTitle)setUploadTitle(file.name.replace(/\.[^.]+$/,''))}} className="mt-1 block w-full text-xs font-normal"/></label>
+<label className="text-xs font-bold text-slate-600">Titolo immagine<input value={uploadTitle} onChange={e=>setUploadTitle(e.target.value)} placeholder="Titolo facoltativo" className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal"/></label>
+<button type="submit" disabled={!uploadFile||uploadBusy} className="inline-flex items-center justify-center gap-2 rounded-lg bg-jso-navy px-3 py-2 text-sm font-bold text-white disabled:opacity-40"><Upload size={15}/>{uploadBusy?'Caricamento…':'Carica immagine'}</button>
+</div>
+<label className="mt-3 flex items-start gap-2 text-xs text-slate-600"><input type="checkbox" checked={addUploadToMedia} onChange={e=>setAddUploadToMedia(e.target.checked)} className="mt-0.5"/><span><span className="font-bold">Aggiungi anche a Media House</span><span className="block text-slate-500">Disattivato per impostazione predefinita: l’immagine verrà usata solo in questo articolo.</span></span></label>
+<p className="mt-2 text-xs text-slate-500">JPEG, PNG, WebP o GIF · massimo 10 MB. L’immagine verrà aggiunta direttamente all’articolo.</p>
+</form><div className="relative"><Search size={16} className="absolute left-3 top-3 text-slate-400"/><input value={mediaQuery} onChange={e=>setMediaQuery(e.target.value)} placeholder="Cerca foto per titolo o didascalia…" className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 outline-none focus:border-jso-blue"/></div></div><div className="min-h-0 flex-1 overflow-y-auto p-4"><div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">{filteredMedia.map(m=><button type="button" key={m.id} onClick={()=>mediaMode==='cover'?chooseCover(m):setSelectedMedia(old=>old.includes(m.id)?old.filter(id=>id!==m.id):[...old,m.id])} className={'overflow-hidden rounded-xl border text-left '+(selectedMedia.includes(m.id)||mediaMode==='cover'&&form.coverImageUrl===m.url?'border-jso-blue ring-2 ring-jso-blue/20':'border-slate-200')}><img src={m.url} alt={m.caption||m.title} className="aspect-[4/3] w-full bg-slate-100 object-cover"/><div className="p-2"><span className="block truncate text-xs font-bold">{m.title||m.fileName||'Immagine'}</span>{m.caption&&<span className="block truncate text-xs text-slate-500">{m.caption}</span>}</div></button>)}</div>{!filteredMedia.length&&<div className="py-12 text-center text-sm text-slate-500">Nessuna foto disponibile. Carica prima le immagini in Media Library.</div>}</div><footer className="flex items-center justify-between gap-3 border-t border-slate-200 p-4"><span className="text-sm text-slate-500">{mediaMode==='cover'?'Seleziona una copertina':selectedMedia.length+' foto selezionate'}</span><div className="flex gap-2"><button type="button" onClick={()=>setMediaOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2 font-bold">Annulla</button>{mediaMode!=='cover'&&<button type="button" disabled={!selectedMedia.length} onClick={insertImages} className="rounded-xl bg-jso-navy px-4 py-2 font-bold text-white disabled:opacity-40">Inserisci foto</button>}</div></footer></section></div>}
     </div>}
   </div>
 }
