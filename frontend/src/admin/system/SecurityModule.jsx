@@ -56,7 +56,7 @@ export default function SecurityModule({ onError }) {
     e.preventDefault()
     const fan = fanAccounts.find(x => x.id === selectedFanId)
     if (!fan) { onError('Seleziona un account supporter.'); return }
-    if (!fan.isActive || !fan.emailVerified) { onError('L’account deve essere attivo e avere l’e-mail verificata.'); return }
+    if (!fan.isActive) { onError('L’account deve essere attivo prima della promozione.'); return }
     const confirmed = window.confirm(
       promotionRole === 'SuperAdmin'
         ? 'Confermi di promuovere ' + fan.displayName + ' (' + fan.email + ') a SUPERADMIN? Avrà accesso completo all’amministrazione.'
