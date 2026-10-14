@@ -37,6 +37,12 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
 
+      - name: Generate JSO launcher icons
+        run: dart run flutter_launcher_icons
+
+      - name: Generate branded native splash screens
+        run: dart run flutter_native_splash:create
+
       - name: Analyze Flutter app
         run: flutter analyze
 
