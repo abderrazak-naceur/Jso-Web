@@ -5,7 +5,6 @@ export const ADMIN_NAVIGATION = [
 
     ['tickets', 'Billetterie', Ticket, ['SuperAdmin','ClubAdmin','MatchManager','TicketSeller','TicketSupervisor'], 'Billetterie & Abonnements'],
     ['memberships', 'Abonnements', CreditCard, ['SuperAdmin','ClubAdmin','SeasonManager'], 'Billetterie & Abonnements'],
-    ['membership-card-artwork', 'Visuels carte abonnement', Images, ['SuperAdmin','ClubAdmin'], 'Billetterie & Abonnements'],
     ['finance', 'Finances', Wallet, ['SuperAdmin','ClubAdmin','FinanceManager'], 'Finances & dons'],
     ['donations', 'Dons & collecte', HeartHandshake, ['SuperAdmin','ClubAdmin','FinanceManager'], 'Finances & dons'],
     ['cash-donations', 'Dons en espèces', Banknote, ['SuperAdmin','ClubAdmin','FinanceManager','ShopManager','TicketSeller','TicketSupervisor'], 'Finances & dons'],
@@ -59,7 +58,6 @@ export const ADMIN_PERMISSION_BY_ID = Object.freeze({
   'fan-accounts': 'community:moderate',
   tickets: 'tickets:admin',
   memberships: 'memberships:manage',
-  'membership-card-artwork': 'content:manage',
   finance: 'finance:view',
   donations: 'finance:view',
   'cash-donations': 'donations:cash',
