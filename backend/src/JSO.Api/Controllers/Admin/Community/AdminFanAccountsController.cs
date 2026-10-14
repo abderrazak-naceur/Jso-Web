@@ -25,7 +25,7 @@ public sealed class AdminFanAccountsController(JsoDbContext db, AuditService aud
         var accounts = await query.OrderByDescending(x => x.CreatedAt)
             .Select(x => new
             {
-                x.Id, x.Email, x.DisplayName, x.ProfilePhotoUrl, x.IsActive,
+                x.Id, x.Email, x.DisplayName, x.FirstName, x.LastName, x.PhoneNumber, x.ProfilePhotoUrl, x.IsActive,
                 x.EmailVerified, x.CreatedAt, x.LastLoginAt, x.LoginDaysCount,
                 x.AnniversaryOptIn, x.FanRatingStars, x.IsVip
             })
