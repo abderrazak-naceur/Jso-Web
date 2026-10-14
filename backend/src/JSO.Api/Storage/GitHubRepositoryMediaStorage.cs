@@ -67,11 +67,15 @@ public sealed class GitHubRepositoryMediaStorage(IConfiguration configuration, I
             throw new ArgumentException("Invalid media path.", nameof(relativePath));
 
         var path = $"{_directory}/{string.Join("/", pieces)}";
-        var apiUrl = $"https://api.github.com/repos/{_repository}/contents/{string.Join("/", path.Split('/').Select(Uri.EscapeDataString))}?ref={Uri.EscapeDataString(_branch)}";
+        var encodedPath = string.Join("/", path.Split('/').Select(Uri.EscapeDataString));
         var client = clients.CreateClient(nameof(GitHubRepositoryMediaStorage));
+
+        // GitHub's Contents API may return a JSON envelope for larger files.
+        // Use the Git blob raw media endpoint to request bytes explicitly.
+        var apiUrl = $"https://api.github.com/repos/{_repository}/contents/{encodedPath}?ref={Uri.EscapeDataString(_branch)}";
         using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.raw+json"));
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.raw"));
         request.Headers.UserAgent.ParseAdd("JSO-Media-Storage/1.0");
         request.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
         var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
