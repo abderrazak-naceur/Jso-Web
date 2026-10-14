@@ -112,9 +112,16 @@ export default function HomePage({
             <div>
               <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-gold">JSO Mobile</p>
               <h2 id="mobile-app-download-title" className="mt-2 text-2xl font-black">La JSO dans votre poche</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-white/75">Explorez l’application, les versions de test et l’accès pour les responsables du club.</p>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-white/75">Téléchargez la version Android officielle de JSO Mobile et retrouvez les actualités, les matchs et la vie du club.</p>
+              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-white/65">
+                <span>Version 1.0.1 · Build 2</span>
+                <span>Mise à jour : 14/10/2026</span>
+              </div>
             </div>
-            <a href="/application" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy transition hover:bg-white">Découvrir JSO Mobile <ArrowUpRight size={18} aria-hidden="true" /></a>
+            <div className="flex shrink-0 flex-col gap-3 sm:items-end">
+              <a href="https://github.com/abderrazak-naceur/Jso-Web/releases/download/android-latest/app-release.apk" className="inline-flex items-center justify-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy transition hover:bg-white" aria-label="Télécharger JSO Mobile version 1.0.1 pour Android">Télécharger l’APK <ArrowUpRight size={18} aria-hidden="true" /></a>
+              <a href="/application" className="text-sm font-bold text-white/75 underline underline-offset-4 hover:text-white">Détails de l’application</a>
+            </div>
           </div>
         </div>
       </section>
