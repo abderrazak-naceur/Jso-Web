@@ -3,7 +3,7 @@ import { CalendarDays, CheckCircle2, Heart, LockKeyhole, ShieldCheck, ShoppingCa
 import { membershipApi } from '../../lib/api'
 import PayOnlineButton from '../shop/PayOnlineButton'
 
-const CARD_ART = '/img/jso-membership-card-2026-2027.svg'
+const CARD_ART = 'https://d2ol7oe51mr4n9.cloudfront.net/user_3DuYKVhdmNmMSAGu9ckyEmyckau/bc085e64-e8a5-4878-8383-da4cdaf30fd5.jpg'
 
 export default function MembershipsSection({ section, token, onRequireLogin }) {
   const [plans, setPlans] = useState([])
