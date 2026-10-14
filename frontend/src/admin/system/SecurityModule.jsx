@@ -24,6 +24,7 @@ export default function SecurityModule({ onError }) {
   const [promotionRole,setPromotionRole] = useState('Editor')
   const [promoting,setPromoting] = useState(false)
   const [promotionNotice,setPromotionNotice] = useState('')
+  const [canManageRoles,setCanManageRoles] = useState(false)
   const [logs,setLogs] = useState([])
   const [assignments,setAssignments] = useState([])
   const [references,setReferences] = useState({matches:[],teams:[],facilities:[],gates:[],devices:[]})
@@ -44,7 +45,10 @@ export default function SecurityModule({ onError }) {
     } catch(e) { onError(e.message) }
   }
 
-  useEffect(()=>{ load() }, [])
+  useEffect(()=>{
+    try { setCanManageRoles(JSON.parse(localStorage.getItem('jso_admin_user') || '{}').role === 'SuperAdmin') } catch { setCanManageRoles(false) }
+    load()
+  }, [])
 
   const userMap = useMemo(() => Object.fromEntries(users.map(u => [u.id, u])), [users])
 
@@ -101,6 +105,7 @@ export default function SecurityModule({ onError }) {
   }
 
   return <div className="space-y-6">
+    {canManageRoles && (
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
       <div className="flex items-center gap-2"><ShieldCheck className="text-jso-blue"/><h2 className="text-xl font-black">Utenti registrati → Staff</h2></div>
       <p className="mt-2 text-sm text-slate-500">Promuovi un supporter registrato e verificato a un ruolo amministrativo. L’assegnazione a SuperAdmin richiede una conferma esplicita ed è registrata nell’audit log.</p>
@@ -122,6 +127,8 @@ export default function SecurityModule({ onError }) {
       {promotionRole === 'SuperAdmin' && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Attenzione: SuperAdmin concede accesso completo al pannello amministrativo.</p>}
       {fanAccounts.filter(x=>x.isActive && x.emailVerified).length === 0 && <p className="mt-3 text-sm text-slate-500">Nessun account attivo con e-mail verificata disponibile per la promozione.</p>}
     </div>
+
+    )}
 
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
