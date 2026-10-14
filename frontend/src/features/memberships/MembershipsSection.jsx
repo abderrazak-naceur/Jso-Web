@@ -3,8 +3,8 @@ import { CalendarDays, CheckCircle2, Heart, LockKeyhole, ShieldCheck, ShoppingCa
 import { membershipApi } from '../../lib/api'
 import PayOnlineButton from '../shop/PayOnlineButton'
 
-const CARD_FRONT = 'https://d2ol7oe51mr4n9.cloudfront.net/user_3DuYKVhdmNmMSAGu9ckyEmyckau/b5460c9e-647e-4890-8764-e253aa640708.jpg'
-const CARD_BACK = 'https://d2ol7oe51mr4n9.cloudfront.net/user_3DuYKVhdmNmMSAGu9ckyEmyckau/fb02bcc6-f378-4bb3-8540-ced64cf6d383.png'
+const CARD_FRONT = 'https://d2ol7oe51mr4n9.cloudfront.net/user_3DuYKVhdmNmMSAGu9ckyEmyckau/3f58df50-26a3-412c-887f-11571871886e.png'
+const CARD_BACK = 'https://d2ol7oe51mr4n9.cloudfront.net/user_3DuYKVhdmNmMSAGu9ckyEmyckau/4d7ae440-bb59-4cc8-8270-7928d929ba53.png'
 
 export default function MembershipsSection({ section, token, onRequireLogin }) {
   const [plans, setPlans] = useState([])
