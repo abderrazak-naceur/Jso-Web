@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, Users, UserRound, ShieldCheck, RefreshCw, Star, ShieldBan } from 'lucide-react'
+import { Search, Users, UserRound, ShieldCheck, RefreshCw, Star, ShieldBan, Pencil, UserCog } from 'lucide-react'
 import { adminApi } from '../api'
 import { API_BASE_URL } from '../../lib/apiConfig'
 
@@ -14,6 +14,7 @@ export default function FanAccounts() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [selected, setSelected] = useState(null)
+  const [canPromote, setCanPromote] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -22,7 +23,10 @@ export default function FanAccounts() {
     catch (err) { setError(err.message || 'Impossible de charger les profils supporter.') }
     finally { setLoading(false) }
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    try { setCanPromote(JSON.parse(localStorage.getItem('jso_admin_user') || '{}').role === 'SuperAdmin') } catch { setCanPromote(false) }
+  }, [])
 
   async function updateStatus(account) {
     const nextActive = !account.isActive
@@ -48,6 +52,47 @@ export default function FanAccounts() {
       setSelected(current => current?.id === account.id ? { ...current, fanRatingStars: result.fanRatingStars, isVip: result.isVip } : current)
       setNotice(result.isVip ? 'Valutazione salvata: utente VIP.' : 'Valutazione salvata: utente non VIP.')
     } catch (err) { setError(err.message || 'Impossible de modifier la note du compte.') }
+    finally { setBusyId('') }
+  }
+
+
+  async function editMember(account) {
+    const displayName = window.prompt('Nom affiché', account.displayName || '')
+    if (displayName === null) return
+    const email = window.prompt('Adresse e-mail', account.email || '')
+    if (email === null) return
+    const firstName = window.prompt('Prénom (facultatif)', account.firstName || '')
+    if (firstName === null) return
+    const lastName = window.prompt('Nom de famille (facultatif)', account.lastName || '')
+    if (lastName === null) return
+    const phoneNumber = window.prompt('Téléphone (facultatif)', account.phoneNumber || '')
+    if (phoneNumber === null) return
+    setBusyId(account.id); setError(''); setNotice('')
+    try {
+      const updated = await adminApi('/admin/fan-accounts/' + account.id, {
+        method: 'PUT', body: JSON.stringify({ displayName, email, firstName, lastName, phoneNumber })
+      })
+      setAccounts(current => current.map(item => item.id === account.id ? { ...item, ...updated } : item))
+      setSelected(current => current?.id === account.id ? { ...current, ...updated } : current)
+      setNotice('Données du membre mises à jour.')
+    } catch (err) { setError(err.message || 'Impossible de modifier ce membre.') }
+    finally { setBusyId('') }
+  }
+
+  async function promoteMember(account) {
+    const roles = ['ClubAdmin','MatchManager','FinanceManager','ShopManager','Editor','CommunityManager','TicketSeller','TicketValidator','TicketSupervisor','SeasonManager']
+    const roleText = window.prompt('Choisissez le rôle administratif : ' + roles.join(', '), 'Editor')
+    if (roleText === null) return
+    const role = roles.find(x => x.toLowerCase() === roleText.trim().toLowerCase())
+    if (!role) { setError('Rôle non valide. Aucun changement effectué.'); return }
+    if (!window.confirm('Promouvoir ' + account.displayName + ' en ' + role + ' ? Le compte administratif utilisera le même e-mail et mot de passe.')) return
+    setBusyId(account.id); setError(''); setNotice('')
+    try {
+      const created = await adminApi('/admin/fan-accounts/' + account.id + '/promote', {
+        method: 'POST', body: JSON.stringify({ role })
+      })
+      setNotice('Promotion effectuée : ' + created.displayName + ' — ' + created.role + '.')
+    } catch (err) { setError(err.message || 'Impossible de promouvoir ce membre.') }
     finally { setBusyId('') }
   }
 
@@ -90,7 +135,7 @@ export default function FanAccounts() {
       </div>
       {loading ? <div className="space-y-3 p-5">{[1,2,3,4].map(n => <div key={n} className="h-16 animate-pulse rounded-xl bg-slate-100"/>)}</div>
         : filtered.length === 0 ? <div className="px-6 py-14 text-center"><UserRound size={30} className="mx-auto text-slate-300"/><p className="mt-3 font-bold">Aucun profil trouvé</p><p className="mt-1 text-sm text-slate-500">Essayez un autre nom ou filtre.</p></div>
-        : <div className="overflow-x-auto"><table className="w-full min-w-[960px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3 font-extrabold">Supporter</th><th className="px-5 py-3 font-extrabold">Note / VIP</th><th className="px-5 py-3 font-extrabold">Inscription</th><th className="px-5 py-3 font-extrabold">Dernière connexion</th><th className="px-5 py-3 font-extrabold">Statut</th><th className="px-5 py-3 font-extrabold">Actions</th></tr></thead><tbody className="divide-y divide-slate-100">{filtered.map(a => { const stars = a.fanRatingStars || 1; const initials = String(a.displayName || a.email || 'JS').split(/\s+/).slice(0,2).map(x => x[0]).join('').toUpperCase(); return <tr key={a.id} className="hover:bg-slate-50/80"><td className="px-5 py-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-jso-navy text-xs font-black text-jso-gold">{a.profilePhotoUrl ? <img src={new URL(a.profilePhotoUrl, API_BASE_URL).href} alt="" className="h-full w-full object-cover"/> : initials}</div><div><p className="font-extrabold text-slate-800">{a.displayName}</p><p className="mt-0.5 text-xs text-slate-500">{a.email}</p></div></div></td><td className="px-5 py-4"><div className="flex items-center gap-1 text-amber-500" aria-label={stars + ' stelle'}>{'★'.repeat(stars)}<span className="ml-1 text-xs text-slate-400">{stars}★</span></div>{a.isVip ? <span className="mt-1 inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-extrabold text-amber-800">VIP</span> : <span className="mt-1 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">Standard</span>}<div className="mt-2 flex gap-1">{[1,3,5].map(value => <button key={value} disabled={busyId === a.id || stars === value} onClick={() => updateRating(a,value)} className={'rounded-lg border px-2 py-1 text-xs font-bold disabled:opacity-40 ' + (stars === value ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-slate-200 hover:border-amber-300')} aria-label={'Assegna ' + value + ' stelle'}>{value}★</button>)}</div></td><td className="px-5 py-4 text-slate-600">{dateLabel(a.createdAt)}</td><td className="px-5 py-4 text-slate-600">{dateLabel(a.lastLoginAt)}</td><td className="px-5 py-4"><span className={'rounded-full px-2.5 py-1 text-xs font-bold ' + (a.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700')}>{a.isActive ? 'Actif' : 'Bloqué'}</span></td><td className="px-5 py-4"><div className="flex items-center gap-2"><button onClick={() => setSelected(a)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-extrabold hover:border-jso-blue hover:text-jso-blue">Détails</button><button disabled={busyId === a.id} onClick={() => updateStatus(a)} className={'rounded-lg px-3 py-2 text-xs font-extrabold disabled:opacity-50 ' + (a.isActive ? 'bg-rose-50 text-rose-700 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100')}>{busyId === a.id ? '…' : a.isActive ? 'Bloquer' : 'Réactiver'}</button></div></td></tr> })}</tbody></table></div>}
+        : <div className="overflow-x-auto"><table className="w-full min-w-[960px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-3 font-extrabold">Supporter</th><th className="px-5 py-3 font-extrabold">Note / VIP</th><th className="px-5 py-3 font-extrabold">Inscription</th><th className="px-5 py-3 font-extrabold">Dernière connexion</th><th className="px-5 py-3 font-extrabold">Statut</th><th className="px-5 py-3 font-extrabold">Actions</th></tr></thead><tbody className="divide-y divide-slate-100">{filtered.map(a => { const stars = a.fanRatingStars || 1; const initials = String(a.displayName || a.email || 'JS').split(/\s+/).slice(0,2).map(x => x[0]).join('').toUpperCase(); return <tr key={a.id} className="hover:bg-slate-50/80"><td className="px-5 py-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-jso-navy text-xs font-black text-jso-gold">{a.profilePhotoUrl ? <img src={new URL(a.profilePhotoUrl, API_BASE_URL).href} alt="" className="h-full w-full object-cover"/> : initials}</div><div><p className="font-extrabold text-slate-800">{a.displayName}</p><p className="mt-0.5 text-xs text-slate-500">{a.email}</p></div></div></td><td className="px-5 py-4"><div className="flex items-center gap-1 text-amber-500" aria-label={stars + ' stelle'}>{'★'.repeat(stars)}<span className="ml-1 text-xs text-slate-400">{stars}★</span></div>{a.isVip ? <span className="mt-1 inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-extrabold text-amber-800">VIP</span> : <span className="mt-1 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">Standard</span>}<div className="mt-2 flex gap-1">{[1,3,5].map(value => <button key={value} disabled={busyId === a.id || stars === value} onClick={() => updateRating(a,value)} className={'rounded-lg border px-2 py-1 text-xs font-bold disabled:opacity-40 ' + (stars === value ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-slate-200 hover:border-amber-300')} aria-label={'Assegna ' + value + ' stelle'}>{value}★</button>)}</div></td><td className="px-5 py-4 text-slate-600">{dateLabel(a.createdAt)}</td><td className="px-5 py-4 text-slate-600">{dateLabel(a.lastLoginAt)}</td><td className="px-5 py-4"><span className={'rounded-full px-2.5 py-1 text-xs font-bold ' + (a.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700')}>{a.isActive ? 'Actif' : 'Bloqué'}</span></td><td className="px-5 py-4"><div className="flex items-center gap-2"><button onClick={() => setSelected(a)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-extrabold hover:border-jso-blue hover:text-jso-blue">Détails</button>{canPromote && <><button disabled={busyId === a.id} onClick={() => editMember(a)} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-extrabold hover:border-jso-blue hover:text-jso-blue"><Pencil size={13}/> Modifier</button><button disabled={busyId === a.id} onClick={() => promoteMember(a)} className="inline-flex items-center gap-1 rounded-lg bg-jso-navy px-3 py-2 text-xs font-extrabold text-white hover:opacity-90"><UserCog size={13}/> Promouvoir</button></>}<button disabled={busyId === a.id} onClick={() => updateStatus(a)} className={'rounded-lg px-3 py-2 text-xs font-extrabold disabled:opacity-50 ' + (a.isActive ? 'bg-rose-50 text-rose-700 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100')}>{busyId === a.id ? '…' : a.isActive ? 'Bloquer' : 'Réactiver'}</button></div></td></tr> })}</tbody></table></div>}
       <div className="border-t border-slate-100 px-5 py-3 text-xs text-slate-400">{filtered.length} profil(s) affiché(s) · maximum API 500</div>
     </section>
 
