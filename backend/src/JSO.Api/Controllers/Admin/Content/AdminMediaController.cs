@@ -54,10 +54,6 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
 
         var extension = imageType.Extension;
         var safeName = $"{Guid.NewGuid():N}{extension}";
-        var uploadedAtUtc = DateTime.UtcNow;
-        var year = uploadedAtUtc.ToString("yyyy");
-        var month = uploadedAtUtc.ToString("MM");
-
         string url;
         string storagePath;
         try
@@ -88,7 +84,7 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
             FileSize = file.Length,
             StoragePath = storagePath
         };
-        // Match-specific uploads also persist to the repository, but enter Media House only by explicit opt-in.
+        // Match-specific uploads also persist to the repository but enter Media House only by explicit opt-in.
         if (!addToMedia)
             return Ok(new { url = asset.Url, title = asset.Title, isPublished = false });
 
@@ -138,8 +134,7 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
     {
         var asset = await db.MediaAssets.FindAsync([id], ct);
         if (asset is null) return NotFound();
-        // Repository files are kept in Git history. Removing a media record never
-        // rewrites repository history or creates dangling public content records.
+        // Repository files remain in Git history; deleting metadata avoids destructive history rewrites.
         db.MediaAssets.Remove(asset); await db.SaveChangesAsync(ct);
         await Audit("DELETE", asset.Id, new { asset.Title }, ct);
         return NoContent();
