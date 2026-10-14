@@ -65,13 +65,37 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Content values worth rendering. API keys are implementation details and
-  /// must never become visible labels in the app.
+  /// Display editorial copy only. Legacy site content can contain serialized
+  /// configuration objects; these must never be rendered in the public app.
   static List<String> _visibleContent(Map<String, String> content) {
     return [
       for (final value in content.values)
-        if (value.trim().isNotEmpty) value.trim(),
+        if (_isEditorialText(value)) value.trim(),
     ];
+  }
+
+  static bool _isEditorialText(String value) {
+    final text = value.trim();
+    if (text.isEmpty) return false;
+
+    final lower = text.toLowerCase();
+    // Reject JSON payloads and recognizable configuration/secret fields even
+    // if the payload is malformed or surrounded by whitespace.
+    if (text.startsWith('{') ||
+        text.startsWith('[') ||
+        lower.contains('"secrets"') ||
+        lower.contains('"providers"') ||
+        lower.contains('"settingsjson"') ||
+        lower.contains('"accesstoken"') ||
+        lower.contains('"clientsecret"') ||
+        lower.contains('"apikey"')) {
+      return false;
+    }
+    if ((text.contains('":') || text.contains('": ')) &&
+        (text.contains('{') || text.contains('['))) {
+      return false;
+    }
+    return true;
   }
 
   @override
