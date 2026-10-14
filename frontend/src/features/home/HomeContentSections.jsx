@@ -173,25 +173,24 @@ export function MobileSection({ section }) {
     <section id="mobile" aria-labelledby="mobile-title" className="overflow-hidden bg-jso-navy text-white">
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 py-16 lg:grid-cols-[0.85fr_1.15fr] lg:px-8 lg:py-24">
         <div>
-          <span className="inline-flex rounded-full border border-jso-gold/40 bg-jso-gold/10 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-jso-gold">JSO Mobile</span>
+          <div className="flex items-center gap-4">
+            <img src="/JSO-crest-regenerated-ok.png" alt="Stemma ufficiale JSO Oudhref" className="h-16 w-16 rounded-full bg-white object-contain p-1" />
+            <span className="inline-flex rounded-full border border-jso-gold/40 bg-jso-gold/10 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-jso-gold">JSO Mobile</span>
+          </div>
           <div className="mt-5"><SectionHeading section={section} title="La JSO" muted="dans ta poche." description="Match Center, billets, actualités et vie du club sur votre téléphone. Les responsables peuvent aussi gérer le club directement dans l’application." light /></div>
+          <div className="mt-5 rounded-2xl border border-white/15 bg-white/5 p-4">
+            <p className="font-extrabold">Version 1.0.1 · Build 2</p>
+            <p className="mt-1 text-sm text-white/65">Dernière mise à jour : 14/10/2026</p>
+          </div>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
-            <a
-              href="https://github.com/abderrazak-naceur/Jso-Web/releases/download/android-latest/app-release.apk"
-              className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-jso-gold px-5 py-3 text-center font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-white"
-            >
-              <Download size={18} aria-hidden="true" /> Android · APK de test
+            <a href="https://github.com/abderrazak-naceur/Jso-Web/releases/download/android-latest/app-release.apk" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-jso-gold px-5 py-3 text-center font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-white">
+              <Download size={18} aria-hidden="true" /> Télécharger l’APK Android
             </a>
-            <a
-              href="https://github.com/abderrazak-naceur/Jso-Web/actions/workflows/ios-test-build.yml"
-              className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-white/35 px-5 py-3 text-center font-extrabold text-white transition hover:bg-white hover:text-jso-navy"
-            >
+            <a href="https://github.com/abderrazak-naceur/Jso-Web/actions/workflows/ios-test-build.yml" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-white/35 px-5 py-3 text-center font-extrabold text-white transition hover:bg-white hover:text-jso-navy">
               <Apple size={18} aria-hidden="true" /> iPhone · builds de test
             </a>
           </div>
-          <p className="mt-4 max-w-xl text-sm leading-6 text-white/65">
-            La version iPhone n’est pas encore distribuée sur l’App Store. Son installation nécessite une build signée par Apple.
-          </p>
+          <p className="mt-4 max-w-xl text-sm leading-6 text-white/65">La version iPhone n’est pas encore distribuée sur l’App Store. Son installation nécessite une build signée par Apple.</p>
           <a href="/admin" className="mt-7 inline-flex items-center gap-2 text-sm font-extrabold text-jso-gold underline decoration-jso-gold/45 underline-offset-4 hover:text-white">Vous gérez le club ? Ouvrir l’administration <ArrowUpRight size={16} aria-hidden="true" /></a>
         </div>
         <div className="relative mx-auto w-full max-w-[38rem] rounded-[2.5rem] border border-white/10 bg-white/5 px-4 pb-4 pt-7 shadow-2xl shadow-black/25 sm:px-8 sm:pb-8">
