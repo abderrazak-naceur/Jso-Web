@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { Shield, UserRound } from 'lucide-react'
-import { isCutoutPhoto, resolvePlayerPhoto } from './playerPhoto'
+import { resolvePlayerPhoto } from './playerPhoto'
 
 export default function PlayerPortrait({ player }) {
   const [failed, setFailed] = useState(false)
   const name = [player.firstName, player.lastName].filter(Boolean).join(' ') || 'Joueur JSO'
   const photoUrl = resolvePlayerPhoto(player)
   const hasPhoto = Boolean(photoUrl) && !failed
-  const isCutout = isCutoutPhoto(photoUrl)
   const position = String(player.position || 'Équipe première')
   const initials = [player.firstName, player.lastName].filter(Boolean).map((part) => part.trim()[0]).join('').slice(0, 2).toUpperCase() || 'JS'
 
@@ -24,7 +23,7 @@ export default function PlayerPortrait({ player }) {
           alt={`Portrait de ${name}`}
           loading="lazy"
           decoding="async"
-          className={`relative z-10 h-full w-full transition duration-700 group-hover:scale-[1.04] ${isCutout ? 'object-contain object-bottom drop-shadow-[0_18px_14px_rgba(0,0,0,.2)]' : 'object-cover object-[50%_18%]'}`}
+          className="relative z-10 h-full w-full object-contain object-bottom p-1.5 drop-shadow-[0_18px_14px_rgba(0,0,0,.28)] transition duration-500 group-hover:drop-shadow-[0_20px_18px_rgba(255,216,61,.18)]"
         />
       ) : (
         <div className="relative z-10 grid h-full place-items-center px-6 text-center">
