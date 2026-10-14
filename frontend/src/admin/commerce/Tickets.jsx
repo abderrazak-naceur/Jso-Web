@@ -22,7 +22,7 @@ async function api(path, options = {}) {
   return response.json()
 }
 
-const emptyType = { name: '', price: '', currency: 'TND', capacity: 100, isActive: true }
+const emptyType = { name: 'Entrée générale — Stade Oudhref', price: '5', currency: 'TND', capacity: 100, isActive: true }
 const STATUS_STYLES = {
   Pending: 'bg-amber-100 text-amber-700',
   Confirmed: 'bg-emerald-100 text-emerald-700',
@@ -37,6 +37,7 @@ export default function TicketsModule({ onError }) {
   const [form, setForm] = useState(emptyType)
   const [editing, setEditing] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [bulkCreating, setBulkCreating] = useState(false)
 
   async function loadMatches() {
     try { const m = await api('/admin/matches'); setMatches(m); if (!matchId && m[0]) setMatchId(m[0].id) }
@@ -74,6 +75,27 @@ export default function TicketsModule({ onError }) {
     try { await api('/admin/tickets/types/' + id, { method: 'DELETE' }); await loadTypes() }
     catch (e) { onError(e.message) }
   }
+  async function createTicketsForUpcomingMatches() {
+    const upcoming = matches.filter((match) => match.kickoffAt && new Date(match.kickoffAt) >= new Date())
+    if (!upcoming.length) { onError('Aucune partie future avec une date valide. Ajoutez d’abord les parties dans le calendrier.'); return }
+    if (!confirm('Créer un billet « Entrée générale — Stade Oudhref » à 5 DT pour chacune des ' + upcoming.length + ' parties futures ? Les billets déjà présents ne seront pas dupliqués.')) return
+    setBulkCreating(true)
+    let created = 0
+    let skipped = 0
+    try {
+      for (const match of upcoming) {
+        const existing = await api('/admin/tickets/types?matchId=' + encodeURIComponent(match.id))
+        if (existing.some((ticket) => (ticket.name || '').trim().toLocaleLowerCase() === 'entrée générale — stade oudhref')) { skipped++; continue }
+        await api('/admin/tickets/types', { method: 'POST', body: JSON.stringify({ matchId: match.id, name: 'Entrée générale — Stade Oudhref', price: 5, currency: 'TND', capacity: 100, isActive: true }) })
+        created++
+      }
+      onError('')
+      alert('Terminé : ' + created + ' billet(s) créé(s), ' + skipped + ' déjà existant(s) ignoré(s). Prix : 5 DT.')
+      await loadTypes()
+    } catch (e) { onError('Création partielle des billets : ' + e.message + ' Rechargez la page pour vérifier les parties déjà traitées.') }
+    finally { setBulkCreating(false) }
+  }
+
   async function setOrderStatus(id, status) {
     try { await api('/admin/tickets/orders/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status }) }); await loadOrders(); await loadTypes() }
     catch (e) { onError(e.message) }
@@ -85,8 +107,8 @@ export default function TicketsModule({ onError }) {
   return <div className="space-y-6">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><h2 className="text-xl font-black">Billetterie — Types de billets</h2><p className="mt-1 text-sm text-slate-500">Gérez les tarifs et les capacités par match.</p></div>
-        <div className="flex flex-wrap items-center gap-2"><button type="button" onClick={startCreate} className="inline-flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-black text-white"><Plus size={16}/> Nouveau billet</button>
+        <div><h2 className="text-xl font-black">Billetterie — Types de billets</h2><p className="mt-1 text-sm text-slate-500">Billet général à 5 DT · Stade Oudhref</p></div>
+        <div className="flex flex-wrap items-center gap-2"><button type="button" onClick={createTicketsForUpcomingMatches} disabled={bulkCreating || matches.length === 0} className="rounded-xl border border-jso-navy px-3 py-2 text-sm font-bold text-jso-navy disabled:opacity-50">{bulkCreating ? "Création…" : "Créer pour les matchs futurs · 5 DT"}</button><button type="button" onClick={startCreate} className="inline-flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-black text-white"><Plus size={16}/> Nouveau billet</button>
         <select value={matchId} onChange={(e) => setMatchId(e.target.value)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-jso-blue">
           {matches.map((m) => <option key={m.id} value={m.id}>{matchLabel(m)}</option>)}
         </select></div>
