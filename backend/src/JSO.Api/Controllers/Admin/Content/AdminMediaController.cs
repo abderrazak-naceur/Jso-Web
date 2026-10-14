@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Text.Json;
 using JSO.Domain;
 using JSO.Infrastructure;
 
@@ -9,7 +12,7 @@ namespace JSO.Api.Controllers;
 [ApiController]
 [Route("api/admin/media")]
 [Authorize(Roles = "SuperAdmin,ClubAdmin,Editor")]
-public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment env, AuditService audit) : ControllerBase
+public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment env, AuditService audit, IHttpClientFactory httpClientFactory, IConfiguration configuration) : ControllerBase
 {
     private Task Audit(string action, Guid id, object? details, CancellationToken ct) =>
         audit.LogAsync(action, "MediaAsset", id.ToString(), User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value,
@@ -83,6 +86,84 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         await db.SaveChangesAsync(ct);
         await Audit("CREATE", asset.Id, new { asset.Title, asset.FileName, asset.FileSize }, ct);
         return Created($"/api/admin/media/{asset.Id}", asset);
+    }
+
+    // Store membership card artwork as versioned repository assets so it survives API container replacements.
+    // Configure GitHub__Token on the API service with repository Contents: Read and write permission.
+    [HttpPost("membership-artwork/{side}")]
+    [RequestSizeLimit(MaxUploadBytes + 1024 * 1024)]
+    public async Task<IActionResult> UploadMembershipArtwork(string side, IFormFile file, CancellationToken ct)
+    {
+        side = (side ?? string.Empty).Trim().ToLowerInvariant();
+        if (side is not ("front" or "back"))
+            return BadRequest(new { message = "Choose either front or back artwork." });
+        if (file is null || file.Length == 0)
+            return BadRequest(new { message = "File is required." });
+        if (file.Length > MaxUploadBytes)
+            return BadRequest(new { message = "Maximum file size is 10 MB." });
+        if (string.IsNullOrWhiteSpace(file.ContentType) ||
+            !AllowedImageTypes.TryGetValue(file.ContentType, out var imageType) ||
+            file.ContentType.Equals("image/gif", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "Only JPEG, PNG and WebP images are supported." });
+
+        await using var input = file.OpenReadStream();
+        using var memory = new MemoryStream();
+        await input.CopyToAsync(memory, ct);
+        var bytes = memory.ToArray();
+        var signatureLength = Math.Min(bytes.Length, 12);
+        if (!HasMatchingSignature(bytes.AsSpan(0, signatureLength), file.ContentType, imageType.Signature))
+            return BadRequest(new { message = "The file content does not match its declared image type." });
+
+        var token = configuration["GitHub:Token"];
+        if (string.IsNullOrWhiteSpace(token))
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+            {
+                message = "GitHub artwork storage is not configured. Add GitHub__Token to the jso-api service on Render."
+            });
+
+        var repository = configuration["GitHub:Repository"] ?? "abderrazak-naceur/Jso-Web";
+        var branch = configuration["GitHub:Branch"] ?? "main";
+        if (!System.Text.RegularExpressions.Regex.IsMatch(repository, @"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$") ||
+            !System.Text.RegularExpressions.Regex.IsMatch(branch, @"^[A-Za-z0-9_./-]+$"))
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "GitHub repository or branch configuration is invalid." });
+
+        var hash = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+        var fileName = $"{side}-{hash[..16]}{imageType.Extension}";
+        var repositoryPath = $"frontend/public/uploads/membership-cards/{fileName}";
+        var encodedPath = string.Join("/", repositoryPath.Split('/').Select(Uri.EscapeDataString));
+        var apiUrl = $"https://api.github.com/repos/{repository}/contents/{encodedPath}?ref={Uri.EscapeDataString(branch)}";
+        var client = httpClientFactory.CreateClient();
+        client.Timeout = TimeSpan.FromSeconds(30);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("JSO-Web-MembershipArtwork/1.0");
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+        client.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
+
+        // Hash-based names are immutable; repeated uploads of identical bytes don't create extra commits.
+        using (var existing = await client.GetAsync(apiUrl, ct))
+        {
+            if (existing.IsSuccessStatusCode)
+                return Ok(new { url = $"https://raw.githubusercontent.com/{repository}/{Uri.EscapeDataString(branch)}/{encodedPath}", fileName, storedInGitHub = true, alreadyExisted = true });
+            if (existing.StatusCode != System.Net.HttpStatusCode.NotFound)
+                return StatusCode(StatusCodes.Status502BadGateway, new { message = "Could not check the GitHub artwork repository. Verify the token and repository permissions." });
+        }
+
+        var commitUrl = $"https://api.github.com/repos/{repository}/contents/{encodedPath}";
+        using var request = new HttpRequestMessage(HttpMethod.Put, commitUrl)
+        {
+            Content = System.Net.Http.Json.JsonContent.Create(new
+            {
+                message = $"Add membership card {side} artwork ({hash[..12]})",
+                branch,
+                content = Convert.ToBase64String(bytes)
+            })
+        };
+        using var response = await client.SendAsync(request, ct);
+        if (!response.IsSuccessStatusCode)
+            return StatusCode(StatusCodes.Status502BadGateway, new { message = "GitHub could not save the artwork. Check that the token has Contents: Read and write permission and that the main branch permits this commit." });
+
+        var publicUrl = $"https://raw.githubusercontent.com/{repository}/{Uri.EscapeDataString(branch)}/{encodedPath}";
+        return Ok(new { url = publicUrl, fileName, storedInGitHub = true, alreadyExisted = false });
     }
 
     private static bool HasMatchingSignature(ReadOnlySpan<byte> content, string contentType, byte[] signature)

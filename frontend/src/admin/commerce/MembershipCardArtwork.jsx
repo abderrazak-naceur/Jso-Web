@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ImagePlus, Save, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { adminApi } from '../api'
-import { API_BASE_URL } from '../../lib/apiConfig'
 import { useRef } from 'react'
 
 const SETTINGS_KEY = 'membership_card_artwork'
@@ -69,9 +68,7 @@ export default function MembershipCardArtwork({ onError = () => {} }) {
   async function upload(side, file) {
     const body = new FormData()
     body.append('file', file)
-    body.append('title', side === 'front' ? 'Carte abonnement JSO — recto' : 'Carte abonnement JSO — verso')
-    body.append('caption', side === 'front' ? 'Recto officiel de la carte d’abonnement 2026–2027' : 'Verso officiel de la carte d’abonnement 2026–2027')
-    return adminApi('/admin/media/upload', { method: 'POST', body })
+    return adminApi('/admin/media/membership-artwork/' + side, { method: 'POST', body })
   }
 
   async function save(event) {
@@ -85,7 +82,7 @@ export default function MembershipCardArtwork({ onError = () => {} }) {
       for (const side of ['front', 'back']) {
         if (files[side]) {
           const media = await upload(side, files[side])
-          next[side] = media.url.startsWith('http') ? media.url : new URL(media.url, API_BASE_URL.replace(/\/api\/?$/, '')).toString()
+          next[side] = media.url
         }
       }
       await adminApi('/admin/content/' + encodeURIComponent(SETTINGS_KEY), {
@@ -107,7 +104,7 @@ export default function MembershipCardArtwork({ onError = () => {} }) {
     <header>
       <p className="text-xs font-black uppercase tracking-[.16em] text-jso-blue">Contenu du site</p>
       <h2 className="mt-1 text-2xl font-black">Visuels de la carte d’abonnement</h2>
-      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">Chargez le recto et le verso séparément. Chaque image possède sa propre prévisualisation ; si vous ne remplacez qu’un côté, l’autre reste inchangé.</p>
+      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">Chargez le recto et le verso séparément. Les images sont enregistrées dans GitHub afin de rester disponibles après les redéploiements.</p>
     </header>
 
     <form onSubmit={save} className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
@@ -143,7 +140,7 @@ export default function MembershipCardArtwork({ onError = () => {} }) {
         <button type="button" onClick={() => { setFiles({ front: null, back: null }); setPreviews(artwork); setSaved(false); onError('') }} disabled={saving || (!files.front && !files.back)} className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 disabled:opacity-50">Annuler les changements</button>
         {saved && <span role="status" className="text-sm font-bold text-emerald-700">Images enregistrées.</span>}
       </div>
-      <p className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900"><AlertTriangle size={16} className="mt-0.5 shrink-0" />L’upload utilise la Media Library de l’API. Sur Render, les fichiers stockés dans le système local du conteneur peuvent disparaître lors d’un redéploiement si aucun disque persistant ou stockage externe n’est configuré.</p>
+      <p className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900"><AlertTriangle size={16} className="mt-0.5 shrink-0" />Chaque image validée est enregistrée dans le dépôt GitHub du site et reste versionnée. L’API doit disposer du secret GitHub__Token avec le droit Contents: Read and write.</p>
     </form>
   </div>
 }
