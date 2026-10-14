@@ -31,7 +31,7 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
 
     [HttpPost("upload")]
     [RequestSizeLimit(MaxUploadBytes + 1024 * 1024)]
-    public async Task<IActionResult> Upload(IFormFile file, [FromForm] string? title, [FromForm] string? caption, CancellationToken ct)
+    public async Task<IActionResult> Upload(IFormFile file, [FromForm] string? title, [FromForm] string? caption, [FromForm] bool addToMedia = true, CancellationToken ct = default)
     {
         if (file is null || file.Length == 0) return BadRequest(new { message = "File is required." });
         if (file.Length > MaxUploadBytes) return BadRequest(new { message = "Maximum file size is 10 MB." });
@@ -75,6 +75,10 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
             FileSize = file.Length,
             StoragePath = relative.Replace('\\', '/')
         };
+        // Match-specific uploads are stored on disk for the match, but enter Media House only by explicit opt-in.
+        if (!addToMedia)
+            return Ok(new { url = asset.Url, title = asset.Title, isPublished = false });
+
         db.MediaAssets.Add(asset);
         await db.SaveChangesAsync(ct);
         await Audit("CREATE", asset.Id, new { asset.Title, asset.FileName, asset.FileSize }, ct);
