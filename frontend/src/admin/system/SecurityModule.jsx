@@ -56,7 +56,7 @@ export default function SecurityModule({ onError }) {
     e.preventDefault()
     const fan = fanAccounts.find(x => x.id === selectedFanId)
     if (!fan) { onError('Seleziona un account supporter.'); return }
-    if (!fan.isActive || !fan.emailVerified) { onError('L’account deve essere attivo e avere l’e-mail verificata.'); return }
+    if (!fan.isActive) { onError('L’account deve essere attivo prima della promozione.'); return }
     const confirmed = window.confirm(
       promotionRole === 'SuperAdmin'
         ? 'Confermi di promuovere ' + fan.displayName + ' (' + fan.email + ') a SUPERADMIN? Avrà accesso completo all’amministrazione.'
@@ -108,13 +108,13 @@ export default function SecurityModule({ onError }) {
     {canManageRoles && (
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
       <div className="flex items-center gap-2"><ShieldCheck className="text-jso-blue"/><h2 className="text-xl font-black">Utenti registrati → Staff</h2></div>
-      <p className="mt-2 text-sm text-slate-500">Promuovi un supporter registrato e verificato a un ruolo amministrativo. L’assegnazione a SuperAdmin richiede una conferma esplicita ed è registrata nell’audit log.</p>
+      <p className="mt-2 text-sm text-slate-500">Promuovi un supporter registrato e attivo a un ruolo amministrativo, anche se l’e-mail non è verificata. L’assegnazione a SuperAdmin richiede una conferma esplicita ed è registrata nell’audit log.</p>
       {promotionNotice && <p role="status" className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800">{promotionNotice}</p>}
       <form onSubmit={promoteRegisteredUser} className="mt-4 grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(180px,1fr)_auto]">
         <label className="text-sm font-bold">Account registrato
           <select required value={selectedFanId} onChange={e=>setSelectedFanId(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-3">
-            <option value="">Seleziona un supporter verificato</option>
-            {fanAccounts.filter(x=>x.isActive && x.emailVerified).map(x=><option key={x.id} value={x.id}>{x.displayName} — {x.email}</option>)}
+            <option value="">Seleziona un supporter attivo</option>
+            {fanAccounts.filter(x=>x.isActive).map(x=><option key={x.id} value={x.id}>{x.displayName} — {x.email}</option>)}
           </select>
         </label>
         <label className="text-sm font-bold">Ruolo da assegnare
@@ -125,7 +125,7 @@ export default function SecurityModule({ onError }) {
         <div className="flex items-end"><button type="submit" disabled={promoting || !selectedFanId} className="w-full rounded-xl bg-jso-navy px-4 py-3 text-sm font-extrabold text-white disabled:opacity-50">{promoting ? 'Promozione…' : 'Promuovi account'}</button></div>
       </form>
       {promotionRole === 'SuperAdmin' && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Attenzione: SuperAdmin concede accesso completo al pannello amministrativo.</p>}
-      {fanAccounts.filter(x=>x.isActive && x.emailVerified).length === 0 && <p className="mt-3 text-sm text-slate-500">Nessun account attivo con e-mail verificata disponibile per la promozione.</p>}
+      {fanAccounts.filter(x=>x.isActive).length === 0 && <p className="mt-3 text-sm text-slate-500">Nessun account attivo disponibile per la promozione.</p>}
     </div>
 
     )}

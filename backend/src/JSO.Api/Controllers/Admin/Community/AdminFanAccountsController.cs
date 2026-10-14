@@ -78,7 +78,6 @@ public sealed class AdminFanAccountsController(JsoDbContext db, AuditService aud
         var fan = await db.FanUsers.SingleOrDefaultAsync(x => x.Id == id, ct);
         if (fan is null) return NotFound(new { message = "Compte supporter introuvable." });
         if (!fan.IsActive) return BadRequest(new { message = "Réactivez le compte avant de le promouvoir." });
-        if (!fan.EmailVerified) return BadRequest(new { message = "L'adresse e-mail doit être vérifiée avant la promotion." });
         var role = (request.Role ?? string.Empty).Trim();
         var allowedRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
