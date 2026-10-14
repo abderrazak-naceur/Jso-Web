@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { CalendarDays, CheckCircle2, CreditCard, Heart, LockKeyhole, ShieldCheck, ShoppingCart, Sparkles, Trophy, UsersRound } from 'lucide-react'
+import { CalendarDays, CheckCircle2, Heart, LockKeyhole, ShieldCheck, ShoppingCart, Sparkles, Trophy, UsersRound } from 'lucide-react'
 import { membershipApi } from '../../lib/api'
 import PayOnlineButton from '../shop/PayOnlineButton'
 
-const CARD_ART = '/img/jso-membership-card-2026-2027.png'
+const CARD_ART = '/img/jso-membership-card-2026-2027.svg'
 
 export default function MembershipsSection({ section, token, onRequireLogin }) {
   const [plans, setPlans] = useState([])
