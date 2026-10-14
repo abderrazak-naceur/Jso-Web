@@ -4,7 +4,7 @@ import { membershipApi } from '../../lib/api'
 import PayOnlineButton from '../shop/PayOnlineButton'
 
 const CARD_FRONT = 'https://d2ol7oe51mr4n9.cloudfront.net/user_3DuYKVhdmNmMSAGu9ckyEmyckau/b5460c9e-647e-4890-8764-e253aa640708.jpg'
-const CARD_BACK = 'https://d2ol7oe51mr4n9.cloudfront.net/user_3DuYKVhdmNmMSAGu9ckyEmyckau/aecf8bb1-0bd9-4104-9bd7-577a4d2a7044.jpg'
+const CARD_BACK = 'https://d2ol7oe51mr4n9.cloudfront.net/user_3DuYKVhdmNmMSAGu9ckyEmyckau/fb02bcc6-f378-4bb3-8540-ced64cf6d383.png'
 
 export default function MembershipsSection({ section, token, onRequireLogin }) {
   const [plans, setPlans] = useState([])
