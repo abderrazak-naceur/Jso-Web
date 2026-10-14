@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CalendarDays, CheckCircle2, Heart, LockKeyhole, ShieldCheck, ShoppingCart, Sparkles, Trophy, UsersRound } from 'lucide-react'
+import { CalendarDays, CheckCircle2, Heart, LockKeyhole, ShieldCheck, ShoppingCart, Sparkles, Ticket, Trophy, UsersRound } from 'lucide-react'
 import { membershipApi } from '../../lib/api'
 import PayOnlineButton from '../shop/PayOnlineButton'
 
@@ -123,7 +123,7 @@ export default function MembershipsSection({ section, token, onRequireLogin }) {
               {[
                 { icon: CalendarDays, title: 'Saison sportive 2026–2027', text: 'Accès aux matchs de la saison' },
                 { icon: ShieldCheck, title: 'Validité : 365 jours', text: 'Après activation de votre carte' },
-                { icon: TicketIcon, title: 'Carte officielle digitale', text: 'Avec QR Code et numéro unique' },
+                { icon: Ticket, title: 'Carte officielle digitale', text: 'Avec QR Code et numéro unique' },
                 { icon: LockKeyhole, title: 'Paiement sécurisé en ligne', text: 'Simple, rapide et fiable' },
               ].map(({ icon: Icon, title, text: description }) => (
                 <div key={title} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0a1a4b]/80 p-4 sm:p-5">
@@ -153,6 +153,3 @@ export default function MembershipsSection({ section, token, onRequireLogin }) {
   )
 }
 
-function TicketIcon(props) {
-  return <span className="inline-flex" {...props}>🎟️</span>
-}
