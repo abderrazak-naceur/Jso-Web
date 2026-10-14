@@ -5,7 +5,7 @@ import { adminApi } from '../api'
 import { emptyNews } from '../constants'
 import { adminEditIdFromPath, adminEditUrl, navigateAdminEdit } from '../adminRoutes'
 import { sharePreviewUrl } from '../../lib/sharePreviewUrl'
-import { getApiBaseUrl, getAssetUrl } from '../../lib/apiConfig'
+import { getAssetUrl } from '../../lib/apiConfig'
 
 const slugify = (value) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 const insertAtCursor = (textarea, current, insertion) => {
