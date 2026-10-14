@@ -63,7 +63,7 @@ public sealed class GitHubRepositoryMediaStorage(IConfiguration configuration, I
         if (!IsConfigured)
             throw new InvalidOperationException("GitHub image storage is not configured.");
         var pieces = relativePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        if (pieces.Length == 0 || pieces.Any(p => p is "." or ".." || p.Contains('\\0')))
+        if (pieces.Length == 0 || pieces.Any(p => p is "." or ".." || p.Contains('\0')))
             throw new ArgumentException("Invalid media path.", nameof(relativePath));
 
         var path = $"{_directory}/{string.Join("/", pieces)}";
