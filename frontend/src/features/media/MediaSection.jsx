@@ -37,7 +37,17 @@ function PublishedMedia({ items }) {
 }
 
 export default function MediaSection({ section, media, status = 'ready' }) {
-  const publishedMedia = media.slice(0, 3)
+  // Opponent team logos belong to their match, not the public homepage media gallery.
+  // Keep the media record in the admin library while hiding this broken standalone card here.
+  const homepageMedia = media.filter((item) => {
+    const title = pick(item, 'title', 'Title') || ''
+    const caption = pick(item, 'caption', 'Caption') || ''
+    const label = `${title} ${caption}`.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase()
+    return !label.includes('logo de l equipe adverse')
+      && !label.includes('logo adversaire')
+      && !label.includes('logo de equipe adverse')
+  })
+  const publishedMedia = homepageMedia.slice(0, 3)
 
   return (
     <section id="media" aria-labelledby="media-title" className="border-y border-slate-200 bg-white/45">
