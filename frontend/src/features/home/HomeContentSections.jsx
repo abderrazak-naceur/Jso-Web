@@ -174,12 +174,12 @@ export function MobileSection({ section }) {
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 py-16 lg:grid-cols-[0.85fr_1.15fr] lg:px-8 lg:py-24">
         <div>
           <div className="flex items-center gap-4">
-            <img src="/JSO-crest-regenerated-ok.png" alt="Stemma ufficiale JSO Oudhref" className="h-16 w-16 rounded-full bg-white object-contain p-1" />
+            <img src="/JSO-official-crest.png" alt="Stemma ufficiale JSO Oudhref" className="h-16 w-16 rounded-full bg-white object-contain p-1" />
             <span className="inline-flex rounded-full border border-jso-gold/40 bg-jso-gold/10 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-jso-gold">JSO Mobile</span>
           </div>
           <div className="mt-5"><SectionHeading section={section} title="La JSO" muted="dans ta poche." description="Match Center, billets, actualités et vie du club sur votre téléphone. Les responsables peuvent aussi gérer le club directement dans l’application." light /></div>
           <div className="mt-5 rounded-2xl border border-white/15 bg-white/5 p-4">
-            <p className="font-extrabold">Version 1.0.2 · Build 3</p>
+            <p className="font-extrabold">Version 1.0.3 · Build 4</p>
             <p className="mt-1 text-sm text-white/65">Dernière mise à jour : 14/10/2026</p>
           </div>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
