@@ -59,6 +59,7 @@ export const ADMIN_PERMISSION_BY_ID = Object.freeze({
   'fan-accounts': 'community:moderate',
   tickets: 'tickets:admin',
   memberships: 'memberships:manage',
+  'membership-card-artwork': 'content:manage',
   finance: 'finance:view',
   donations: 'finance:view',
   'cash-donations': 'donations:cash',
