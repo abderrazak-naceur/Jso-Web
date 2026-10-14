@@ -8,9 +8,8 @@ namespace JSO.Api.Controllers;
 [Route("api/media")]
 public sealed class MediaController(JsoDbContext db, ContentTranslationService translations) : ControllerBase
 {
-    // Public image proxy: works for public and private repositories without exposing the GitHub token.
+    // Public asset proxy for media stored in this repository. The GitHub token stays server-side.
     [HttpGet("files/{**path}")]
-    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> GetRepositoryFile(string path, [FromServices] JSO.Api.Storage.GitHubRepositoryMediaStorage storage, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(path) || path.Split('/').Any(p => p is "." or ".."))
@@ -23,7 +22,7 @@ public sealed class MediaController(JsoDbContext db, ContentTranslationService t
             Response.Headers["X-Content-Type-Options"] = "nosniff";
             if (!string.IsNullOrWhiteSpace(asset.ETag))
                 Response.Headers.ETag = asset.ETag;
-            return File(asset.Content, asset.ContentType, enableRangeProcessing: false);
+            return File(asset.Content, asset.ContentType);
         }
         catch (InvalidOperationException ex)
         {
