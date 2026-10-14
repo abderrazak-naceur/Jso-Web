@@ -2,6 +2,18 @@ import { useEffect, useState } from 'react'
 import { X, Pencil, Save, Upload } from 'lucide-react'
 import Field from '../components/Field'
 import { adminApi } from '../api'
+import { getApiBaseUrl } from '../../lib/apiConfig'
+
+function resolveMediaUrl(value) {
+  if (!value) return ''
+  try {
+    const apiBase = getApiBaseUrl()
+    const origin = /^https?:\/\//i.test(apiBase) ? new URL(apiBase).origin : window.location.origin
+    return new URL(value, origin).toString()
+  } catch {
+    return value
+  }
+}
 export default function MediaModule({ onError }) {
   const [items,setItems]=useState([]); const [file,setFile]=useState(null); const [title,setTitle]=useState(''); const [caption,setCaption]=useState('')
   const [editing,setEditing]=useState(null); const [editForm,setEditForm]=useState({title:'',caption:'',isPublished:true}); const [editModalOpen,setEditModalOpen]=useState(false)
@@ -26,7 +38,7 @@ export default function MediaModule({ onError }) {
       {file&&<p className="mt-3 text-xs text-slate-500">{file.name} · {(file.size/1024/1024).toFixed(2)} MB</p>}
       <button disabled={!file} className="mt-4 flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-3 font-bold text-white disabled:opacity-40"><Upload size={16}/>Uploader le média</button>
     </form>
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{items.map(m=><div key={m.id} className="overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white"><div className="aspect-video bg-slate-100">{m.url&&<img src={m.url} alt={m.title} className="h-full w-full object-cover" loading="lazy"/>}</div><div className="p-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{items.map(m=><div key={m.id} className="overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white"><div className="aspect-video bg-slate-100">{m.url&&<img src={resolveMediaUrl(m.url)} alt={m.title} className="h-full w-full object-cover" loading="lazy"/>}</div><div className="p-4">
       <b className="block truncate">{m.title}</b>
       {m.caption&&<p className="mt-1 truncate text-xs text-slate-500">{m.caption}</p>}
       <p className="mt-1 text-xs text-slate-500">{m.fileSize?((m.fileSize/1024/1024).toFixed(2)+' MB'):m.type}{m.isPublished===false?' · Masqué':''}</p>
