@@ -125,6 +125,12 @@ builder.Services.AddHttpClient(nameof(JSO.Api.Storage.GitHubRepositoryMediaStora
 });
 builder.Services.AddSingleton<JSO.Api.Storage.GitHubRepositoryMediaStorage>();
 
+builder.Services.AddHttpClient(nameof(JSO.Api.Storage.GitHubRepositoryMediaStorage), client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddSingleton<JSO.Api.Storage.GitHubRepositoryMediaStorage>();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
