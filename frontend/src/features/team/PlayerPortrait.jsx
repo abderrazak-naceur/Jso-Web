@@ -1,14 +1,40 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Shield, UserRound } from 'lucide-react'
 import { resolvePlayerPhoto } from './playerPhoto'
 
 export default function PlayerPortrait({ player }) {
-  const [failed, setFailed] = useState(false)
   const name = [player.firstName, player.lastName].filter(Boolean).join(' ') || 'Joueur JSO'
-  const photoUrl = resolvePlayerPhoto(player)
-  const hasPhoto = Boolean(photoUrl) && !failed
+  const primaryPhoto = resolvePlayerPhoto(player)
+  const localPhoto = useMemo(() => {
+    const slug = [player?.firstName, player?.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+    return slug ? `/players/${slug}.png` : ''
+  }, [player?.firstName, player?.lastName])
+  const photoCandidates = useMemo(
+    () => [...new Set([primaryPhoto, localPhoto].filter(Boolean))],
+    [primaryPhoto, localPhoto],
+  )
+  const [candidateIndex, setCandidateIndex] = useState(0)
+  const [failedCandidates, setFailedCandidates] = useState([])
+  useEffect(() => {
+    setCandidateIndex(0)
+    setFailedCandidates([])
+  }, [primaryPhoto, localPhoto])
+  const photoUrl = photoCandidates[candidateIndex]
+  const hasPhoto = Boolean(photoUrl) && !failedCandidates.includes(photoUrl)
   const position = String(player.position || 'Équipe première')
   const initials = [player.firstName, player.lastName].filter(Boolean).map((part) => part.trim()[0]).join('').slice(0, 2).toUpperCase() || 'JS'
+
+  function handlePhotoError() {
+    setFailedCandidates((previous) => [...previous, photoUrl])
+    if (candidateIndex + 1 < photoCandidates.length) setCandidateIndex((index) => index + 1)
+  }
 
   return (
     <div className="relative aspect-[4/5] overflow-hidden bg-jso-navy">
@@ -19,10 +45,11 @@ export default function PlayerPortrait({ player }) {
       {hasPhoto ? (
         <img
           src={photoUrl}
-          onError={() => setFailed(true)}
+          onError={handlePhotoError}
           alt={`Portrait de ${name}`}
           loading="lazy"
           decoding="async"
+          fetchPriority="low"
           className="relative z-10 h-full w-full object-contain object-bottom p-1.5 drop-shadow-[0_18px_14px_rgba(0,0,0,.28)] transition duration-500 group-hover:drop-shadow-[0_20px_18px_rgba(255,216,61,.18)]"
         />
       ) : (
