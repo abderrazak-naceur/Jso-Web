@@ -30,6 +30,15 @@ export default function MatchesModule({ onError }) {
   function startEdit(m){navigateAdminEdit('matches',m.id);setSelected(m);setModalOpen(true)}
   async function copyAdminLink(m){try{await navigator.clipboard.writeText(window.location.origin+adminEditUrl('matches',m.id))}catch{onError('Impossible de copier le lien admin.')}}
   async function copyPublicLink(m){try{await navigator.clipboard.writeText(sharePreviewUrl('match',m.id))}catch{onError('Impossible de copier le lien public.')}}
+  async function removeMatch(match){
+    const label = `${match.isHome ? 'JSO' : 'Ext.'} — ${match.opponentName}`
+    if (!window.confirm(`Supprimer définitivement le match « ${label} » ? Cette action est irréversible.`)) return
+    try {
+      await adminApi('/admin/matches/' + match.id, { method: 'DELETE' })
+      if (String(editing) === String(match.id)) closeModal()
+      await load()
+    } catch (e) { onError(e.message) }
+  }
   async function save(e){e.preventDefault();try{const body={...form,opponentLogoUrl:form.opponentLogoUrl||null,kickoffAt:new Date(form.kickoffAt).toISOString(),homeScore:form.homeScore===''?null:Number(form.homeScore),awayScore:form.awayScore===''?null:Number(form.awayScore),isPublished:Boolean(form.isPublished)};if(editing)await adminApi('/admin/matches/'+editing,{method:'PUT',body:JSON.stringify(body)});else await adminApi('/admin/matches',{method:'POST',body:JSON.stringify(body)});navigateAdminEdit('matches',null);setEditing(null);setModalOpen(false);setForm(f=>({...f,opponentName:'',venue:'',opponentLogoUrl:'',homeScore:'',awayScore:''}));await load()}catch(e){onError(e.message)}}
   useEffect(() => {
     if (!modalOpen) return
@@ -55,6 +64,6 @@ export default function MatchesModule({ onError }) {
         </form>
       </section>
     </div>}
-    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Matchs</h2><div className="mt-4 space-y-2">{matches.map(m=><div key={m.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-4"><div><b>{m.isHome?'JSO':'Ext.'} — {m.opponentName}</b><p className="text-xs text-slate-500">{new Date(m.kickoffAt).toLocaleString('fr-FR')} · {m.status} · {m.isPublished?'Publié':'Brouillon'}</p></div><div className="flex gap-2"><button type="button" onClick={()=>startEdit(m)} className="rounded-lg bg-white px-3 py-2 text-sm font-bold text-jso-blue"><Pencil size={15} className="mr-1 inline"/>Modifier</button><button type="button" onClick={()=>copyAdminLink(m)} title="Copier le lien admin" className="rounded-lg bg-white px-3 py-2 text-jso-blue"><Link2 size={16}/></button>{m.isPublished && <button type="button" onClick={()=>copyPublicLink(m)} title="Copier le lien public" className="rounded-lg bg-white px-3 py-2 text-xs font-bold text-jso-blue">Public</button>}</div></div>)}</div></div>
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6"><h2 className="text-xl font-black">Matchs</h2><div className="mt-4 space-y-2">{matches.map(m=><div key={m.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-4"><div><b>{m.isHome?'JSO':'Ext.'} — {m.opponentName}</b><p className="text-xs text-slate-500">{new Date(m.kickoffAt).toLocaleString('fr-FR')} · {m.status} · {m.isPublished?'Publié':'Brouillon'}</p></div><div className="flex gap-2"><button type="button" onClick={()=>startEdit(m)} className="rounded-lg bg-white px-3 py-2 text-sm font-bold text-jso-blue"><Pencil size={15} className="mr-1 inline"/>Modifier</button><button type="button" onClick={()=>removeMatch(m)} title="Supprimer le match (SuperAdmin)" className="rounded-lg bg-white px-3 py-2 text-sm font-bold text-red-600"><Trash2 size={15} className="mr-1 inline"/>Supprimer</button><button type="button" onClick={()=>copyAdminLink(m)} title="Copier le lien admin" className="rounded-lg bg-white px-3 py-2 text-jso-blue"><Link2 size={16}/></button>{m.isPublished && <button type="button" onClick={()=>copyPublicLink(m)} title="Copier le lien public" className="rounded-lg bg-white px-3 py-2 text-xs font-bold text-jso-blue">Public</button>}</div></div>)}</div></div>
   </div>
 }

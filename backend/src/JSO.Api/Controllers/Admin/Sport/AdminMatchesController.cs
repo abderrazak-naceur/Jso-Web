@@ -81,6 +81,32 @@ public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) 
         return Ok(match);
     }
 
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        var match = await db.Matches.SingleOrDefaultAsync(x => x.Id == id, ct);
+        if (match is null) return NotFound(new { message = "Match introuvable." });
+
+        // Match events belong to the match and are removed explicitly.
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            var events = await db.MatchEvents.Where(x => x.MatchId == id).ToListAsync(ct);
+            db.MatchEvents.RemoveRange(events);
+            db.Matches.Remove(match);
+            await db.SaveChangesAsync(ct);
+            await audit.LogAsync("DELETE", "Match", id.ToString(), User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(), new { opponentName = match.OpponentName }, ct);
+            await transaction.CommitAsync(ct);
+            return NoContent();
+        }
+        catch (DbUpdateException)
+        {
+            await transaction.RollbackAsync(ct);
+            return Conflict(new { message = "Impossibile eliminare la partita perché è collegata ad altri dati (ad esempio biglietti, formazioni o dirette). Rimuovi o archivia prima i dati collegati." });
+        }
+    }
+
     [HttpGet("{id:guid}/events")]
     public async Task<IActionResult> GetEvents(Guid id, CancellationToken ct)
     {
