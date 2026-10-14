@@ -30,6 +30,7 @@ async function request(path, signal) {
 
 export const publicApi = {
   getHome: (signal) => request('/home', signal),
+  getContent: (signal) => request('/content', signal),
   getClub: (signal) => request('/club', signal),
   getMatches: (signal) => request('/matches', signal),
   getNews: (signal) => request('/news', signal),
