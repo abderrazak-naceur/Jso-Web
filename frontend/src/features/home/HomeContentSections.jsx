@@ -179,7 +179,7 @@ export function MobileSection({ section }) {
           </div>
           <div className="mt-5"><SectionHeading section={section} title="La JSO" muted="dans ta poche." description="Match Center, billets, actualités et vie du club sur votre téléphone. Les responsables peuvent aussi gérer le club directement dans l’application." light /></div>
           <div className="mt-5 rounded-2xl border border-white/15 bg-white/5 p-4">
-            <p className="font-extrabold">Version 1.0.1 · Build 2</p>
+            <p className="font-extrabold">Version 1.0.2 · Build 3</p>
             <p className="mt-1 text-sm text-white/65">Dernière mise à jour : 14/10/2026</p>
           </div>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
