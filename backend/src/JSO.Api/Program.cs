@@ -146,6 +146,8 @@ builder.Services.AddCors(options =>
     // production frontend URL or contains an outdated value.
     var allowedOrigins = origins
         .Append("https://jso-web.onrender.com")
+        .Append("https://jsoudhref.com")
+        .Append("https://www.jsoudhref.com")
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToArray();
 
