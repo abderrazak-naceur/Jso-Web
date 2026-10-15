@@ -19,6 +19,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
+builder.Services.AddHttpClient("Resend", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+
 var dataProtectionKeysPath = builder.Configuration["DataProtection:KeysPath"];
 var dataProtection = builder.Services
     .AddDataProtection()
