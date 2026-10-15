@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 namespace JSO.Api.Controllers;
+// Public reset endpoints deliberately return generic request acknowledgements to avoid account enumeration.
 public sealed record PasswordResetRequest(string Email);
 public sealed record PasswordResetSubmit(string Email,string Token,string NewPassword);
 [ApiController]
