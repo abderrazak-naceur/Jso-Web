@@ -39,6 +39,7 @@ function App() {
       const title = String(settings.seo_title || '').trim()
       const description = String(settings.seo_description || '').trim()
       const verification = String(settings.seo_search_console_verification || '').trim()
+      const keywords = String(settings.seo_keywords || '').trim()
       if (title) document.title = title
       if (description) {
         let meta = document.querySelector('meta[name="description"]')
@@ -54,6 +55,15 @@ function App() {
       if (title) {
         const ogTitle = document.querySelector('meta[property="og:title"]')
         if (ogTitle) ogTitle.content = title
+      }
+      if (keywords) {
+        let meta = document.querySelector('meta[name="keywords"]')
+        if (!meta) {
+          meta = document.createElement('meta')
+          meta.name = 'keywords'
+          document.head.appendChild(meta)
+        }
+        meta.content = keywords
       }
       if (verification) {
         let meta = document.querySelector('meta[name="google-site-verification"]')
