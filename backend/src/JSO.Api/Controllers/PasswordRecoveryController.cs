@@ -16,7 +16,7 @@ public sealed class PasswordRecoveryController(JsoDbContext db,IConfiguration co
 {
  const string Generic="If an active account exists for this email, a reset link will be sent shortly.";
  [HttpPost("{userType}/request"),EnableRateLimiting("auth-login")]
- public async Task<IActionResult> Request(string userType,PasswordResetRequest request,CancellationToken ct)
+ public async Task<IActionResult> RequestReset(string userType,PasswordResetRequest request,CancellationToken ct)
  {
   var type=TypeOf(userType);var email=request.Email?.Trim().ToLowerInvariant();
   if(type is null||string.IsNullOrWhiteSpace(email)||email.Length>254||!email.Contains('@'))return BadRequest(new{message="A valid account type and email are required."});
