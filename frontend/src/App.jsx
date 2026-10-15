@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import PasswordResetPage from './features/account/PasswordResetPage'
 import AccessibilityPanel from './AccessibilityPanel'
 import OfflineBanner from './OfflineBanner'
 import AccountSettingsModal from './features/account/AccountSettingsModal'
@@ -151,6 +152,7 @@ function App() {
   const homeLayout = useHomeLayout()
   const focusSection = sectionFromPath()
   const isAdminStreamsRoute = window.location.pathname === '/admin/live-streams'
+  const isPasswordResetRoute = window.location.pathname === '/password-reset'
   const productSlug = productSlugFromPath()
   const eventSlug = eventSlugFromPath()
   useDocumentTitle(focusSection ? sections.find((item) => item.id === focusSection)?.label : null)
@@ -159,6 +161,8 @@ function App() {
     setAuthMode(mode)
     setAuthOpen(true)
   }
+
+  if (isPasswordResetRoute) return <PasswordResetPage />
 
   return (
     <div className="min-h-screen bg-jso-paper text-jso-ink">
