@@ -160,6 +160,7 @@ export default function AuthModal({ open, initialMode = 'login', onClose, onAuth
           </button>
         </form>
 
+        {!isRegister && <p className="mt-4 text-center text-sm"><a href="/password-reset?type=fan" className="font-bold text-jso-blue hover:underline">Mot de passe oublié ?</a></p>}
         <p className="mt-6 text-center text-sm text-slate-500">
           {isRegister ? 'Vous avez déjà un compte ?' : 'Pas encore de compte ?'}{' '}
           <button type="button" onClick={switchMode} className="font-bold text-jso-blue">
