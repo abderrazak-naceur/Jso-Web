@@ -25,6 +25,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<Sponsor> Sponsors => Set<Sponsor>();
  public DbSet<SponsorActivation> SponsorActivations => Set<SponsorActivation>();
  public DbSet<FanUser> FanUsers => Set<FanUser>();
+ public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
  public DbSet<Product> Products => Set<Product>();
  public DbSet<Order> Orders => Set<Order>();
  public DbSet<OrderItem> OrderItems => Set<OrderItem>();
@@ -111,6 +112,8 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<SponsorActivation>().HasIndex(x=>new{x.SponsorId,x.ScannedAt});
   modelBuilder.Entity<LiveBlogEntry>().HasIndex(x=>new{x.MatchId,x.IsPinned,x.CreatedAt});
   modelBuilder.Entity<FanUser>().HasIndex(x=>x.Email).IsUnique();
+  modelBuilder.Entity<PasswordResetToken>().HasIndex(x=>new{x.UserType,x.Email,x.TokenHash}).IsUnique();
+  modelBuilder.Entity<PasswordResetToken>().HasIndex(x=>new{x.UserType,x.Email,x.ExpiresAt});
   modelBuilder.Entity<FanUser>().Property(x=>x.AnniversaryOptIn).HasDefaultValue(false);
   modelBuilder.Entity<FanUser>().HasIndex(x=>x.AnniversaryOptIn);
   modelBuilder.Entity<Product>().HasIndex(x=>x.Slug).IsUnique();
