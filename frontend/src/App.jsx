@@ -30,6 +30,43 @@ import { useI18n } from './i18n/index.jsx'
 function App() {
   const { t } = useI18n()
   const data = useHomeData()
+
+  // Apply SEO metadata stored by administrators through the public content API.
+  useEffect(() => {
+    const controller = new AbortController()
+    publicApi.getContent(controller.signal).then((settings) => {
+      if (controller.signal.aborted || !settings) return
+      const title = String(settings.seo_title || '').trim()
+      const description = String(settings.seo_description || '').trim()
+      const verification = String(settings.seo_search_console_verification || '').trim()
+      if (title) document.title = title
+      if (description) {
+        let meta = document.querySelector('meta[name="description"]')
+        if (!meta) {
+          meta = document.createElement('meta')
+          meta.name = 'description'
+          document.head.appendChild(meta)
+        }
+        meta.content = description
+        const ogDescription = document.querySelector('meta[property="og:description"]')
+        if (ogDescription) ogDescription.content = description
+      }
+      if (title) {
+        const ogTitle = document.querySelector('meta[property="og:title"]')
+        if (ogTitle) ogTitle.content = title
+      }
+      if (verification) {
+        let meta = document.querySelector('meta[name="google-site-verification"]')
+        if (!meta) {
+          meta = document.createElement('meta')
+          meta.name = 'google-site-verification'
+          document.head.appendChild(meta)
+        }
+        meta.content = verification
+      }
+    }).catch(() => {})
+    return () => controller.abort()
+  }, [])
   const cart = useCart()
   const fan = useFanSession()
   const requestedTemplatePreview = new URLSearchParams(window.location.search).get('templatePreview')
