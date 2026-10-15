@@ -32,6 +32,7 @@ function Login({ onLogin }) {
       <label className="mt-4 block text-sm font-bold">Mot de passe<input value={password} onChange={e => setPassword(e.target.value)} type="password" required className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></label>
       {error && <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p>}
       <button className="mt-6 w-full rounded-xl bg-jso-navy px-4 py-3 font-extrabold text-white hover:bg-jso-blue">Se connecter</button>
+      <a href="/password-reset?type=admin" className="mt-4 block text-center text-sm font-bold text-jso-blue hover:underline">Mot de passe oublié ?</a>
       <a href="/" className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-jso-blue hover:underline">Retour au site <ExternalLink size={15} aria-hidden="true" /></a>
     </form>
   </main>
