@@ -26,10 +26,16 @@ public sealed class PasswordRecoveryController(JsoDbContext db,IConfiguration co
   var raw=Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)).TrimEnd('=').Replace('+','-').Replace('/','_');
   db.PasswordResetTokens.Add(new PasswordResetToken{UserType=type,Email=email,TokenHash=Hash(raw),ExpiresAt=DateTimeOffset.UtcNow.AddMinutes(30)});await db.SaveChangesAsync(ct);
   var frontend=config["PasswordReset:FrontendUrl"]?.TrimEnd('/');var host=config["Email:SmtpHost"];var from=config["Email:From"];
-  if(string.IsNullOrWhiteSpace(frontend)||string.IsNullOrWhiteSpace(host)||string.IsNullOrWhiteSpace(from)){log.LogError("Password recovery email configuration is missing.");return StatusCode(503,new{message="Password recovery email is not configured. Please contact support."});}
+  if(string.IsNullOrWhiteSpace(frontend)||string.IsNullOrWhiteSpace(host)||string.IsNullOrWhiteSpace(from)){
+   log.LogError("Password recovery email configuration is missing.");
+   var pending=await db.PasswordResetTokens.SingleOrDefaultAsync(x=>x.UserType==type&&x.Email==email&&x.TokenHash==Hash(raw),ct);
+   if(pending is not null)db.PasswordResetTokens.Remove(pending);
+   await db.SaveChangesAsync(ct);
+   return Ok(new{message=Generic});
+  }
   var link=$"{frontend}/password-reset?type={type}&email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(raw)}";
   try{using var mail=new MailMessage(from,email){Subject="JSO — Réinitialisation du mot de passe",Body=$"Ouvrez ce lien pour réinitialiser votre mot de passe (valable 30 minutes, une seule utilisation) :\n\n{link}\n\nIgnorez ce message si vous n'avez rien demandé."};using var smtp=new SmtpClient(host,int.TryParse(config["Email:SmtpPort"],out var port)?port:587){EnableSsl=!string.Equals(config["Email:EnableSsl"],"false",StringComparison.OrdinalIgnoreCase),Timeout=10000};var user=config["Email:Username"];if(!string.IsNullOrWhiteSpace(user))smtp.Credentials=new NetworkCredential(user,config["Email:Password"]??"");await smtp.SendMailAsync(mail,ct);}
-  catch(Exception ex){log.LogError(ex,"Could not send password reset email.");var stored=await db.PasswordResetTokens.SingleOrDefaultAsync(x=>x.UserType==type&&x.Email==email&&x.TokenHash==Hash(raw),ct);if(stored is not null)db.PasswordResetTokens.Remove(stored);await db.SaveChangesAsync(ct);return StatusCode(503,new{message="Password recovery email is temporarily unavailable. Please try again later."});}
+  catch(Exception ex){log.LogError(ex,"Could not send password reset email.");var stored=await db.PasswordResetTokens.SingleOrDefaultAsync(x=>x.UserType==type&&x.Email==email&&x.TokenHash==Hash(raw),ct);if(stored is not null)db.PasswordResetTokens.Remove(stored);await db.SaveChangesAsync(ct);return Ok(new{message=Generic});}
   return Ok(new{message=Generic});
  }
  [HttpPost("{userType}/reset"),EnableRateLimiting("auth-login")]
