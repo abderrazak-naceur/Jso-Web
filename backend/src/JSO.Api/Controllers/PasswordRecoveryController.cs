@@ -13,6 +13,8 @@ namespace JSO.Api.Controllers;
 public sealed record PasswordResetRequest(string Email);
 public sealed record PasswordResetSubmit(string Email, string Token, string NewPassword);
 
+[ApiController]
+[Route("api/password-recovery")]
 public sealed class PasswordRecoveryController(
     JsoDbContext db,
     IConfiguration config,
@@ -22,10 +24,6 @@ public sealed class PasswordRecoveryController(
 {
     private const string Generic = "If an active account exists for this email, a reset link will be sent shortly.";
     private const string ResendEndpoint = "https://api.resend.com/emails";
-
-    [ApiController]
-    [Route("api/password-recovery")]
-    public sealed class RouteMarker { }
 
     [HttpPost("{userType}/request"), EnableRateLimiting("auth-login")]
     public async Task<IActionResult> RequestReset(string userType, PasswordResetRequest request, CancellationToken ct)
