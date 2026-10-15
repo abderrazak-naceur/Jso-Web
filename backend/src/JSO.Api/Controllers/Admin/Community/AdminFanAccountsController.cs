@@ -86,23 +86,38 @@ public sealed class AdminFanAccountsController(JsoDbContext db, AuditService aud
         };
         if (!allowedRoles.Contains(role))
             return BadRequest(new { message = "Rôle administratif non autorisé pour cette opération." });
-        if (await db.AdminUsers.AnyAsync(x => x.Email == fan.Email, ct))
-            return Conflict(new { message = "Un compte administratif existe déjà avec cette adresse e-mail." });
-        var admin = new AdminUser
+        // An administrative account may already exist for this email. In that case,
+        // promote/update that account instead of rejecting the operation or creating a duplicate.
+        // Keep its existing password hash so promotion does not unexpectedly change credentials.
+        var admin = await db.AdminUsers.SingleOrDefaultAsync(x => x.Email.ToLower() == fan.Email.ToLower(), ct);
+        var created = admin is null;
+        if (admin is null)
         {
-            Email = fan.Email,
-            DisplayName = fan.DisplayName,
-            PasswordHash = fan.PasswordHash,
-            Role = role,
-            IsActive = true
-        };
-        db.AdminUsers.Add(admin);
+            admin = new AdminUser
+            {
+                Email = fan.Email,
+                DisplayName = fan.DisplayName,
+                PasswordHash = fan.PasswordHash,
+                Role = role,
+                IsActive = true
+            };
+            db.AdminUsers.Add(admin);
+        }
+        else
+        {
+            admin.Role = role;
+            admin.DisplayName = fan.DisplayName;
+            admin.IsActive = true;
+        }
+
         await db.SaveChangesAsync(ct);
-        await audit.LogAsync("PROMOTE_FAN_TO_STAFF", "AdminUser", admin.Id.ToString(),
+        await audit.LogAsync(created ? "PROMOTE_FAN_TO_STAFF" : "UPDATE_ADMIN_ROLE_FROM_FAN_ACCOUNT",
+            "AdminUser", admin.Id.ToString(),
             User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value,
             HttpContext.Connection.RemoteIpAddress?.ToString(),
-            new { fanId = fan.Id, admin.Email, admin.Role }, ct);
-        return Created("/api/admin/security/users", new { admin.Id, admin.Email, admin.DisplayName, admin.Role, admin.IsActive });
+            new { fanId = fan.Id, admin.Email, admin.Role, existingAdminAccount = !created }, ct);
+        var response = new { admin.Id, admin.Email, admin.DisplayName, admin.Role, admin.IsActive };
+        return created ? Created("/api/admin/security/users", response) : Ok(response);
     }
 
     [HttpPut("{id:guid}/status")]
