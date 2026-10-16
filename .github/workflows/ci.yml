@@ -184,6 +184,21 @@ jobs:
           jq -e '.networkCidr == "192.0.2.0/24" and .enforcementEnabled == false' <<< "$ip_rule_response"
           curl -fsS http://127.0.0.1:5080/api/admin/security/ip-blocks \
             -H "Authorization: Bearer $token" | jq -e 'any(.rules[]; .networkCidr == "192.0.2.0/24")'
+          ip_rule_bad_expiry_status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+            http://127.0.0.1:5080/api/admin/security/ip-blocks \
+            -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+            -d '{"networkCidr":"2001:db8::/32","reason":"CI expired rule","expiresAt":"2020-01-01T00:00:00Z"}')
+          test "$ip_rule_bad_expiry_status" = 400
+          ipv6_rule_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/security/ip-blocks \
+            -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+            -d '{"networkCidr":"2001:db8::/32","reason":"CI IPv6 smoke test rule"}')
+          ipv6_rule_id=$(jq -r '.id // empty' <<< "$ipv6_rule_response")
+          test -n "$ipv6_rule_id"
+          jq -e '.networkCidr == "2001:db8::/32" and .enforcementEnabled == false' <<< "$ipv6_rule_response"
+          curl -fsS -X PATCH "http://127.0.0.1:5080/api/admin/security/ip-blocks/$ipv6_rule_id/disable" \
+            -H "Authorization: Bearer $token" -o /dev/null
+          curl -fsS http://127.0.0.1:5080/api/admin/security/ip-blocks \
+            -H "Authorization: Bearer $token" | jq -e --arg id "$ipv6_rule_id" 'any(.rules[]; .id == $id and .isEnabled == false)'
           curl -fsS 'http://127.0.0.1:5080/api/admin/security/traffic-events?limit=10' \
             -H "Authorization: Bearer $token" | jq -e '.detectionMode == "signals-only" and (.events | type == "array") and any(.events[]; .category == "automation-signal" and .verifiedBot == false)'
 
