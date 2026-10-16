@@ -55,7 +55,7 @@ public sealed class IpBlockRulesController(JsoDbContext db) : ControllerBase
         };
         db.IpBlockRules.Add(rule);
         await db.SaveChangesAsync(ct);
-        return Created($"/api/admin/security/ip-blocks/{rule.Id}", new { rule.Id, rule.NetworkCidr, rule.Reason, rule.CreatedAt, rule.ExpiresAt, rule.IsEnabled, enforcementEnabled = false });
+        return Ok(new { rule.Id, rule.NetworkCidr, rule.Reason, rule.CreatedAt, rule.ExpiresAt, rule.IsEnabled, enforcementEnabled = false });
     }
 
     [HttpPatch("{id:guid}/disable")]
