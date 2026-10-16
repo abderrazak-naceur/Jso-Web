@@ -55,6 +55,15 @@ public sealed class IpBlockRulesController(JsoDbContext db, IConfiguration confi
             IsEnabled = true
         };
         db.IpBlockRules.Add(rule);
+        db.AuditLogs.Add(new AuditLog
+        {
+            Action = "security.ip-block.created",
+            EntityType = nameof(IpBlockRule),
+            EntityId = rule.Id.ToString(),
+            UserId = rule.CreatedBy,
+            UserEmail = User.FindFirstValue(ClaimTypes.Email),
+            Details = $"CIDR={rule.NetworkCidr}; expiresAt={rule.ExpiresAt:O}; enforcementEnabled={configuration.GetValue<bool>(\"Security:TrustedClientIpVerified\") && configuration.GetValue<bool>(\"Security:IpBlockEnforcementEnabled\")}"
+        });
         await db.SaveChangesAsync(ct);
         return Ok(new { rule.Id, rule.NetworkCidr, rule.Reason, rule.CreatedAt, rule.ExpiresAt, rule.IsEnabled, enforcementEnabled = configuration.GetValue<bool>("Security:TrustedClientIpVerified") && configuration.GetValue<bool>("Security:IpBlockEnforcementEnabled") });
     }
@@ -65,6 +74,15 @@ public sealed class IpBlockRulesController(JsoDbContext db, IConfiguration confi
         var rule = await db.IpBlockRules.FirstOrDefaultAsync(x => x.Id == id, ct);
         if (rule is null) return NotFound();
         rule.IsEnabled = false;
+        db.AuditLogs.Add(new AuditLog
+        {
+            Action = "security.ip-block.disabled",
+            EntityType = nameof(IpBlockRule),
+            EntityId = rule.Id.ToString(),
+            UserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub"),
+            UserEmail = User.FindFirstValue(ClaimTypes.Email),
+            Details = $"CIDR={rule.NetworkCidr}"
+        });
         await db.SaveChangesAsync(ct);
         return NoContent();
     }
