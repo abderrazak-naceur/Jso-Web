@@ -111,7 +111,17 @@ public sealed class IpBlockRulesController(JsoDbContext db, IConfiguration confi
     private static string NormalizeCidr(string value)
     {
         var parts = value.Split('/', StringSplitOptions.TrimEntries);
-        var address = IPAddress.Parse(parts[0]).ToString().ToLowerInvariant();
-        return parts.Length == 1 ? address : address + "/" + int.Parse(parts[1]);
+        var address = IPAddress.Parse(parts[0]);
+        var maxBits = address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ? 32 : 128;
+        var prefix = parts.Length == 1 ? maxBits : int.Parse(parts[1]);
+        var bytes = address.GetAddressBytes();
+        var fullBytes = prefix / 8;
+        var remainingBits = prefix % 8;
+        if (remainingBits > 0 && fullBytes < bytes.Length)
+            bytes[fullBytes] = (byte)(bytes[fullBytes] & (0xff << (8 - remainingBits)));
+        for (var i = fullBytes + (remainingBits > 0 ? 1 : 0); i < bytes.Length; i++)
+            bytes[i] = 0;
+        var normalizedAddress = new IPAddress(bytes).ToString().ToLowerInvariant();
+        return prefix == maxBits ? normalizedAddress : normalizedAddress + "/" + prefix;
     }
 }
