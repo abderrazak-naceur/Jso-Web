@@ -11,7 +11,7 @@ namespace JSO.Api.Controllers;
 [ApiController]
 [Route("api/admin/security/ip-blocks")]
 [Authorize(Roles = "SuperAdmin")]
-public sealed class IpBlockRulesController(JsoDbContext db) : ControllerBase
+public sealed class IpBlockRulesController(JsoDbContext db, IConfiguration configuration) : ControllerBase
 {
     public sealed record CreateRuleRequest(string? NetworkCidr, string? Reason, DateTimeOffset? ExpiresAt);
 
@@ -24,7 +24,8 @@ public sealed class IpBlockRulesController(JsoDbContext db) : ControllerBase
             .Select(x => new { x.Id, x.NetworkCidr, x.Reason, x.CreatedBy, x.CreatedAt, x.ExpiresAt, x.IsEnabled,
                 IsExpired = x.ExpiresAt != null && x.ExpiresAt <= now })
             .ToListAsync(ct);
-        return Ok(new { enforcementEnabled = false, rules });
+        var enforcementEnabled = configuration.GetValue<bool>("Security:TrustedClientIpVerified") && configuration.GetValue<bool>("Security:IpBlockEnforcementEnabled");
+        return Ok(new { enforcementEnabled, rules });
     }
 
     [HttpPost]
@@ -55,7 +56,7 @@ public sealed class IpBlockRulesController(JsoDbContext db) : ControllerBase
         };
         db.IpBlockRules.Add(rule);
         await db.SaveChangesAsync(ct);
-        return Ok(new { rule.Id, rule.NetworkCidr, rule.Reason, rule.CreatedAt, rule.ExpiresAt, rule.IsEnabled, enforcementEnabled = false });
+        return Ok(new { rule.Id, rule.NetworkCidr, rule.Reason, rule.CreatedAt, rule.ExpiresAt, rule.IsEnabled, enforcementEnabled = configuration.GetValue<bool>("Security:TrustedClientIpVerified") && configuration.GetValue<bool>("Security:IpBlockEnforcementEnabled") });
     }
 
     [HttpPatch("{id:guid}/disable")]
