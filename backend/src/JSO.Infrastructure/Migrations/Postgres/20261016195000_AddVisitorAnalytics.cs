@@ -1,9 +1,13 @@
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using JSO.Infrastructure;
 
 #nullable disable
 
 namespace JSO.Infrastructure.Migrations.Postgres;
 
+[DbContext(typeof(JsoDbContext))]
+[Migration("20261016195000_AddVisitorAnalytics")]
 public partial class AddVisitorAnalytics : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
