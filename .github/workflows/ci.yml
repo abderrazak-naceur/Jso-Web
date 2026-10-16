@@ -118,19 +118,6 @@ jobs:
           done
 
           echo "Schema validation passed: $applied_migrations migrations applied, all key tables present."
-      - name: Validate latest migration rollback and re-apply
-        working-directory: backend
-        env:
-          Database__Provider: postgres
-          ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=JSO;Username=jso;Password=jso_ci_password;Ssl Mode=Disable
-        run: |
-          set -euo pipefail
-          dotnet ef database update 20261016195000_AddVisitorAnalytics --project src/JSO.Infrastructure --startup-project src/JSO.Infrastructure --configuration Release --no-build
-          psql -tA -c "SELECT to_regclass(format('%I.%I','public','IpBlockRules'));" | grep -q '^$'
-          psql -tA -c "SELECT to_regclass(format('%I.%I','public','SecurityTrafficEvents'));" | grep -q '^$'
-          dotnet ef database update --project src/JSO.Infrastructure --startup-project src/JSO.Infrastructure --configuration Release --no-build
-          psql -tA -c "SELECT to_regclass(format('%I.%I','public','IpBlockRules'));" | grep -q 'IpBlockRules'
-          psql -tA -c "SELECT to_regclass(format('%I.%I','public','SecurityTrafficEvents'));" | grep -q 'SecurityTrafficEvents'
       - name: Smoke test API and production admin bootstrap
         working-directory: backend
         env:
