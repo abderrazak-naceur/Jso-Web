@@ -268,6 +268,8 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.UseRequestLocalization();
 app.UseExceptionHandler();
+// Record low-confidence automation signals only; this middleware never blocks traffic.
+app.UseMiddleware<SuspiciousTrafficMiddleware>();
 // Aggregate-only API usage metrics (idea E16). Placed right after the
 // exception handler so it observes the final status code of every request
 // (including auth failures) while never storing any personal data.
