@@ -24,6 +24,7 @@ Implemented on the feature branch:
 - CI smoke checks cover page-view intake, authorization, invalid/valid IP rule input, and the security event feed.
 - SuperAdmin API and UI to create/disable IPv4/IPv6 IP/CIDR rules with reason, optional expiry, duplicate prevention, and audit-log entries.
 - PostgreSQL entities/migration for block rules and security traffic events.
+- Best-effort daily cleanup of detailed security traffic events older than 30 days; analytics page views are cleaned up after 13 months.
 - Explicitly gated server-side CIDR enforcement; it requires both `Security:TrustedClientIpVerified=true` and `Security:IpBlockEnforcementEnabled=true` and remains off by default.
 - Conservative user-agent automation signals, deduplicated in-process and marked low-confidence; these signals never block requests and never verify a crawler.
 - Admin UI displays the actual enforcement state and recent signal events.
