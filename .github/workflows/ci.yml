@@ -170,6 +170,23 @@ jobs:
             'http://127.0.0.1:5080/api/admin/visitor-analytics?days=7')
           test "$visitor_unauth_status" = 401
 
+          # IP/CIDR rules and traffic events are SuperAdmin-only and must validate input.
+          ip_blocks_unauth_status=$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:5080/api/admin/security/ip-blocks)
+          test "$ip_blocks_unauth_status" = 401
+          ip_rule_invalid_status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+            http://127.0.0.1:5080/api/admin/security/ip-blocks \
+            -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+            -d '{"networkCidr":"not-an-ip","reason":"CI invalid input"}')
+          test "$ip_rule_invalid_status" = 400
+          ip_rule_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/security/ip-blocks \
+            -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+            -d '{"networkCidr":"192.0.2.0/24","reason":"CI smoke test rule","expiresAt":null}')
+          jq -e '.networkCidr == "192.0.2.0/24" and .enforcementEnabled == false' <<< "$ip_rule_response"
+          curl -fsS http://127.0.0.1:5080/api/admin/security/ip-blocks \
+            -H "Authorization: Bearer $token" | jq -e 'any(.rules[]; .networkCidr == "192.0.2.0/24")'
+          curl -fsS 'http://127.0.0.1:5080/api/admin/security/traffic-events?limit=10' \
+            -H "Authorization: Bearer $token" | jq -e '.detectionMode == "signals-only" and (.events | type == "array")'
+
           # Browsers must be able to read authorization failures instead of
           # reporting a generic "Failed to fetch" for the donation screens.
           for path in admin/donations/summary staff/donations/cash/capabilities; do
