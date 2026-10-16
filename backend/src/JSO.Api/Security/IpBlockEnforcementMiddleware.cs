@@ -9,9 +9,9 @@ namespace JSO.Api.Security;
 /// Optional CIDR enforcement. It is intentionally off unless both explicit
 /// configuration flags are true after the hosting proxy chain has been verified.
 /// </summary>
-public sealed class IpBlockEnforcementMiddleware(RequestDelegate next, IConfiguration configuration, ILogger<IpBlockEnforcementMiddleware> logger)
+public sealed class IpBlockEnforcementMiddleware(RequestDelegate next, IConfiguration configuration, ILogger<IpBlockEnforcementMiddleware> logger, IServiceScopeFactory scopeFactory)
 {
-    public async Task InvokeAsync(HttpContext context, JsoDbContext db)
+    public async Task InvokeAsync(HttpContext context)
     {
         var enabled = configuration.GetValue<bool>("Security:TrustedClientIpVerified")
             && configuration.GetValue<bool>("Security:IpBlockEnforcementEnabled");
@@ -31,6 +31,8 @@ public sealed class IpBlockEnforcementMiddleware(RequestDelegate next, IConfigur
 
         if (clientIp.IsIPv4MappedToIPv6) clientIp = clientIp.MapToIPv4();
         var now = DateTimeOffset.UtcNow;
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JsoDbContext>();
         var rules = await db.IpBlockRules.AsNoTracking()
             .Where(x => x.IsEnabled && (x.ExpiresAt == null || x.ExpiresAt > now))
             .Select(x => x.NetworkCidr)
