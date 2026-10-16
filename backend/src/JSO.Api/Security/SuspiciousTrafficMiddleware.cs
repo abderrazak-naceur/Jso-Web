@@ -26,6 +26,12 @@ public sealed class SuspiciousTrafficMiddleware(RequestDelegate next, ILogger<Su
             if (!LastRecorded.TryGetValue(key, out var last) || now - last >= DeduplicationWindow)
             {
                 LastRecorded[key] = now;
+                if (LastRecorded.Count > 5000)
+                {
+                    var expiredBefore = now - DeduplicationWindow;
+                    foreach (var entry in LastRecorded)
+                        if (entry.Value < expiredBefore) LastRecorded.TryRemove(entry.Key, out _);
+                }
                 try
                 {
                     await using var scope = context.RequestServices.CreateAsyncScope();
