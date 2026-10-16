@@ -89,20 +89,38 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             {
                 var role = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value
                     ?? context.Principal?.FindFirst("role")?.Value;
-                if (!string.Equals(role, "Fan", StringComparison.OrdinalIgnoreCase)) return;
+                if (string.IsNullOrWhiteSpace(role))
+                {
+                    context.Fail("Missing identity role.");
+                    return;
+                }
 
                 var subject = context.Principal?.FindFirst("sub")?.Value
                     ?? context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-                if (!Guid.TryParse(subject, out var fanId))
+                if (!Guid.TryParse(subject, out var userId))
                 {
-                    context.Fail("Invalid fan identity.");
+                    context.Fail("Invalid identity.");
                     return;
                 }
 
                 await using var scope = context.HttpContext.RequestServices.CreateAsyncScope();
                 var db = scope.ServiceProvider.GetRequiredService<JsoDbContext>();
-                var isActive = await db.FanUsers.AsNoTracking().AnyAsync(x => x.Id == fanId && x.IsActive);
-                if (!isActive) context.Fail("Fan account is inactive.");
+
+                if (string.Equals(role, "Fan", StringComparison.OrdinalIgnoreCase))
+                {
+                    var isActiveFan = await db.FanUsers.AsNoTracking()
+                        .AnyAsync(x => x.Id == userId && x.IsActive);
+                    if (!isActiveFan) context.Fail("Fan account is inactive.");
+                    return;
+                }
+
+                // Admin tokens are self-contained JWTs. Re-check the current database
+                // account on every request so disabling an account or changing its role
+                // revokes its already-issued tokens immediately instead of waiting up to
+                // eight hours for token expiry.
+                var isActiveAdminWithSameRole = await db.AdminUsers.AsNoTracking()
+                    .AnyAsync(x => x.Id == userId && x.IsActive && x.Role == role);
+                if (!isActiveAdminWithSameRole) context.Fail("Admin account is inactive or its role has changed.");
             }
         };
     });
