@@ -2655,6 +2655,36 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.ToTable("VisitorPageViews");
                 });
 
+            modelBuilder.Entity("JSO.Domain.IpBlockRule", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<DateTimeOffset>("CreatedAt").HasColumnType("timestamp with time zone");
+                    b.Property<string>("CreatedBy").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)");
+                    b.Property<DateTimeOffset?>("ExpiresAt").HasColumnType("timestamp with time zone");
+                    b.Property<bool>("IsEnabled").HasColumnType("boolean");
+                    b.Property<string>("NetworkCidr").IsRequired().HasMaxLength(64).HasColumnType("character varying(64)");
+                    b.Property<string>("Reason").IsRequired().HasMaxLength(500).HasColumnType("character varying(500)");
+                    b.HasKey("Id");
+                    b.HasIndex("NetworkCidr", "IsEnabled");
+                    b.ToTable("IpBlockRules");
+                });
+
+            modelBuilder.Entity("JSO.Domain.SecurityTrafficEvent", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<string>("Category").IsRequired().HasMaxLength(40).HasColumnType("character varying(40)");
+                    b.Property<string>("ClientAddress").HasMaxLength(64).HasColumnType("character varying(64)");
+                    b.Property<DateTimeOffset>("CreatedAt").HasColumnType("timestamp with time zone");
+                    b.Property<string>("Path").IsRequired().HasMaxLength(300).HasColumnType("character varying(300)");
+                    b.Property<string>("Severity").IsRequired().HasMaxLength(20).HasColumnType("character varying(20)");
+                    b.Property<string>("Signal").IsRequired().HasMaxLength(300).HasColumnType("character varying(300)");
+                    b.Property<string>("UserAgentFamily").HasMaxLength(100).HasColumnType("character varying(100)");
+                    b.Property<bool>("VerifiedBot").HasColumnType("boolean");
+                    b.HasKey("Id");
+                    b.HasIndex("CreatedAt");
+                    b.ToTable("SecurityTrafficEvents");
+                });
+
             modelBuilder.Entity("JSO.Domain.Volunteer", b =>
                 {
                     b.Property<Guid>("Id")
