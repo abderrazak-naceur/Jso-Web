@@ -55,6 +55,8 @@ public sealed class IpBlockRulesController(JsoDbContext db, IConfiguration confi
             IsEnabled = true
         };
         db.IpBlockRules.Add(rule);
+        var enforcementEnabled = configuration.GetValue<bool>("Security:TrustedClientIpVerified")
+            && configuration.GetValue<bool>("Security:IpBlockEnforcementEnabled");
         db.AuditLogs.Add(new AuditLog
         {
             Action = "security.ip-block.created",
@@ -62,10 +64,10 @@ public sealed class IpBlockRulesController(JsoDbContext db, IConfiguration confi
             EntityId = rule.Id.ToString(),
             UserId = rule.CreatedBy,
             UserEmail = User.FindFirstValue(ClaimTypes.Email),
-            Details = $"CIDR={rule.NetworkCidr}; expiresAt={rule.ExpiresAt:O}; enforcementEnabled={configuration.GetValue<bool>(\"Security:TrustedClientIpVerified\") && configuration.GetValue<bool>(\"Security:IpBlockEnforcementEnabled\")}"
+            Details = $"CIDR={rule.NetworkCidr}; expiresAt={rule.ExpiresAt:O}; enforcementEnabled={enforcementEnabled}"
         });
         await db.SaveChangesAsync(ct);
-        return Ok(new { rule.Id, rule.NetworkCidr, rule.Reason, rule.CreatedAt, rule.ExpiresAt, rule.IsEnabled, enforcementEnabled = configuration.GetValue<bool>("Security:TrustedClientIpVerified") && configuration.GetValue<bool>("Security:IpBlockEnforcementEnabled") });
+        return Ok(new { rule.Id, rule.NetworkCidr, rule.Reason, rule.CreatedAt, rule.ExpiresAt, rule.IsEnabled, enforcementEnabled });
     }
 
     [HttpPatch("{id:guid}/disable")]
