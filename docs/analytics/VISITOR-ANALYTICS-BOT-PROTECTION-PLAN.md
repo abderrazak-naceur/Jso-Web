@@ -66,7 +66,7 @@ Use persistent database entities and migrations, not in-memory state or Render's
 
 Before enabling raw IP storage, define the purpose, access restrictions, retention period, deletion job, and privacy notice. Prefer a keyed HMAC fingerprint for analytics uniqueness; store raw IP only for security block rules/events when necessary. Never store query strings, authorization headers, cookies, request bodies, or full user-agent strings unless a documented security need requires them.
 
-Initial recommended retention: aggregate analytics for 13 months; detailed security events and raw IP values for no more than 30 days by default, configurable after privacy review. Deletion must be scheduled and testable. This is a technical default, not legal advice.
+Initial recommended retention: analytics page-view records for 13 months; detailed security events for no more than 30 days by default. The API attempts a daily cleanup of old security events when it receives traffic; this is best-effort and is not a substitute for a durable scheduled retention job. Review retention settings and privacy notice before production. This is a technical default, not legal advice.
 
 ## 4. Proposed API surface
 
