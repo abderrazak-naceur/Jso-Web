@@ -152,6 +152,24 @@ jobs:
             http://127.0.0.1:5080/api/admin/matches)
           test "$admin_unauth_status" = 401
 
+          # Visitor analytics is opt-in at the browser and aggregates only sanitized public page views.
+          page_view_status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+            http://127.0.0.1:5080/api/analytics/page-view \
+            -H 'Content-Type: application/json' \
+            -d '{"path":"/","referrer":"https://example.com/article","deviceClass":"desktop","visitorId":"ci-visitor-001"}')
+          test "$page_view_status" = 204
+          sensitive_page_status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+            http://127.0.0.1:5080/api/analytics/page-view \
+            -H 'Content-Type: application/json' \
+            -d '{"path":"/account?email=private@example.com","deviceClass":"desktop","visitorId":"ci-visitor-002"}')
+          test "$sensitive_page_status" = 204
+          curl -fsS 'http://127.0.0.1:5080/api/admin/visitor-analytics?days=7' \
+            -H "Authorization: Bearer $token" \
+            | jq -e '.pageViews >= 1 and .uniqueVisitors >= 1 and any(.topPages[]; .path == "/")'
+          visitor_unauth_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            'http://127.0.0.1:5080/api/admin/visitor-analytics?days=7')
+          test "$visitor_unauth_status" = 401
+
           # Browsers must be able to read authorization failures instead of
           # reporting a generic "Failed to fetch" for the donation screens.
           for path in admin/donations/summary staff/donations/cash/capabilities; do
