@@ -13,9 +13,12 @@ public sealed class SuspiciousTrafficMiddleware(RequestDelegate next, ILogger<Su
 {
     private static readonly ConcurrentDictionary<string, DateTimeOffset> LastRecorded = new();
     private static readonly TimeSpan DeduplicationWindow = TimeSpan.FromMinutes(15);
+    private static int _lastCleanupDay;
 
     public async Task InvokeAsync(HttpContext context)
     {
+        await TryCleanupOldEventsAsync(context);
+
         var userAgent = context.Request.Headers.UserAgent.ToString();
         var family = GetAutomationFamily(userAgent);
         if (family is not null && IsPubliclyRelevantPath(context.Request.Path))
@@ -57,6 +60,30 @@ public sealed class SuspiciousTrafficMiddleware(RequestDelegate next, ILogger<Su
         }
 
         await next(context);
+    }
+
+    private async Task TryCleanupOldEventsAsync(HttpContext context)
+    {
+        // Keep detailed security signals for at most 30 days. Run at most once
+        // per UTC day per process; cleanup failure must never interrupt requests.
+        var now = DateTimeOffset.UtcNow;
+        var today = now.Year * 1000 + now.DayOfYear;
+        if (Interlocked.Exchange(ref _lastCleanupDay, today) == today)
+            return;
+
+        try
+        {
+            await using var scope = context.RequestServices.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<JsoDbContext>();
+            var cutoff = now.AddDays(-30);
+            await db.SecurityTrafficEvents
+                .Where(x => x.CreatedAt < cutoff)
+                .ExecuteDeleteAsync(context.RequestAborted);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Could not apply 30-day security-event retention cleanup; it will be retried on the next UTC day.");
+        }
     }
 
     private static string? GetAutomationFamily(string userAgent)
