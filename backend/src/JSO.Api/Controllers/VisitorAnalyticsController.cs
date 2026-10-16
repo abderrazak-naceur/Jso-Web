@@ -33,9 +33,21 @@ public sealed class VisitorAnalyticsController(JsoDbContext db, IConfiguration c
             path.StartsWith("/password-reset", StringComparison.OrdinalIgnoreCase) ||
             path.StartsWith("/payment", StringComparison.OrdinalIgnoreCase) ||
             path.StartsWith("/account", StringComparison.OrdinalIgnoreCase) ||
-            path.StartsWith("/profil", StringComparison.OrdinalIgnoreCase) ||
-            path.Contains('@'))
+            path.StartsWith("/profil", StringComparison.OrdinalIgnoreCase))
             return NoContent();
+
+        // Collapse opaque path identifiers so analytics never retains raw IDs or emails.
+        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries)
+            .Select(segment =>
+            {
+                var decoded = Uri.UnescapeDataString(segment);
+                return Guid.TryParse(decoded, out _) || long.TryParse(decoded, out _) ||
+                    decoded.Contains('@') || decoded.Length >= 32
+                    ? ":id"
+                    : decoded;
+            });
+        path = "/" + string.Join("/", segments);
+        if (path.Length > 300) path = path[..300];
 
         var visitorId = request.VisitorId?.Trim();
         if (string.IsNullOrWhiteSpace(visitorId) || visitorId.Length > 100)
