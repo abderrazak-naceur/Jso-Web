@@ -28,6 +28,7 @@ function formatDate(value) {
 
 export default function IpBlockManager() {
   const [rules, setRules] = useState([])
+  const [enforcementEnabled, setEnforcementEnabled] = useState(false)
   const [events, setEvents] = useState([])
   const [network, setNetwork] = useState('')
   const [reason, setReason] = useState('')
@@ -45,6 +46,7 @@ export default function IpBlockManager() {
         request('/admin/security/traffic-events?limit=100'),
       ])
       setRules(blockResult.rules || [])
+      setEnforcementEnabled(Boolean(blockResult.enforcementEnabled))
       setEvents(eventResult.events || [])
     } catch (e) { setError(e.message || 'Impossible de charger les règles de sécurité.') }
     finally { setBusy(false) }
@@ -68,7 +70,7 @@ export default function IpBlockManager() {
       setNetwork('')
       setReason('')
       setExpiresAt('')
-      setMessage('Règle enregistrée. Elle reste en mode préparation : aucun client n’est encore bloqué.')
+      setMessage('Règle enregistrée. ' + (enforcementEnabled ? 'La règle est active.' : 'Mode préparation : aucun client n’est encore bloqué.') + '')
       await load()
     } catch (e) { setError(e.message || 'Impossible de créer la règle.') }
   }
@@ -86,7 +88,7 @@ export default function IpBlockManager() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-start gap-3">
           <Ban size={22} className="mt-1 text-jso-blue"/>
-          <div><h3 className="text-lg font-black text-jso-ink">Règles de blocage IP / CIDR</h3><p className="mt-1 text-sm text-slate-600">Préparez les règles, avec justification et expiration. L’application aux requêtes reste désactivée tant que l’adresse client fiable de Render n’a pas été validée.</p></div>
+          <div><h3 className="text-lg font-black text-jso-ink">Règles de blocage IP / CIDR</h3><p className="mt-1 text-sm text-slate-600">Configurez les règles avec justification et expiration. État de l’application : {enforcementEnabled ? 'ACTIVE' : 'désactivée — adresse client fiable non validée'}. </p></div>
         </div>
         <button onClick={load} disabled={busy} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold"><RefreshCw size={15}/>Actualiser</button>
       </div>
