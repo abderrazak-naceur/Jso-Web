@@ -424,6 +424,16 @@ jobs:
             -d "$(jq -nc --arg token "$ticket_token" --arg matchId "$match_id" --arg gateId "$gate_code" --arg deviceId "$device_code"               '{token:$token,matchId:$matchId,gateId:$gateId,deviceId:$deviceId}')")
           jq -e '.result == "AlreadyUsed"' <<< "$second_checkin"
 
+          # Security management is SuperAdmin-only; ordinary Fan identities must be denied.
+          fan_ip_blocks_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            http://127.0.0.1:5080/api/admin/security/ip-blocks \
+            -H "Authorization: Bearer $fan_token")
+          test "$fan_ip_blocks_status" = 403
+          fan_traffic_events_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            http://127.0.0.1:5080/api/admin/security/traffic-events \
+            -H "Authorization: Bearer $fan_token")
+          test "$fan_traffic_events_status" = 403
+
           # Wrong match is a ticket outcome, while wrong gate/device are authorization failures.
           wrong_match_status=$(curl -sS -o /tmp/jso-wrong-match.json -w '%{http_code}' \
             -X POST http://127.0.0.1:5080/api/admin/tickets/scan/validate \
