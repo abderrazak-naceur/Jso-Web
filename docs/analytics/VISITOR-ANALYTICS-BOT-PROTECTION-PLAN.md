@@ -12,7 +12,27 @@ The existing SEO/Analytics module stores the GA4 Measurement ID and Search Conso
 
 The current rate limiter uses `RemoteIpAddress`; forwarded headers are enabled, but the trusted-proxy configuration and Render's production request path must be verified before relying on IP-based enforcement. Existing rate limits are useful baseline protection, not a bot-management console.
 
-## 2. Intended outcome
+## 2. Current implementation status (2026-10-16)
+
+Implemented on the feature branch:
+- Consent prompt with accept/refuse and a persistent privacy-preferences control.
+- Public SPA page-view intake that only the browser calls after explicit opt-in.
+- Sensitive routes excluded; query strings/fragments removed; opaque IDs normalized.
+- No raw IP, raw visitor identifier, cookie, authorization header, or full user-agent is stored for analytics. Visitor identity is pseudonymized with HMAC.
+- PostgreSQL migration, database-side aggregate queries, 13-month best-effort cleanup, and a SuperAdmin-only analytics endpoint.
+- Admin dashboard for views, estimated unique visitors, daily trend, top pages, referrer hosts, and device class.
+- CI smoke checks added for page-view intake and authorization.
+
+Not yet implemented:
+- IP/CIDR block management and server-side enforcement.
+- Security traffic event feed and bot/anomaly detection.
+- Production verification of trusted client IP extraction behind Render.
+- Automated tests for consent revocation, retention, migration rollback, and authorization matrix.
+- End-to-end production smoke test and deploy.
+
+The PR remains a draft until CI and the remaining security controls are reviewed. Do not claim bot protection or IP blocking is active based on this initial analytics phase.
+
+## 3. Intended outcome
 
 Add a separate, permission-protected **Visitors & Protection** area in the existing admin. Do not duplicate or replace the existing aggregate API Usage screen.
 
