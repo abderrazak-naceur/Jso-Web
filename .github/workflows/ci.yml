@@ -185,7 +185,7 @@ jobs:
           curl -fsS http://127.0.0.1:5080/api/admin/security/ip-blocks \
             -H "Authorization: Bearer $token" | jq -e 'any(.rules[]; .networkCidr == "192.0.2.0/24")'
           curl -fsS 'http://127.0.0.1:5080/api/admin/security/traffic-events?limit=10' \
-            -H "Authorization: Bearer $token" | jq -e '.detectionMode == "signals-only" and (.events | type == "array")'
+            -H "Authorization: Bearer $token" | jq -e '.detectionMode == "signals-only" and (.events | type == "array") and any(.events[]; .category == "automation-signal" and .verifiedBot == false)'
 
           # Browsers must be able to read authorization failures instead of
           # reporting a generic "Failed to fetch" for the donation screens.
