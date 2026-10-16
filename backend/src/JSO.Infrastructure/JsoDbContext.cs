@@ -53,6 +53,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<ScoutingNote> ScoutingNotes => Set<ScoutingNote>();
  public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
  public DbSet<ApiUsageDaily> ApiUsageDaily => Set<ApiUsageDaily>();
+ public DbSet<VisitorPageView> VisitorPageViews => Set<VisitorPageView>();
  public DbSet<DataExportRequest> DataExportRequests => Set<DataExportRequest>();
  public DbSet<AccountDeletionRequest> AccountDeletionRequests => Set<AccountDeletionRequest>();
  public DbSet<CommunityProgram> CommunityPrograms => Set<CommunityProgram>();
@@ -211,6 +212,13 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<FeatureFlag>().HasIndex(x=>x.Key).IsUnique();
   modelBuilder.Entity<FeatureFlag>().Property(x=>x.Enabled).HasDefaultValue(false);
   modelBuilder.Entity<ApiUsageDaily>().HasIndex(x=>new{x.Date,x.RouteGroup,x.StatusClass}).IsUnique();
+  modelBuilder.Entity<VisitorPageView>().Property(x=>x.Path).HasMaxLength(300).IsRequired();
+  modelBuilder.Entity<VisitorPageView>().Property(x=>x.ReferrerHost).HasMaxLength(150).IsRequired();
+  modelBuilder.Entity<VisitorPageView>().Property(x=>x.DeviceClass).HasMaxLength(20).IsRequired();
+  modelBuilder.Entity<VisitorPageView>().Property(x=>x.VisitorKey).HasMaxLength(64).IsRequired();
+  modelBuilder.Entity<VisitorPageView>().HasIndex(x=>x.CreatedAt);
+  modelBuilder.Entity<VisitorPageView>().HasIndex(x=>new{x.Path,x.CreatedAt});
+  modelBuilder.Entity<VisitorPageView>().HasIndex(x=>new{x.VisitorKey,x.CreatedAt});
   modelBuilder.Entity<DataExportRequest>().HasIndex(x=>new{x.FanUserId,x.Status});
   modelBuilder.Entity<DataExportRequest>().HasIndex(x=>x.RequestedAt);
   modelBuilder.Entity<DataExportRequest>().Property(x=>x.Status).HasDefaultValue("Pending");
