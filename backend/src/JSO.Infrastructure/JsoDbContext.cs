@@ -54,6 +54,8 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<FeatureFlag> FeatureFlags => Set<FeatureFlag>();
  public DbSet<ApiUsageDaily> ApiUsageDaily => Set<ApiUsageDaily>();
  public DbSet<VisitorPageView> VisitorPageViews => Set<VisitorPageView>();
+ public DbSet<IpBlockRule> IpBlockRules => Set<IpBlockRule>();
+ public DbSet<SecurityTrafficEvent> SecurityTrafficEvents => Set<SecurityTrafficEvent>();
  public DbSet<DataExportRequest> DataExportRequests => Set<DataExportRequest>();
  public DbSet<AccountDeletionRequest> AccountDeletionRequests => Set<AccountDeletionRequest>();
  public DbSet<CommunityProgram> CommunityPrograms => Set<CommunityProgram>();
@@ -219,6 +221,17 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<VisitorPageView>().HasIndex(x=>x.CreatedAt);
   modelBuilder.Entity<VisitorPageView>().HasIndex(x=>new{x.Path,x.CreatedAt});
   modelBuilder.Entity<VisitorPageView>().HasIndex(x=>new{x.VisitorKey,x.CreatedAt});
+  modelBuilder.Entity<IpBlockRule>().Property(x=>x.NetworkCidr).HasMaxLength(64).IsRequired();
+  modelBuilder.Entity<IpBlockRule>().Property(x=>x.Reason).HasMaxLength(500).IsRequired();
+  modelBuilder.Entity<IpBlockRule>().Property(x=>x.CreatedBy).HasMaxLength(200).IsRequired();
+  modelBuilder.Entity<IpBlockRule>().HasIndex(x=>new{x.NetworkCidr,x.IsEnabled});
+  modelBuilder.Entity<SecurityTrafficEvent>().Property(x=>x.Category).HasMaxLength(40).IsRequired();
+  modelBuilder.Entity<SecurityTrafficEvent>().Property(x=>x.Severity).HasMaxLength(20).IsRequired();
+  modelBuilder.Entity<SecurityTrafficEvent>().Property(x=>x.Signal).HasMaxLength(300).IsRequired();
+  modelBuilder.Entity<SecurityTrafficEvent>().Property(x=>x.Path).HasMaxLength(300).IsRequired();
+  modelBuilder.Entity<SecurityTrafficEvent>().Property(x=>x.ClientAddress).HasMaxLength(64);
+  modelBuilder.Entity<SecurityTrafficEvent>().Property(x=>x.UserAgentFamily).HasMaxLength(100);
+  modelBuilder.Entity<SecurityTrafficEvent>().HasIndex(x=>x.CreatedAt);
   modelBuilder.Entity<DataExportRequest>().HasIndex(x=>new{x.FanUserId,x.Status});
   modelBuilder.Entity<DataExportRequest>().HasIndex(x=>x.RequestedAt);
   modelBuilder.Entity<DataExportRequest>().Property(x=>x.Status).HasDefaultValue("Pending");
