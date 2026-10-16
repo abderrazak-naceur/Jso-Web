@@ -26,6 +26,7 @@ import { useNavigation } from './features/site/useNavigation'
 import { useHomeLayout } from './features/home/useHomeLayout'
 import { HOME_TEMPLATE_IDS } from './features/home/homeTemplates'
 import { useI18n } from './i18n/index.jsx'
+import VisitorAnalyticsConsent from './features/site/VisitorAnalyticsConsent.jsx'
 
 function App() {
   const { t } = useI18n()
@@ -330,6 +331,7 @@ function App() {
       <ChangePasswordModal open={passwordOpen} token={fan.token} onClose={() => setPasswordOpen(false)} />
       <AccessibilityPanel />
       <OfflineBanner />
+      <VisitorAnalyticsConsent />
     </div>
   )
 }

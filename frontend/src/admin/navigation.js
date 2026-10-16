@@ -50,6 +50,7 @@ export const ADMIN_NAVIGATION = [
     ['security', 'Sécurité', ShieldCheck, ['SuperAdmin'], 'Système'],
     ['featureflags', 'Feature flags', Flag, ['SuperAdmin','ClubAdmin'], 'Système'],
     ['apiusage', 'Utilisation API', Gauge, ['SuperAdmin','ClubAdmin'], 'Système'],
+    ['visitor-analytics', 'Visiteurs & protection', ShieldAlert, ['SuperAdmin'], 'Système'],
     ['gdpr', 'RGPD', ShieldAlert, ['SuperAdmin','ClubAdmin'], 'Système'],
     ['settings', 'Configuration', Server, ['SuperAdmin','ClubAdmin'], 'Système'],
 ]
@@ -98,6 +99,7 @@ export const ADMIN_PERMISSION_BY_ID = Object.freeze({
   security: 'security:manage',
   featureflags: 'system:feature-flags',
   apiusage: 'system:api-usage',
+  'visitor-analytics': 'security:manage',
   gdpr: 'system:gdpr',
   settings: 'system:settings',
 })

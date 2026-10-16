@@ -43,6 +43,7 @@ export const ADMIN_MODULES = {
   community: lazy(() => import('./community/CommunityPrograms')),
   featureflags: lazy(() => import('./system/FeatureFlags')),
   apiusage: lazy(() => import('./system/ApiUsage')),
+  'visitor-analytics': lazy(() => import('./system/VisitorAnalyticsModule')),
   gdpr: lazy(() => import('./system/Gdpr')),
   'club-events': lazy(() => import('./content/ClubEvents')),
   documents: lazy(() => import('./content/Documents')),
