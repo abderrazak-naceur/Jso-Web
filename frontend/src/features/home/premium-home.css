@@ -131,3 +131,12 @@
   .home-template-premium-2026 a,
   .home-template-premium-2026 button { transition-duration: 0.001ms; }
 }
+
+/* The ticket card is rendered from live next-match data, and only appears in Premium. */
+.home-template-premium-2026 .jso-next-match-ticket {
+  display: block;
+}
+.home-template-premium-2026 .jso-next-match-ticket button:focus-visible {
+  outline: 3px solid var(--jso-premium-blue);
+  outline-offset: 3px;
+}
