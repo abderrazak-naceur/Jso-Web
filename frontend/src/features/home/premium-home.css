@@ -1,0 +1,133 @@
+/* JSO Premium 2026: white-first editorial layout with royal blue and gold. */
+.home-template-premium-2026 {
+  --jso-premium-blue: #123b78;
+  --jso-premium-gold: #ffc629;
+  --jso-premium-ink: #071a35;
+  color: var(--jso-premium-ink);
+  background: #fff;
+}
+.home-template-premium-2026 > [data-home-section] { scroll-margin-top: 6rem; }
+.home-template-premium-2026 h1,
+.home-template-premium-2026 h2,
+.home-template-premium-2026 h3 { letter-spacing: -0.04em; }
+.home-template-premium-2026 [data-home-section="highlights"],
+.home-template-premium-2026 [data-home-section="matches"],
+.home-template-premium-2026 [data-home-section="memberships"],
+.home-template-premium-2026 [data-home-section="news"],
+.home-template-premium-2026 [data-home-section="shop"],
+.home-template-premium-2026 [data-home-section="team"],
+.home-template-premium-2026 [data-home-section="media"],
+.home-template-premium-2026 [data-home-section="sponsors"] { background-color: #fff; }
+.home-template-premium-2026 [data-home-section="matches"] {
+  background: linear-gradient(180deg, #fff 0%, #f5f8fd 100%);
+  border-top: 1px solid rgb(18 59 120 / 8%);
+  border-bottom: 1px solid rgb(18 59 120 / 8%);
+}
+.home-template-premium-2026 [data-home-section="sponsors"] {
+  border-top: 1px solid rgb(18 59 120 / 8%);
+  border-bottom: 1px solid rgb(18 59 120 / 8%);
+}
+.home-template-premium-2026 [data-home-section="highlights"] { border-bottom: 1px solid rgb(18 59 120 / 8%); }
+.home-template-premium-2026 [data-home-section="highlights"] h2,
+.home-template-premium-2026 [data-home-section="matches"] h2,
+.home-template-premium-2026 [data-home-section="news"] h2 { color: var(--jso-premium-ink); }
+.home-template-premium-2026 [data-home-section="highlights"] article,
+.home-template-premium-2026 [data-home-section="matches"] article,
+.home-template-premium-2026 [data-home-section="memberships"] article,
+.home-template-premium-2026 [data-home-section="shop"] article,
+.home-template-premium-2026 [data-home-section="news"] article,
+.home-template-premium-2026 [data-home-section="media"] article {
+  border-color: rgb(18 59 120 / 10%);
+  box-shadow: 0 16px 42px rgb(7 26 53 / 8%);
+}
+.home-template-premium-2026 .jso-hero--premium {
+  color: var(--jso-premium-ink);
+  background-color: #fff;
+  background-image: url('/jso-stadium-hero.png');
+  background-position: center right;
+  background-size: cover;
+}
+.home-template-premium-2026 .jso-hero--premium > .jso-premium-overlay {
+  background: linear-gradient(90deg, #fff 0%, rgb(255 255 255 / 98%) 30%, rgb(255 255 255 / 78%) 48%, rgb(255 255 255 / 12%) 78%, rgb(255 255 255 / 4%) 100%);
+}
+.home-template-premium-2026 .jso-hero--premium > .jso-premium-bottom-overlay {
+  background: linear-gradient(0deg, rgb(255 255 255 / 72%), transparent);
+}
+.home-template-premium-2026 .jso-hero--premium .jso-premium-copy {
+  position: relative;
+  z-index: 2;
+  max-width: 44rem;
+  color: var(--jso-premium-ink);
+}
+.home-template-premium-2026 .jso-hero--premium .jso-premium-eyebrow {
+  color: var(--jso-premium-blue);
+  background: rgb(255 255 255 / 88%);
+  border-color: rgb(18 59 120 / 14%);
+}
+.home-template-premium-2026 .jso-hero--premium h1 {
+  max-width: 10ch;
+  color: var(--jso-premium-ink);
+  font-size: clamp(3rem, 6.6vw, 6.3rem);
+  font-weight: 950;
+  line-height: .96;
+  text-wrap: balance;
+}
+.home-template-premium-2026 .jso-hero--premium h1 span {
+  color: var(--jso-premium-gold);
+  text-shadow: 0 2px 0 rgb(7 26 53 / 6%);
+}
+.home-template-premium-2026 .jso-hero--premium .jso-premium-description { color: #34445e; }
+.home-template-premium-2026 .jso-hero--premium .jso-premium-primary {
+  color: var(--jso-premium-ink);
+  background: var(--jso-premium-gold);
+  box-shadow: 0 10px 28px rgb(255 198 41 / 25%);
+}
+.home-template-premium-2026 .jso-hero--premium .jso-premium-secondary {
+  color: var(--jso-premium-blue);
+  border-color: rgb(18 59 120 / 20%);
+  background: rgb(255 255 255 / 88%);
+}
+.home-template-premium-2026 .jso-hero--premium .jso-premium-facts {
+  color: #50617b;
+  border-color: rgb(18 59 120 / 14%);
+}
+.home-template-premium-2026 .jso-hero--premium .jso-premium-facts strong { color: var(--jso-premium-ink); }
+.home-template-premium-2026 .jso-hero--premium .jso-premium-emblem {
+  min-height: clamp(280px, 35vw, 430px);
+  border: 1px solid rgb(255 255 255 / 55%);
+  background: linear-gradient(145deg, rgb(255 255 255 / 76%), rgb(255 255 255 / 42%));
+  box-shadow: 0 24px 70px rgb(7 26 53 / 15%);
+  backdrop-filter: blur(10px);
+}
+.home-template-premium-2026 .jso-hero--premium .jso-premium-emblem-caption {
+  background: linear-gradient(0deg, rgb(255 255 255 / 94%), rgb(255 255 255 / 0%));
+}
+.home-template-premium-2026 .jso-hero--premium .jso-premium-emblem-caption p:first-child { color: var(--jso-premium-blue); }
+.home-template-premium-2026 .jso-hero--premium .jso-premium-emblem-caption p:last-child { color: var(--jso-premium-ink); }
+.home-template-premium-2026 .jso-hero--premium .jso-premium-emblem img { filter: drop-shadow(0 16px 30px rgb(7 26 53 / 20%)); }
+.home-template-premium-2026 [data-home-section="matches"] article {
+  border-radius: 1.75rem;
+  box-shadow: 0 18px 50px rgb(7 26 53 / 9%);
+}
+.home-template-premium-2026 [data-home-section="matches"] article > button {
+  background: var(--jso-premium-gold);
+  color: var(--jso-premium-ink);
+}
+.home-template-premium-2026 [data-home-section="matches"] article > button:hover {
+  background: var(--jso-premium-blue);
+  color: #fff;
+}
+.home-template-premium-2026 [data-home-section="highlights"] button { box-shadow: 0 14px 36px rgb(7 26 53 / 12%); }
+.home-template-premium-2026 a,
+.home-template-premium-2026 button { transition-duration: 200ms; }
+@media (max-width: 767px) {
+  .home-template-premium-2026 .jso-hero--premium { background-position: 62% center; }
+  .home-template-premium-2026 .jso-hero--premium > .jso-premium-overlay {
+    background: linear-gradient(180deg, rgb(255 255 255 / 96%) 0%, rgb(255 255 255 / 93%) 52%, rgb(255 255 255 / 58%) 100%);
+  }
+  .home-template-premium-2026 .jso-hero--premium .jso-premium-emblem { min-height: 270px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-template-premium-2026 a,
+  .home-template-premium-2026 button { transition-duration: 0.001ms; }
+}
