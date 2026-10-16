@@ -13,6 +13,7 @@ namespace JSO.Api.Controllers;
 [Route("api/analytics")]
 public sealed class VisitorAnalyticsController(JsoDbContext db, IConfiguration configuration) : ControllerBase
 {
+    private static int _lastCleanupDay;
     public sealed record PageViewRequest(string? Path, string? Referrer, string? DeviceClass, string? VisitorId);
 
     [HttpPost("page-view")]
@@ -72,6 +73,19 @@ public sealed class VisitorAnalyticsController(JsoDbContext db, IConfiguration c
             CreatedAt = DateTimeOffset.UtcNow
         });
         await db.SaveChangesAsync(ct);
+
+        // Keep detailed analytics for at most 13 months. Cleanup is attempted
+        // once per UTC day per process and can never break the page-view request.
+        var today = DateTime.UtcNow.Year * 1000 + DateTime.UtcNow.DayOfYear;
+        if (Interlocked.Exchange(ref _lastCleanupDay, today) != today)
+        {
+            try
+            {
+                var cutoff = DateTimeOffset.UtcNow.AddMonths(-13);
+                await db.VisitorPageViews.Where(x => x.CreatedAt < cutoff).ExecuteDeleteAsync(ct);
+            }
+            catch { /* analytics retention cleanup is best-effort */ }
+        }
         return NoContent();
     }
 }
@@ -86,20 +100,34 @@ public sealed class AdminVisitorAnalyticsController(JsoDbContext db) : Controlle
     {
         days = Math.Clamp(days, 1, 90);
         var since = DateTimeOffset.UtcNow.AddDays(-days);
-        var rows = await db.VisitorPageViews.AsNoTracking().Where(x => x.CreatedAt >= since).ToListAsync(ct);
+        var query = db.VisitorPageViews.AsNoTracking().Where(x => x.CreatedAt >= since);
+        var pageViews = await query.CountAsync(ct);
+        var uniqueVisitors = await query.Select(x => x.VisitorKey).Distinct().CountAsync(ct);
+        var daily = await query
+            .GroupBy(x => new { x.CreatedAt.Year, x.CreatedAt.Month, x.CreatedAt.Day })
+            .OrderBy(x => x.Key.Year).ThenBy(x => x.Key.Month).ThenBy(x => x.Key.Day)
+            .Select(x => new
+            {
+                x.Key.Year, x.Key.Month, x.Key.Day,
+                views = x.Count(),
+                visitors = x.Select(y => y.VisitorKey).Distinct().Count()
+            }).ToListAsync(ct);
+        var topPages = await query.GroupBy(x => x.Path).OrderByDescending(x => x.Count()).Take(12)
+            .Select(x => new { path = x.Key, views = x.Count() }).ToListAsync(ct);
+        var referrers = await query.Where(x => x.ReferrerHost != "").GroupBy(x => x.ReferrerHost)
+            .OrderByDescending(x => x.Count()).Take(10).Select(x => new { host = x.Key, views = x.Count() }).ToListAsync(ct);
+        var devices = await query.GroupBy(x => x.DeviceClass).OrderByDescending(x => x.Count())
+            .Select(x => new { device = x.Key, views = x.Count() }).ToListAsync(ct);
+
         return Ok(new
         {
             windowDays = days,
-            pageViews = rows.Count,
-            uniqueVisitors = rows.Select(x => x.VisitorKey).Distinct().Count(),
-            byDay = rows.GroupBy(x => x.CreatedAt.UtcDateTime.ToString("yyyy-MM-dd"))
-                .OrderBy(x => x.Key).Select(x => new { date = x.Key, views = x.Count(), visitors = x.Select(y => y.VisitorKey).Distinct().Count() }),
-            topPages = rows.GroupBy(x => x.Path).OrderByDescending(x => x.Count()).Take(12)
-                .Select(x => new { path = x.Key, views = x.Count() }),
-            referrers = rows.Where(x => x.ReferrerHost != "").GroupBy(x => x.ReferrerHost)
-                .OrderByDescending(x => x.Count()).Take(10).Select(x => new { host = x.Key, views = x.Count() }),
-            devices = rows.GroupBy(x => x.DeviceClass).OrderByDescending(x => x.Count())
-                .Select(x => new { device = x.Key, views = x.Count() })
+            pageViews,
+            uniqueVisitors,
+            byDay = daily.Select(x => new { date = $"{x.Year:D4}-{x.Month:D2}-{x.Day:D2}", x.views, x.visitors }),
+            topPages,
+            referrers,
+            devices
         });
     }
 }
