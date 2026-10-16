@@ -11,7 +11,7 @@ public sealed class IpBlockCidrMatchingTests
         ?? throw new InvalidOperationException("CIDR matcher was not found.");
 
     private static bool Matches(string address, string cidr) =>
-        (bool)(MatchesMethod.Invoke(null, [IPAddress.Parse(address), cidr])
+        (bool)(MatchesMethod.Invoke(null, new object?[] { IPAddress.Parse(address), cidr })
             ?? throw new InvalidOperationException("CIDR matcher returned no result."));
 
     [Theory]
@@ -20,7 +20,7 @@ public sealed class IpBlockCidrMatchingTests
     [InlineData("192.0.2.12", "192.0.2.12/32", true)]
     [InlineData("192.0.2.13", "192.0.2.12/32", false)]
     [InlineData("10.255.255.255", "10.0.0.0/7", true)]
-    [InlineData("11.0.0.1", "10.0.0.0/7", false)]
+    [InlineData("12.0.0.1", "10.0.0.0/7", false)]
     [InlineData("2001:db8::1234", "2001:db8::/32", true)]
     [InlineData("2001:db9::1", "2001:db8::/32", false)]
     [InlineData("2001:db8::1", "2001:db8::1/128", true)]
