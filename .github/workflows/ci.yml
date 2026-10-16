@@ -126,7 +126,13 @@ jobs:
         run: |
           set -euo pipefail
           dotnet ef database update 20261016195000_AddVisitorAnalytics --project src/JSO.Infrastructure --startup-project src/JSO.Infrastructure --configuration Release --no-build
-          psql -tA -c "SELECT to_regclass('public.\\"IpBlockRules\\"');" | grep -q '^        working-directory: backend
+          psql -tA -c "SELECT to_regclass(format('%I.%I','public','IpBlockRules'));" | grep -q '^$'
+          psql -tA -c "SELECT to_regclass(format('%I.%I','public','SecurityTrafficEvents'));" | grep -q '^$'
+          dotnet ef database update --project src/JSO.Infrastructure --startup-project src/JSO.Infrastructure --configuration Release --no-build
+          psql -tA -c "SELECT to_regclass(format('%I.%I','public','IpBlockRules'));" | grep -q 'IpBlockRules'
+          psql -tA -c "SELECT to_regclass(format('%I.%I','public','SecurityTrafficEvents'));" | grep -q 'SecurityTrafficEvents'
+      - name: Smoke test API and production admin bootstrap
+        working-directory: backend
         env:
           ASPNETCORE_ENVIRONMENT: Production
           ASPNETCORE_URLS: http://127.0.0.1:5080
