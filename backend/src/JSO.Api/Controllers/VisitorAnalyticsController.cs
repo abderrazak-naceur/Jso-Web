@@ -50,11 +50,19 @@ public sealed class VisitorAnalyticsController(JsoDbContext db, IConfiguration c
             referrerHost = referrer.Host.ToLowerInvariant()[..Math.Min(referrer.Host.Length, 150)];
 
         // Use a keyed HMAC instead of storing the browser identifier directly.
-        var key = configuration["Analytics:VisitorHashKey"];
-        if (string.IsNullOrWhiteSpace(key) || key.Length < 32)
-            return StatusCode(StatusCodes.Status503ServiceUnavailable);
+        // Derive a purpose-specific key from the existing server secret when no
+        // dedicated analytics key is configured. Never expose this key to the client.
+        var masterKey = configuration["Analytics:VisitorHashKey"];
+        if (string.IsNullOrWhiteSpace(masterKey))
+        {
+            var jwtKey = configuration["Jwt:Key"];
+            if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
+                return StatusCode(StatusCodes.Status503ServiceUnavailable);
+            masterKey = Convert.ToHexString(HMACSHA256.HashData(
+                Encoding.UTF8.GetBytes(jwtKey), Encoding.UTF8.GetBytes("JSO visitor analytics v1")));
+        }
 
-        var visitorKey = Convert.ToHexString(HMACSHA256.HashData(Encoding.UTF8.GetBytes(key), Encoding.UTF8.GetBytes(visitorId)));
+        var visitorKey = Convert.ToHexString(HMACSHA256.HashData(Encoding.UTF8.GetBytes(masterKey), Encoding.UTF8.GetBytes(visitorId)));
         db.VisitorPageViews.Add(new VisitorPageView
         {
             Path = path,
