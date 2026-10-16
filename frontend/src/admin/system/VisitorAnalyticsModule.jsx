@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Activity, Users, Eye, RefreshCw, ShieldAlert, ExternalLink } from 'lucide-react'
 import { API_BASE_URL } from '../../lib/apiConfig'
+import IpBlockManager from './IpBlockManager'
 
 const WINDOWS = [[7, '7 jours'], [30, '30 jours'], [90, '90 jours']]
 
@@ -82,5 +83,6 @@ export default function VisitorAnalyticsModule({ onError = () => {} }) {
     <section className="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-6">
       <div className="flex items-start gap-3"><ShieldAlert className="mt-0.5 text-amber-700" size={22}/><div><h3 className="font-black text-amber-950">Protezione bot e blocco IP</h3><p className="mt-2 text-sm leading-6 text-amber-900">I limiti di frequenza API esistenti continuano a funzionare. La gestione amministrativa dei blocchi IP/CIDR e il rilevamento avanzato dei bot richiedono ancora la verifica dell’indirizzo client affidabile dietro il proxy Render; non attiviamo blocchi automatici finché questa verifica non è completata.</p><a href="/admin/security" className="mt-3 inline-flex items-center gap-2 font-bold text-amber-950 underline">Apri sicurezza esistente <ExternalLink size={15}/></a></div></div>
     </section>
+    <IpBlockManager />
   </div>
 }
