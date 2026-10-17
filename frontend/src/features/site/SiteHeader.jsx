@@ -44,6 +44,7 @@ export default function SiteHeader({
     [t('common.news'), NEWS_LIST_PATH, Newspaper],
     ...(sections.some((section) => section.id === 'shop') ? [['Boutique', sectionUrl('shop'), ShoppingBag]] : []),
     ...(sections.some((section) => section.id === 'donation') ? [['Soutenir', sectionUrl('donation'), HeartHandshake]] : []),
+    ['Campagne de soutien', '/support-campaign-preview', HeartHandshake],
   ]
 
   // Escape closes whichever menu is open (and gives focus back to its button);
@@ -106,6 +107,9 @@ export default function SiteHeader({
               {section.label}
             </a>
           ))}
+          <a href="/support-campaign-preview" onClick={closeMenus} className={desktopLinkClass(window.location.pathname === '/support-campaign-preview')}>
+            Campagne de soutien
+          </a>
 
           {(secondary.length > 0 || extraLinks.length > 0) && (
             <div ref={moreRef} className="relative">
