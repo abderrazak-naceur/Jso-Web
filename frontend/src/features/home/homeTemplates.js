@@ -63,6 +63,14 @@ export const HOME_TEMPLATES = [
     preview: 'heritage',
     sectionOrder: ['hero', 'club', 'archive', 'team', 'news', 'media', 'highlights', 'matches', 'events', 'community', 'memberships', 'sponsors', 'donation', 'shop', 'infos', 'mobile', 'selling-band', 'app-download'],
   },
+  {
+    id: 'premium-2026',
+    name: 'JSO Premium 2026',
+    badge: 'Premium',
+    description: 'Une expérience lumineuse blanc, bleu royal et or, pensée pour les supporters, les matchs et la billetterie.',
+    preview: 'premium',
+    sectionOrder: ['hero', 'highlights', 'matches', 'memberships', 'selling-band', 'news', 'shop', 'team', 'media', 'events', 'sponsors', 'community', 'donation', 'club', 'archive', 'infos', 'mobile', 'app-download'],
+  },
 ]
 
 export const HOME_TEMPLATE_IDS = new Set(HOME_TEMPLATES.map(({ id }) => id))

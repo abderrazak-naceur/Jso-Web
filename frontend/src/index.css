@@ -620,3 +620,90 @@ html[dir="rtl"] .jso-hero {
 html[dir="rtl"] .jso-scroll {
   direction: rtl;
 }
+
+
+/* JSO Premium 2026 — premium club identity, using only the official navy/blue,
+   yellow and white palette. Shared content and API integrations stay intact. */
+.home-template-premium-2026 {
+  color: #0b1730;
+  background: #f7f9fc;
+}
+.home-template-premium-2026 h1,
+.home-template-premium-2026 h2,
+.home-template-premium-2026 h3 {
+  letter-spacing: -0.04em;
+}
+.home-template-premium-2026 [data-home-section] {
+  scroll-margin-top: 6rem;
+}
+.home-template-premium-2026 [data-home-section="matches"],
+.home-template-premium-2026 [data-home-section="memberships"],
+.home-template-premium-2026 [data-home-section="sponsors"] {
+  border-top: 1px solid rgb(7 26 58 / 8%);
+  border-bottom: 1px solid rgb(7 26 58 / 8%);
+}
+.home-template-premium-2026 .jso-hero {
+  min-height: 0;
+  background-image: url('/jso-stadium-hero.png');
+  background-position: center 40%;
+  background-size: cover;
+}
+.home-template-premium-2026 .jso-hero > .absolute.inset-0 {
+  background-image: linear-gradient(100deg, rgb(4 15 36 / 97%) 0%, rgb(7 26 58 / 88%) 48%, rgb(7 26 58 / 34%) 100%);
+}
+.home-template-premium-2026 .jso-hero .relative.mx-auto {
+  min-height: clamp(540px, 65vw, 700px);
+}
+.home-template-premium-2026 .jso-hero h1 {
+  max-width: 10ch;
+  font-size: clamp(3rem, 7vw, 6.5rem);
+  line-height: .98;
+  font-weight: 950;
+  text-wrap: balance;
+}
+.home-template-premium-2026 .jso-hero h1 span {
+  color: #ffd700;
+  text-shadow: 0 4px 28px rgb(255 215 0 / 16%);
+}
+.home-template-premium-2026 .jso-hero .bg-jso-gold {
+  box-shadow: 0 10px 28px rgb(255 215 0 / 20%);
+}
+.home-template-premium-2026 [data-home-section="memberships"] article,
+.home-template-premium-2026 [data-home-section="shop"] article,
+.home-template-premium-2026 [data-home-section="news"] article,
+.home-template-premium-2026 [data-home-section="media"] article {
+  border-color: rgb(7 26 58 / 10%);
+  box-shadow: 0 16px 42px rgb(7 26 58 / 8%);
+}
+.home-template-premium-2026 [data-home-section="sponsors"] {
+  background: #fff;
+}
+.home-template-premium-2026 [data-home-section="matches"] {
+  background: linear-gradient(180deg, #fff, #f4f7fc);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .home-template-premium-2026 a,
+  .home-template-premium-2026 button {
+    transition-duration: 200ms;
+  }
+}
+
+.home-template-mini-premium {
+  color: #fff;
+  background: linear-gradient(145deg, #030b1c, #071a3a 58%, #1769e0);
+}
+.home-template-mini-premium .home-template-mini-hero {
+  color: #fff;
+  background: linear-gradient(135deg, #071a3a, #102b58);
+  border: 1px solid rgb(255 215 0 / 55%);
+}
+.home-template-mini-premium .home-template-mini-side {
+  color: #ffd700;
+  background: #102b58;
+  border: 1px solid rgb(255 215 0 / 40%);
+}
+.home-template-mini-premium .home-template-mini-card {
+  color: #fff;
+  background: #10213e;
+  border: 1px solid rgb(255 255 255 / 12%);
+}
