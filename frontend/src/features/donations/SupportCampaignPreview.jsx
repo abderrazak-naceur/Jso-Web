@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, BusFront, CheckCircle2, ChevronRight, CircleDollarSign, CreditCard, LayoutDashboard, LockKeyhole, Menu, Plus, Settings2, ShieldCheck, Target, Users, Wallet, Wrench, X } from 'lucide-react'
+import { ArrowRight, BusFront, CheckCircle2, ChevronRight, CircleDollarSign, CreditCard, LayoutDashboard, Plus, Settings2, ShieldCheck, Target, Users, Wallet, Wrench, X } from 'lucide-react'
 
 const initialCampaigns = [
   { id: 1, title: 'Un bus pour la JSO', category: 'Transport', target: 30000, raised: 8650, supporters: 342, status: 'Activa', months: 10, image: 'bus' },
