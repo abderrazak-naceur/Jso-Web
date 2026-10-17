@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Net;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -144,7 +145,40 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "JSO API",
+        Version = "v1",
+        Description = "API pubblica di JSO Web. Gli endpoint protetti richiedono un token JWT."
+    });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Inserisci il token JWT senza il prefisso Bearer."
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<JsoDbContext>();
@@ -242,16 +276,22 @@ await using (var startupScope = app.Services.CreateAsyncScope())
 
 app.UseForwardedHeaders();
 
-if (app.Environment.IsDevelopment())
+// Swagger is enabled in production as well as development so the deployed API
+// can be inspected and tested from the browser. Protected endpoints still enforce
+// their existing JWT/role policies; Swagger does not bypass authorization.
+if (builder.Configuration.GetValue("Swagger:Enabled", true))
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "JSO API v1");
+        options.RoutePrefix = "swagger";
+        options.DocumentTitle = "JSO API - Swagger";
+    });
 }
-else
-{
-    // Render terminates TLS at the edge. The app listens on the internal
-    // HTTP port, so HTTPS redirection here only creates an unnecessary warning.
-}
+
+// Render terminates TLS at the edge. The app listens on the internal HTTP port,
+// so HTTPS redirection here would only create an unnecessary warning.
 
 var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "uploads");
 Directory.CreateDirectory(uploadsPath);
