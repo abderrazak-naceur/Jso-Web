@@ -242,10 +242,12 @@ await using (var startupScope = app.Services.CreateAsyncScope())
 
 app.UseForwardedHeaders();
 
-// Swagger is enabled in production as well as development so the deployed API
-// can be inspected and tested from the browser. Protected endpoints still enforce
-// their existing JWT/role policies; Swagger does not bypass authorization.
-if (builder.Configuration.GetValue("Swagger:Enabled", true))
+// Swagger is available by default only in Development. In production it exposes
+// the API surface and must be explicitly enabled for a short, controlled review
+// window using the Swagger__Enabled environment variable. This does not replace
+// endpoint authorization: sensitive controllers/actions must still require JWT
+// authentication and role/permission policies.
+if (builder.Configuration.GetValue("Swagger:Enabled", builder.Environment.IsDevelopment()))
 {
     app.UseSwagger();
     app.UseSwaggerUI(options =>
