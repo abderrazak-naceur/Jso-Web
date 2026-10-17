@@ -242,16 +242,22 @@ await using (var startupScope = app.Services.CreateAsyncScope())
 
 app.UseForwardedHeaders();
 
-if (app.Environment.IsDevelopment())
+// Swagger is enabled in production as well as development so the deployed API
+// can be inspected and tested from the browser. Protected endpoints still enforce
+// their existing JWT/role policies; Swagger does not bypass authorization.
+if (builder.Configuration.GetValue("Swagger:Enabled", true))
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "JSO API v1");
+        options.RoutePrefix = "swagger";
+        options.DocumentTitle = "JSO API - Swagger";
+    });
 }
-else
-{
-    // Render terminates TLS at the edge. The app listens on the internal
-    // HTTP port, so HTTPS redirection here only creates an unnecessary warning.
-}
+
+// Render terminates TLS at the edge. The app listens on the internal HTTP port,
+// so HTTPS redirection here would only create an unnecessary warning.
 
 var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "uploads");
 Directory.CreateDirectory(uploadsPath);
