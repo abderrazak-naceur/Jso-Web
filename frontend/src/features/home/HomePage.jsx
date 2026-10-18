@@ -65,7 +65,7 @@ function buildHighlights({ data, onOpenMatch, onOpenArticle }) {
     title: 'Chaque geste compte pour la JSO',
     subtitle: 'Aidez le club à avancer',
     cta: 'Faire un don',
-    onSelect: () => { window.location.assign('/soutenir') },
+    onSelect: () => { window.location.assign('/nos-projets#faire-un-don') },
   })
   items.push({
     key: 'memberships',
@@ -169,7 +169,7 @@ export default function HomePage({
                 L’objectif est de construire un soutien régulier pour le club : 10 000 TND par mois et 120 000 TND sur 12 mois si 1 000 personnes participent.
               </p>
             </div>
-            <a href="/soutenir" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-jso-navy px-6 py-3 font-extrabold text-white hover:bg-white hover:text-jso-navy">
+            <a href="/nos-projets#faire-un-don" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-jso-navy px-6 py-3 font-extrabold text-white hover:bg-white hover:text-jso-navy">
               Participer <HeartHandshake size={17} aria-hidden="true" />
             </a>
           </div>

@@ -11,7 +11,7 @@ export default function DonationsInfoCard() {
               <h2 className="mt-2 text-2xl font-black sm:text-3xl">Un petit geste. Un grand impact.</h2>
               <p className="mt-3 text-sm leading-6 text-white/65">Aidez la Jeunesse Sportive de Oudhref à poursuivre son projet sportif et associatif.</p>
             </div>
-            <a href="/soutenir" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy hover:bg-white">
+            <a href="/nos-projets#faire-un-don" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy hover:bg-white">
               Faire un don <HeartHandshake size={17} aria-hidden="true" />
             </a>
           </div>

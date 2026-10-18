@@ -113,7 +113,7 @@ export default function DonationsModule({ onError }) {
       <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
         <p className="text-xs font-black uppercase tracking-widest text-jso-blue">Pour un supporter</p>
         <h3 className="mt-2 text-xl font-black">Faire un don</h3>
-        <p className="mt-2 text-sm leading-6 text-slate-600">Partagez la page publique. Elle affiche uniquement les paiements en ligne opérationnels et explique le don en espèces quand aucun paiement en ligne n’est ouvert.</p>
+        <p className="mt-2 text-sm leading-6 text-slate-600">Partagez la page publique. Les promesses en espèces restent « À confirmer » jusqu’à la réception de l’argent ; un paiement en ligne devient payé après la vérification du prestataire.</p>
         <a href="/nos-projets" target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-bold text-white">Ouvrir la page de don</a>
       </div>
       <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">

@@ -4,7 +4,7 @@ export const SECTION_PATHS = Object.freeze({
   team: '/equipe',
   club: '/club',
   shop: '/boutique',
-  donation: '/soutenir',
+  donation: '/nos-projets',
   projects: '/nos-projets',
   memberships: '/abonnements',
   media: '/medias',

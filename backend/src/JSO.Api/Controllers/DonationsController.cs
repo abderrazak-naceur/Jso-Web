@@ -61,7 +61,6 @@ public sealed class DonationsController(
             {
                 x.Id,
                 x.DisplayName,
-                Message = x.PaymentProvider == "Cash" ? null : x.Message,
                 x.Amount,
                 x.PaymentStatus,
                 CreatedAt = x.CreatedAt,
@@ -82,8 +81,47 @@ public sealed class DonationsController(
             totalPaidTnd = total,
             monthlyPaidTnd = monthlyTotal,
             donorCount = count,
+            supporterCount = await publicDonations.CountAsync(ct),
             recentDonations = recent,
         });
+    }
+
+    [HttpGet("supporters")]
+    public async Task<IActionResult> Supporters([FromQuery] int page = 1, [FromQuery] int pageSize = 10,
+        [FromQuery] string? status = null, [FromQuery] string? search = null, CancellationToken ct = default)
+    {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 50);
+        var query = db.SupporterBricks.AsNoTracking()
+            .Where(x => x.Status == CampaignStatus &&
+                (x.PaymentStatus == "Paid" || (x.PaymentProvider == "Cash" && x.PaymentStatus == "Pending")));
+        if (string.Equals(status, "paid", StringComparison.OrdinalIgnoreCase))
+            query = query.Where(x => x.PaymentStatus == "Paid");
+        else if (string.Equals(status, "pending", StringComparison.OrdinalIgnoreCase))
+            query = query.Where(x => x.PaymentProvider == "Cash" && x.PaymentStatus == "Pending");
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(x => x.DisplayName.Contains(term));
+        }
+        var totalCount = await query.CountAsync(ct);
+        var items = await query
+            .OrderByDescending(x => x.PaidAt ?? x.CreatedAt)
+            .ThenByDescending(x => x.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new
+            {
+                x.Id,
+                x.DisplayName,
+                x.Amount,
+                x.PaymentStatus,
+                CreatedAt = x.CreatedAt,
+                x.PaidAt
+            })
+            .ToListAsync(ct);
+
+        return Ok(new { items, page, pageSize, totalCount, totalPages = (int)Math.Ceiling(totalCount / (double)pageSize) });
     }
 
     [HttpPost]
@@ -98,9 +136,7 @@ public sealed class DonationsController(
             // their private account history. Never accept the owner id from the
             // request body.
             FanUserId = CurrentFanId(),
-            DisplayName = string.IsNullOrWhiteSpace(request.DisplayName)
-                ? "Un amoureux de la JSO"
-                : request.DisplayName.Trim(),
+            DisplayName = request.DisplayName!.Trim(),
             Message = string.IsNullOrWhiteSpace(request.Message) ? null : request.Message.Trim(),
             Amount = request.Amount,
             DonorPhone = NormalizePhone(request.Phone),
@@ -134,7 +170,7 @@ public sealed class DonationsController(
         var donation = new SupporterBrick
         {
             FanUserId = CurrentFanId(),
-            DisplayName = string.IsNullOrWhiteSpace(request.DisplayName) ? "Donateur JSO" : request.DisplayName.Trim(),
+            DisplayName = request.DisplayName!.Trim(),
             Message = string.IsNullOrWhiteSpace(request.Message) ? null : request.Message.Trim(),
             Amount = request.Amount,
             DonorPhone = NormalizePhone(request.Phone),
@@ -271,7 +307,8 @@ public sealed class DonationsController(
     {
         if (amount < 1m) return "Le montant minimum du don est de 1 TND.";
         if (amount > 1_000_000m) return "Le montant du don est hors limites.";
-        if (displayName?.Trim().Length > 80) return "Le nom affiché doit contenir au maximum 80 caractères.";
+        if (string.IsNullOrWhiteSpace(displayName)) return "Indiquez le nom qui apparaîtra dans la liste publique.";
+        if (displayName.Trim().Length > 80) return "Le nom affiché doit contenir au maximum 80 caractères.";
         if (message?.Trim().Length > 280) return "Le message doit contenir au maximum 280 caractères.";
         return null;
     }

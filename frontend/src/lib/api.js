@@ -133,6 +133,12 @@ export const ticketApi = {
 
 export const donationsApi = {
   campaign: (signal) => request('/donations/campaign', signal),
+  supporters: (page = 1, status = '', search = '', signal) => {
+    const params = new URLSearchParams({ page: String(page), pageSize: '10' })
+    if (status) params.set('status', status)
+    if (search.trim()) params.set('search', search.trim())
+    return request('/donations/supporters?' + params.toString(), signal)
+  },
   paymentMethods: (signal) => request('/donations/payment-methods', signal),
   create: (data, token) => requestJson('/donations', 'POST', data, token),
   cashPledge: (data, token) => requestJson('/donations/cash-pledge', 'POST', data, token),

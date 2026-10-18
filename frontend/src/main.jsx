@@ -50,7 +50,10 @@ function Root() {
   if (path.startsWith('/payment/')) return <PaymentReturn />
   if (path === '/actualites') return <NewsListPage />
   if (path === '/billetterie') return <BilletteriePage />
-  if (path === '/soutenir') return <DonationPage />
+  if (path === '/soutenir') {
+    window.history.replaceState({}, '', '/nos-projets' + window.location.search + window.location.hash)
+    return <DonationPage />
+  }
   if (path === '/support-campaign-preview') return <SupportCampaignPreview />
   if (path === '/account' || path === '/mon-espace') return <CustomerDashboardPage />
   if (path === '/profil' || path === '/profile') return <SupporterProfilePage />
