@@ -91,8 +91,8 @@ export default function DonationsModule({ onError }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-gold">Collecte</p>
-          <h2 className="mt-2 text-3xl font-black">Soutien JSO</h2>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-white/70">Suivez tous les dons confirmés, réglez la campagne et vérifiez quels moyens de paiement sont réellement ouverts.</p>
+          <h2 className="mt-2 text-3xl font-black">Dons & collecte</h2>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-white/70">Suivez les dons confirmés, consultez les montants collectés et gérez les paramètres de la campagne. La confirmation des espèces se fait séparément dans « Dons en espèces ».</p>
         </div>
         <HeartHandshake className="text-jso-gold" size={34} aria-hidden="true" />
       </div>
@@ -126,7 +126,7 @@ export default function DonationsModule({ onError }) {
 
     <div className="flex flex-wrap gap-3">
       <button onClick={copyLink} className="inline-flex items-center gap-2 rounded-full bg-jso-navy px-5 py-3 text-sm font-extrabold text-white"><Copy size={16}/> {linkCopied ? 'Lien copié' : 'Copier le lien de collecte'}</button>
-      <a href="/soutenir" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-jso-navy"><ExternalLink size={16}/> Voir la page</a>
+      <a href="/nos-projets" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-jso-navy"><ExternalLink size={16}/> Voir la page</a>
       <button onClick={load} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-600"><RefreshCw size={16}/> Actualiser</button>
     </div>
 
