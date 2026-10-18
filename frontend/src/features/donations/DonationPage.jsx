@@ -10,7 +10,7 @@ import { useI18n } from '../../i18n/index.jsx'
 import StandalonePageHeader from '../site/StandalonePageHeader'
 import { CLUB_SOCIALS } from '../site/brand'
 
-const PRESETS = [5, 10, 20, 50, 100, 250]
+const PRESETS = [5, 10, 20, 30, 50]
 const PAYMENT_METHODS = [
   { id: 'flouci', label: 'Flouci', description: 'Paiement hébergé en Tunisie', group: 'online', country: 'TN' },
   { id: 'card', label: 'Carte bancaire', description: 'Visa / Mastercard via la passerelle de paiement', group: 'online', country: 'INTL' },
@@ -173,18 +173,18 @@ export default function DonationPage() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-jso-gold/30 bg-jso-gold/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-jso-gold">
                 <HeartHandshake size={15} aria-hidden="true" />
-                Soutenir le club
+                Nos projets
               </div>
               <h1 className="mt-6 max-w-3xl text-4xl font-black tracking-tight sm:text-6xl">
-                Ensemble, faisons grandir la JSO.
+                Ensemble pour un JSO plus grand.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-white/65 sm:text-lg">
-                Votre contribution aide le club à financer son fonctionnement, ses jeunes, ses déplacements et ses projets.
+                Soutenez nos projets pour développer le club, améliorer nos infrastructures et offrir un meilleur avenir à nos joueurs.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
                 <a href="#faire-un-don" className="inline-flex items-center gap-2 rounded-full bg-jso-gold px-5 py-3 text-sm font-extrabold text-jso-navy hover:bg-white">
-                  <HeartHandshake size={17} aria-hidden="true" /> Comment faire un don
+                  <HeartHandshake size={17} aria-hidden="true" /> Soutenir le projet
                 </a>
                 <button type="button" onClick={sharePage} className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10">
                   <Share2 size={17} aria-hidden="true" /> {shared ? 'Partagé' : 'Partager'}
@@ -213,8 +213,8 @@ export default function DonationPage() {
                 </div>
                 <p className="mt-3 text-sm font-semibold text-white/55">{progress.toFixed(0)}% de l’objectif ce mois-ci · {formatMoney(total, 'TND')} collectés depuis le début · {campaign?.donorCount || 0} contributions confirmées</p>
                 <div className="mt-4 rounded-xl bg-white/5 p-3 text-sm">
-                  <strong>Objectif mensuel du club</strong>
-                  <p className="mt-1 text-white/55">Suggestion : {formatMoney(campaign?.suggestedMonthlyContributionTnd || 10, 'TND')} par don. Vous choisissez librement le montant et pouvez revenir chaque mois. Aucun abonnement ni prélèvement automatique.</p>
+                  <strong>Un projet collectif, un avenir plus grand</strong>
+                  <p className="mt-1 text-white/55">Chaque contribution compte. Choisissez librement le montant de votre soutien : aucun abonnement ni prélèvement automatique.</p>
                 </div>
               </div>
             </div>
@@ -227,7 +227,7 @@ export default function DonationPage() {
           {methodsLoading ? <div role="status" className="rounded-[2rem] border border-slate-200 bg-white p-8 text-sm font-semibold text-slate-600">Vérification des moyens de paiement…</div> : <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-blue">1 · Choisir le montant</p>
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-blue">Je soutiens ce projet</p>
                 <h2 className="mt-2 text-2xl font-black">Chaque contribution compte.</h2>
               </div>
               {donation && <span className="rounded-full bg-amber-50 px-3 py-2 text-xs font-black text-amber-700">Contribution #{String(donation.id).slice(0, 8)}</span>}
@@ -360,7 +360,7 @@ export default function DonationPage() {
             <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-3">
                 <QrCode size={24} className="text-jso-blue" aria-hidden="true" />
-                <h2 className="text-xl font-black">QR de la campagne</h2>
+                <h2 className="text-xl font-black">Partager le projet</h2>
               </div>
               <div className="mt-5 rounded-2xl bg-white p-4 text-center">
                 {qrUrl
@@ -368,7 +368,7 @@ export default function DonationPage() {
                   : <div className="mx-auto grid h-56 w-56 place-items-center rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-500">QR indisponible</div>}
               </div>
               <p className="mt-4 text-sm leading-6 text-slate-500">Ce QR ouvre la page de collecte JSO. Choisissez un paiement en ligne ou enregistrez une contribution en espèces à confirmer par le club.</p>
-              {qrUrl && <a href={qrUrl} download="jso-soutenir-qr.png" className="mt-3 inline-block text-sm font-bold text-jso-blue underline">Télécharger le QR</a>}
+              {qrUrl && <a href={qrUrl} download="jso-soutenir-qr.png" className="mt-3 inline-block text-sm font-bold text-jso-blue underline">Télécharger le QR du projet</a>}
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 <button type="button" onClick={copyLink} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm font-extrabold text-jso-navy hover:border-jso-blue">
                   <Copy size={15} aria-hidden="true" /> {copied ? 'Lien copié' : 'Copier'}
@@ -399,7 +399,7 @@ export default function DonationPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-blue">Communauté</p>
-                <h2 className="mt-2 text-2xl font-black">Merci aux derniers soutiens.</h2>
+                <h2 className="mt-2 text-2xl font-black">Merci à tous ceux qui soutiennent la JSO.</h2>
               </div>
             </div>
             <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
