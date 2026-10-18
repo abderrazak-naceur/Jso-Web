@@ -349,8 +349,9 @@ export default function DonationPage() {
               )}
             </div>
 
+            {cashSubmitted && <div role="status" className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-900">Votre participation est enregistrée et visible dans la liste. Le statut restera « En attente » jusqu’à ce qu’un responsable JSO reçoive l’argent et confirme le paiement.</div>}
             <p className="mt-4 text-xs leading-5 text-slate-400">
-              La page de paiement est hébergée par le prestataire. Le site JSO ne reçoit pas les données de carte.
+              {selectedMethod === 'cash' ? 'Aucun paiement en ligne n’a été effectué. Le montant sera comptabilisé uniquement après confirmation du responsable.' : 'La page de paiement est hébergée par le prestataire. Le site JSO ne reçoit pas les données de carte.'}
             </p>
           </div>}
 
