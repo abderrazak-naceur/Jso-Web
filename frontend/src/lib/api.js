@@ -135,6 +135,7 @@ export const donationsApi = {
   campaign: (signal) => request('/donations/campaign', signal),
   paymentMethods: (signal) => request('/donations/payment-methods', signal),
   create: (data, token) => requestJson('/donations', 'POST', data, token),
+  cashPledge: (data, token) => requestJson('/donations/cash-pledge', 'POST', data, token),
   status: (id) => requestJson('/donations/' + id, 'GET'),
   pay: (id, country, provider, email) => requestJson('/donations/' + id + '/pay', 'POST', { country, provider, email }),
 }
