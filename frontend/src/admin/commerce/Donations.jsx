@@ -16,6 +16,7 @@ export default function DonationsModule({ onError }) {
   const [summaryError, setSummaryError] = useState('')
   const [settingsError, setSettingsError] = useState('')
   const [linkCopied, setLinkCopied] = useState(false)
+  const [confirmingCashId, setConfirmingCashId] = useState('')
 
   async function load() {
     setLoading(true)
@@ -42,6 +43,18 @@ export default function DonationsModule({ onError }) {
 
   const progress = data?.goalTnd ? Math.min(100, Math.max(0, Number(data.monthlyPaidTnd || 0) / Number(data.goalTnd) * 100)) : 0
   const cashProgress = data?.goalTnd ? Math.min(100, Math.max(0, Number(data.monthlyCashPaidTnd || 0) / Number(data.goalTnd) * 100)) : 0
+
+  async function confirmCashDonation(item) {
+    if (!window.confirm(`Confirmer que les ${money(item.amount)} de ${item.displayName || 'ce donateur'} ont bien été reçus en espèces ?`)) return
+    setConfirmingCashId(item.id)
+    try {
+      await adminApi('/admin/donations/' + item.id + '/confirm-cash', { method: 'POST' })
+      await load()
+      setFeedback('Don en espèces confirmé et comptabilisé.')
+      onError('')
+    } catch (e) { onError(e.message) }
+    finally { setConfirmingCashId('') }
+  }
 
   async function copyLink() {
     try {
@@ -157,7 +170,7 @@ export default function DonationsModule({ onError }) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[880px] text-left text-sm">
           <thead><tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
-            <th className="p-4">Date</th><th className="p-4">Donateur</th><th className="p-4">Montant</th><th className="p-4">Statut</th><th className="p-4">Pays</th><th className="p-4">Provider</th><th className="p-4">Point</th><th className="p-4">Message</th>
+            <th className="p-4">Date</th><th className="p-4">Donateur</th><th className="p-4">Montant</th><th className="p-4">Statut</th><th className="p-4">Pays</th><th className="p-4">Provider</th><th className="p-4">Point</th><th className="p-4">Message</th><th className="p-4">Action</th>
           </tr></thead>
           <tbody>
             {(data?.donations || []).map((item) => (
@@ -170,6 +183,7 @@ export default function DonationsModule({ onError }) {
                 <td className="p-4">{item.paymentProvider || '—'}</td>
                 <td className="p-4">{item.cashPointName || (item.paymentProvider === 'Cash' ? '—' : '')}</td>
                 <td className="p-4 max-w-sm truncate text-slate-500">{item.message || '—'}</td>
+                <td className="p-4">{item.paymentProvider === 'Cash' && item.paymentStatus !== 'Paid' ? <button type="button" disabled={confirmingCashId === item.id} onClick={() => confirmCashDonation(item)} className="whitespace-nowrap rounded-lg bg-jso-navy px-3 py-2 text-xs font-black text-white disabled:opacity-50">{confirmingCashId === item.id ? 'Confirmation…' : 'Marquer payé'}</button> : '—'}</td>
               </tr>
             ))}
           </tbody>
