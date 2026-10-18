@@ -5,6 +5,7 @@ export const SECTION_PATHS = Object.freeze({
   club: '/club',
   shop: '/boutique',
   donation: '/soutenir',
+  projects: '/nos-projets',
   memberships: '/abonnements',
   media: '/medias',
   events: '/agenda',

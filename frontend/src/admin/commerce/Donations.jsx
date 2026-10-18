@@ -16,6 +16,7 @@ export default function DonationsModule({ onError }) {
   const [summaryError, setSummaryError] = useState('')
   const [settingsError, setSettingsError] = useState('')
   const [linkCopied, setLinkCopied] = useState(false)
+  const [confirmingCashId, setConfirmingCashId] = useState('')
 
   async function load() {
     setLoading(true)
@@ -43,9 +44,21 @@ export default function DonationsModule({ onError }) {
   const progress = data?.goalTnd ? Math.min(100, Math.max(0, Number(data.monthlyPaidTnd || 0) / Number(data.goalTnd) * 100)) : 0
   const cashProgress = data?.goalTnd ? Math.min(100, Math.max(0, Number(data.monthlyCashPaidTnd || 0) / Number(data.goalTnd) * 100)) : 0
 
+  async function confirmCashDonation(item) {
+    if (!window.confirm(`Confirmer que les ${money(item.amount)} de ${item.displayName || 'ce donateur'} ont bien été reçus en espèces ?`)) return
+    setConfirmingCashId(item.id)
+    try {
+      await adminApi('/admin/donations/' + item.id + '/confirm-cash', { method: 'POST' })
+      await load()
+      setFeedback('Don en espèces confirmé et comptabilisé.')
+      onError('')
+    } catch (e) { onError(e.message) }
+    finally { setConfirmingCashId('') }
+  }
+
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(window.location.origin + '/soutenir')
+      await navigator.clipboard.writeText(window.location.origin + '/nos-projets')
       setLinkCopied(true)
       window.setTimeout(() => setLinkCopied(false), 2000)
     } catch { onError('Impossible de copier le lien de collecte.') }
@@ -78,8 +91,8 @@ export default function DonationsModule({ onError }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-gold">Collecte</p>
-          <h2 className="mt-2 text-3xl font-black">Soutien JSO</h2>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-white/70">Suivez tous les dons confirmés, réglez la campagne et vérifiez quels moyens de paiement sont réellement ouverts.</p>
+          <h2 className="mt-2 text-3xl font-black">Dons & collecte</h2>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-white/70">Suivez les dons confirmés, consultez les montants collectés et gérez les paramètres de la campagne. La confirmation des espèces se fait séparément dans « Dons en espèces ».</p>
         </div>
         <HeartHandshake className="text-jso-gold" size={34} aria-hidden="true" />
       </div>
@@ -101,7 +114,7 @@ export default function DonationsModule({ onError }) {
         <p className="text-xs font-black uppercase tracking-widest text-jso-blue">Pour un supporter</p>
         <h3 className="mt-2 text-xl font-black">Faire un don</h3>
         <p className="mt-2 text-sm leading-6 text-slate-600">Partagez la page publique. Elle affiche uniquement les paiements en ligne opérationnels et explique le don en espèces quand aucun paiement en ligne n’est ouvert.</p>
-        <a href="/soutenir" target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-bold text-white">Ouvrir la page de don</a>
+        <a href="/nos-projets" target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-bold text-white">Ouvrir la page de don</a>
       </div>
       <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
         <p className="text-xs font-black uppercase tracking-widest text-jso-blue">Pour le personnel</p>
@@ -113,7 +126,7 @@ export default function DonationsModule({ onError }) {
 
     <div className="flex flex-wrap gap-3">
       <button onClick={copyLink} className="inline-flex items-center gap-2 rounded-full bg-jso-navy px-5 py-3 text-sm font-extrabold text-white"><Copy size={16}/> {linkCopied ? 'Lien copié' : 'Copier le lien de collecte'}</button>
-      <a href="/soutenir" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-jso-navy"><ExternalLink size={16}/> Voir la page</a>
+      <a href="/nos-projets" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-jso-navy"><ExternalLink size={16}/> Voir la page</a>
       <button onClick={load} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-600"><RefreshCw size={16}/> Actualiser</button>
     </div>
 
@@ -157,7 +170,7 @@ export default function DonationsModule({ onError }) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[880px] text-left text-sm">
           <thead><tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
-            <th className="p-4">Date</th><th className="p-4">Donateur</th><th className="p-4">Montant</th><th className="p-4">Statut</th><th className="p-4">Pays</th><th className="p-4">Provider</th><th className="p-4">Point</th><th className="p-4">Message</th>
+            <th className="p-4">Date</th><th className="p-4">Donateur</th><th className="p-4">Montant</th><th className="p-4">Statut</th><th className="p-4">Pays</th><th className="p-4">Provider</th><th className="p-4">Point</th><th className="p-4">Message</th><th className="p-4">Action</th>
           </tr></thead>
           <tbody>
             {(data?.donations || []).map((item) => (
@@ -170,6 +183,7 @@ export default function DonationsModule({ onError }) {
                 <td className="p-4">{item.paymentProvider || '—'}</td>
                 <td className="p-4">{item.cashPointName || (item.paymentProvider === 'Cash' ? '—' : '')}</td>
                 <td className="p-4 max-w-sm truncate text-slate-500">{item.message || '—'}</td>
+                <td className="p-4">{item.paymentProvider === 'Cash' && item.paymentStatus !== 'Paid' ? <button type="button" disabled={confirmingCashId === item.id} onClick={() => confirmCashDonation(item)} className="whitespace-nowrap rounded-lg bg-jso-navy px-3 py-2 text-xs font-black text-white disabled:opacity-50">{confirmingCashId === item.id ? 'Confirmation…' : 'Marquer payé'}</button> : '—'}</td>
               </tr>
             ))}
           </tbody>

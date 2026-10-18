@@ -51,15 +51,21 @@ public sealed class DonationsController(
         var monthlyTotal = await paid.Where(x => x.PaidAt >= monthStart && x.PaidAt < monthEnd)
             .SumAsync(x => x.Amount, ct);
         var count = await paid.CountAsync(ct);
-        var recent = await paid
-            .OrderByDescending(x => x.PaidAt)
-            .Take(9)
+        var publicDonations = db.SupporterBricks.AsNoTracking()
+            .Where(x => x.Status == CampaignStatus &&
+                (x.PaymentStatus == "Paid" || (x.PaymentProvider == "Cash" && x.PaymentStatus == "Pending")));
+        var recent = await publicDonations
+            .OrderByDescending(x => x.PaidAt ?? x.CreatedAt)
+            .Take(30)
             .Select(x => new
             {
                 x.Id,
-                DisplayName = x.PaymentProvider == "Cash" ? "Donateur en espèces" : x.DisplayName,
+                x.DisplayName,
                 Message = x.PaymentProvider == "Cash" ? null : x.Message,
-                x.Amount, x.PaidAt
+                x.Amount,
+                x.PaymentStatus,
+                CreatedAt = x.CreatedAt,
+                x.PaidAt
             })
             .ToListAsync(ct);
 
@@ -116,6 +122,42 @@ public sealed class DonationsController(
             donation.DisplayName,
             donation.Amount,
             paymentStatus = donation.PaymentStatus,
+        });
+    }
+
+    [HttpPost("cash-pledge")]
+    public async Task<IActionResult> CreateCashPledge(CreateDonationRequest request, CancellationToken ct)
+    {
+        var error = Validate(request.DisplayName, request.Message, request.Amount);
+        if (error is not null) return BadRequest(new { message = error });
+
+        var donation = new SupporterBrick
+        {
+            FanUserId = CurrentFanId(),
+            DisplayName = string.IsNullOrWhiteSpace(request.DisplayName) ? "Donateur JSO" : request.DisplayName.Trim(),
+            Message = string.IsNullOrWhiteSpace(request.Message) ? null : request.Message.Trim(),
+            Amount = request.Amount,
+            DonorPhone = NormalizePhone(request.Phone),
+            WhatsAppOptIn = request.WhatsAppOptIn,
+            Status = CampaignStatus,
+            PaymentStatus = "Pending",
+            PaymentProvider = "Cash",
+            Country = "TN"
+        };
+
+        db.SupporterBricks.Add(donation);
+        await db.SaveChangesAsync(ct);
+        await audit.LogAsync("CASH_DONATION_PLEDGED", "SupporterBrick", donation.Id.ToString(), null, null,
+            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            new { donation.Amount, donation.DisplayName, campaign = "jso-support-2026" }, ct);
+
+        return Created($"/api/donations/{donation.Id}", new
+        {
+            id = donation.Id,
+            displayName = donation.DisplayName,
+            amount = donation.Amount,
+            paymentStatus = donation.PaymentStatus,
+            paymentProvider = donation.PaymentProvider
         });
     }
 

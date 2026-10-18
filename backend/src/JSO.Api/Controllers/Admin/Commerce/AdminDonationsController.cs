@@ -103,6 +103,36 @@ public sealed class AdminDonationsController(
         });
     }
 
+    [HttpPost("{id:guid}/confirm-cash")]
+    public async Task<IActionResult> ConfirmCash(Guid id, CancellationToken ct)
+    {
+        var donation = await db.SupporterBricks.SingleOrDefaultAsync(
+            x => x.Id == id && x.Status == "Donation", ct);
+        if (donation is null) return NotFound();
+        if (!string.Equals(donation.PaymentProvider, "Cash", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "Seules les contributions déclarées en espèces peuvent être confirmées ici." });
+        if (donation.PaymentStatus == "Paid")
+            return BadRequest(new { message = "Cette contribution est déjà marquée comme payée." });
+        if (donation.PaymentStatus != "Pending")
+            return BadRequest(new { message = "Seules les contributions en attente peuvent être confirmées." });
+
+        var now = DateTimeOffset.UtcNow;
+        donation.PaymentStatus = "Paid";
+        donation.PaidAt = now;
+        donation.ChargedAmount = donation.Amount;
+        donation.ChargedCurrency = "TND";
+        donation.Country ??= "TN";
+        donation.ProviderRef = $"JSO-CASH-{now:yyyyMMdd}-{donation.Id.ToString("N")[..8].ToUpperInvariant()}";
+        await db.SaveChangesAsync(ct);
+
+        await audit.LogAsync("CASH_DONATION_CONFIRMED", "SupporterBrick", donation.Id.ToString(),
+            User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value,
+            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            new { donation.Amount, donation.DisplayName, receiptNumber = donation.ProviderRef }, ct);
+
+        return Ok(new { id = donation.Id, paymentStatus = donation.PaymentStatus, paidAt = donation.PaidAt, receiptNumber = donation.ProviderRef });
+    }
+
     [HttpPost("{id:guid}/refund")]
     public async Task<IActionResult> Refund(Guid id, CancellationToken ct)
     {

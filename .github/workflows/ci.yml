@@ -123,6 +123,8 @@ jobs:
         env:
           ASPNETCORE_ENVIRONMENT: Production
           ASPNETCORE_URLS: http://127.0.0.1:5080
+          DOTNET_ENVIRONMENT: Production
+          Database__Provider: postgres
           Database__Provider: postgres
           ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=JSO;Username=jso;Password=jso_ci_password;Ssl Mode=Disable
           Cors__AllowedOrigins__0: http://localhost:5173
@@ -130,14 +132,19 @@ jobs:
           ADMIN_BOOTSTRAP_EMAIL: admin@jso.test
           ADMIN_BOOTSTRAP_PASSWORD: ci-only-initial-admin-password
         run: |
-          dotnet run --project src/JSO.Api --configuration Release --no-build --no-launch-profile > /tmp/jso-api.log 2>&1 &
+          dotnet src/JSO.Api/bin/Release/net10.0/JSO.Api.dll > /tmp/jso-api.log 2>&1 &
           api_pid=$!
           trap 'kill "$api_pid" || true' EXIT
-          for i in {1..30}; do
-            if curl -fsS http://127.0.0.1:5080/health >/dev/null; then break; fi
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:5080/health >/dev/null 2>&1; then break; fi
             sleep 2
           done
-          curl -fsS http://127.0.0.1:5080/health >/dev/null || { cat /tmp/jso-api.log; exit 1; }
+          if ! curl -fsS http://127.0.0.1:5080/health >/dev/null; then
+            echo 'API failed to become healthy; startup log follows:'
+            cat /tmp/jso-api.log
+            ps -fp "$api_pid" || true
+            exit 1
+          fi
           curl -fsS http://127.0.0.1:5080/api/club >/dev/null
           login_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/auth/login \
             -H 'Content-Type: application/json' \
