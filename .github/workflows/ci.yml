@@ -130,7 +130,7 @@ jobs:
           ADMIN_BOOTSTRAP_EMAIL: admin@jso.test
           ADMIN_BOOTSTRAP_PASSWORD: ci-only-initial-admin-password
         run: |
-          dotnet run --project src/JSO.Api --configuration Release --no-build --no-launch-profile > /tmp/jso-api.log 2>&1 &
+          dotnet src/JSO.Api/bin/Release/net10.0/JSO.Api.dll > /tmp/jso-api.log 2>&1 &
           api_pid=$!
           trap 'kill "$api_pid" || true' EXIT
           for i in {1..30}; do
