@@ -58,7 +58,7 @@ export default function DonationsModule({ onError }) {
 
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(window.location.origin + '/soutenir')
+      await navigator.clipboard.writeText(window.location.origin + '/nos-projets')
       setLinkCopied(true)
       window.setTimeout(() => setLinkCopied(false), 2000)
     } catch { onError('Impossible de copier le lien de collecte.') }
@@ -114,7 +114,7 @@ export default function DonationsModule({ onError }) {
         <p className="text-xs font-black uppercase tracking-widest text-jso-blue">Pour un supporter</p>
         <h3 className="mt-2 text-xl font-black">Faire un don</h3>
         <p className="mt-2 text-sm leading-6 text-slate-600">Partagez la page publique. Elle affiche uniquement les paiements en ligne opérationnels et explique le don en espèces quand aucun paiement en ligne n’est ouvert.</p>
-        <a href="/soutenir" target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-bold text-white">Ouvrir la page de don</a>
+        <a href="/nos-projets" target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-bold text-white">Ouvrir la page de don</a>
       </div>
       <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
         <p className="text-xs font-black uppercase tracking-widest text-jso-blue">Pour le personnel</p>
