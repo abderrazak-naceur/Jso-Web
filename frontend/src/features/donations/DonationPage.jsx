@@ -223,7 +223,7 @@ export default function DonationPage() {
 
       <section id="faire-un-don" className="mx-auto max-w-7xl scroll-mt-24 px-5 py-16 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-          {methodsLoading ? <div role="status" className="rounded-[2rem] border border-slate-200 bg-white p-8 text-sm font-semibold text-slate-600">Vérification des moyens de paiement…</div> : true ? <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          {methodsLoading ? <div role="status" className="rounded-[2rem] border border-slate-200 bg-white p-8 text-sm font-semibold text-slate-600">Vérification des moyens de paiement…</div> : <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-blue">1 · Choisir le montant</p>
@@ -352,17 +352,6 @@ export default function DonationPage() {
             <p className="mt-4 text-xs leading-5 text-slate-400">
               La page de paiement est hébergée par le prestataire. Le site JSO ne reçoit pas les données de carte.
             </p>
-          </div> : <div className="rounded-[2rem] border border-amber-200 bg-white p-6 shadow-sm sm:p-8">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-blue">Comment donner aujourd’hui</p>
-            <h2 className="mt-3 text-3xl font-black text-jso-navy">Don en espèces auprès de la JSO</h2>
-            <p className="mt-4 text-base leading-7 text-slate-600">{methodsError ? 'Nous ne pouvons pas vérifier les paiements en ligne pour le moment.' : 'Le paiement en ligne n’est pas encore disponible.'} Vous pouvez soutenir le club en remettant votre don à un vendeur ou à une boutique JSO autorisée.</p>
-            <ol className="mt-6 space-y-3 text-sm leading-6 text-slate-700">
-              <li className="rounded-xl bg-slate-50 p-4"><strong>1.</strong> Contactez le club pour connaître un point de collecte autorisé.</li>
-              <li className="rounded-xl bg-slate-50 p-4"><strong>2.</strong> Remettez le montant de votre choix au personnel.</li>
-              <li className="rounded-xl bg-slate-50 p-4"><strong>3.</strong> Le personnel enregistre le don et vous remet un reçu numéroté.</li>
-            </ol>
-            <a href={CLUB_FACEBOOK_URL} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-full bg-jso-navy px-5 py-3 text-sm font-extrabold text-white hover:bg-jso-blue">Demander un point de collecte sur Facebook <ArrowUpRight size={16} aria-hidden="true" /></a>
-            <p className="mt-4 text-xs leading-5 text-slate-500">Cette page ne prélève aucun montant et ne crée pas de don en attente. Chaque don est ponctuel ; la contribution mensuelle affichée est une suggestion, sans abonnement automatique.</p>
           </div>}
 
           <aside className="space-y-6">
@@ -376,7 +365,7 @@ export default function DonationPage() {
                   ? <img src={qrUrl} alt="QR scannable vers la page de soutien JSO" className="mx-auto h-56 w-56" />
                   : <div className="mx-auto grid h-56 w-56 place-items-center rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-500">QR indisponible</div>}
               </div>
-              <p className="mt-4 text-sm leading-6 text-slate-500">Ce QR ouvre cette page d’information. {methods.length ? 'Vous pourrez y choisir un paiement disponible.' : 'Il ne déclenche aucun paiement ; le don en espèces se fait auprès du club.'}</p>
+              <p className="mt-4 text-sm leading-6 text-slate-500">Ce QR ouvre la page de collecte JSO. Choisissez un paiement en ligne ou enregistrez une contribution en espèces à confirmer par le club.</p>
               {qrUrl && <a href={qrUrl} download="jso-soutenir-qr.png" className="mt-3 inline-block text-sm font-bold text-jso-blue underline">Télécharger le QR</a>}
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 <button type="button" onClick={copyLink} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm font-extrabold text-jso-navy hover:border-jso-blue">
@@ -388,14 +377,14 @@ export default function DonationPage() {
               </div>
             </div>
 
-            {methods.length > 0 && <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+            {<div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-xl font-black">Faire un don en espèces</h2>
               <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-6 text-slate-600">
                 <li>Adressez-vous à un vendeur ou à une boutique JSO autorisée.</li>
                 <li>Remettez le montant choisi. Le personnel enregistre le don dans son espace JSO.</li>
                 <li>Demandez immédiatement le reçu numéroté et conservez son lien de vérification.</li>
               </ol>
-              <p className="mt-4 text-xs leading-5 text-slate-500">Le don en espèces se fait sur place. Aucun paiement en espèces ne peut être validé depuis cette page.</p>
+              <p className="mt-4 text-xs leading-5 text-slate-500">Une déclaration en espèces reste en attente et n’est pas ajoutée au total collecté tant qu’un responsable n’a pas confirmé la réception.</p>
               <a href={CLUB_FACEBOOK_URL} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-jso-blue underline">Demander un point de collecte sur Facebook <ArrowUpRight size={15} aria-hidden="true" /></a>
             </div>}
           </aside>
