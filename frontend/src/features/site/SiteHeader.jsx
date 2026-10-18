@@ -107,7 +107,7 @@ export default function SiteHeader({
               {section.label}
             </a>
           ))}
-          <a href="/support-campaign-preview" onClick={closeMenus} className={desktopLinkClass(window.location.pathname === '/nos-projets')}>
+          <a href="/nos-projets" onClick={closeMenus} className={desktopLinkClass(window.location.pathname === '/nos-projets')}>
             Nos projets
           </a>
 
