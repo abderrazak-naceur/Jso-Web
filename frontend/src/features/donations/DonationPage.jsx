@@ -108,6 +108,7 @@ export default function DonationPage() {
   }
 
   async function submitCashPledge() {
+    if (!displayName.trim()) { setError('Indiquez le nom qui apparaîtra dans la liste publique.'); return }
     if (effectiveAmount < 1) { setError('Le montant minimum est de 1 TND.'); return }
     setCashSubmitting(true)
     setError('')
@@ -378,7 +379,7 @@ export default function DonationPage() {
               </div>
             </div>
 
-            {<div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-xl font-black">Faire un don en espèces</h2>
               <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-6 text-slate-600">
                 <li>Adressez-vous à un vendeur ou à une boutique JSO autorisée.</li>
@@ -387,7 +388,7 @@ export default function DonationPage() {
               </ol>
               <p className="mt-4 text-xs leading-5 text-slate-500">Une déclaration en espèces reste en attente et n’est pas ajoutée au total collecté tant qu’un responsable n’a pas confirmé la réception.</p>
               <a href={CLUB_FACEBOOK_URL} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-jso-blue underline">Demander un point de collecte sur Facebook <ArrowUpRight size={15} aria-hidden="true" /></a>
-            </div>}
+            </div>
           </aside>
         </div>
       </section>
