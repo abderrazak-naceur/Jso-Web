@@ -37,12 +37,14 @@ export default function DonationPage() {
   const [email, setEmail] = useState('')
   const [whatsappOptIn, setWhatsappOptIn] = useState(false)
   const [donation, setDonation] = useState(null)
+  const [cashSubmitting, setCashSubmitting] = useState(false)
+  const [cashSubmitted, setCashSubmitted] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const [shared, setShared] = useState(false)
   const [selectedMethod, setSelectedMethod] = useState('')
-  const pageUrl = window.location.origin + '/soutenir'
+  const pageUrl = window.location.origin + '/nos-projets'
 
   useEffect(() => {
     QRCode.toDataURL(pageUrl, {
@@ -103,6 +105,32 @@ export default function DonationPage() {
     }, fan.token)
     setDonation(created)
     return donationsApi.pay(created.id, country, selectedMethod === 'card' ? 'STRIPE' : selectedMethod.toUpperCase(), email.trim() || null)
+  }
+
+  async function submitCashPledge() {
+    if (effectiveAmount < 1) { setError('Le montant minimum est de 1 TND.'); return }
+    setCashSubmitting(true)
+    setError('')
+    setCashSubmitted(false)
+    try {
+      const created = await donationsApi.cashPledge({
+        amount: effectiveAmount,
+        displayName: displayName.trim() || null,
+        message: message.trim() || null,
+        phone: phone.trim() || null,
+        whatsappOptIn: Boolean(phone.trim() && whatsappOptIn),
+      }, fan.token)
+      setDonation(created)
+      setCashSubmitted(true)
+      setCampaign((current) => current ? {
+        ...current,
+        recentDonations: [{ ...created, paymentStatus: 'Pending', createdAt: new Date().toISOString(), paidAt: null }, ...(current.recentDonations || []).filter((item) => item.id !== created.id)].slice(0, 30),
+      } : current)
+    } catch (e) {
+      setError(e?.message || 'Impossible d’enregistrer votre promesse de don.')
+    } finally {
+      setCashSubmitting(false)
+    }
   }
 
   async function copyLink() {
@@ -195,7 +223,7 @@ export default function DonationPage() {
 
       <section id="faire-un-don" className="mx-auto max-w-7xl scroll-mt-24 px-5 py-16 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-          {methodsLoading ? <div role="status" className="rounded-[2rem] border border-slate-200 bg-white p-8 text-sm font-semibold text-slate-600">Vérification des moyens de paiement…</div> : methods.length > 0 ? <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          {methodsLoading ? <div role="status" className="rounded-[2rem] border border-slate-200 bg-white p-8 text-sm font-semibold text-slate-600">Vérification des moyens de paiement…</div> : true ? <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-blue">1 · Choisir le montant</p>
@@ -287,10 +315,26 @@ export default function DonationPage() {
                     <p className={'mt-1 text-xs ' + (selectedMethod === method.id ? 'text-white/65' : 'text-slate-500')}>{method.description}</p>
                   </button>
                 ))}
+                <button
+                  key="cash"
+                  type="button"
+                  onClick={() => setSelectedMethod('cash')}
+                  className={'rounded-2xl border p-4 text-left transition ' + (selectedMethod === 'cash' ? 'border-jso-navy bg-jso-navy text-white' : 'border-slate-200 bg-white hover:border-jso-blue')}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-black">Espèces (Cash)</p>
+                    <span className={'rounded-full px-2 py-1 text-[10px] font-black ' + (selectedMethod === 'cash' ? 'bg-white/15 text-white/80' : 'bg-amber-50 text-amber-800')}>À confirmer</span>
+                  </div>
+                  <p className={'mt-1 text-xs ' + (selectedMethod === 'cash' ? 'text-white/65' : 'text-slate-500')}>Votre nom apparaît dans la liste des soutiens. Le don sera compté après réception par un responsable JSO.</p>
+                </button>
               </div>
             </div>
             <div className="mt-6">
-              {methods.some((method) => method.id === selectedMethod) ? (
+              {selectedMethod === 'cash' ? (
+                <button type="button" onClick={submitCashPledge} disabled={effectiveAmount < 1 || loading || cashSubmitting} className="w-full rounded-full bg-jso-navy px-5 py-4 text-sm font-extrabold text-white disabled:opacity-50">
+                  {cashSubmitting ? 'Enregistrement…' : 'Déclarer ma contribution en espèces'}
+                </button>
+              ) : methods.some((method) => method.id === selectedMethod) ? (
                 <PayOnlineButton
                   key={selectedMethod}
                   pay={startDonation}
@@ -375,7 +419,10 @@ export default function DonationPage() {
                     <span className="shrink-0 font-black text-jso-blue">{formatMoney(item.amount, 'TND')}</span>
                   </div>
                   {item.message && <p className="mt-3 text-sm italic leading-6 text-slate-500">“{item.message}”</p>}
-                  <p className="mt-3 text-xs font-bold text-slate-400">{new Date(item.paidAt).toLocaleDateString(language === 'ar' ? 'ar-TN' : language === 'it' ? 'it-IT' : language === 'en' ? 'en-GB' : 'fr-FR')}</p>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs font-bold text-slate-400">{new Date(item.paidAt || item.createdAt || Date.now()).toLocaleDateString(language === 'ar' ? 'ar-TN' : language === 'it' ? 'it-IT' : language === 'en' ? 'en-GB' : 'fr-FR')}</p>
+                    <span className={'rounded-full px-2.5 py-1 text-[10px] font-black ' + (item.paymentStatus === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800')}>{item.paymentStatus === 'Paid' ? 'Payé' : 'En attente de confirmation'}</span>
+                  </div>
                 </article>
               ))}
             </div>
