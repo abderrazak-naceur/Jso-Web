@@ -20,6 +20,9 @@ public sealed class SupporterBrick
     // Optional link to a known fan identity (FanUser). Null for anonymous or
     // admin-created bricks.
     public Guid? FanUserId { get; set; }
+    public Guid? FundraisingProjectId { get; set; }
+    public Guid? FundraisingCommitmentId { get; set; }
+    public int? InstallmentNumber { get; set; }
 
     // Required public label chosen by the supporter.
     public string DisplayName { get; set; } = null!;

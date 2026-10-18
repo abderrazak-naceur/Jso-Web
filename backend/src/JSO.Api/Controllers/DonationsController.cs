@@ -43,7 +43,7 @@ public sealed class DonationsController(
     {
         var settings = await DonationCampaignSettings.LoadAsync(db, ct);
         var paid = db.SupporterBricks.AsNoTracking()
-            .Where(x => x.Status == CampaignStatus && x.PaymentStatus == "Paid");
+            .Where(x => x.Status == CampaignStatus && x.FundraisingProjectId == null && x.PaymentStatus == "Paid");
         var monthStart = new DateTimeOffset(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, TimeSpan.Zero);
         var monthEnd = monthStart.AddMonths(1);
 
@@ -52,7 +52,7 @@ public sealed class DonationsController(
             .SumAsync(x => x.Amount, ct);
         var count = await paid.CountAsync(ct);
         var publicDonations = db.SupporterBricks.AsNoTracking()
-            .Where(x => x.Status == CampaignStatus &&
+            .Where(x => x.Status == CampaignStatus && x.FundraisingProjectId == null &&
                 (x.PaymentStatus == "Paid" || (x.PaymentProvider == "Cash" && x.PaymentStatus == "Pending")));
         var recent = await publicDonations
             .OrderByDescending(x => x.PaidAt ?? x.CreatedAt)
@@ -93,7 +93,7 @@ public sealed class DonationsController(
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);
         var query = db.SupporterBricks.AsNoTracking()
-            .Where(x => x.Status == CampaignStatus &&
+            .Where(x => x.Status == CampaignStatus && x.FundraisingProjectId == null &&
                 (x.PaymentStatus == "Paid" || (x.PaymentProvider == "Cash" && x.PaymentStatus == "Pending")));
         if (string.Equals(status, "paid", StringComparison.OrdinalIgnoreCase))
             query = query.Where(x => x.PaymentStatus == "Paid");
@@ -245,6 +245,15 @@ public sealed class DonationsController(
         var donation = await db.SupporterBricks.SingleOrDefaultAsync(
             x => x.Id == id && x.Status == CampaignStatus, ct);
         if (donation is null) return NotFound();
+        if (donation.FundraisingCommitmentId is { } commitmentId)
+        {
+            var commitment = await db.FundraisingCommitments.AsNoTracking().SingleOrDefaultAsync(c => c.Id == commitmentId, ct);
+            if (commitment is null) return NotFound();
+            if (!(CurrentFanId() is { } ownerId && ownerId == commitment.FanUserId) &&
+                !FundraisingAccess.Matches(commitment.AccessTokenHash, Request.Headers["X-Fundraising-Token"].ToString())) return Unauthorized();
+            if (commitment.PaymentMethod == "Cash") return BadRequest(new { message = "Les versements en espèces sont confirmés par le club après réception." });
+            if (string.IsNullOrWhiteSpace(request.Email)) request = request with { Email = commitment.Email };
+        }
         if (donation.PaymentStatus == "Paid")
             return BadRequest(new { message = "Cette contribution a déjà été réglée." });
         if (donation.Amount <= 0)
@@ -265,8 +274,9 @@ public sealed class DonationsController(
                 new { message = "Le paiement en ligne n'est pas correctement configuré." });
         }
 
-        var returnUrl = $"{baseUrl}/payment/success?payableType=Donation&payableId={donation.Id}";
-        var cancelUrl = $"{baseUrl}/payment/cancel?payableType=Donation&payableId={donation.Id}";
+        var projectQuery = donation.FundraisingProjectId is { } projectId ? $"&projectId={projectId}" : "";
+        var returnUrl = $"{baseUrl}/payment/success?payableType=Donation&payableId={donation.Id}{projectQuery}";
+        var cancelUrl = $"{baseUrl}/payment/cancel?payableType=Donation&payableId={donation.Id}{projectQuery}";
         if (provider == paymentSelector.Paymee &&
             !System.Net.Mail.MailAddress.TryCreate(request.Email, out _))
             return BadRequest(new { message = "Une adresse e-mail valide est requise pour Paymee." });

@@ -8,7 +8,6 @@ import ChangePasswordModal from './features/account/ChangePasswordModal'
 import ProfileModal from './features/account/ProfileModal'
 import { useFanSession } from './features/account/useFanSession'
 import HomePage from './features/home/HomePage'
-import DonationPage from './features/donations/DonationPage'
 import { useHomeData } from './features/home/useHomeData'
 import MatchCenterModal from './features/matches/MatchCenterModal'
 import { normalizeMatch } from './features/matches/matchUtils'
@@ -208,12 +207,6 @@ function App() {
   function openAuth(mode) {
     setAuthMode(mode)
     setAuthOpen(true)
-  }
-
-  if (window.location.pathname.replace(/\/+$/, '') === '/nos-projets') return <DonationPage />
-  if (window.location.pathname.replace(/\/+$/, '') === '/support-campaign-preview') {
-    window.history.replaceState({}, '', '/nos-projets')
-    return <DonationPage />
   }
 
   if (isPasswordResetRoute) return <PasswordResetPage />

@@ -11,7 +11,6 @@ const BilletteriePage = lazy(() => import('./features/tickets/BilletteriePage.js
 const DonationPage = lazy(() => import('./features/donations/DonationPage.jsx'))
 const CustomerDashboardPage = lazy(() => import('./features/account/CustomerDashboardPage.jsx'))
 const SupporterProfilePage = lazy(() => import('./features/account/SupporterProfilePage.jsx'))
-const SupportCampaignPreview = lazy(() => import('./features/donations/SupportCampaignPreview.jsx'))
 
 class RootErrorBoundary extends Component {
   state = { error: null }
@@ -50,11 +49,10 @@ function Root() {
   if (path.startsWith('/payment/')) return <PaymentReturn />
   if (path === '/actualites') return <NewsListPage />
   if (path === '/billetterie') return <BilletteriePage />
-  if (path === '/soutenir') {
-    window.history.replaceState({}, '', '/nos-projets' + window.location.search + window.location.hash)
+  if (['/nos-projets', '/soutenir', '/support-campaign-preview'].includes(path)) {
+    if (path !== '/nos-projets') window.history.replaceState({}, '', '/nos-projets' + window.location.search + window.location.hash)
     return <DonationPage />
   }
-  if (path === '/support-campaign-preview') return <SupportCampaignPreview />
   if (path === '/account' || path === '/mon-espace') return <CustomerDashboardPage />
   if (path === '/profil' || path === '/profile') return <SupporterProfilePage />
   return <App />

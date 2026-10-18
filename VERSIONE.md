@@ -2,6 +2,19 @@
 
 Questo documento registra le versioni presenti nel repository e indica separatamente quando un deploy è stato verificato. Un tag o un numero versione non significa che Render sia aggiornato; le versioni più vecchie non ricostruite in modo affidabile restano da completare.
 
+## Modifiche locali — 19 ottobre 2026 — Raccolta fondi per progetti
+
+- Nuovo template dedicato per `/nos-projets`, basato sul mockup approvato: intestazione navy, immagine del progetto, indicatori reali, elenco dei progetti e sostenitori.
+- Admin: **Obiettivi della raccolta fondi**, galleria, creazione personalizzata, bozze, pubblicazione, anteprima desktop/mobile e conferma delle rate in contanti.
+- Piani di 10 mesi da 5, 10, 20, 30 o 50 TND; calendario privato e collegamento ai gestori di pagamento esistenti.
+- Titolo e budget reali saranno configurati dall’Admin. Nessun progetto dimostrativo viene inserito dalla migrazione.
+- Aggiunti test del dominio/API e controlli HTTP PostgreSQL nel workflow CI.
+- Verifiche locali: build frontend riuscita, 10 test frontend e 75 backend passati, incluso l’allineamento tra modello e snapshot PostgreSQL. Lint senza errori (due avvisi preesistenti).
+
+**Stato pubblicazione:** modifiche locali, nessun nuovo tag e nessun deploy dichiarato. La nuova migrazione PostgreSQL e i controlli CI devono riuscire prima della pubblicazione Web/API. I controlli con database InMemory e la generazione SQL non sostituiscono questo controllo.
+
+**Guida operativa:** [Raccolta fondi per progetti](docs/FUNDRAISING_PROJECTS.md).
+
 ## V1.26 — Template homepage: API e anteprime
 
 **Versione nel codice:** `frontend/src/version.json` riporta V1.26.

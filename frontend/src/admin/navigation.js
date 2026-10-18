@@ -6,6 +6,7 @@ export const ADMIN_NAVIGATION = [
     ['tickets', 'Billetterie', Ticket, ['SuperAdmin','ClubAdmin','MatchManager','TicketSeller','TicketSupervisor'], 'Billetterie & Abonnements'],
     ['memberships', 'Abonnements', CreditCard, ['SuperAdmin','ClubAdmin','SeasonManager'], 'Billetterie & Abonnements'],
     ['finance', 'Finances', Wallet, ['SuperAdmin','ClubAdmin','FinanceManager'], 'Finances & dons'],
+    ['fundraising-projects', 'Obiettivi della raccolta fondi', Flag, ['SuperAdmin','ClubAdmin','FinanceManager'], 'Finances & dons'],
     ['donations', 'Dons & collecte', HeartHandshake, ['SuperAdmin','ClubAdmin','FinanceManager'], 'Finances & dons'],
     ['cash-donations', 'Dons en espèces', Banknote, ['SuperAdmin','ClubAdmin','FinanceManager','ShopManager','TicketSeller','TicketSupervisor'], 'Finances & dons'],
 
@@ -59,6 +60,7 @@ export const ADMIN_PERMISSION_BY_ID = Object.freeze({
   tickets: 'tickets:admin',
   memberships: 'memberships:manage',
   finance: 'finance:view',
+  'fundraising-projects': 'finance:view',
   donations: 'finance:view',
   'cash-donations': 'donations:cash',
   shop: 'shop:manage',
@@ -111,6 +113,7 @@ export const ADMIN_PUBLIC_PATHS = Object.freeze({
   tickets: '/billetterie',
   memberships: '/abonnements',
   donations: '/nos-projets',
+  'fundraising-projects': '/nos-projets',
   'cash-donations': '/nos-projets',
   shop: '/boutique',
   orders: '/boutique',

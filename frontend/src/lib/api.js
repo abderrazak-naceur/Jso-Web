@@ -67,13 +67,14 @@ export const communityApi = {
     request('/community/reactions?targetType=' + encodeURIComponent(targetType) + '&targetId=' + encodeURIComponent(targetId), signal),
 }
 
-async function requestJson(path, method, body, token) {
+async function requestJson(path, method, body, token, extraHeaders = {}) {
   const options = {
     method,
     headers: {
       ...languageHeaders(),
       'Content-Type': 'application/json',
       ...(token ? { Authorization: 'Bearer ' + token } : {}),
+      ...extraHeaders,
     },
   }
   if (body) options.body = JSON.stringify(body)
@@ -144,6 +145,15 @@ export const donationsApi = {
   cashPledge: (data, token) => requestJson('/donations/cash-pledge', 'POST', data, token),
   status: (id) => requestJson('/donations/' + id, 'GET'),
   pay: (id, country, provider, email) => requestJson('/donations/' + id + '/pay', 'POST', { country, provider, email }),
+}
+
+export const fundraisingApi = {
+  projects: signal => request('/fundraising/projects', signal),
+  supporters: (id, page = 1, search = '', signal) => request(`/fundraising/projects/${encodeURIComponent(id)}/supporters?` + new URLSearchParams({ page: String(page), search }), signal),
+  join: (id, data, token) => requestJson(`/fundraising/projects/${encodeURIComponent(id)}/commitments`, 'POST', data, token),
+  commitment: (id, accessToken, token) => requestJson(`/fundraising/commitments/${encodeURIComponent(id)}`, 'GET', null, token, accessToken ? { 'X-Fundraising-Token': accessToken } : {}),
+  mine: token => requestJson('/fundraising/mine', 'GET', null, token),
+  pay: (id, country, provider, email, accessToken, token) => requestJson(`/donations/${encodeURIComponent(id)}/pay`, 'POST', { country, provider, email }, token, accessToken ? { 'X-Fundraising-Token': accessToken } : {}),
 }
 
 export const supporterApi = {

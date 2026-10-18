@@ -9,6 +9,10 @@ import { SECTION_PATHS, eventSlugFromPath, matchIdFromPath, matchSlugFromPath, m
 test('admin sections and edit links survive a direct page load', () => {
   assert.equal(adminSectionFromPath('/admin'), 'dashboard')
   assert.equal(adminSectionFromPath('/admin/donations'), 'donations')
+  assert.equal(adminSectionFromPath('/admin/fundraising-projects'), 'fundraising-projects')
+  const fundraisingEdit = adminEditUrl('fundraising-projects', 'project-id')
+  assert.equal(adminSectionFromPath(fundraisingEdit), 'fundraising-projects')
+  assert.equal(adminEditIdFromPath('fundraising-projects', fundraisingEdit), 'project-id')
   assert.equal(adminSectionUrl('cash-donations'), '/admin/cash-donations')
   const edit = adminEditUrl('news', 'article-id')
   assert.equal(adminSectionFromPath(edit), 'news')
@@ -29,7 +33,9 @@ test('every admin section has a module, permission and known category', () => {
 })
 
 test('admin search only shows sections available to the role', () => {
-  assert.deepEqual(visibleAdminItems('FinanceManager', 'dons').map(([id]) => id), ['finance', 'donations', 'cash-donations'])
+  assert.deepEqual(visibleAdminItems('FinanceManager', 'dons').map(([id]) => id), ['finance', 'fundraising-projects', 'donations', 'cash-donations'])
+  assert.ok(visibleAdminItems('FinanceManager').some(([id]) => id === 'fundraising-projects'))
+  assert.ok(!visibleAdminItems('Editor').some(([id]) => id === 'fundraising-projects'))
   assert.equal(visibleAdminItems('Editor', 'sécurité').length, 0)
   assert.ok(visibleAdminItems('MatchManager', 'matchs').some(([id]) => id === 'matches'))
 })

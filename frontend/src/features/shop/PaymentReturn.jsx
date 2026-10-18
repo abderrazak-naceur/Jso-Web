@@ -193,6 +193,7 @@ export default function PaymentReturn() {
             <button onClick={refresh} className="rounded-full border border-slate-200 px-5 py-2 text-sm font-bold hover:border-jso-blue">Actualiser</button>
           </div>
         )}
+        {params.get('projectId') && <a href={`/nos-projets?projet=${encodeURIComponent(params.get('projectId'))}#mon-engagement`} className="mt-6 block rounded-full bg-jso-blue px-6 py-3 font-extrabold text-white">Retrouver mon engagement</a>}
         <a href="/" className="mt-6 inline-block rounded-full bg-jso-navy px-6 py-3 font-extrabold text-white hover:bg-jso-blue">Retour à l’accueil</a>
         {isPending && !loading && <p className="mt-3 text-xs text-slate-400">Statut actuel : {status || 'inconnu'}</p>}
       </div>

@@ -25,6 +25,7 @@ export const ADMIN_MODULES = {
   'match-streams': lazy(() => import('./sport/MatchStreamsWithPromos')),
   analytics: lazy(() => import('./sport/PlayerAnalyticsModule')),
   finance: lazy(() => import('./commerce/Finance')),
+  'fundraising-projects': lazy(() => import('./commerce/FundraisingProjects')),
   donations: lazy(() => import('./commerce/Donations')),
   'cash-donations': lazy(() => import('./commerce/CashDonations')),
   volunteers: lazy(() => import('./community/Volunteers')),

@@ -7,7 +7,7 @@ export function adminSectionFromPath(pathname = window.location.pathname) {
   if (parts[0] !== 'admin') return null
   if (parts.length === 1) return 'dashboard'
   if (parts.length === 2 && knownSections.has(parts[1])) return parts[1]
-  if (parts.length === 4 && ['news', 'shop', 'matches', 'club-events'].includes(parts[1]) && parts[2] && parts[3] === 'edit') return parts[1]
+  if (parts.length === 4 && ['news', 'shop', 'matches', 'club-events', 'fundraising-projects'].includes(parts[1]) && parts[2] && parts[3] === 'edit') return parts[1]
   return null
 }
 
