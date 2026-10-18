@@ -110,8 +110,8 @@ export const ADMIN_QUICK_SECTION_IDS = ['tickets', 'matches', 'news', 'donations
 export const ADMIN_PUBLIC_PATHS = Object.freeze({
   tickets: '/billetterie',
   memberships: '/abonnements',
-  donations: '/soutenir',
-  'cash-donations': '/soutenir',
+  donations: '/nos-projets',
+  'cash-donations': '/nos-projets',
   shop: '/boutique',
   orders: '/boutique',
   sponsors: '/partenaires',
