@@ -173,7 +173,7 @@ function TicketTypeRow({ type, fan, onNeedAuth }) {
         <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
           <p className="inline-flex items-center gap-2 text-sm font-extrabold text-emerald-800"><CheckCircle2 size={18} aria-hidden="true" /> Billet gratuit confirmé avec le code {promoCode.trim().toUpperCase()}.</p>
           <p className="mt-1 text-sm font-semibold text-emerald-800">Le QR code est disponible dans votre espace supporter, rubrique « Mes billets ».</p>
-          <a href="/account#biglietti" className="mt-4 inline-flex rounded-xl bg-jso-navy px-5 py-3 font-extrabold text-white hover:bg-jso-blue">Voir mon billet et son QR</a>
+          <a href="/account/tickets" className="mt-4 inline-flex rounded-xl bg-jso-navy px-5 py-3 font-extrabold text-white hover:bg-jso-blue">Voir mon billet et son QR</a>
         </div>
       ) : orderId ? (
         <div className="mt-4 rounded-2xl border border-slate-200 bg-jso-paper/60 p-5">

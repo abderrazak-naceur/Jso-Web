@@ -88,9 +88,9 @@ export default function CustomerDashboardPage() {
       </section>
 
       {fan.status === 'authenticated' && <section aria-label="Riepilogo account" className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5"><div className="flex items-center gap-3 text-blue-700"><Ticket size={21}/><span className="text-sm font-bold text-slate-500">I miei biglietti</span></div><p className="mt-3 text-3xl font-black">{ticketCount ?? '—'}</p><a href="/account#biglietti" className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-blue-700">Visualizza <ArrowRight size={15}/></a></div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5"><div className="flex items-center gap-3 text-violet-700"><Crown size={21}/><span className="text-sm font-bold text-slate-500">Abbonamenti</span></div><p className="mt-3 text-3xl font-black">{membershipCount ?? '—'}</p><a href="/account#abbonamenti" className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-blue-700">Visualizza <ArrowRight size={15}/></a></div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5"><div className="flex items-center gap-3 text-emerald-700"><ShoppingBag size={21}/><span className="text-sm font-bold text-slate-500">I miei ordini</span></div><p className="mt-3 text-3xl font-black">{orderCount ?? '—'}</p><a href="/account#ordini" className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-blue-700">Visualizza <ArrowRight size={15}/></a></div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5"><div className="flex items-center gap-3 text-blue-700"><Ticket size={21}/><span className="text-sm font-bold text-slate-500">I miei biglietti</span></div><p className="mt-3 text-3xl font-black">{ticketCount ?? '—'}</p><a href="/account/tickets" className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-blue-700">Visualizza <ArrowRight size={15}/></a></div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5"><div className="flex items-center gap-3 text-violet-700"><Crown size={21}/><span className="text-sm font-bold text-slate-500">Abbonamenti</span></div><p className="mt-3 text-3xl font-black">{membershipCount ?? '—'}</p><a href="/account/memberships" className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-blue-700">Visualizza <ArrowRight size={15}/></a></div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5"><div className="flex items-center gap-3 text-emerald-700"><ShoppingBag size={21}/><span className="text-sm font-bold text-slate-500">I miei ordini</span></div><p className="mt-3 text-3xl font-black">{orderCount ?? '—'}</p><a href="/account/orders" className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-blue-700">Visualizza <ArrowRight size={15}/></a></div>
       </section>}
 
       <section className="mt-7 grid gap-4 lg:grid-cols-[1.1fr_.9fr]">
@@ -105,9 +105,9 @@ export default function CustomerDashboardPage() {
           <a href="/billetterie" className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 py-3.5 font-extrabold text-white transition hover:bg-blue-800"><Ticket size={18}/> Vai alla biglietteria e paga online <ArrowRight size={17}/></a>
         </div>
         <div className="space-y-4">
-          <QuickLink href="/account#biglietti" icon={Ticket} title="I miei biglietti" description="Biglietti acquistati e QR code, se disponibili." />
-          <QuickLink href="/account#abbonamenti" icon={Crown} title="Abbonamenti" description="Consulta le tue adesioni e il relativo stato." tone="violet"/>
-          <QuickLink href="/account#ordini" icon={ShoppingBag} title="I miei ordini" description="Controlla acquisti e stato dei pagamenti." tone="green"/>
+          <QuickLink href="/account/tickets" icon={Ticket} title="I miei biglietti" description="Biglietti acquistati e QR code, se disponibili." />
+          <QuickLink href="/account/memberships" icon={Crown} title="Abbonamenti" description="Consulta le tue adesioni e il relativo stato." tone="violet"/>
+          <QuickLink href="/account/orders" icon={ShoppingBag} title="I miei ordini" description="Controlla acquisti e stato dei pagamenti." tone="green"/>
           <QuickLink href="/profil" icon={UserRound} title="Profilo personale" description="Aggiorna i dati del tuo account." tone="gold"/>
           <div className="rounded-2xl bg-[#071a3a] p-5 text-white"><div className="flex items-center gap-3"><CreditCard size={22} className="text-[#ffd700]"/><h3 className="font-extrabold">Pagamento protetto</h3></div><p className="mt-2 text-sm leading-6 text-white/75">La prenotazione e il pagamento vengono gestiti dal flusso ufficiale della biglietteria. La conferma dipende dal provider di pagamento.</p></div>
         </div>

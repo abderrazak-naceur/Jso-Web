@@ -80,8 +80,9 @@ test('public sections and content have stable paths', () => {
   assert.equal(sectionFromPath('/boutique/slug/extra'), null)
 })
 
-test('account routes use the dashboard that includes payment history', () => {
+test('account section URLs resolve only to their dedicated dashboard routes', () => {
   const source = readFileSync(new URL('../src/main.jsx', import.meta.url), 'utf8')
   assert.match(source, /import\('\.\/features\/account\/CustomerDashboardPage\.jsx'\)/)
-  assert.match(source, /path === '\/account' \|\| path === '\/mon-espace'\) return <CustomerDashboardPage \/>/)
+  assert.match(source, /\['\/account', '\/mon-espace', '\/account\/tickets', '\/account\/memberships', '\/account\/orders', '\/account\/supports', '\/account\/payments'\]\.includes\(path\)\) return <CustomerDashboardPage \/>/)
+  assert.doesNotMatch(source, /path\.startsWith\('\/account\/'\)/)
 })

@@ -194,7 +194,7 @@ export default function PaymentReturn() {
           </div>
         )}
         {params.get('projectId') && <a href={`/nos-projets?projet=${encodeURIComponent(params.get('projectId'))}#mon-engagement`} className="mt-6 block rounded-full bg-jso-blue px-6 py-3 font-extrabold text-white">Retrouver mon engagement</a>}
-        {params.get('projectId') && <a href="/account#mes-soutiens" className="mt-4 block text-sm font-bold text-jso-blue">Mon dashboard · Mes soutiens</a>}
+        {params.get('projectId') && <a href="/account/supports" className="mt-4 block text-sm font-bold text-jso-blue">Mon dashboard · Mes soutiens</a>}
         <a href="/" className="mt-6 inline-block rounded-full bg-jso-navy px-6 py-3 font-extrabold text-white hover:bg-jso-blue">Retour à l’accueil</a>
         {isPending && !loading && <p className="mt-3 text-xs text-slate-400">Statut actuel : {status || 'inconnu'}</p>}
       </div>

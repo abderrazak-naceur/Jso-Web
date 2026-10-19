@@ -9,6 +9,7 @@ import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import './CustomerDashboardPage.css'
 import { getProfilePhoto, subscribeProfilePhoto } from './profilePhoto'
 import { getSupporterLevel } from './supporterLevel'
+import QRCode from 'qrcode'
 
 const value = (item, ...keys) => {
   for (const key of keys) if (item?.[key] !== undefined && item?.[key] !== null) return item[key]
@@ -44,8 +45,12 @@ function DataError({ message, onRetry }) {
 
 
 export default function CustomerDashboardPage() {
+  const accountSection = ({ '/account/tickets': 'tickets', '/account/memberships': 'memberships', '/account/orders': 'orders', '/account/supports': 'supports', '/account/payments': 'payments' })[window.location.pathname.replace(/\/$/, '')] || ''
+  const sectionTitles = { tickets: ['Mes billets', 'Vos billets confirmés et leurs QR codes.'], memberships: ['Mes abonnements', 'Consultez vos abonnements et leur statut.'], orders: ['Mes commandes', 'Suivez vos achats et leurs statuts.'], supports: ['Mes soutiens', 'Retrouvez vos participations aux projets de la JSO.'], payments: ['Mes paiements', 'Consultez l’historique et le statut de vos opérations.'] }
+  const sectionHeading = sectionTitles[accountSection]
   const fan = useFanSession()
   const [authOpen, setAuthOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [authMode, setAuthMode] = useState('login')
   const [profilePhoto, setProfilePhoto] = useState(getProfilePhoto)
   useEffect(() => subscribeProfilePhoto(setProfilePhoto), [])
@@ -89,7 +94,9 @@ export default function CustomerDashboardPage() {
     setDigitalErrors((state) => ({ ...state, [id]: '' }))
     try {
       const result = await ticketApi.digital(id, fan.token)
-      setDigital((state) => ({ ...state, [id]: result }))
+      const token = value(result, 'token', 'Token')
+      const qrCodeDataUrl = token ? await QRCode.toDataURL(token, { width: 320, margin: 2, errorCorrectionLevel: 'M' }) : null
+      setDigital((state) => ({ ...state, [id]: { ...result, qrCodeDataUrl } }))
     } catch (error) {
       setDigitalErrors((state) => ({ ...state, [id]: error?.message || 'Billet numérique indisponible. Vérifiez que le paiement est confirmé.' }))
     } finally {
@@ -131,25 +138,22 @@ export default function CustomerDashboardPage() {
   const displayName = fan.user?.displayName || fan.user?.fullName || fan.user?.name || fan.user?.email?.split('@')[0] || 'Supporter'
   const supporterLevel = getSupporterLevel(fan.user?.loginDaysCount)
   const initials = displayName.split(/[\\s._-]+/).filter(Boolean).slice(0, 2).map((word) => word[0]).join('').toUpperCase() || 'JS'
-  const jumpTo = (id) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    document.getElementById('jso-mobile-sidebar')?.classList.remove('is-open')
-  }
+  const closeMobileMenu = () => setMobileMenuOpen(false)
   function NavItem({ icon: Icon, label, href, active = false, onClick }) {
     const classes = "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold transition " + (active ? 'bg-blue-600 text-white shadow-md' : 'text-white/75 hover:bg-white/10 hover:text-white')
     return onClick
-      ? <button type="button" onClick={onClick} className={classes}><Icon size={18} aria-hidden="true" /><span>{label}</span></button>
-      : <a href={href} aria-current={active ? 'page' : undefined} className={classes}><Icon size={18} aria-hidden="true" /><span>{label}</span></a>
+      ? <button type="button" onClick={() => { onClick(); closeMobileMenu() }} className={classes}><Icon size={18} aria-hidden="true" /><span>{label}</span></button>
+      : <a href={href} onClick={closeMobileMenu} aria-current={active ? 'page' : undefined} className={classes}><Icon size={18} aria-hidden="true" /><span>{label}</span></a>
   }
   const sidebar = <aside className="jso-dashboard-sidebar">
     <a href="/" className="jso-brand-lockup" aria-label="JSO, accueil"><img src="/JSO-crest-regenerated-ok.png" alt="" /><span><strong>JSO</strong><small>FOOTBALL CLUB</small></span></a>
     <nav aria-label="Navigazione area supporter" className="jso-sidebar-nav">
-      <NavItem icon={LayoutDashboard} label="Mon espace" href="/mon-espace" active />
-      <NavItem icon={Ticket} label="Mes billets" href="#mes-billets" onClick={() => jumpTo('mes-billets')} />
-      <NavItem icon={Crown} label="Mes abonnements" href="#mes-abonnements" onClick={() => jumpTo('mes-abonnements')} />
-      <NavItem icon={ShoppingBag} label="Mes commandes" href="#mes-commandes" onClick={() => jumpTo('mes-commandes')} />
-      <NavItem icon={ShieldCheck} label="Mes soutiens" href="#mes-soutiens" onClick={() => jumpTo('mes-soutiens')} />
-      <NavItem icon={CreditCard} label="Mes paiements" href="#mes-paiements" onClick={() => jumpTo('mes-paiements')} />
+      <NavItem icon={LayoutDashboard} label="Mon espace" href="/mon-espace" active={!accountSection} />
+      <NavItem icon={Ticket} label="Mes billets" href="/account/tickets" active={accountSection === 'tickets'} />
+      <NavItem icon={Crown} label="Mes abonnements" href="/account/memberships" active={accountSection === 'memberships'} />
+      <NavItem icon={ShoppingBag} label="Mes commandes" href="/account/orders" active={accountSection === 'orders'} />
+      <NavItem icon={ShieldCheck} label="Mes soutiens" href="/account/supports" active={accountSection === 'supports'} />
+      <NavItem icon={CreditCard} label="Mes paiements" href="/account/payments" active={accountSection === 'payments'} />
       <NavItem icon={UserRound} label="Mon profil" onClick={() => { window.location.href = "/profil" }} />
       <NavItem icon={Settings} label="Paramètres" onClick={() => setAuthOpen(true)} />
       <NavItem icon={LogOut} label="Se déconnecter" onClick={fan.signOut} />
@@ -158,17 +162,17 @@ export default function CustomerDashboardPage() {
     <div className="jso-sidebar-foot">JSO · Ensemble vers la victoire</div>
   </aside>
 
-  return <div className="jso-account-page min-h-screen bg-jso-paper text-jso-ink">
+  return <div className={'jso-account-page min-h-screen bg-jso-paper text-jso-ink' + (accountSection ? ' jso-account-section-view jso-account-view-' + accountSection : '')}>
     {sidebar}
     <div className="jso-dashboard-shell">
       <header className="jso-dashboard-topbar">
-        <button type="button" className="jso-mobile-menu" aria-label="Afficher le menu supporter" onClick={() => document.getElementById('jso-mobile-sidebar')?.classList.toggle('is-open')}><Menu size={21} /></button>
+        <button type="button" className="jso-mobile-menu" aria-label="Afficher le menu supporter" aria-expanded={mobileMenuOpen} aria-controls="jso-mobile-sidebar" onClick={() => setMobileMenuOpen((open) => !open)}><Menu size={21} /></button>
         <a href="/" className="jso-mobile-brand"><img src="/JSO-crest-regenerated-ok.png" alt="" /><strong>JSO</strong><small>FOOTBALL CLUB</small></a>
         <nav className="jso-top-links" aria-label="Navigation principale"><a href="/">Accueil</a><a href="/matchs">Matches</a><a href="/billetterie">Billetterie</a><a href="/abonnements">Abonnements</a><a href="/boutique">Boutique</a><a href="/actualites">Actualités</a></nav>
         <div className="jso-top-user"><span className="jso-notification-dot" aria-label="Notifications">♧</span><span className="jso-avatar relative overflow-hidden border-2 border-amber-400 shadow-md" aria-label={displayName}>{profilePhoto ? <img src={profilePhoto} alt="" className="h-full w-full object-cover" /> : initials}<Crown size={12} className="absolute bottom-0 right-0 rounded-full bg-amber-300 p-[1px] text-jso-navy" aria-hidden="true" /></span><span className="jso-top-user-name">{displayName}<small className="block text-[10px] font-bold text-amber-600">{supporterLevel.name} · {'★'.repeat(supporterLevel.stars)}</small></span><ChevronDown size={15} aria-hidden="true" /></div>
       </header>
       <main id="main-content" tabIndex={-1} className="jso-dashboard-main">
-        <div className="jso-welcome"><div><p className="jso-eyebrow">ESPACE SUPPORTER</p><h1>Bonjour {displayName},</h1><p className="jso-welcome-subtitle">Bienvenue dans votre espace personnel.</p><p className="jso-welcome-copy">Retrouvez ici tous vos billets, abonnements, commandes et informations.</p></div><div className="jso-welcome-actions"><button type="button" onClick={() => setReload((n) => n + 1)}><RefreshCw size={16} /> Actualiser</button></div></div>
+        <div className="jso-welcome"><div><p className="jso-eyebrow">ESPACE SUPPORTER</p><h1>{sectionHeading?.[0] || `Bonjour ${displayName},`}</h1><p className="jso-welcome-subtitle">{sectionHeading?.[1] || 'Bienvenue dans votre espace personnel.'}</p>{!accountSection && <p className="jso-welcome-copy">Retrouvez ici tous vos billets, abonnements, commandes et informations.</p>}</div><div className="jso-welcome-actions"><button type="button" onClick={() => setReload((n) => n + 1)}><RefreshCw size={16} /> Actualiser</button></div></div>
         <div className="jso-dashboard-kpis" aria-label="Résumé de votre compte">
           <article className="jso-kpi-card"><span className="jso-kpi-icon"><Ticket size={23} /></span><div><span className="jso-kpi-label">Mes billets</span><strong>{data.tickets.status === 'ready' ? ticketItems.length : '—'}</strong><small>{ticketItems.length ? 'Votre prochain match' : 'Vos billets apparaîtront ici'}</small></div><ChevronRight size={18} className="jso-kpi-arrow" /></article>
           <article className="jso-kpi-card jso-kpi-gold"><span className="jso-kpi-icon"><Crown size={23} /></span><div><span className="jso-kpi-label">Mon abonnement</span><strong className="jso-kpi-word">{activeMembership ? 'Actif' : '—'}</strong><small>{value(activeMembership, 'planName', 'PlanName', 'name', 'Name') || 'Saison 2026/27'}</small></div><ChevronRight size={18} className="jso-kpi-arrow" /></article>
@@ -182,7 +186,7 @@ export default function CustomerDashboardPage() {
               <div className="jso-ticket-details"><span><small>Tribune</small><strong>{value(nextTicket, 'standName', 'StandName', 'tribune', 'Tribune') || '—'}</strong></span><span><small>Rang</small><strong>{value(nextTicket, 'row', 'Row', 'rank', 'Rank') || '—'}</strong></span><span><small>Siège</small><strong>{value(nextTicket, 'seat', 'Seat') || '—'}</strong></span>{nextQrImage && <img className="jso-ticket-qr" src={nextQr} alt="QR code du billet" />}</div>
               <div className="jso-ticket-actions"><span className={'jso-status-pill ' + (['Confirmed', 'Paid', 'Active'].includes(statusOf(nextTicket)) ? 'is-ok' : '')}><CheckCircle2 size={14} /> {prettyStatus(statusOf(nextTicket))}</span><button type="button" onClick={() => showDigital(nextTicket)} disabled={!nextTicketId || Boolean(digitalBusy[nextTicketId])}>{digitalBusy[nextTicketId] ? 'Chargement…' : <><Ticket size={15} /> Voir mon billet</>}</button></div>
               {digitalErrors[nextTicketId] && <p role="alert" className="jso-dashboard-error">{digitalErrors[nextTicketId]}</p>}
-              {nextDigital && <div className="jso-ticket-extra"><p>Billet numérique</p>{nextQrImage && <a href={nextQr} download={'jso-ticket-' + nextTicketId + '.png'}><Download size={14} /> Télécharger le billet</a>}<button type="button" onClick={() => setDigital((state) => { const next = { ...state }; delete next[nextTicketId]; return next })}>Fermer</button></div>}
+              {nextDigital && <div className="jso-ticket-extra" role="region" aria-label="Billet numérique"><div><p>Billet numérique</p><small>Présentez ce QR code à l’entrée du stade.</small></div>{nextQrImage && <img src={nextQr} alt="QR code valide pour le contrôle du billet" className="jso-ticket-qr-large" />}<div className="jso-ticket-extra-actions">{nextQrImage && <a href={nextQr} download={'jso-ticket-' + nextTicketId + '.png'}><Download size={16} /> Télécharger le QR</a>}<button type="button" onClick={() => setDigital((state) => { const next = { ...state }; delete next[nextTicketId]; return next })}>Fermer</button></div></div>}
             </div> : <EmptyState title="Aucun billet pour le moment" detail="Vos réservations apparaîtront ici après l’achat." />}
           </section>
           <section className="jso-panel jso-membership-panel" id="mes-abonnements">
@@ -205,6 +209,13 @@ export default function CustomerDashboardPage() {
             })}</div> : <EmptyState title="Aucune commande pour le moment" detail="Vos achats seront affichés ici avec leur statut et leur montant." />}
           </section>
         </div>
+        {accountSection === 'tickets' && <section className="jso-panel jso-all-tickets"><div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">BILLETTERIE</span><h2>Tous mes billets</h2></div><a href="/billetterie">Acheter un billet <ChevronRight size={14} /></a></div>
+          {data.tickets.status === 'error' ? <DataError message={data.tickets.message} onRetry={() => setReload(n => n + 1)} /> : data.tickets.status === 'loading' ? <p className="jso-muted">Chargement des billets…</p> : ticketItems.length ? <div className="jso-account-ticket-list">{ticketItems.map((ticket, index) => {
+            const id = idOf(ticket) || index
+            const qrData = value(digital[id], 'qrCodeDataUrl')
+            return <article key={id} className="jso-account-ticket-row"><div><strong>{value(ticket, 'ticketTypeName', 'TicketTypeName', 'matchTitle', 'MatchTitle') || 'Billet JSO'}</strong><p>{dateOf(ticket, 'kickoffAt', 'KickoffAt', 'createdAt', 'CreatedAt')} · {prettyStatus(statusOf(ticket))}</p><small>{moneyOf(ticket) || 'Billet numérique'}</small></div>{qrData && <img src={qrData} alt="QR code du billet" className="jso-ticket-qr-large" />}{qrData ? <a href={qrData} download={'jso-ticket-' + id + '.png'} className="jso-account-ticket-action"><Download size={16}/> Télécharger QR</a> : <button type="button" className="jso-account-ticket-action" disabled={Boolean(digitalBusy[id]) || !['Confirmed', 'CheckedIn'].includes(statusOf(ticket))} onClick={() => showDigital(ticket)}>{digitalBusy[id] ? 'Chargement…' : 'Afficher le QR'}</button>}{digitalErrors[id] && <p role="alert" className="jso-dashboard-error">{digitalErrors[id]}</p>}</article>
+          })}</div> : <EmptyState title="Aucun billet pour le moment" detail="Les billets achetés apparaîtront ici." />}
+        </section>}
         <AccountFundraising key={fan.token} token={fan.token} onChanged={() => setReload(n => n + 1)}/>
         <section className="jso-panel mt-4" id="mes-paiements">
           <div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">SUIVI DE VOS ACHATS</span><h2>Historique des paiements</h2></div><span className="jso-status-pill">{data.payments.items.length} opération{data.payments.items.length === 1 ? '' : 's'}</span></div>
@@ -226,11 +237,11 @@ export default function CustomerDashboardPage() {
             <a href="/boutique" className="jso-news-card"><div className="jso-news-photo jso-news-photo-four" /><strong>Nouvelle collection disponible</strong><small>Boutique · JSO</small></a>
           </div>
         </section>
-        <div className="jso-mobile-bottom-nav"><a href="/mon-espace" className="is-active"><LayoutDashboard size={18} /><small>Mon espace</small></a><a href="#mes-billets"><Ticket size={18} /><small>Mes billets</small></a><a href="#mes-soutiens"><ShieldCheck size={18} /><small>Mes soutiens</small></a><a href="/boutique"><ShoppingBag size={18} /><small>Boutique</small></a><a href="/profil"><UserRound size={18} /><small>Profil</small></a></div>
+        <div className="jso-mobile-bottom-nav"><a href="/mon-espace" className={!accountSection ? 'is-active' : ''}><LayoutDashboard size={18} /><small>Mon espace</small></a><a href="/account/tickets" className={accountSection === 'tickets' ? 'is-active' : ''}><Ticket size={18} /><small>Mes billets</small></a><a href="/account/supports" className={accountSection === 'supports' ? 'is-active' : ''}><ShieldCheck size={18} /><small>Mes soutiens</small></a><a href="/account/payments" className={accountSection === 'payments' ? 'is-active' : ''}><CreditCard size={18} /><small>Paiements</small></a><a href="/profil"><UserRound size={18} /><small>Profil</small></a></div>
         <div className="jso-dashboard-footer">JSO Football Club · Espace supporter</div>
       </main>
     </div>
-    <div id="jso-mobile-sidebar" className="jso-mobile-sidebar">{sidebar}<button type="button" className="jso-mobile-sidebar-close" onClick={() => document.getElementById('jso-mobile-sidebar')?.classList.remove('is-open')}>Fermer le menu</button></div>
+    <div id="jso-mobile-sidebar" className={'jso-mobile-sidebar' + (mobileMenuOpen ? ' is-open' : '')} onKeyDown={(event) => { if (event.key === 'Escape') closeMobileMenu() }}>{sidebar}<button type="button" className="jso-mobile-sidebar-close" onClick={closeMobileMenu}>Fermer le menu</button></div>
     {allLoading && <div className="jso-loading-bar" role="status">Chargement de vos informations…</div>}
     <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onAuthenticated={(result) => { fan.signIn(result); setAuthOpen(false) }} />
   </div>

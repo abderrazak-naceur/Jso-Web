@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ImagePlus, Save, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { ImagePlus, Save, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { adminApi } from '../api'
 import { useRef } from 'react'
 

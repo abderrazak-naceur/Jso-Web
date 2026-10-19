@@ -343,7 +343,6 @@ Object.assign(LEGACY_TRANSLATIONS, {
   'Mon profil': { en: 'My profile', it: 'Il mio profilo', ar: 'ملفي الشخصي' },
   'Paramètres': { en: 'Settings', it: 'Impostazioni', ar: 'الإعدادات' },
   'Se déconnecter': { en: 'Sign out', it: 'Disconnetti', ar: 'تسجيل الخروج' },
-  'La mia area': { en: 'My area', it: 'La mia area', ar: 'مساحتي' },
 })
 
 
@@ -632,7 +631,6 @@ Object.assign(LEGACY_TRANSLATIONS, {
   'Supprimer le projet': { en: 'Delete project', it: 'Elimina progetto', ar: 'حذف المشروع' },
   'Restaurer en brouillon': { en: 'Restore as draft', it: 'Ripristina come bozza', ar: 'استعادة كمسودة' },
   'Archiver': { en: 'Archive', it: 'Archivia', ar: 'أرشفة' },
-  'Objectifs de collecte de fonds': { en: 'Fundraising goals', it: 'Obiettivi di raccolta fondi', ar: 'أهداف جمع التبرعات' },
 })
 
 Object.assign(LEGACY_TRANSLATIONS, {

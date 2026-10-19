@@ -231,4 +231,51 @@
   .jso-ticket-actions button { flex-basis: 100%; }
   .jso-mobile-bottom-nav a { font-size: 11px; }
 }
+
+/* Account areas are real pages with one focused section at a time. */
+.jso-account-section-view .jso-dashboard-kpis,
+.jso-account-section-view .jso-news-panel,
+.jso-account-section-view .jso-dashboard-footer,
+.jso-account-section-view .jso-dashboard-panels>section,
+.jso-account-section-view #mes-soutiens,
+.jso-account-section-view #mes-paiements,
+.jso-account-section-view .fr-account-area,
+.jso-account-section-view .jso-all-tickets {display:none}
+.jso-account-section-view .jso-dashboard-panels{display:block;max-width:980px;margin:0 auto}
+.jso-account-section-view .jso-dashboard-panels>section{width:100%;padding:clamp(18px,3vw,30px);border-radius:20px}
+.jso-account-view-tickets .jso-all-tickets,
+.jso-account-view-memberships .jso-dashboard-panels>#mes-abonnements,
+.jso-account-view-orders .jso-dashboard-panels>#mes-commandes,
+.jso-account-view-supports #mes-soutiens,
+.jso-account-view-supports .fr-account-area,
+.jso-account-view-payments #mes-paiements{display:block;max-width:980px;margin:0 auto}
+.jso-ticket-extra{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:16px;padding:16px;border:1px solid #c9d9ef;border-radius:16px;background:#f5f8fd}
+.jso-ticket-extra>div:first-child{flex:1;min-width:180px}
+.jso-ticket-extra p{font-size:16px;font-weight:900;color:#071a36}
+.jso-ticket-extra small{display:block;margin-top:5px;font-size:13px;color:#52647c}
+.jso-ticket-qr-large{width:clamp(120px,22vw,190px);height:auto;padding:8px;border:1px solid #e1e8f1;border-radius:12px;background:#fff;image-rendering:pixelated}
+.jso-ticket-extra-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.jso-ticket-extra-actions a,.jso-ticket-extra-actions button,.jso-account-ticket-action{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:10px 14px;border:1px solid #c9d9ef;border-radius:12px;background:#fff;color:#123761;font-size:14px;font-weight:800;text-decoration:none;cursor:pointer}
+.jso-account-ticket-list{display:grid;gap:12px}
+.jso-account-ticket-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:18px;border:1px solid #e5eaf2;border-radius:16px;background:#fff}
+.jso-account-ticket-row>div:first-child{flex:1;min-width:180px}
+.jso-account-ticket-row strong{font-size:17px;color:#10213d}
+.jso-account-ticket-row p,.jso-account-ticket-row small{display:block;margin-top:5px;font-size:14px;color:#586980}
+.jso-account-ticket-action:disabled{opacity:.55;cursor:not-allowed}
+.jso-mobile-bottom-nav{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:760px){
+ .jso-account-section-view .jso-dashboard-main{padding-top:18px}
+ .jso-account-section-view .jso-welcome{margin:0 auto 18px;max-width:980px}
+ .jso-account-section-view .jso-welcome h1{font-size:clamp(28px,7vw,36px)}
+ .jso-ticket-extra{align-items:flex-start;padding:14px;gap:12px}
+ .jso-ticket-extra>div:first-child{flex-basis:100%}
+ .jso-ticket-qr-large{width:min(64vw,220px);margin-inline:auto}
+ .jso-ticket-extra-actions{width:100%}
+ .jso-ticket-extra-actions a,.jso-ticket-extra-actions button{flex:1;min-height:50px}
+ .jso-account-ticket-row{gap:12px;padding:15px}
+ .jso-account-ticket-row>div:first-child{flex-basis:100%}
+ .jso-account-ticket-row strong{font-size:16px;line-height:1.45}
+ .jso-account-ticket-row p,.jso-account-ticket-row small{font-size:14px;line-height:1.5}
+ .jso-account-ticket-action{flex:1;min-height:50px;font-size:14px}
+}
 @media(max-width:1100px){.jso-mobile-bottom-nav{grid-template-columns:repeat(5,minmax(0,1fr))}}

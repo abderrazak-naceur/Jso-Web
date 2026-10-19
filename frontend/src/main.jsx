@@ -53,7 +53,7 @@ function Root() {
     if (path !== '/nos-projets') window.history.replaceState({}, '', '/nos-projets' + window.location.search + window.location.hash)
     return <DonationPage />
   }
-  if (path === '/account' || path === '/mon-espace') return <CustomerDashboardPage />
+  if (['/account', '/mon-espace', '/account/tickets', '/account/memberships', '/account/orders', '/account/supports', '/account/payments'].includes(path)) return <CustomerDashboardPage />
   if (path === '/profil' || path === '/profile') return <SupporterProfilePage />
   return <App />
 }
