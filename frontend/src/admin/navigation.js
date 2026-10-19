@@ -6,7 +6,7 @@ export const ADMIN_NAVIGATION = [
     ['tickets', 'Billetterie', Ticket, ['SuperAdmin','ClubAdmin','MatchManager','TicketSeller','TicketSupervisor'], 'Billetterie & Abonnements'],
     ['memberships', 'Abonnements', CreditCard, ['SuperAdmin','ClubAdmin','SeasonManager'], 'Billetterie & Abonnements'],
     ['finance', 'Finances', Wallet, ['SuperAdmin','ClubAdmin','FinanceManager'], 'Finances & dons'],
-    ['fundraising-projects', 'Obiettivi della raccolta fondi', Flag, ['SuperAdmin','ClubAdmin','FinanceManager'], 'Finances & dons'],
+    ['fundraising-projects', 'Objectifs de collecte de fonds', Flag, ['SuperAdmin','ClubAdmin','FinanceManager'], 'Finances & dons'],
     ['donations', 'Dons & collecte', HeartHandshake, ['SuperAdmin','ClubAdmin','FinanceManager'], 'Finances & dons'],
     ['cash-donations', 'Dons en espèces', Banknote, ['SuperAdmin','ClubAdmin','FinanceManager','ShopManager','TicketSeller','TicketSupervisor'], 'Finances & dons'],
 

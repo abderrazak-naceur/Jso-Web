@@ -1,8 +1,11 @@
 import { ArrowRight, CheckCircle2, Coins, HeartHandshake, ShieldCheck, Target, Users } from 'lucide-react'
-import { fundraisingMoney as money, projectImage } from './fundraisingTemplates'
+import { useI18n } from '../../../i18n/index.jsx'
+import { fundraisingMoney, projectImage } from './fundraisingTemplates'
 import './fundraising.css'
 
 export default function FundraisingProjectView({ project, preview = false, onSupport }) {
+  const { language } = useI18n()
+  const money = value => fundraisingMoney(value, language)
   const total = Number(project.totalPaidTnd) || 0
   const budget = Number(project.budgetTnd) || 0
   const progress = budget > 0 ? Math.min(100, Math.max(0, total / budget * 100)) : 0

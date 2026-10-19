@@ -4,13 +4,12 @@ import { adminApi } from '../api'
 import { adminEditIdFromPath, navigateAdminEdit } from '../adminRoutes'
 import { useDialog } from '../../features/site/useDialog'
 import FundraisingProjectView from '../../features/donations/fundraising/FundraisingProjectView.jsx'
-import { FUNDRAISING_TEMPLATES } from '../../features/donations/fundraising/fundraisingTemplates.js'
+import { FUNDRAISING_TEMPLATES, fundraisingDate, fundraisingMoney } from '../../features/donations/fundraising/fundraisingTemplates.js'
+import { useI18n, localizeLegacySubtree } from '../../i18n/index.jsx'
 
 const noop = () => {}
 const blankProject = { title: '', description: '', budgetTnd: '', durationMonths: 10, templateId: 'custom', imageUrl: '', status: 'Draft' }
 const inputClass = 'mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-100'
-const money = value => new Intl.NumberFormat('fr-TN', { style: 'currency', currency: 'TND', currencyDisplay: 'code', maximumFractionDigits: 3 }).format(Number(value) || 0)
-const date = value => value ? new Date(value).toLocaleDateString('fr-FR') : '—'
 const statusLabel = status => ({ Draft: 'Brouillon privé', Published: 'Publié', Archived: 'Archivé' })[status] || status
 const projectPayload = (project, status = project.status) => ({ title: project.title.trim(), description: project.description.trim(), budgetTnd: Number(project.budgetTnd), durationMonths: 10, templateId: project.templateId, imageUrl: project.imageUrl?.trim() || null, status })
 
@@ -73,6 +72,10 @@ function PreviewDialog({ project, onClose }) {
 }
 
 export default function FundraisingProjects({ onError = noop }) {
+  const { language, setLanguage, languages } = useI18n()
+  const date = value => fundraisingDate(value, language)
+  const money = value => fundraisingMoney(value, language)
+  const localizationRoot = useRef(null)
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -97,6 +100,8 @@ export default function FundraisingProjects({ onError = noop }) {
   const editingRef = useRef(editingId)
   formRef.current = form
   editingRef.current = editingId
+
+  useEffect(() => localizeLegacySubtree(language, localizationRoot.current), [language])
 
   const loadProjects = useCallback(async signal => {
     setLoading(true)
@@ -262,10 +267,10 @@ export default function FundraisingProjects({ onError = noop }) {
   const displayedCommitments = commitments.filter(item => `${item.displayName} ${item.phone || ''} ${item.email || ''}`.toLocaleLowerCase('fr').includes(search.trim().toLocaleLowerCase('fr')))
   const managed = projects.find(item => item.id === managedProject)
 
-  return <div className="space-y-6 text-slate-900">
+  return <div ref={localizationRoot} className="space-y-6 text-slate-900">
     <header className="rounded-3xl bg-gradient-to-br from-slate-950 to-blue-950 p-6 text-white sm:p-8">
       <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[.15em] text-amber-300"><Flag size={16}/> Finances & dons</p>
-      <div className="mt-3 flex flex-wrap items-start justify-between gap-5"><div><h2 className="text-2xl font-black sm:text-3xl">Obiettivi della raccolta fondi</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">Créez vos projets, préparez leur page publique et suivez les contributions sur 10 mois. Seuls les paiements confirmés alimentent la collecte.</p></div><button type="button" disabled={loading || Boolean(loadError)} onClick={() => begin()} className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-5 py-3 text-sm font-black text-slate-950 disabled:opacity-50"><Plus size={18}/> Nouvel objectif</button></div>
+      <div className="mt-3 flex flex-wrap items-start justify-between gap-5"><div><h2 className="text-2xl font-black sm:text-3xl">Objectifs de collecte de fonds</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">Créez vos projets, préparez leur page publique et suivez les contributions sur 10 mois. Seuls les paiements confirmés alimentent la collecte.</p></div><div className="flex flex-wrap items-center gap-3"><label className="sr-only" htmlFor="fundraising-language">Langue</label><select id="fundraising-language" aria-label="Langue" value={language} onChange={event => setLanguage(event.target.value)} className="rounded-xl border border-white/30 bg-slate-900/40 px-3 py-3 text-sm font-bold text-white">{languages.map(item => <option key={item.code} value={item.code} className="text-slate-900">{item.flag} {item.label}</option>)}</select><button type="button" disabled={loading || Boolean(loadError)} onClick={() => begin()} className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-5 py-3 text-sm font-black text-slate-950 disabled:opacity-50"><Plus size={18}/> Nouvel objectif</button></div></div>
       <a href="/nos-projets" target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-amber-200"><ExternalLink size={15}/> Voir la page publique</a>
     </header>
 

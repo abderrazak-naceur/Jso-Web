@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react'
 import { ArrowRight, HeartHandshake } from 'lucide-react'
 import { donationsApi, fundraisingApi } from '../../../lib/api'
+import { useI18n } from '../../../i18n/index.jsx'
 import FundraisingDashboard from './FundraisingDashboard'
 import { ONLINE_PROVIDERS } from './FundraisingRegistration'
 import { readFundraisingAccess, forgetFundraisingAccess } from './fundraisingAccess'
-import { fundraisingMoney as money } from './fundraisingTemplates'
+import { fundraisingDate, fundraisingMoney } from './fundraisingTemplates'
 import './fundraising.css'
 
 export default function AccountFundraising({ token, onChanged }) {
+  const { language } = useI18n()
+  const date = value => fundraisingDate(value, language)
+  const money = value => fundraisingMoney(value, language)
   const [items, setItems] = useState([])
   const [guests, setGuests] = useState([])
   const [selectedId, setSelectedId] = useState('')
@@ -73,7 +77,7 @@ export default function AccountFundraising({ token, onChanged }) {
     finally { setPaying('') }
   }
 
-  return <section className="jso-panel mt-4" id="mes-soutiens">
+  return <section className="jso-panel mt-4" id="mes-soutiens" lang={language}>
     <div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">COLLECTES DU CLUB</span><h2>Mes soutiens</h2></div><a href="/nos-projets">Nos projets <ArrowRight size={14}/></a></div>
     <p className="mb-4 text-sm text-slate-500">Vos participations, les espèces à remettre au club et chaque mensualité confirmée, même lorsque le projet est archivé.</p>
     {notice && <p role="status" className="mb-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">{notice}</p>}
@@ -81,7 +85,7 @@ export default function AccountFundraising({ token, onChanged }) {
     {loading ? <p role="status" className="text-sm text-slate-500">Chargement de vos participations…</p> : <>
       {guests.length > 0 && <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4"><h3 className="font-bold text-slate-900">Participation créée avant votre connexion ?</h3><p className="mt-1 text-sm text-slate-600">Rattachez uniquement vos propres participations retrouvées dans ce navigateur.</p>{guests.map(record => <div key={record.id} className="mt-3 flex flex-wrap items-center justify-between gap-3"><span className="text-sm">{record.data.displayName} · {record.data.projectTitle} · {money(record.data.monthlyAmountTnd)} / mois</span><button type="button" disabled={Boolean(claiming)} onClick={() => link(record)} className="rounded-lg bg-blue-900 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{claiming === record.id ? 'Rattachement…' : 'Rattacher à mon compte'}</button></div>)}</div>}
       {items.length ? <div className="jso-fundraising fr-account-area">
-        <label className="fr-field">Mon projet soutenu<select value={selected.id} onChange={event => setSelectedId(event.target.value)}>{items.map(item => <option key={item.id} value={item.id}>{item.projectTitle} · {money(item.monthlyAmountTnd)} / mois · {new Date(item.createdAt).toLocaleDateString('fr-FR')}</option>)}</select></label>
+        <label className="fr-field">Mon projet soutenu<select value={selected.id} onChange={event => setSelectedId(event.target.value)}>{items.map(item => <option key={item.id} value={item.id}>{item.projectTitle} · {money(item.monthlyAmountTnd)} / mois · {date(item.createdAt)}</option>)}</select></label>
         <FundraisingDashboard commitment={selected} providers={providers} providerId={providerId} setProviderId={setProviderId} onPay={pay} payingId={paying} onRefresh={refresh} inAccount sectionId={`engagement-${selected.id}`}/>
       </div> : <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center"><HeartHandshake className="mx-auto text-blue-800" size={28}/><h3 className="mt-3 font-bold">Aucun soutien lié à votre compte</h3><p className="mt-2 text-sm text-slate-500">Choisissez un projet en étant connecté pour suivre vos dix mensualités ici.</p><a href="/nos-projets" className="mt-4 inline-flex items-center gap-2 font-bold text-blue-800">Découvrir les projets <ArrowRight size={16}/></a></div>}
     </>}

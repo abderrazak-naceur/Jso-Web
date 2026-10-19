@@ -72,14 +72,20 @@ function translateLegacy(source, language) {
     return leading + translatedBase + suffix + trailing
   }
 
+  match = core.match(/^Mois (\d+)$/)
+  if (match) {
+    const values = { en: `Month ${match[1]}`, it: `Mese ${match[1]}`, ar: `الشهر ${match[1]}` }
+    return leading + (values[language] ?? core) + trailing
+  }
+
   return source
 }
 
 const SOURCE_TEXT = new WeakMap()
 const SOURCE_ATTRIBUTES = new WeakMap()
 
-function localizePublicDom(language) {
-  if (typeof document === 'undefined' || window.location.pathname.startsWith('/admin')) return () => {}
+function localizeRoot(language, root) {
+  if (typeof document === 'undefined' || !root) return () => {}
 
   const translatingText = new WeakSet()
   const translatingAttributes = new WeakSet()
@@ -175,7 +181,7 @@ function localizePublicDom(language) {
     }
   }
 
-  scan(document.body)
+  scan(root)
 
   const observer = new MutationObserver((records) => {
     for (const record of records) {
@@ -189,7 +195,7 @@ function localizePublicDom(language) {
     }
   })
 
-  observer.observe(document.body, {
+  observer.observe(root, {
     childList: true,
     subtree: true,
     characterData: true,
@@ -201,6 +207,15 @@ function localizePublicDom(language) {
     disposed = true
     observer.disconnect()
   }
+}
+
+export function localizeLegacySubtree(language, root) {
+  return localizeRoot(language, root)
+}
+
+function localizePublicDom(language) {
+  if (typeof document === 'undefined' || window.location.pathname.startsWith('/admin')) return () => {}
+  return localizeRoot(language, document.body)
 }
 
 function setMeta(name, content, attribute = 'name') {

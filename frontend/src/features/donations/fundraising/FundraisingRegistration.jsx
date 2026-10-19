@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { ArrowLeft, ArrowRight, ShieldCheck, X } from 'lucide-react'
 import { useDialog } from '../../site/useDialog'
 import { CREST_SRC } from '../../site/brand'
-import { MONTHLY_AMOUNTS, PLAN_MONTHS, planTotal, fundraisingMoney as money } from './fundraisingTemplates'
+import { useI18n } from '../../../i18n/index.jsx'
+import { MONTHLY_AMOUNTS, PLAN_MONTHS, planTotal, fundraisingMoney } from './fundraisingTemplates'
 
 export const ONLINE_PROVIDERS = [
   { id: 'STRIPE', key: 'stripe', label: 'Carte bancaire · international', country: 'FR' },
@@ -12,6 +13,8 @@ export const ONLINE_PROVIDERS = [
 ]
 
 export default function FundraisingRegistration({ project, initialAmount, methods, user, onClose, onJoin }) {
+  const { language } = useI18n()
+  const money = value => fundraisingMoney(value, language)
   const ref = useDialog(() => { if (!saving) onClose() })
   const available = ONLINE_PROVIDERS.filter(provider => methods?.[provider.key])
   const [step, setStep] = useState(1)
@@ -36,6 +39,13 @@ export default function FundraisingRegistration({ project, initialAmount, method
     catch (e) { setError(e.message) }
     finally { setSaving(false) }
   }
+  const paymentLabel = {
+    fr: `Payer le premier mois · ${money(amount)}`,
+    en: `Pay the first month · ${money(amount)}`,
+    it: `Paga il primo mese · ${money(amount)}`,
+    ar: `ادفع الشهر الأول · ${money(amount)}`,
+  }[language] || `Payer le premier mois · ${money(amount)}`
+  const submitLabel = saving ? ({ fr: 'Enregistrement…', en: 'Saving…', it: 'Salvataggio…', ar: 'جارٍ الحفظ…' }[language]) : step < 3 ? ({ fr: 'Continuer', en: 'Continue', it: 'Continua', ar: 'متابعة' }[language]) : paymentMethod === 'Cash' ? ({ fr: 'Confirmer mon engagement', en: 'Confirm my commitment', it: 'Conferma il mio impegno', ar: 'تأكيد التزامي' }[language]) : paymentLabel
   return <div className="jso-fundraising fr-modal-backdrop" onClick={e => { if (e.target === e.currentTarget && !saving) onClose() }}>
     <section ref={ref} role="dialog" aria-modal="true" aria-labelledby="fr-registration-title" tabIndex={-1} className="fr-modal">
       <div className="fr-modal-head"><img src={CREST_SRC} alt="JSO"/><button className="fr-close" type="button" aria-label="Fermer l’inscription" disabled={saving} onClick={onClose}><X size={18}/></button></div>
@@ -57,7 +67,7 @@ export default function FundraisingRegistration({ project, initialAmount, method
           <label className="fr-consent"><input required type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)}/><span>Je confirme cet engagement volontaire et l’affichage de mon nom dans les soutiens. Les dix versements sont réglés séparément, sans prélèvement automatique.</span></label>
         </>}
         {error && <p className="fr-alert fr-error" role="alert">{error}</p>}
-        <div className="fr-modal-buttons">{step > 1 && <button className="fr-button fr-button-outline" type="button" disabled={saving} onClick={() => setStep(step - 1)}><ArrowLeft size={15}/>Retour</button>}<button className="fr-button fr-button-gold" disabled={saving || (step === 3 && !consent)} type="submit">{saving ? 'Enregistrement…' : step < 3 ? 'Continuer' : paymentMethod === 'Cash' ? 'Confirmer mon engagement' : `Payer le premier mois · ${money(amount)}`}<ArrowRight size={16}/></button></div>
+        <div className="fr-modal-buttons">{step > 1 && <button className="fr-button fr-button-outline" type="button" disabled={saving} onClick={() => setStep(step - 1)}><ArrowLeft size={15}/>Retour</button>}<button className="fr-button fr-button-gold" disabled={saving || (step === 3 && !consent)} type="submit">{submitLabel}<ArrowRight size={16}/></button></div>
         <p className="fr-plan-note"><ShieldCheck size={12} style={{ display: 'inline', marginRight: 4 }}/>Seuls les paiements reçus et vérifiés sont comptabilisés.</p>
       </form>
     </section>
