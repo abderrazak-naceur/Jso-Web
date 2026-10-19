@@ -211,9 +211,11 @@ jobs:
             | jq -e '.amount == 12.34 and .message == null and .donorName == "CI Cash Donor"'
           curl -fsS http://127.0.0.1:5080/api/donations/campaign \
             | jq -e --arg id "$cash_id" 'any(.recentDonations[]; .id == $id and .displayName == "Donateur en espèces" and .message == null)'
-          curl -fsS http://127.0.0.1:5080/api/admin/donations/summary \
-            -H "Authorization: Bearer $token" \
-            | jq -e --arg id "$cash_id" '.cashPaidTnd >= 12.34 and any(.donations[]; .id == $id and .paymentStatus == "Paid")'
+          cash_summary=$(curl -fsS http://127.0.0.1:5080/api/admin/donations/summary \
+            -H "Authorization: Bearer $token")
+          echo "$cash_summary" | jq --arg id "$cash_id" '{cashPaidTnd, totalPaidTnd, matchingDonation: [.donations[]? | select(.id == $id) | {id, amount, paymentStatus, paymentProvider}]}'
+          echo "$cash_summary" | jq -e '.cashPaidTnd >= 12.34'
+          echo "$cash_summary" | jq -e --arg id "$cash_id" 'any(.donations[]; .id == $id and .paymentStatus == "Paid")'
 
           curl -fsS -X DELETE "http://127.0.0.1:5080/api/admin/security/staff-assignments/$cash_assignment_id" \
             -H "Authorization: Bearer $token"
