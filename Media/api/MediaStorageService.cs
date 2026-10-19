@@ -88,7 +88,7 @@ public sealed class MediaStorageService(IConfiguration configuration)
     {
         // Preserve absolute document-root paths; relative roots are resolved
         // from the SFTP account's home directory.
-        var isAbsolute = directory.StartsWith('/', StringComparison.Ordinal);
+        var isAbsolute = directory.StartsWith("/", StringComparison.Ordinal);
         var current = isAbsolute ? "/" : ".";
         foreach (var part in directory.Split('/', StringSplitOptions.RemoveEmptyEntries))
         {
