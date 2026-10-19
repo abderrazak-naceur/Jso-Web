@@ -89,10 +89,12 @@ public sealed class MediaStorageService(IConfiguration configuration)
 
     private static void EnsureDirectory(SftpClient client, string directory)
     {
-        var current = "";
+        // SFTP account home is the safe starting point; relative paths avoid
+        // attempting to create protected ancestors such as /home or /var.
+        var current = ".";
         foreach (var part in directory.Split('/', StringSplitOptions.RemoveEmptyEntries))
         {
-            current += "/" + part;
+            current = current == "." ? part : current + "/" + part;
             if (!client.Exists(current)) client.CreateDirectory(current);
         }
     }
