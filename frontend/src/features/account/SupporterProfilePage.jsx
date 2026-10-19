@@ -8,6 +8,7 @@ import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { prepareProfilePhoto } from './profilePhoto'
 import { API_BASE_URL } from '../../lib/apiConfig'
 import { getSupporterLevel, SUPPORTER_LEVELS } from './supporterLevel'
+import './SupporterProfilePage.css'
 
 const formatDate = (value) => {
   if (!value) return '—'
@@ -68,6 +69,7 @@ export default function SupporterProfilePage() {
     if (!file) return
     setPhotoBusy(true)
     setPhotoError('')
+    setNotice('')
     try {
       const prepared = await prepareProfilePhoto(file)
       const blob = await (await fetch(prepared)).blob()
@@ -84,16 +86,17 @@ export default function SupporterProfilePage() {
   }
 
   function removePhoto() {
-    try {
-      accountApi.deletePhoto(fan.token).then(() => {
-        setPhoto('')
-        setProfile(previous => ({ ...previous, profilePhotoUrl: null }))
-        setNotice('Photo retirée. Vos initiales sont affichées.')
-      }).catch(err => setPhotoError(err?.message || 'Impossible de retirer la photo.'))
-      setPhotoError('')
-    } catch (err) {
+    if (!photo || photoBusy) return
+    setPhotoBusy(true)
+    setPhotoError('')
+    setNotice('')
+    accountApi.deletePhoto(fan.token).then(() => {
+      setPhoto('')
+      setProfile(previous => ({ ...previous, profilePhotoUrl: null }))
+      setNotice('Photo retirée. Vos initiales sont affichées.')
+    }).catch(err => {
       setPhotoError(err?.message || 'Impossible de retirer la photo.')
-    }
+    }).finally(() => setPhotoBusy(false))
   }
 
   async function submit(event) {
@@ -121,18 +124,18 @@ export default function SupporterProfilePage() {
   }
 
   if (fan.status === 'unknown' || loading) {
-    return <div className="min-h-screen bg-jso-paper"><StandalonePageHeader /><main className="mx-auto max-w-5xl px-5 py-20 text-center text-sm font-semibold text-slate-500">Chargement de votre profil…</main></div>
+    return <div className="jso-profile-page min-h-screen bg-jso-paper"><StandalonePageHeader /><main className="jso-profile-main mx-auto max-w-5xl px-5 py-20 text-center text-sm font-semibold text-slate-500">Chargement de votre profil…</main></div>
   }
 
   if (fan.status !== 'authenticated' || !fan.token) {
-    return <div className="min-h-screen bg-jso-paper text-jso-ink"><StandalonePageHeader /><main className="mx-auto max-w-3xl px-5 py-16"><a href="/" className="inline-flex items-center gap-2 text-sm font-bold text-jso-blue"><ArrowLeft size={16} /> Retour au site</a><section className="mt-8 rounded-[2rem] bg-jso-navy p-8 text-white shadow-xl sm:p-12"><span className="grid h-14 w-14 place-items-center rounded-2xl bg-white/10 text-jso-gold"><ShieldCheck size={28} /></span><p className="mt-6 text-xs font-extrabold tracking-[0.2em] text-jso-gold">ESPACE SUPPORTER</p><h1 className="mt-2 text-3xl font-black">Votre profil JSO</h1><p className="mt-4 leading-7 text-white/75">Connectez-vous pour consulter et personnaliser votre profil supporter.</p><button type="button" onClick={() => setAuthOpen(true)} className="mt-7 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy transition hover:bg-white">Se connecter</button></section></main><AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onAuthenticated={(result) => { fan.signIn(result); setAuthOpen(false) }} /></div>
+    return <div className="jso-profile-page min-h-screen bg-jso-paper text-jso-ink"><StandalonePageHeader /><main className="jso-profile-main mx-auto max-w-3xl px-5 py-16"><a href="/" className="inline-flex items-center gap-2 text-sm font-bold text-jso-blue"><ArrowLeft size={16} /> Retour au site</a><section className="jso-profile-guest mt-8 rounded-[2rem] bg-jso-navy p-8 text-white shadow-xl sm:p-12"><span className="grid h-14 w-14 place-items-center rounded-2xl bg-white/10 text-jso-gold"><ShieldCheck size={28} /></span><p className="mt-6 text-xs font-extrabold tracking-[0.2em] text-jso-gold">ESPACE SUPPORTER</p><h1 className="mt-2 text-3xl font-black">Votre profil JSO</h1><p className="mt-4 leading-7 text-white/75">Connectez-vous pour consulter et personnaliser votre profil supporter.</p><button type="button" onClick={() => setAuthOpen(true)} className="mt-7 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy transition hover:bg-white">Se connecter</button></section></main><AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onAuthenticated={(result) => { fan.signIn(result); setAuthOpen(false) }} /></div>
   }
 
-  return <div className="min-h-screen bg-slate-50 text-jso-ink">
+  return <div className="jso-profile-page min-h-screen bg-slate-50 text-jso-ink">
     <StandalonePageHeader />
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <main className="jso-profile-main mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <a href="/account" className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-bold text-slate-600 transition hover:bg-white hover:text-jso-blue"><ArrowLeft size={16} /> Mon espace supporter</a>
-      <div className="mt-5 overflow-hidden rounded-[2rem] bg-jso-navy text-white shadow-xl">
+      <div className="jso-profile-hero mt-5 overflow-hidden rounded-[2rem] bg-jso-navy text-white shadow-xl">
         <div className="relative px-6 py-8 sm:px-10 sm:py-10">
           <div className="absolute inset-0 opacity-20" aria-hidden="true" style={{ background: 'radial-gradient(circle at 85% 10%, #ffd700 0, transparent 32%), radial-gradient(circle at 10% 100%, #1769e0 0, transparent 40%)' }} />
           <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
@@ -147,7 +150,7 @@ export default function SupporterProfilePage() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
-        <section className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+        <section className="jso-profile-form-card rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
           <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-extrabold tracking-[0.18em] text-jso-blue">VOS INFORMATIONS</p><h2 className="mt-2 text-2xl font-black">Informations personnelles</h2><p className="mt-2 text-sm leading-6 text-slate-500">Gardez vos informations à jour pour profiter pleinement des services du club.</p></div><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-blue-50 text-jso-blue"><UserRound size={21} /></span></div>
           {error && <div role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</div>}
           {notice && <div role="status" className="mt-5 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800"><CheckCircle2 size={17} />{notice}</div>}
@@ -157,15 +160,15 @@ export default function SupporterProfilePage() {
             <div className="grid gap-4 sm:grid-cols-2"><div><label htmlFor="supporter-birthdate" className="mb-2 block text-sm font-bold">Date de naissance</label><input id="supporter-birthdate" type="date" value={birthDate} min="1900-01-01" max={new Date().toISOString().slice(0,10)} onChange={(event) => setBirthDate(event.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></div><div><label htmlFor="supporter-phone" className="mb-2 block text-sm font-bold">Téléphone</label><input id="supporter-phone" type="tel" value={phoneNumber} minLength={7} maxLength={32} autoComplete="tel" onChange={(event) => setPhoneNumber(event.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-jso-blue" /></div></div>
             <div><label htmlFor="supporter-email" className="mb-2 flex items-center justify-between gap-3 text-sm font-bold">Adresse e-mail<span className={`rounded-full px-2.5 py-1 text-[11px] font-extrabold ${profile?.emailVerified ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{profile?.emailVerified ? 'Vérifiée' : 'Non vérifiée'}</span></label><input id="supporter-email" type="email" value={profile?.email || fan.user?.email || ''} readOnly disabled className="w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-500" /></div>
             <div className="rounded-2xl border border-slate-200 p-4 sm:p-5"><label className="flex cursor-pointer items-start gap-3"><input type="checkbox" checked={anniversaryOptIn} onChange={(event) => setAnniversaryOptIn(event.target.checked)} className="mt-1 h-4 w-4 accent-blue-600" /><span><span className="block text-sm font-extrabold">Recevoir un message pour votre anniversaire</span><span className="mt-1 block text-sm leading-5 text-slate-500">Choix facultatif, modifiable à tout moment.</span></span></label></div>
-            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between"><button type="button" onClick={removePhoto} disabled={!photo} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-40"><Trash2 size={16} /> Rimuovi foto</button><button type="submit" disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-xl bg-jso-blue px-5 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-jso-navy disabled:cursor-wait disabled:opacity-60"><Save size={17} /> {saving ? 'Enregistrement en cours…' : 'Enregistrer le profil'}</button></div>
+            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between"><button type="button" onClick={removePhoto} disabled={!photo || photoBusy} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-40"><Trash2 size={16} /> {photoBusy ? 'Traitement…' : 'Rimuovi foto'}</button><button type="submit" disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-xl bg-jso-blue px-5 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-jso-navy disabled:cursor-wait disabled:opacity-60"><Save size={17} /> {saving ? 'Enregistrement en cours…' : 'Enregistrer le profil'}</button></div>
           </form>
         </section>
-        <aside className="space-y-6">
-          <section className="rounded-[1.75rem] border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm sm:p-6"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-jso-navy text-jso-gold"><Crown size={21} /></span><div><p className="text-xs font-extrabold tracking-[0.15em] text-amber-700">FIDÉLITÉ JSO</p><h2 className="text-xl font-black">{level.name}</h2></div></div><p className="mt-4 text-sm leading-6 text-slate-600">{level.days} jour(s) d’activité sur votre compte.</p><div className="mt-4 h-2 overflow-hidden rounded-full bg-amber-100"><div className="h-full rounded-full bg-gradient-to-r from-amber-300 to-amber-500 transition-all" style={{ width: `${level.progress}%` }} /></div><p className="mt-2 text-xs font-semibold text-slate-500">{level.next ? `${level.remaining} jour(s) avant le niveau suivant` : 'Niveau maximum atteint !'}</p><div className="mt-4 grid grid-cols-5 gap-1">{SUPPORTER_LEVELS.map((item) => <div key={item.name} className={`rounded-lg px-1 py-2 text-center ${level.index >= SUPPORTER_LEVELS.indexOf(item) ? 'bg-amber-200 text-amber-900' : 'bg-slate-100 text-slate-400'}`}><p className="text-xs font-black">{item.stars} ★</p><p className="mt-1 text-[9px] font-bold leading-tight">{item.name}</p></div>)}</div></section>
+        <aside className="jso-profile-aside space-y-6">
+          <section className="jso-profile-loyalty rounded-[1.75rem] border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm sm:p-6"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-jso-navy text-jso-gold"><Crown size={21} /></span><div><p className="text-xs font-extrabold tracking-[0.15em] text-amber-700">FIDÉLITÉ JSO</p><h2 className="text-xl font-black">{level.name}</h2></div></div><p className="mt-4 text-sm leading-6 text-slate-600">{level.days} jour(s) d’activité sur votre compte.</p><div className="mt-4 h-2 overflow-hidden rounded-full bg-amber-100"><div className="h-full rounded-full bg-gradient-to-r from-amber-300 to-amber-500 transition-all" style={{ width: `${level.progress}%` }} /></div><p className="mt-2 text-xs font-semibold text-slate-500">{level.next ? `${level.remaining} jour(s) avant le niveau suivant` : 'Niveau maximum atteint !'}</p><div className="mt-4 grid grid-cols-5 gap-1">{SUPPORTER_LEVELS.map((item) => <div key={item.name} className={`rounded-lg px-1 py-2 text-center ${level.index >= SUPPORTER_LEVELS.indexOf(item) ? 'bg-amber-200 text-amber-900' : 'bg-slate-100 text-slate-400'}`}><p className="text-xs font-black">{item.stars} ★</p><p className="mt-1 text-[9px] font-bold leading-tight">{item.name}</p></div>)}</div></section>
           <section className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><ShieldCheck size={19} /></span><h2 className="font-black">Votre compte</h2></div><p className="mt-3 text-sm leading-6 text-slate-500">Vos informations personnelles sont accessibles uniquement après connexion à votre compte.</p><a href="/account" className="mt-4 inline-flex items-center gap-2 text-sm font-extrabold text-jso-blue hover:text-jso-navy">Accéder à mon espace <ArrowLeft size={15} className="rotate-180" /></a></section>
         </aside>
       </div>
-      <p className="mt-5 text-center text-xs leading-5 text-slate-400">Votre photo est enregistrée dans ce navigateur sur cet appareil. La synchronisation de la photo entre plusieurs appareils nécessite un stockage photo côté serveur.</p>
+      <p className="jso-profile-privacy mt-5 text-center text-xs leading-5 text-slate-400">Votre photo est associée à votre profil JSO. Vous pouvez la remplacer ou la retirer à tout moment.</p>
     </main>
   </div>
 }

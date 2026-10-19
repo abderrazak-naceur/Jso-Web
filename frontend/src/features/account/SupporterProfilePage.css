@@ -1,0 +1,74 @@
+.jso-profile-page {
+  background: #f3f6fb;
+}
+
+.jso-profile-main {
+  width: min(100% - 32px, 1440px);
+  padding-top: clamp(28px, 4vw, 56px);
+  padding-bottom: clamp(36px, 5vw, 72px);
+}
+
+.jso-profile-main > a:first-child {
+  min-height: 44px;
+  padding-inline: 10px;
+  border-radius: 12px;
+  font-size: 15px;
+}
+
+.jso-profile-hero {
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 30px;
+  box-shadow: 0 24px 56px rgba(5, 25, 58, .18);
+}
+
+.jso-profile-hero h1 { font-size: clamp(34px, 4vw, 48px); line-height: 1.1; }
+.jso-profile-hero p { font-size: 15px; line-height: 1.6; }
+.jso-profile-hero p:first-child { font-size: 12px; }
+.jso-profile-hero label { min-height: 48px; font-size: 14px; }
+
+.jso-profile-form-card,
+.jso-profile-loyalty,
+.jso-profile-aside > section:last-child {
+  border-radius: 24px;
+  box-shadow: 0 10px 32px rgba(12, 35, 67, .06);
+}
+
+.jso-profile-form-card h2 { font-size: clamp(24px, 2.4vw, 30px); line-height: 1.2; }
+.jso-profile-form-card > div:first-child p { font-size: 13px; line-height: 1.5; }
+.jso-profile-form-card > div:first-child p + h2 + p { max-width: 58ch; font-size: 15px; line-height: 1.65; }
+.jso-profile-form-card label { font-size: 15px; line-height: 1.45; }
+.jso-profile-form-card input:not([type="checkbox"]) {
+  min-height: 54px;
+  border-radius: 13px;
+  font-size: 16px;
+}
+.jso-profile-form-card input[type="checkbox"] { width: 20px; height: 20px; }
+.jso-profile-form-card button { min-height: 48px; font-size: 14px; }
+.jso-profile-form-card button:focus-visible,
+.jso-profile-hero a:focus-visible,
+.jso-profile-hero button:focus-visible,
+.jso-profile-page a:focus-visible {
+  outline: 3px solid #e8b84f;
+  outline-offset: 3px;
+}
+
+.jso-profile-loyalty > p,
+.jso-profile-loyalty > div > p { font-size: 14px; line-height: 1.55; }
+.jso-profile-loyalty > div:last-child p:last-child { font-size: 11px; }
+.jso-profile-aside > section:last-child h2 { font-size: 18px; }
+.jso-profile-aside > section:last-child p { font-size: 14px; line-height: 1.6; }
+.jso-profile-privacy { max-width: 72ch; margin-inline: auto; font-size: 13px; line-height: 1.6; }
+.jso-profile-guest { border-radius: 28px; box-shadow: 0 24px 56px rgba(5, 25, 58, .18); }
+.jso-profile-guest h1 { font-size: clamp(32px, 4vw, 44px); }
+.jso-profile-guest p { font-size: 16px; line-height: 1.7; }
+.jso-profile-guest button { min-height: 50px; font-size: 15px; }
+
+@media (max-width: 640px) {
+  .jso-profile-main { width: 100%; padding: 20px 14px 36px; }
+  .jso-profile-hero { border-radius: 22px; }
+  .jso-profile-hero h1 { font-size: 32px; }
+  .jso-profile-form-card,
+  .jso-profile-loyalty,
+  .jso-profile-aside > section:last-child { border-radius: 20px; }
+  .jso-profile-form-card input:not([type="checkbox"]) { min-height: 52px; }
+}

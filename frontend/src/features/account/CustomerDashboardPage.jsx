@@ -69,17 +69,30 @@ export default function CustomerDashboardPage() {
   useEffect(() => {
     if (fan.status !== 'authenticated' || !fan.token) return
     let active = true
-    setData(Object.fromEntries(['tickets', 'orders', 'memberships', 'payments'].map(name => [name, { status: 'loading', items: [] }])))
-    Promise.allSettled([ticketApi.mine(fan.token), shopOrderApi.myOrders(fan.token), membershipApi.mine(fan.token), paymentHistoryApi.mine(fan.token)]).then((tasks) => {
+    const sources = {
+      tickets: () => ticketApi.mine(fan.token),
+      orders: () => shopOrderApi.myOrders(fan.token),
+      memberships: () => membershipApi.mine(fan.token),
+      payments: () => paymentHistoryApi.mine(fan.token),
+    }
+    const names = {
+      tickets: ['tickets'],
+      memberships: ['memberships'],
+      orders: ['orders'],
+      payments: ['payments'],
+      supports: [],
+    }[accountSection] || Object.keys(sources)
+    setData(Object.fromEntries(Object.keys(sources).map(name => [name, names.includes(name) ? { status: 'loading', items: [] } : { status: 'ready', items: [] }])))
+    if (!names.length) return () => { active = false }
+    Promise.allSettled(names.map(name => sources[name]())).then((tasks) => {
       if (!active) return
-      const names = ['tickets', 'orders', 'memberships', 'payments']
-      setData(Object.fromEntries(names.map((name, index) => {
+      setData(previous => ({ ...previous, ...Object.fromEntries(names.map((name, index) => {
         const result = tasks[index]
         return [name, result.status === 'fulfilled' ? { status: 'ready', items: listOf(result.value) } : { status: 'error', items: [], message: result.reason?.message || 'Service temporairement indisponible.' }]
-      })))
+      })) }))
     })
     return () => { active = false }
-  }, [fan.status, fan.token, reload])
+  }, [accountSection, fan.status, fan.token, reload])
 
   useEffect(() => {
     if (fan.status === 'authenticated' && window.location.hash === '#mes-soutiens' &&
@@ -127,7 +140,12 @@ export default function CustomerDashboardPage() {
   const ticketItems = data.tickets.items
   const orderItems = data.orders.items
   const membershipItems = data.memberships.items
-  const allLoading = [data.tickets, data.orders, data.memberships, data.payments].every((item) => item.status === 'loading')
+  const relevantData = accountSection === 'tickets' ? [data.tickets]
+    : accountSection === 'memberships' ? [data.memberships]
+      : accountSection === 'orders' ? [data.orders]
+        : accountSection === 'payments' ? [data.payments]
+          : accountSection === 'supports' ? [] : [data.tickets, data.orders, data.memberships, data.payments]
+  const allLoading = relevantData.length > 0 && relevantData.every((item) => item.status === 'loading')
   const nextTicket = ticketItems[0]
   const nextTicketId = nextTicket ? idOf(nextTicket) : null
   const nextDigital = nextTicketId ? digital[nextTicketId] : null
@@ -174,15 +192,15 @@ export default function CustomerDashboardPage() {
       <main id="main-content" tabIndex={-1} className="jso-dashboard-main">
         <div className="jso-welcome"><div><p className="jso-eyebrow">ESPACE SUPPORTER</p><h1>{sectionHeading?.[0] || `Bonjour ${displayName},`}</h1><p className="jso-welcome-subtitle">{sectionHeading?.[1] || 'Bienvenue dans votre espace personnel.'}</p>{!accountSection && <p className="jso-welcome-copy">Retrouvez ici tous vos billets, abonnements, commandes et informations.</p>}</div><div className="jso-welcome-actions"><button type="button" onClick={() => setReload((n) => n + 1)}><RefreshCw size={16} /> Actualiser</button></div></div>
         <div className="jso-dashboard-kpis" aria-label="Résumé de votre compte">
-          <article className="jso-kpi-card"><span className="jso-kpi-icon"><Ticket size={23} /></span><div><span className="jso-kpi-label">Mes billets</span><strong>{data.tickets.status === 'ready' ? ticketItems.length : '—'}</strong><small>{ticketItems.length ? 'Votre prochain match' : 'Vos billets apparaîtront ici'}</small></div><ChevronRight size={18} className="jso-kpi-arrow" /></article>
-          <article className="jso-kpi-card jso-kpi-gold"><span className="jso-kpi-icon"><Crown size={23} /></span><div><span className="jso-kpi-label">Mon abonnement</span><strong className="jso-kpi-word">{activeMembership ? 'Actif' : '—'}</strong><small>{value(activeMembership, 'planName', 'PlanName', 'name', 'Name') || 'Saison 2026/27'}</small></div><ChevronRight size={18} className="jso-kpi-arrow" /></article>
-          <article className="jso-kpi-card"><span className="jso-kpi-icon"><ShoppingBag size={23} /></span><div><span className="jso-kpi-label">Mes commandes</span><strong>{data.orders.status === 'ready' ? orderItems.length : '—'}</strong><small>{recentOrders[0] ? dateOf(recentOrders[0], 'createdAt', 'CreatedAt', 'orderDate', 'OrderDate') : 'Vos achats JSO'}</small></div><ChevronRight size={18} className="jso-kpi-arrow" /></article>
+          <a href="/account/tickets" className="jso-kpi-card"><span className="jso-kpi-icon"><Ticket size={23} /></span><div><span className="jso-kpi-label">Mes billets</span><strong>{data.tickets.status === 'ready' ? ticketItems.length : '—'}</strong><small>{ticketItems.length ? 'Votre prochain match' : 'Vos billets apparaîtront ici'}</small></div><ChevronRight size={18} className="jso-kpi-arrow" /></a>
+          <a href="/account/memberships" className="jso-kpi-card jso-kpi-gold"><span className="jso-kpi-icon"><Crown size={23} /></span><div><span className="jso-kpi-label">Mon abonnement</span><strong className="jso-kpi-word">{activeMembership ? prettyStatus(statusOf(activeMembership)) : 'Aucun'}</strong><small>{value(activeMembership, 'planName', 'PlanName', 'name', 'Name') || 'Consulter mes abonnements'}</small></div><ChevronRight size={18} className="jso-kpi-arrow" /></a>
+          <a href="/account/orders" className="jso-kpi-card"><span className="jso-kpi-icon"><ShoppingBag size={23} /></span><div><span className="jso-kpi-label">Mes commandes</span><strong>{data.orders.status === 'ready' ? orderItems.length : '—'}</strong><small>{recentOrders[0] ? dateOf(recentOrders[0], 'createdAt', 'CreatedAt', 'orderDate', 'OrderDate') : 'Vos achats JSO'}</small></div><ChevronRight size={18} className="jso-kpi-arrow" /></a>
         </div>
         <div className="jso-dashboard-panels">
           <section className="jso-panel jso-next-match" id="mes-billets">
             <div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">BILLETTERIE</span><h2>Prochain match</h2></div><a href="/matchs">Voir tous les matchs <ChevronRight size={14} /></a></div>
             {data.tickets.status === 'error' ? <DataError message={data.tickets.message} onRetry={() => setReload((n) => n + 1)} /> : data.tickets.status === 'loading' ? <p className="jso-muted">Chargement des billets…</p> : nextTicket ? <div className="jso-match-ticket">
-              <div className="jso-match-banner"><img src="/JSO-crest-regenerated-ok.png" alt="JSO" className="jso-match-crest" /><div className="jso-match-info"><p>{value(nextTicket, 'competitionName', 'CompetitionName', 'matchTitle', 'MatchTitle', 'matchName', 'MatchName', 'opponentName', 'OpponentName', 'ticketTypeName', 'TicketTypeName') || 'Match JSO'}</p><h3>JSO <span>vs</span> {value(nextTicket, 'opponentName', 'OpponentName') || 'Adversaire'}</h3><small><CalendarDays size={13} /> {dateOf(nextTicket, 'kickoffAt', 'KickoffAt', 'createdAt', 'CreatedAt', 'purchaseDate', 'PurchaseDate')} · {value(nextTicket, 'venue', 'Venue') || 'Stade Municipal'}</small></div></div>
+              <div className="jso-match-banner"><img src="/JSO-crest-regenerated-ok.png" alt="JSO" className="jso-match-crest" /><div className="jso-match-info"><p>{value(nextTicket, 'competitionName', 'CompetitionName', 'matchTitle', 'MatchTitle', 'matchName', 'MatchName', 'opponentName', 'OpponentName', 'ticketTypeName', 'TicketTypeName') || 'Billet JSO'}</p><h3>{value(nextTicket, 'opponentName', 'OpponentName') ? <>JSO <span>vs</span> {value(nextTicket, 'opponentName', 'OpponentName')}</> : 'Match JSO'}</h3><small><CalendarDays size={13} /> {dateOf(nextTicket, 'kickoffAt', 'KickoffAt')} · {value(nextTicket, 'venue', 'Venue') || 'Lieu à confirmer'}</small></div></div>
               <div className="jso-ticket-details"><span><small>Tribune</small><strong>{value(nextTicket, 'standName', 'StandName', 'tribune', 'Tribune') || '—'}</strong></span><span><small>Rang</small><strong>{value(nextTicket, 'row', 'Row', 'rank', 'Rank') || '—'}</strong></span><span><small>Siège</small><strong>{value(nextTicket, 'seat', 'Seat') || '—'}</strong></span>{nextQrImage && <img className="jso-ticket-qr" src={nextQr} alt="QR code du billet" />}</div>
               <div className="jso-ticket-actions"><span className={'jso-status-pill ' + (['Confirmed', 'Paid', 'Active'].includes(statusOf(nextTicket)) ? 'is-ok' : '')}><CheckCircle2 size={14} /> {prettyStatus(statusOf(nextTicket))}</span><button type="button" onClick={() => showDigital(nextTicket)} disabled={!nextTicketId || Boolean(digitalBusy[nextTicketId])}>{digitalBusy[nextTicketId] ? 'Chargement…' : <><Ticket size={15} /> Voir mon billet</>}</button></div>
               {digitalErrors[nextTicketId] && <p role="alert" className="jso-dashboard-error">{digitalErrors[nextTicketId]}</p>}
@@ -229,12 +247,11 @@ export default function CustomerDashboardPage() {
             </article>)}
           </div> : <EmptyState title="Aucun paiement enregistré" detail="Vos achats et paiements apparaîtront ici, y compris les billets de match." />}
         </section>
-        <section className="jso-panel jso-news-panel"><div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">JSO FOOTBALL CLUB</span><h2>Actualités pour vous</h2></div><a href="/actualites">Voir toutes les actualités <ChevronRight size={14} /></a></div>
-          <div className="jso-news-grid">
-            <a href="/actualites" className="jso-news-card"><div className="jso-news-photo jso-news-photo-one" /><strong>Préparez votre venue au stade</strong><small>Infos match · JSO</small></a>
-            <a href="/abonnements" className="jso-news-card"><div className="jso-news-photo jso-news-photo-two" /><strong>Les abonnements 2026/27</strong><small>Vie du club · JSO</small></a>
-            <a href="/actualites" className="jso-news-card"><div className="jso-news-photo jso-news-photo-three" /><strong>Une belle dynamique avant la prochaine journée</strong><small>Équipe · JSO</small></a>
-            <a href="/boutique" className="jso-news-card"><div className="jso-news-photo jso-news-photo-four" /><strong>Nouvelle collection disponible</strong><small>Boutique · JSO</small></a>
+        <section className="jso-panel jso-explore-panel"><div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">DÉCOUVRIR LA JSO</span><h2>Continuer avec le club</h2></div></div>
+          <div className="jso-explore-grid">
+            <a href="/matchs"><span className="jso-explore-icon"><CalendarDays size={22} /></span><span><strong>Calendrier des matchs</strong><small>Retrouvez les prochaines rencontres de la JSO.</small></span><ChevronRight size={18} /></a>
+            <a href="/boutique"><span className="jso-explore-icon is-gold"><ShoppingBag size={22} /></span><span><strong>Boutique officielle</strong><small>Découvrez les articles et équipements du club.</small></span><ChevronRight size={18} /></a>
+            <a href="/nos-projets"><span className="jso-explore-icon is-green"><ShieldCheck size={22} /></span><span><strong>Soutenir la JSO</strong><small>Suivez vos participations et les projets du club.</small></span><ChevronRight size={18} /></a>
           </div>
         </section>
         <div className="jso-mobile-bottom-nav"><a href="/mon-espace" className={!accountSection ? 'is-active' : ''}><LayoutDashboard size={18} /><small>Mon espace</small></a><a href="/account/tickets" className={accountSection === 'tickets' ? 'is-active' : ''}><Ticket size={18} /><small>Mes billets</small></a><a href="/account/supports" className={accountSection === 'supports' ? 'is-active' : ''}><ShieldCheck size={18} /><small>Mes soutiens</small></a><a href="/account/payments" className={accountSection === 'payments' ? 'is-active' : ''}><CreditCard size={18} /><small>Paiements</small></a><a href="/profil"><UserRound size={18} /><small>Profil</small></a></div>
