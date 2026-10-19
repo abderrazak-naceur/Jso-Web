@@ -15,7 +15,31 @@ using System.Net;
 using System.Text;
 using System.Threading.RateLimiting;
 
-var builder = WebApplication.CreateBuilder(args);
+var releaseInit = args.Contains("--release-init", StringComparer.Ordinal);
+var migrateOnly = args.Contains("--migrate-only", StringComparer.Ordinal);
+if (releaseInit && migrateOnly)
+    throw new ArgumentException("Choose either '--release-init' or '--migrate-only'.");
+var isDatabaseCommand = releaseInit || migrateOnly;
+var builderArgs = args.Where(argument =>
+    !string.Equals(argument, "--release-init", StringComparison.Ordinal)
+    && !string.Equals(argument, "--migrate-only", StringComparison.Ordinal)).ToArray();
+var builder = WebApplication.CreateBuilder(builderArgs);
+
+if (isDatabaseCommand)
+{
+    // Run one-off database work without starting the web server or requiring
+    // API-only configuration such as JWT and CORS.
+    builder.Services.AddInfrastructure(builder.Configuration);
+    builder.Services.AddScoped<DatabaseInitializer>();
+    var migrationHost = builder.Build();
+    await using var migrationScope = migrationHost.Services.CreateAsyncScope();
+    var initializer = migrationScope.ServiceProvider.GetRequiredService<DatabaseInitializer>();
+    if (releaseInit)
+        await initializer.InitializeReleaseAsync();
+    else
+        await initializer.MigrateAsync();
+    return;
+}
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -108,9 +132,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
                 if (string.Equals(role, "Fan", StringComparison.OrdinalIgnoreCase))
                 {
-                    var isActiveFan = await db.FanUsers.AsNoTracking()
-                        .AnyAsync(x => x.Id == userId && x.IsActive);
-                    if (!isActiveFan) context.Fail("Fan account is inactive.");
+                    var tokenVersion = context.Principal?.FindFirst("fan_session_version")?.Value;
+                    if (!int.TryParse(tokenVersion, out var sessionVersion))
+                    {
+                        context.Fail("Fan session must be renewed.");
+                        return;
+                    }
+
+                    var fanSession = await db.FanUsers.AsNoTracking()
+                        .Where(x => x.Id == userId && x.IsActive)
+                        .Select(x => new { x.SessionVersion })
+                        .SingleOrDefaultAsync();
+                    if (fanSession is null || fanSession.SessionVersion != sessionVersion)
+                        context.Fail("Fan account is inactive or its session was revoked.");
                     return;
                 }
 
@@ -118,9 +152,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 // account on every request so disabling an account or changing its role
                 // revokes its already-issued tokens immediately instead of waiting up to
                 // eight hours for token expiry.
-                var isActiveAdminWithSameRole = await db.AdminUsers.AsNoTracking()
-                    .AnyAsync(x => x.Id == userId && x.IsActive && x.Role == role);
-                if (!isActiveAdminWithSameRole) context.Fail("Admin account is inactive or its role has changed.");
+                var adminTokenVersion = context.Principal?.FindFirst("admin_session_version")?.Value;
+                if (!int.TryParse(adminTokenVersion, out var adminSessionVersion))
+                {
+                    context.Fail("Admin session must be renewed.");
+                    return;
+                }
+
+                var adminSession = await db.AdminUsers.AsNoTracking()
+                    .Where(x => x.Id == userId && x.IsActive && x.Role == role)
+                    .Select(x => new { x.SessionVersion })
+                    .SingleOrDefaultAsync();
+                if (adminSession is null || adminSession.SessionVersion != adminSessionVersion)
+                    context.Fail("Admin account is inactive, its role changed, or its session was revoked.");
             }
         };
     });

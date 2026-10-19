@@ -13,6 +13,7 @@ public sealed class TicketType
     public string Currency { get; set; } = "TND";
     public int Capacity { get; set; }
     public int SoldCount { get; set; }
+    public int ReservedCount { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

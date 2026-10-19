@@ -38,7 +38,7 @@ const moneyOf = (item) => {
 const statusOf = (item) => String(value(item, 'status', 'Status', 'paymentStatus', 'PaymentStatus') || '—')
 const prettyStatus = (status) => ({
   Paid: 'Payé', Confirmed: 'Confirmé', Active: 'Actif', Pending: 'En attente',
-  Cancelled: 'Annulé', Failed: 'Échoué', Expired: 'Expiré', Used: 'Utilisé', CheckedIn: 'Contrôlé',
+  Cancelled: 'Annulé', Failed: 'Échoué', Expired: 'Expiré', RefundRequired: 'Remboursement requis', Used: 'Utilisé', CheckedIn: 'Contrôlé',
 }[status] || status)
 function EmptyState({ title, detail }) {
   return <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center"><p className="font-extrabold text-jso-ink">{title}</p><p className="mt-1 text-sm text-slate-500">{detail}</p></div>

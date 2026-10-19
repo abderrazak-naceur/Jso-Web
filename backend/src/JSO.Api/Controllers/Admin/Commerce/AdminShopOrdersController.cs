@@ -16,7 +16,8 @@ namespace JSO.Api.Controllers;
 [ApiController]
 [Authorize(Roles = "SuperAdmin,ClubAdmin,ShopManager")]
 [Route("api/admin/shop/orders")]
-public sealed class AdminShopOrdersController(JsoDbContext db, AuditService audit, OrderPaymentService payments) : ControllerBase
+public sealed class AdminShopOrdersController(JsoDbContext db, AuditService audit, OrderPaymentService payments,
+    InventoryReservationService reservations) : ControllerBase
 {
     // Allowed forward transitions. Cancelled/Failed are terminal-ish sinks.
     private static readonly Dictionary<string, string[]> Transitions = new()
@@ -85,6 +86,8 @@ public sealed class AdminShopOrdersController(JsoDbContext db, AuditService audi
                     return NotFound();
                 case OrderPaymentService.MarkPaidResult.InsufficientStock:
                     return BadRequest(new { message = "Not enough stock to fulfil the order." });
+                case OrderPaymentService.MarkPaidResult.RefundRequired:
+                    return Conflict(new { message = "Payment was captured but stock is unavailable. Refund or manual fulfilment is required." });
                 case OrderPaymentService.MarkPaidResult.AlreadyPaid:
                 {
                     // Already past Pending (paid by a webhook, an admin, or in a
@@ -109,6 +112,17 @@ public sealed class AdminShopOrdersController(JsoDbContext db, AuditService audi
 
         if (!Transitions.TryGetValue(order.Status, out var allowed) || !allowed.Contains(target))
             return BadRequest(new { message = $"Cannot move an order from {order.Status} to {target}." });
+
+        if (order.Status == "Pending" && target is "Cancelled" or "Failed")
+        {
+            if (order.ProviderRef is not null)
+                return Conflict(new { message = "Une commande avec paiement en ligne doit attendre l'expiration du paiement avant annulation." });
+            var items = await db.OrderItems.AsNoTracking().Where(x => x.OrderId == order.Id)
+                .Select(x => new { x.ProductId, x.Quantity }).ToListAsync(ct);
+            foreach (var item in items)
+                await reservations.ReleaseProductAsync(item.ProductId, item.Quantity, ct);
+            order.ReservationExpiresAt = null;
+        }
 
         order.Status = target;
         await db.SaveChangesAsync(ct);

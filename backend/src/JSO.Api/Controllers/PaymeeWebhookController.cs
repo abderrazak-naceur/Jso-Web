@@ -101,6 +101,8 @@ public sealed class PaymeeWebhookController(
         {
             PayableCompletionResult.Completed or PayableCompletionResult.AlreadyCompleted =>
                 Ok(new { received = true, status = "completed" }),
+            PayableCompletionResult.RefundRequired =>
+                Ok(new { received = true, status = "refund_required" }),
             PayableCompletionResult.NotFound => NotFound(),
             _ => Conflict(new { message = "Payable non finalisable." })
         };

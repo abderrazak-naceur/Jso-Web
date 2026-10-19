@@ -4,14 +4,15 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [main]
-  push:
-    branches: [main]
     paths:
       - 'mobile/**'
       - '.github/workflows/android-apk.yml'
+  push:
+    tags:
+      - 'android-v*'
 
 permissions:
-  contents: write
+  contents: read
   actions: read
 
 jobs:
@@ -23,10 +24,10 @@ jobs:
         working-directory: mobile
     steps:
       - name: Checkout main
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@fd55f4c5af5b953cc57a2be44cb082c8f6635e8e # v2.21.0
         with:
           channel: stable
           cache: true
@@ -56,22 +57,33 @@ jobs:
           --dart-define=JSO_WEB_BASE_URL=https://jso-web.onrender.com
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: JSO-Android-APK
           path: mobile/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
           retention-days: 14
 
-      - name: Publish stable APK download
-        if: github.event_name != 'pull_request'
-        uses: softprops/action-gh-release@v2
+  publish-apk:
+    name: Publish versioned Android APK
+    if: startsWith(github.ref, 'refs/tags/android-v')
+    needs: build-apk
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Download APK artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          tag_name: android-latest
-          name: JSO Android APK (latest)
-          body: Latest automatically built Android APK for JSO.
-          target_commitish: main
-          files: mobile/build/app/outputs/flutter-apk/app-release.apk
-          overwrite_files: true
+          name: JSO-Android-APK
+          path: release
+      - name: Publish versioned APK release
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: JSO Android APK ${{ github.ref_name }}
+          body: Android APK built from the tagged JSO source release.
+          files: release/app-release.apk
           prerelease: true
           make_latest: false

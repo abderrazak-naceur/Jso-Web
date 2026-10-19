@@ -20,9 +20,47 @@ public sealed class DatabaseInitializer(
             return;
         }
 
-        await db.Database.MigrateAsync(ct);
-        logger.LogInformation("JSO database migrations applied successfully.");
+        // Development uses EnsureCreated through its seeder. Production defaults
+        // to an explicit one-off migration step; setting `startup` is retained as
+        // a temporary compatibility switch for existing single-instance hosts.
+        var migrationMode = configuration["Database:MigrationMode"]?.Trim().ToLowerInvariant()
+            ?? "manual";
+        switch (migrationMode)
+        {
+            case "startup":
+                await MigrateAsync(ct);
+                break;
+            case "manual":
+                var pendingMigrations = await db.Database.GetPendingMigrationsAsync(ct);
+                var pendingList = pendingMigrations.ToArray();
+                if (pendingList.Length > 0)
+                {
+                    throw new InvalidOperationException(
+                        $"Database has {pendingList.Length} pending migration(s) while Database:MigrationMode is 'manual'. " +
+                        "Run the API container with '--release-init' before deploying this application version. " +
+                        $"First pending migration: {pendingList[0]}");
+                }
+                logger.LogInformation("Database schema is current; migrations and seed data are reserved for the release initialization step.");
+                return;
+            default:
+                throw new InvalidOperationException(
+                    $"Unsupported Database:MigrationMode '{migrationMode}'. Use 'startup' or 'manual'.");
+        }
 
+        await SeedProductionDataAsync(ct);
+    }
+
+    public async Task InitializeReleaseAsync(CancellationToken ct = default)
+    {
+        if (environment.IsDevelopment())
+            throw new InvalidOperationException("The production release initializer cannot run in Development.");
+
+        await MigrateAsync(ct);
+        await SeedProductionDataAsync(ct);
+    }
+
+    private async Task SeedProductionDataAsync(CancellationToken ct)
+    {
         var email = configuration["ADMIN_BOOTSTRAP_EMAIL"]?.Trim().ToLowerInvariant();
         var password = configuration["ADMIN_BOOTSTRAP_PASSWORD"];
         var resetBootstrapPassword = string.Equals(
@@ -252,5 +290,20 @@ public sealed class DatabaseInitializer(
         });
         await db.SaveChangesAsync(ct);
         logger.LogInformation("JSO production bootstrap administrator created.");
+    }
+
+    public async Task MigrateAsync(CancellationToken ct = default)
+    {
+        var pendingMigrations = await db.Database.GetPendingMigrationsAsync(ct);
+        var pendingList = pendingMigrations.ToArray();
+        if (pendingList.Length == 0)
+        {
+            logger.LogInformation("Database schema is already current; no migrations to apply.");
+            return;
+        }
+
+        logger.LogInformation("Applying {Count} database migration(s).", pendingList.Length);
+        await db.Database.MigrateAsync(ct);
+        logger.LogInformation("JSO database migrations applied successfully.");
     }
 }

@@ -48,7 +48,7 @@ them with a `.env` file or environment variables if you change them.
 
 ## Database migrations
 
-Development bootstrap currently uses `EnsureCreatedAsync` so a fresh local database can start with demo data. Production startup now uses `Database.MigrateAsync()`.
+Development bootstrap currently uses `EnsureCreatedAsync` so a fresh local database can start with demo data. Production defaults to a manual migration mode so each migration is run once before an API rollout.
 
 Use provider-specific migrations. The initial PostgreSQL migration was generated with the .NET 10 runtime and applied to PostgreSQL 17 in CI; verification on the target Oracle environment is still pending.
 
@@ -58,7 +58,19 @@ PostgreSQL example for a future schema change:
 
 The PostgreSQL snapshot is in the Infrastructure assembly. If SQL Server needs migrations in the future, configure a separate migrations assembly and snapshot for that provider; do not generate SQL Server migrations against the PostgreSQL snapshot.
 
-The initial PostgreSQL migration is checked in under `src/JSO.Infrastructure/Migrations/Postgres`. CI applies it to PostgreSQL 17 and smoke-tests the production API bootstrap. For migration commands, use `JSO.Infrastructure` as both project and startup project; it contains the design-time context factory.
+The PostgreSQL migration set is checked in under `src/JSO.Infrastructure/Migrations/Postgres`. CI applies it to PostgreSQL 17 through the same one-off command used for releases, then smoke-tests the API with `Database__MigrationMode=manual`.
+
+### One-off production release initialization
+
+Run the API image built from the release commit once, against the production database, before deploying that image to API replicas:
+
+    dotnet JSO.Api.dll --release-init
+
+The command requires `Database__Provider`, `ConnectionStrings__DefaultConnection` and, when needed, `Database__Host`. It applies pending migrations, ensures production seed/bootstrap data exists, and exits without starting the web server or requiring JWT/CORS settings. Re-running it is safe. On the first production initialization, it also requires `ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` (at least 12 characters). The regular API fails fast if it detects pending migrations in manual mode and does not write seed data on replica startup.
+
+For a schema-only operation, `dotnet JSO.Api.dll --migrate-only` applies pending migrations and exits without running production seed/bootstrap data.
+
+For a controlled transition from an older deployment, do not roll out an image with pending schema changes until the one-off command can run against the production database. The legacy mode remains temporarily available via `Database__MigrationMode=startup`, but it applies migrations and seed writes in each API instance and is unsuitable for multi-replica rollout. If using it during transition, keep the API at one replica and schedule a switch to manual mode. Schema changes for zero-downtime rollout must remain backward-compatible with both old and new app versions (expand/contract); the migration command does not make incompatible DDL safe by itself.
 
 ## Production
 

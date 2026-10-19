@@ -36,5 +36,6 @@ public enum PayableCompletionResult
     Completed,        // transitioned pending -> paid, side effect applied
     AlreadyCompleted, // idempotent no-op
     NotFound,         // payable does not exist
-    Unavailable       // could not fulfil (e.g. insufficient stock/capacity)
+    Unavailable,      // could not fulfil before payment was captured
+    RefundRequired    // payment was captured after reservation expiry and fulfilment was impossible
 }

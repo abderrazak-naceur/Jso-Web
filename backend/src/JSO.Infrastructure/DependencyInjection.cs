@@ -108,6 +108,8 @@ public static class DependencyInjection
         services.AddScoped<PaymeePaymentProvider>();
         services.AddScoped<PaymentProviderSelector>();
         services.AddScoped<OrderPaymentService>();
+        services.AddScoped<InventoryReservationService>();
+        services.AddHostedService<ReservationExpiryWorker>();
 
         // Generic payment completion: one IPayableCompletion per payable type
         // (shop order = OrderPaymentService, ticket order, supporter brick) plus

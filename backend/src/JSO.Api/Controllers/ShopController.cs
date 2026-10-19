@@ -31,7 +31,7 @@ public sealed class ShopController(JsoDbContext db, ContentTranslationService tr
             x.Currency,
             x.ImageUrl,
             Category = ContentTranslationService.ResolveFromMap(map, "Product", x.Id, "category", x.Category, language),
-            inStock = x.Stock > 0
+            inStock = x.Stock - x.ReservedStock > 0
         }).ToList();
 
         return Ok(products);
@@ -58,7 +58,7 @@ public sealed class ShopController(JsoDbContext db, ContentTranslationService tr
             product.Currency,
             product.ImageUrl,
             Category = ContentTranslationService.ResolveFromMap(map, "Product", product.Id, "category", product.Category, language),
-            inStock = product.Stock > 0
+            inStock = product.Stock - product.ReservedStock > 0
         });
     }
 }

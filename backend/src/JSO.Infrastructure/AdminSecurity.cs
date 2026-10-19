@@ -41,7 +41,8 @@ public sealed class JwtTokenService(IConfiguration configuration)
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(ClaimTypes.Name, user.DisplayName),
-            new Claim(ClaimTypes.Role, user.Role)
+            new Claim(ClaimTypes.Role, user.Role),
+            new Claim("admin_session_version", user.SessionVersion.ToString(System.Globalization.CultureInfo.InvariantCulture))
         };
 
         var credentials = new SigningCredentials(
@@ -71,7 +72,8 @@ public sealed class JwtTokenService(IConfiguration configuration)
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(ClaimTypes.Name, user.DisplayName),
-            new Claim(ClaimTypes.Role, "Fan")
+            new Claim(ClaimTypes.Role, "Fan"),
+            new Claim("fan_session_version", user.SessionVersion.ToString(System.Globalization.CultureInfo.InvariantCulture))
         };
 
         var credentials = new SigningCredentials(

@@ -166,6 +166,7 @@ public sealed class FundraisingApiTests
         Assert.Equal(1, supporters.GetProperty("totalCount").GetInt32());
         var supporter = Assert.Single(supporters.GetProperty("items").EnumerateArray());
         Assert.Equal("Supporter Test", supporter.GetProperty("DisplayName").GetString());
+        Assert.Equal("Cash", supporter.GetProperty("PaymentMethod").GetString());
         Assert.False(supporter.TryGetProperty("Phone", out _));
         Assert.False(supporter.TryGetProperty("Email", out _));
         Assert.False(supporter.TryGetProperty("AccessTokenHash", out _));

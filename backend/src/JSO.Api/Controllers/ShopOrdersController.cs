@@ -22,7 +22,8 @@ public sealed class ShopOrdersController(
     AuditService audit,
     PaymentProviderSelector paymentSelector,
     PaymentLinkBuilder paymentLinks,
-    Microsoft.Extensions.Configuration.IConfiguration configuration) : ControllerBase
+    Microsoft.Extensions.Configuration.IConfiguration configuration,
+    InventoryReservationService reservations) : ControllerBase
 {
     private Guid? CurrentFanId()
     {
@@ -84,6 +85,8 @@ public sealed class ShopOrdersController(
             lines[item.ProductId] = lines.TryGetValue(item.ProductId, out var q) ? q + item.Quantity : item.Quantity;
         }
 
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        await reservations.ReleaseExpiredAsync(ct);
         var productIds = lines.Keys.ToList();
         var products = await db.Products.AsNoTracking()
             .Where(p => productIds.Contains(p.Id))
@@ -106,7 +109,7 @@ public sealed class ShopOrdersController(
             var product = products.FirstOrDefault(p => p.Id == productId);
             if (product is null || !product.IsActive)
                 return BadRequest(new { message = "A product in the cart is no longer available.", productId });
-            if (product.Stock < quantity)
+            if (product.Stock - product.ReservedStock < quantity)
                 return BadRequest(new { message = $"Not enough stock for '{product.Name}'.", productId });
 
             var lineTotal = product.Price * quantity;
@@ -122,10 +125,18 @@ public sealed class ShopOrdersController(
             });
         }
 
+        foreach (var (productId, quantity) in lines.OrderBy(x => x.Key))
+        {
+            if (await reservations.TryReserveProductAsync(productId, quantity, ct) != 1)
+                return BadRequest(new { message = "A product in the cart is no longer available.", productId });
+        }
+
         order.Total = total;
+        order.ReservationExpiresAt = DateTimeOffset.UtcNow.Add(InventoryReservationService.ReservationLifetime);
         db.Orders.Add(order);
         db.OrderItems.AddRange(orderItems);
         await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
 
         await audit.LogAsync("CREATE", "Order", order.Id.ToString(), fanId.Value.ToString(),
             User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(),
@@ -165,6 +176,9 @@ public sealed class ShopOrdersController(
         if (order is null) return NotFound();
         if (order.Status != "Pending")
             return BadRequest(new { message = "Cette commande n'est plus en attente de paiement." });
+        var now = DateTimeOffset.UtcNow;
+        if (order.ReservationExpiresAt <= now)
+            return BadRequest(new { message = "La réservation a expiré. Veuillez recommencer." });
 
         var provider = paymentSelector.Select(country);
         var isTunisia = PaymentProviderSelector.IsTunisia(country);
@@ -189,6 +203,13 @@ public sealed class ShopOrdersController(
         var returnUrl = $"{baseUrl}/payment/success?orderId={order.Id}";
         var cancelUrl = $"{baseUrl}/payment/cancel?orderId={order.Id}";
 
+        var claimed = await db.Orders.Where(x => x.Id == id && x.FanUserId == fanId
+                && x.Status == "Pending" && x.ReservationExpiresAt > now)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.ReservationExpiresAt,
+                now.Add(InventoryReservationService.PaymentReservationLifetime)), ct);
+        if (claimed != 1) return Conflict(new { message = "La réservation a expiré. Veuillez recommencer." });
+        order.ReservationExpiresAt = now.Add(InventoryReservationService.PaymentReservationLifetime);
+
         var paymentRequest = new PaymentRequest(
             PayableTypes.ShopOrder, order.Id, fanId.Value, order.Total, $"Commande JSO {order.Id}");
 
@@ -199,12 +220,22 @@ public sealed class ShopOrdersController(
         }
         catch (PaymentProviderNotConfiguredException)
         {
+            order.ReservationExpiresAt = DateTimeOffset.UtcNow.Add(InventoryReservationService.ReservationLifetime);
+            await db.SaveChangesAsync(ct);
             return StatusCode(StatusCodes.Status503ServiceUnavailable,
                 new { message = $"Le paiement en ligne via {provider.Name} n'est pas encore disponible. Veuillez réessayer plus tard." });
         }
         catch (PaymentProviderException ex)
         {
+            order.ReservationExpiresAt = DateTimeOffset.UtcNow.Add(InventoryReservationService.ReservationLifetime);
+            await db.SaveChangesAsync(ct);
             return StatusCode(StatusCodes.Status502BadGateway, new { message = ex.Message });
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // The provider may have created the hosted session before the
+            // connection was interrupted; retain the longer payment window.
+            throw;
         }
 
         // Persist the routing decision and the provider reference for webhook
@@ -219,6 +250,7 @@ public sealed class ShopOrdersController(
         // the buyer paid and the webhook can cross-check it.
         order.ChargedAmount = initiation.ChargedAmount;
         order.ChargedCurrency = initiation.ChargedCurrency;
+        order.ReservationExpiresAt = DateTimeOffset.UtcNow.Add(InventoryReservationService.PaymentReservationLifetime);
         await db.SaveChangesAsync(ct);
 
         await audit.LogAsync("ORDER_PAY_INIT", "Order", order.Id.ToString(), fanId.Value.ToString(),

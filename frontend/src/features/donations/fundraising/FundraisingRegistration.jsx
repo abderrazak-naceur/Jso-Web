@@ -4,6 +4,7 @@ import { useDialog } from '../../site/useDialog'
 import { CREST_SRC } from '../../site/brand'
 import { useI18n } from '../../../i18n/index.jsx'
 import { MONTHLY_AMOUNTS, PLAN_MONTHS, planTotal, fundraisingMoney } from './fundraisingTemplates'
+import { fundraisingCopy as copy, fundraisingProviderLabel } from './fundraisingCopy'
 
 export const ONLINE_PROVIDERS = [
   { id: 'STRIPE', key: 'stripe', label: 'Carte bancaire · international', country: 'FR' },
@@ -14,6 +15,7 @@ export const ONLINE_PROVIDERS = [
 
 export default function FundraisingRegistration({ project, initialAmount, methods, user, onClose, onJoin }) {
   const { language } = useI18n()
+  const t = (key, values) => copy(language, key, values)
   const money = value => fundraisingMoney(value, language)
   const ref = useDialog(() => { if (!saving) onClose() })
   const available = ONLINE_PROVIDERS.filter(provider => methods?.[provider.key])
@@ -32,43 +34,40 @@ export default function FundraisingRegistration({ project, initialAmount, method
     setError('')
     if (step < 3) { setStep(step + 1); return }
     if (!consent || saving) return
-    if (paymentMethod === 'Online' && !available.some(item => item.id === provider)) { setError('Aucun prestataire disponible. Choisissez les espèces.'); return }
-    if (provider === 'PAYMEE' && paymentMethod === 'Online' && (!phone.trim() || !email.trim())) { setError('Paymee demande un téléphone et une adresse e-mail. Renseignez-les à l’étape 1.'); return }
+    if (paymentMethod === 'Online' && !available.some(item => item.id === provider)) { setError(t('noProvider')); return }
+    if (provider === 'PAYMEE' && paymentMethod === 'Online' && (!phone.trim() || !email.trim())) { setError(t('paymeeFields')); return }
     setSaving(true)
     try { await onJoin({ displayName: name.trim(), monthlyAmountTnd: amount, phone: phone.trim() || null, email: email.trim() || null, paymentMethod }, available.find(item => item.id === provider)) }
     catch (e) { setError(e.message) }
     finally { setSaving(false) }
   }
   const paymentLabel = {
-    fr: `Payer le premier mois · ${money(amount)}`,
-    en: `Pay the first month · ${money(amount)}`,
-    it: `Paga il primo mese · ${money(amount)}`,
-    ar: `ادفع الشهر الأول · ${money(amount)}`,
+    fr: `Payer le premier mois · ${money(amount)}`, en: `Pay the first month · ${money(amount)}`, it: `Paga il primo mese · ${money(amount)}`, ar: `ادفع الشهر الأول · ${money(amount)}`,
   }[language] || `Payer le premier mois · ${money(amount)}`
-  const submitLabel = saving ? ({ fr: 'Enregistrement…', en: 'Saving…', it: 'Salvataggio…', ar: 'جارٍ الحفظ…' }[language]) : step < 3 ? ({ fr: 'Continuer', en: 'Continue', it: 'Continua', ar: 'متابعة' }[language]) : paymentMethod === 'Cash' ? ({ fr: 'Confirmer mon engagement', en: 'Confirm my commitment', it: 'Conferma il mio impegno', ar: 'تأكيد التزامي' }[language]) : paymentLabel
+  const submitLabel = saving ? t('saving') : step < 3 ? t('continue') : paymentMethod === 'Cash' ? t('confirmCommitment') : paymentLabel
   return <div className="jso-fundraising fr-modal-backdrop" onClick={e => { if (e.target === e.currentTarget && !saving) onClose() }}>
     <section ref={ref} role="dialog" aria-modal="true" aria-labelledby="fr-registration-title" tabIndex={-1} className="fr-modal">
       <div className="fr-modal-head"><img src={CREST_SRC} alt="JSO"/><button className="fr-close" type="button" aria-label="Fermer l’inscription" disabled={saving} onClick={onClose}><X size={18}/></button></div>
       <form className="fr-modal-body" onSubmit={submit}>
-        <h2 id="fr-registration-title">Devenez soutien de la JSO</h2><p className="fr-modal-subtitle">{project.title} · Un petit geste, un grand impact.</p>
-        <p className="fr-plan-note">Ce soutien sera lié à votre compte et restera accessible dans « Mon dashboard → Mes soutiens ».</p>
-        <div className="fr-steps" aria-label={`Étape ${step} sur 3`}>{['Vos coordonnées', 'Votre contribution', 'Confirmation'].map((text, i) => <span className={step === i + 1 ? 'is-active' : ''} key={text}><b>{i + 1}</b>{text}</span>)}</div>
+        <h2 id="fr-registration-title">{t('regTitle')}</h2><p className="fr-modal-subtitle">{project.title} · {t('regSubtitle')}</p>
+        <p className="fr-plan-note">{t('linkedAccount')}</p>
+        <div className="fr-steps" aria-label={`${language === 'en' ? 'Step' : language === 'it' ? 'Passaggio' : language === 'ar' ? 'الخطوة' : 'Étape'} ${step} ${language === 'en' ? 'of' : language === 'it' ? 'di' : language === 'ar' ? 'من' : 'sur'} 3`}>{['yourDetails', 'yourContribution', 'confirmation'].map((key, i) => <span className={step === i + 1 ? 'is-active' : ''} key={key}><b>{i + 1}</b>{t(key)}</span>)}</div>
         {step === 1 && <>
-          <label className="fr-field">Nom public *<input required value={name} onChange={e => setName(e.target.value)} maxLength={80} autoComplete="name" placeholder="Prénom et nom"/><small>Ce nom apparaîtra dans la liste des soutiens. Aucun contact n’est affiché publiquement.</small></label>
-          <div className="fr-field-pair"><label className="fr-field">E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={254} autoComplete="email" placeholder="vous@exemple.com"/></label><label className="fr-field">Téléphone<input type="tel" value={phone} onChange={e => setPhone(e.target.value)} maxLength={32} autoComplete="tel" placeholder="+216…"/></label></div>
-          <p className="fr-plan-note">Le téléphone permet au club de vous contacter pour les espèces. Ces coordonnées restent privées. Paymee les demande pour le paiement en ligne.</p>
+          <label className="fr-field">{t('publicNameRequired')}<input required value={name} onChange={e => setName(e.target.value)} maxLength={80} autoComplete="name" placeholder={t('firstLastName')}/><small>{t('publicNameHint')}</small></label>
+          <div className="fr-field-pair"><label className="fr-field">{t('email')}<input type="email" value={email} onChange={e => setEmail(e.target.value)} maxLength={254} autoComplete="email" placeholder={language === 'it' ? 'tu@esempio.com' : language === 'en' ? 'you@example.com' : language === 'ar' ? 'you@example.com' : 'vous@exemple.com'}/></label><label className="fr-field">{t('phone')}<input type="tel" value={phone} onChange={e => setPhone(e.target.value)} maxLength={32} autoComplete="tel" placeholder="+216…"/></label></div>
+          <p className="fr-plan-note">{t('phoneHint')}</p>
         </>}
-        {step === 2 && <><p className="fr-modal-subtitle">Choisissez votre contribution mensuelle pendant {PLAN_MONTHS} mois.</p>{MONTHLY_AMOUNTS.map(value => <label className="fr-option" key={value}><input type="radio" name="monthly-amount" checked={amount === value} onChange={() => setAmount(value)}/><span><strong>{money(value)} / mois</strong><small>Pour {PLAN_MONTHS} mois · Total de l’engagement : {money(planTotal(value))}</small></span></label>)}</>}
+        {step === 2 && <><p className="fr-modal-subtitle">{t('chooseMonthly', { months: PLAN_MONTHS })}</p>{MONTHLY_AMOUNTS.map(value => <label className="fr-option" key={value}><input type="radio" name="monthly-amount" checked={amount === value} onChange={() => setAmount(value)}/><span><strong>{money(value)} / {language === 'en' ? 'month' : language === 'it' ? 'mese' : language === 'ar' ? 'شهر' : 'mois'}</strong><small>{t('totalCommitment')}: {money(planTotal(value))}</small></span></label>)}</>}
         {step === 3 && <>
-          <div className="fr-summary"><p><span>Votre nom public</span><strong>{name}</strong></p><p><span>Contribution mensuelle</span><strong>{money(amount)}</strong></p><p><span>Durée</span><strong>{PLAN_MONTHS} mois</strong></p><p><span>Engagement total</span><strong>{money(planTotal(amount))}</strong></p></div>
-          <label className="fr-option"><input type="radio" name="pay-method" checked={paymentMethod === 'Cash'} onChange={() => setPaymentMethod('Cash')}/><span><strong>Espèces auprès du club</strong><small>Votre nom apparaît dès l’inscription. Chaque versement est confirmé après réception.</small></span></label>
-          <label className="fr-option"><input type="radio" name="pay-method" checked={paymentMethod === 'Online'} onChange={() => setPaymentMethod('Online')} disabled={!available.length}/><span><strong>Carte / paiement en ligne</strong><small>{available.length ? 'Votre premier versement sera payé sur le site sécurisé du prestataire.' : 'Les paiements en ligne ne sont pas encore configurés pour le club.'}</small></span></label>
-          {paymentMethod === 'Online' && <label className="fr-field">Prestataire<select value={provider} onChange={e => setProvider(e.target.value)}>{available.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>}
-          <label className="fr-consent"><input required type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)}/><span>Je confirme cet engagement volontaire et l’affichage de mon nom dans les soutiens. Les dix versements sont réglés séparément, sans prélèvement automatique.</span></label>
+          <div className="fr-summary"><p><span>{t('yourPublicName')}</span><strong>{name}</strong></p><p><span>{t('monthlyContribution')}</span><strong>{money(amount)}</strong></p><p><span>{t('duration')}</span><strong>{PLAN_MONTHS} {language === 'en' ? 'months' : language === 'it' ? 'mesi' : language === 'ar' ? 'أشهر' : 'mois'}</strong></p><p><span>{t('commitmentTotal')}</span><strong>{money(planTotal(amount))}</strong></p></div>
+          <label className="fr-option"><input type="radio" name="pay-method" checked={paymentMethod === 'Cash'} onChange={() => setPaymentMethod('Cash')}/><span><strong>{t('cashAtClub')}</strong><small>{t('cashMethodHint')}</small></span></label>
+          <label className="fr-option"><input type="radio" name="pay-method" checked={paymentMethod === 'Online'} onChange={() => setPaymentMethod('Online')} disabled={!available.length}/><span><strong>{t('cardOnline')}</strong><small>{available.length ? t('onlineMethodHint') : t('onlineUnavailable')}</small></span></label>
+          {paymentMethod === 'Online' && <label className="fr-field">{t('provider')}<select value={provider} onChange={e => setProvider(e.target.value)}>{available.map(item => <option key={item.id} value={item.id}>{fundraisingProviderLabel(item.id, language, item.label)}</option>)}</select></label>}
+          <label className="fr-consent"><input required type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)}/><span>{t('consent')}</span></label>
         </>}
         {error && <p className="fr-alert fr-error" role="alert">{error}</p>}
-        <div className="fr-modal-buttons">{step > 1 && <button className="fr-button fr-button-outline" type="button" disabled={saving} onClick={() => setStep(step - 1)}><ArrowLeft size={15}/>Retour</button>}<button className="fr-button fr-button-gold" disabled={saving || (step === 3 && !consent)} type="submit">{submitLabel}<ArrowRight size={16}/></button></div>
-        <p className="fr-plan-note"><ShieldCheck size={12} style={{ display: 'inline', marginRight: 4 }}/>Seuls les paiements reçus et vérifiés sont comptabilisés.</p>
+        <div className="fr-modal-buttons">{step > 1 && <button className="fr-button fr-button-outline" type="button" disabled={saving} onClick={() => setStep(step - 1)}><ArrowLeft size={15}/>{t('back')}</button>}<button className="fr-button fr-button-gold" disabled={saving || (step === 3 && !consent)} type="submit">{submitLabel}<ArrowRight size={16}/></button></div>
+        <p className="fr-plan-note"><ShieldCheck size={12} style={{ display: 'inline', marginRight: 4 }}/>{t('verifiedOnly')}</p>
       </form>
     </section>
   </div>

@@ -57,8 +57,8 @@ public sealed class AdminShopController(JsoDbContext db, AuditService audit) : C
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> UpdateProduct(Guid id, ProductRequest request, CancellationToken ct)
     {
-        var product = await db.Products.FindAsync([id], ct);
-        if (product is null) return NotFound();
+        var exists = await db.Products.AnyAsync(x => x.Id == id, ct);
+        if (!exists) return NotFound();
 
         var error = Validate(request);
         if (error is not null) return BadRequest(new { message = error });
@@ -66,17 +66,26 @@ public sealed class AdminShopController(JsoDbContext db, AuditService audit) : C
         var slug = request.Slug.Trim().ToLowerInvariant();
         if (await db.Products.AnyAsync(x => x.Id != id && x.Slug == slug, ct))
             return Conflict(new { message = "A product with this slug already exists." });
-
-        product.Name = request.Name.Trim();
-        product.Slug = slug;
-        product.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
-        product.Price = request.Price;
-        product.Currency = string.IsNullOrWhiteSpace(request.Currency) ? "TND" : request.Currency.Trim().ToUpperInvariant();
-        product.ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim();
-        product.Category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category.Trim();
-        product.Stock = request.Stock;
-        product.IsActive = request.IsActive;
-        await db.SaveChangesAsync(ct);
+        var description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
+        var currency = string.IsNullOrWhiteSpace(request.Currency) ? "TND" : request.Currency.Trim().ToUpperInvariant();
+        var imageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim();
+        var category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category.Trim();
+        // Keep the reservation guard in the same SQL UPDATE as the stock change;
+        // a read-then-save check races with concurrent checkout reservations.
+        var updated = await db.Products.Where(x => x.Id == id && x.ReservedStock <= request.Stock)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(x => x.Name, request.Name.Trim())
+                .SetProperty(x => x.Slug, slug)
+                .SetProperty(x => x.Description, description)
+                .SetProperty(x => x.Price, request.Price)
+                .SetProperty(x => x.Currency, currency)
+                .SetProperty(x => x.ImageUrl, imageUrl)
+                .SetProperty(x => x.Category, category)
+                .SetProperty(x => x.Stock, request.Stock)
+                .SetProperty(x => x.IsActive, request.IsActive), ct);
+        if (updated == 0)
+            return Conflict(new { message = "Stock cannot be lower than the quantity currently reserved by pending orders." });
+        var product = await db.Products.AsNoTracking().SingleAsync(x => x.Id == id, ct);
         await audit.LogAsync("UPDATE", "Product", product.Id.ToString(), User.FindFirst("sub")?.Value,
             User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(),
             new { product.Slug, product.Price, product.Currency }, ct);

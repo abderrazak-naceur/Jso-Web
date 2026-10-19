@@ -21,7 +21,8 @@ public sealed class TicketsController(
     PaymentProviderSelector paymentSelector,
     PaymentLinkBuilder paymentLinks,
     Microsoft.Extensions.Configuration.IConfiguration configuration,
-    ContentTranslationService translations) : ControllerBase
+    ContentTranslationService translations,
+    InventoryReservationService reservations) : ControllerBase
 {
     // Public billetterie listing: published matches that have at least one
     // active ticket type, with the cheapest price and total remaining places.
@@ -43,7 +44,7 @@ public sealed class TicketsController(
                 x.Status,
                 fromPrice = activeTypes.Where(t => t.MatchId == x.Id).Min(t => (decimal?)t.Price),
                 currency = activeTypes.Where(t => t.MatchId == x.Id).Select(t => t.Currency).FirstOrDefault(),
-                available = activeTypes.Where(t => t.MatchId == x.Id).Sum(t => (int?)(t.Capacity - t.SoldCount)) ?? 0
+                available = activeTypes.Where(t => t.MatchId == x.Id).Sum(t => (int?)(t.Capacity - t.SoldCount - t.ReservedCount)) ?? 0
             })
             .ToListAsync(ct);
 
@@ -68,7 +69,7 @@ public sealed class TicketsController(
             Name = ContentTranslationService.ResolveFromMap(map, "TicketType", x.Id, "name", x.Name, language),
             x.Price,
             x.Currency,
-            available = x.Capacity - x.SoldCount
+            available = x.Capacity - x.SoldCount - x.ReservedCount
         }).ToList();
 
         return Ok(types);
@@ -176,10 +177,12 @@ public sealed class TicketsController(
         if (request.Quantity < 1 || request.Quantity > 10)
             return BadRequest(new { message = "Quantity must be between 1 and 10." });
 
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        await reservations.ReleaseExpiredAsync(ct);
         var type = await db.TicketTypes.AsNoTracking()
             .SingleOrDefaultAsync(x => x.Id == request.TicketTypeId && x.IsActive, ct);
         if (type is null) return BadRequest(new { message = "Ticket type not available." });
-        if (type.Capacity - type.SoldCount < request.Quantity)
+        if (type.Capacity - type.SoldCount - type.ReservedCount < request.Quantity)
             return BadRequest(new { message = "Not enough tickets available." });
 
         var promoInput = NormalizePromo(request.PromoCode);
@@ -191,6 +194,7 @@ public sealed class TicketsController(
                 return BadRequest(new { message = "Code promo non valide, expiré ou épuisé." });
         }
 
+        var now = DateTimeOffset.UtcNow;
         var order = new TicketOrder
         {
             FanUserId = fanId.Value,
@@ -204,20 +208,31 @@ public sealed class TicketsController(
             PromoCode = promo?.Code,
             Status = promo is null ? "Pending" : "Confirmed",
             ConfirmedAt = promo is null ? null : DateTimeOffset.UtcNow,
+            ReservationExpiresAt = promo is null ? now.Add(InventoryReservationService.ReservationLifetime) : null,
             PaymentProvider = promo is null ? null : "Promo"
         };
         if (promo is not null)
         {
-            var trackedType = await db.TicketTypes.SingleAsync(x => x.Id == type.Id, ct);
-            if (trackedType.SoldCount + request.Quantity > trackedType.Capacity)
+            var capacityUpdated = await db.TicketTypes.Where(x => x.Id == type.Id && x.IsActive
+                    && x.Capacity - x.SoldCount - x.ReservedCount >= request.Quantity)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.SoldCount, x => x.SoldCount + request.Quantity), ct);
+            if (capacityUpdated != 1)
                 return BadRequest(new { message = "Not enough tickets available." });
-            trackedType.SoldCount += request.Quantity;
-            promo.Uses++;
+            var promoUpdated = await db.TicketPromoCodes.Where(x => x.Id == promo.Id && x.IsEnabled
+                    && (!x.ExpiresAt.HasValue || x.ExpiresAt > now)
+                    && (!x.MaxUses.HasValue || x.Uses < x.MaxUses.Value))
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Uses, x => x.Uses + 1), ct);
+            if (promoUpdated != 1) return BadRequest(new { message = "Code promo épuisé." });
             order.PublicTicketToken = TicketTokenGenerator.Generate();
             order.IssuedAt = DateTimeOffset.UtcNow;
         }
+        else if (await reservations.TryReserveTicketAsync(type.Id, request.Quantity, ct) != 1)
+        {
+            return BadRequest(new { message = "Not enough tickets available." });
+        }
         db.TicketOrders.Add(order);
         await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
         await audit.LogAsync("CREATE", "TicketOrder", order.Id.ToString(), fanId.Value.ToString(),
             User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(),
             new { order.MatchId, order.Total, promoCode = order.PromoCode, order.Status }, ct);
@@ -248,7 +263,8 @@ public sealed class TicketsController(
         // Only the owning fan may pay their own reservation.
         var order = await db.TicketOrders.SingleOrDefaultAsync(x => x.Id == id && x.FanUserId == fanId, ct);
         if (order is null) return NotFound();
-        if (order.Status != "Pending")
+        var now = DateTimeOffset.UtcNow;
+        if (order.Status != "Pending" || order.ReservationExpiresAt <= now)
             return BadRequest(new { message = "Cette réservation n'est plus en attente de paiement." });
 
         var provider = paymentSelector.Select(country);
@@ -268,6 +284,13 @@ public sealed class TicketsController(
             return StatusCode(StatusCodes.Status503ServiceUnavailable,
                 new { message = "Le paiement en ligne n'est pas correctement configuré. Veuillez réessayer plus tard." });
         }
+
+        var claimed = await db.TicketOrders.Where(x => x.Id == id && x.FanUserId == fanId
+                && x.Status == "Pending" && x.ReservationExpiresAt > now)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.ReservationExpiresAt,
+                    now.Add(InventoryReservationService.PaymentReservationLifetime)), ct);
+        if (claimed != 1) return Conflict(new { message = "La réservation a expiré. Veuillez recommencer." });
+        order.ReservationExpiresAt = now.Add(InventoryReservationService.PaymentReservationLifetime);
         var returnUrl = $"{baseUrl}/payment/success?payableType=TicketOrder&payableId={order.Id}";
         var cancelUrl = $"{baseUrl}/payment/cancel?payableType=TicketOrder&payableId={order.Id}";
 
@@ -282,12 +305,22 @@ public sealed class TicketsController(
         }
         catch (PaymentProviderNotConfiguredException)
         {
+            order.ReservationExpiresAt = DateTimeOffset.UtcNow.Add(InventoryReservationService.ReservationLifetime);
+            await db.SaveChangesAsync(ct);
             return StatusCode(StatusCodes.Status503ServiceUnavailable,
                 new { message = $"Le paiement en ligne via {provider.Name} n'est pas encore disponible. Veuillez réessayer plus tard." });
         }
         catch (PaymentProviderException ex)
         {
+            order.ReservationExpiresAt = DateTimeOffset.UtcNow.Add(InventoryReservationService.ReservationLifetime);
+            await db.SaveChangesAsync(ct);
             return StatusCode(StatusCodes.Status502BadGateway, new { message = ex.Message });
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // The provider may have created a session before the connection was
+            // interrupted; retain the longer checkout window for late webhooks.
+            throw;
         }
 
         order.PaymentProvider = provider.Name;
@@ -296,6 +329,7 @@ public sealed class TicketsController(
         order.Currency = isTunisia ? "TND" : (configuration["Payments:Stripe:Currency"] ?? "eur").ToUpperInvariant();
         order.ChargedAmount = initiation.ChargedAmount;
         order.ChargedCurrency = initiation.ChargedCurrency;
+        order.ReservationExpiresAt = DateTimeOffset.UtcNow.Add(InventoryReservationService.PaymentReservationLifetime);
         await db.SaveChangesAsync(ct);
 
         await audit.LogAsync("TICKET_PAY_INIT", "TicketOrder", order.Id.ToString(), fanId.Value.ToString(),

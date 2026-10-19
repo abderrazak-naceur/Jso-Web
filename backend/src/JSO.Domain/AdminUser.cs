@@ -6,6 +6,7 @@ public sealed class AdminUser
     public string Email { get; set; } = null!;
     public string DisplayName { get; set; } = null!;
     public string PasswordHash { get; set; } = null!;
+    public int SessionVersion { get; set; }
     public string Role { get; set; } = "ClubAdmin";
     public bool IsActive { get; set; } = true;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;

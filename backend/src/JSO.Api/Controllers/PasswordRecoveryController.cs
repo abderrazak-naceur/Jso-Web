@@ -122,6 +122,7 @@ public sealed class PasswordRecoveryController(
             var user = await db.AdminUsers.SingleOrDefaultAsync(x => x.Email == email && x.IsActive, ct);
             if (user is null) return BadRequest(new { message = "The reset link is invalid or expired." });
             user.PasswordHash = PasswordHasher.Hash(request.NewPassword);
+            user.SessionVersion++;
             await audit.LogAsync("RESET_PASSWORD", "AdminUser", user.Id.ToString(), user.Id.ToString(),
                 user.Email, HttpContext.Connection.RemoteIpAddress?.ToString(), ct: ct);
         }
@@ -130,6 +131,7 @@ public sealed class PasswordRecoveryController(
             var user = await db.FanUsers.SingleOrDefaultAsync(x => x.Email == email && x.IsActive, ct);
             if (user is null) return BadRequest(new { message = "The reset link is invalid or expired." });
             user.PasswordHash = PasswordHasher.Hash(request.NewPassword);
+            user.SessionVersion++;
             await audit.LogAsync("RESET_PASSWORD", "FanUser", user.Id.ToString(), user.Id.ToString(),
                 user.Email, HttpContext.Connection.RemoteIpAddress?.ToString(), ct: ct);
         }

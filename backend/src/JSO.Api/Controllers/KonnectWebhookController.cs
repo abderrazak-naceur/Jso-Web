@@ -76,6 +76,7 @@ public sealed class KonnectWebhookController(
         {
             PayableCompletionResult.Completed => Ok(new { received = true, status = "completed" }),
             PayableCompletionResult.AlreadyCompleted => Ok(new { received = true, status = "already_completed" }),
+            PayableCompletionResult.RefundRequired => Ok(new { received = true, status = "refund_required" }),
             PayableCompletionResult.NotFound => NotFound(new { message = "Payable not found." }),
             _ => StatusCode(StatusCodes.Status409Conflict, new { message = "Payable could not be completed." })
         };

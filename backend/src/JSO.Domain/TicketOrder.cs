@@ -21,6 +21,7 @@ public sealed class TicketOrder
     public string Status { get; set; } = "Pending";
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? ConfirmedAt { get; set; }
+    public DateTimeOffset? ReservationExpiresAt { get; set; }
 
     // Online payment routing/reconciliation (additive, nullable). Mirrors the
     // shop Order fields so the shared, generic payment abstraction can drive a

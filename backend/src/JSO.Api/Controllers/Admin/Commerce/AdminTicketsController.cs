@@ -1,5 +1,6 @@
 using JSO.Domain;
 using JSO.Infrastructure;
+using JSO.Infrastructure.Payments;
 using JSO.Api.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +15,7 @@ namespace JSO.Api.Controllers;
 [ApiController]
 [Authorize(Policy = AdminPermissions.TicketsAdmin)]
 [Route("api/admin/tickets")]
-public sealed class AdminTicketsController(JsoDbContext db, AuditService audit) : ControllerBase
+public sealed class AdminTicketsController(JsoDbContext db, AuditService audit, InventoryReservationService reservations) : ControllerBase
 {
     [HttpGet("types")]
     public async Task<IActionResult> GetTypes([FromQuery] Guid? matchId, CancellationToken ct)
@@ -52,19 +53,23 @@ public sealed class AdminTicketsController(JsoDbContext db, AuditService audit) 
     [HttpPut("types/{id:guid}")]
     public async Task<IActionResult> UpdateType(Guid id, TicketTypeRequest request, CancellationToken ct)
     {
-        var type = await db.TicketTypes.FindAsync([id], ct);
+        var type = await db.TicketTypes.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct);
         if (type is null) return NotFound();
         var error = Validate(request);
         if (error is not null) return BadRequest(new { message = error });
-        if (request.Capacity < type.SoldCount)
-            return BadRequest(new { message = "Capacity cannot be lower than tickets already sold." });
-
-        type.Name = request.Name.Trim();
-        type.Price = request.Price;
-        type.Currency = string.IsNullOrWhiteSpace(request.Currency) ? "TND" : request.Currency.Trim().ToUpperInvariant();
-        type.Capacity = request.Capacity;
-        type.IsActive = request.IsActive;
-        await db.SaveChangesAsync(ct);
+        var currency = string.IsNullOrWhiteSpace(request.Currency) ? "TND" : request.Currency.Trim().ToUpperInvariant();
+        // Capacity is checked and updated atomically against both sales and live holds.
+        var updated = await db.TicketTypes.Where(x => x.Id == id
+                && x.SoldCount + x.ReservedCount <= request.Capacity)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(x => x.Name, request.Name.Trim())
+                .SetProperty(x => x.Price, request.Price)
+                .SetProperty(x => x.Currency, currency)
+                .SetProperty(x => x.Capacity, request.Capacity)
+                .SetProperty(x => x.IsActive, request.IsActive), ct);
+        if (updated == 0)
+            return BadRequest(new { message = "Capacity cannot be lower than sold tickets plus active reservations." });
+        type = await db.TicketTypes.AsNoTracking().SingleAsync(x => x.Id == id, ct);
         await audit.LogAsync("UPDATE", "TicketType", type.Id.ToString(), User.FindFirst("sub")?.Value,
             User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(), ct: ct);
         return Ok(type);
@@ -104,6 +109,7 @@ public sealed class AdminTicketsController(JsoDbContext db, AuditService audit) 
             return BadRequest(new { message = "Status must be Confirmed or Cancelled." });
 
         await using var tx = await db.Database.BeginTransactionAsync(ct);
+        await reservations.ReleaseExpiredAsync(ct);
         var order = await db.TicketOrders.SingleOrDefaultAsync(x => x.Id == id, ct);
         if (order is null) return NotFound();
         if (order.Status == target) return Ok(new { order.Id, order.Status });
@@ -114,8 +120,9 @@ public sealed class AdminTicketsController(JsoDbContext db, AuditService audit) 
         {
             var type = await db.TicketTypes.SingleOrDefaultAsync(x => x.Id == order.TicketTypeId, ct);
             if (type is null) return BadRequest(new { message = "Ticket type no longer exists." });
-            if (type.SoldCount + order.Quantity > type.Capacity)
+            if (type.ReservedCount < order.Quantity || type.SoldCount + type.ReservedCount > type.Capacity)
                 return BadRequest(new { message = "Not enough remaining capacity." });
+            type.ReservedCount -= order.Quantity;
             type.SoldCount += order.Quantity;
             order.ConfirmedAt = DateTimeOffset.UtcNow;
             order.PaidAt = DateTimeOffset.UtcNow;
@@ -130,6 +137,13 @@ public sealed class AdminTicketsController(JsoDbContext db, AuditService audit) 
                 order.PublicTicketToken = TicketTokenGenerator.Generate();
                 order.IssuedAt = DateTimeOffset.UtcNow;
             }
+        }
+        else if (target == "Cancelled")
+        {
+            if (order.ProviderRef is not null)
+                return Conflict(new { message = "Une réservation avec paiement en ligne ne peut être annulée avant expiration ou confirmation du prestataire." });
+            await reservations.ReleaseTicketAsync(order.TicketTypeId, order.Quantity, ct);
+            order.ReservationExpiresAt = null;
         }
 
         order.Status = target;

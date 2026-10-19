@@ -83,6 +83,11 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("SessionVersion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -842,6 +847,11 @@ namespace JSO.Infrastructure.Migrations.Postgres
 
                     b.Property<string>("ProfilePhotoUrl")
                         .HasColumnType("text");
+
+                    b.Property<int>("SessionVersion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.HasKey("Id");
 
@@ -1793,6 +1803,9 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTimeOffset?>("ReservationExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1834,6 +1847,8 @@ namespace JSO.Infrastructure.Migrations.Postgres
                         .HasFilter("\"ProviderRef\" IS NOT NULL");
 
                     b.HasIndex("Status");
+
+                    b.HasIndex("Status", "ReservationExpiresAt");
 
                     b.HasIndex("FanUserId", "CreatedAt");
 
@@ -1987,6 +2002,11 @@ namespace JSO.Infrastructure.Migrations.Postgres
 
                     b.Property<int>("Stock")
                         .HasColumnType("integer");
+
+                    b.Property<int>("ReservedStock")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.HasKey("Id");
 
@@ -2624,6 +2644,9 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.Property<DateTimeOffset?>("PaidAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTimeOffset?>("ReservationExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("PromoCode")
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
@@ -2675,6 +2698,8 @@ namespace JSO.Infrastructure.Migrations.Postgres
 
                     b.HasIndex("MatchId", "Status");
 
+                    b.HasIndex("Status", "ReservationExpiresAt");
+
                     b.ToTable("TicketOrders");
                 });
 
@@ -2710,6 +2735,11 @@ namespace JSO.Infrastructure.Migrations.Postgres
 
                     b.Property<int>("SoldCount")
                         .HasColumnType("integer");
+
+                    b.Property<int>("ReservedCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.HasKey("Id");
 

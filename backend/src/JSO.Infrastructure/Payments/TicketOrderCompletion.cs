@@ -31,18 +31,67 @@ public sealed class TicketOrderCompletion(JsoDbContext db, AuditService audit) :
         if (order is null)
             return PayableCompletionResult.NotFound;
 
-        // Idempotent: only a Pending reservation is advanced. Confirmed/Cancelled
-        // are terminal for payment purposes.
-        if (order.Status != "Pending")
+        if (order.Status == "RefundRequired")
+            return PayableCompletionResult.RefundRequired;
+        if (order.Status is "Confirmed" or "CheckedIn" or "Cancelled")
             return PayableCompletionResult.AlreadyCompleted;
 
-        var type = await db.TicketTypes.SingleOrDefaultAsync(x => x.Id == order.TicketTypeId, ct);
-        if (type is null)
-            return PayableCompletionResult.Unavailable; // type removed; leave Pending
-        if (type.SoldCount + order.Quantity > type.Capacity)
-            return PayableCompletionResult.Unavailable; // no capacity; do not oversell
+        var latePayment = order.Status == "Expired"
+            || (order.Status == "Pending" && order.ReservationExpiresAt <= DateTimeOffset.UtcNow);
+        if (order.Status != "Pending" && order.Status != "Expired")
+            return PayableCompletionResult.AlreadyCompleted;
+        var priorStatus = order.Status;
+        var claimNow = DateTimeOffset.UtcNow;
+        var claimed = await db.TicketOrders
+            .Where(x => x.Id == payableId && x.Status == priorStatus
+                && (priorStatus != "Pending" || (latePayment
+                    ? x.ReservationExpiresAt <= claimNow
+                    : x.ReservationExpiresAt == null || x.ReservationExpiresAt > claimNow)))
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.Status, "ProcessingPayment"), ct);
+        if (claimed != 1)
+            return PayableCompletionResult.AlreadyCompleted;
+        order.Status = "ProcessingPayment";
 
-        type.SoldCount += order.Quantity;
+        var typeExists = await db.TicketTypes.AnyAsync(x => x.Id == order.TicketTypeId, ct);
+        if (latePayment)
+        {
+            if (priorStatus == "Pending" && typeExists)
+            {
+                await db.TicketTypes.Where(x => x.Id == order.TicketTypeId)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.ReservedCount, x => x.ReservedCount - order.Quantity), ct);
+            }
+            var reacquired = !typeExists ? 0 : await db.TicketTypes
+                .Where(x => x.Id == order.TicketTypeId && x.IsActive
+                    && x.Capacity - x.SoldCount - x.ReservedCount >= order.Quantity)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.ReservedCount, x => x.ReservedCount + order.Quantity), ct);
+            if (reacquired != 1)
+            {
+                order.Status = "RefundRequired";
+                order.PaidAt = DateTimeOffset.UtcNow;
+                order.PaymentProvider = paymentProvider;
+                order.ProviderRef = providerRef;
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+                await audit.LogAsync("PAYMENT_REFUND_REQUIRED", "TicketOrder", order.Id.ToString(),
+                    paymentProvider, null, null,
+                    new { providerRef, reason = "Late payment after reservation expiry; ticket capacity unavailable." }, ct);
+                return PayableCompletionResult.RefundRequired;
+            }
+        }
+        if (!typeExists)
+            return PayableCompletionResult.Unavailable;
+
+        // Convert the hold to a sale with one conditional SQL update. Writing
+        // absolute values from a previously loaded entity loses concurrent
+        // webhook increments for different orders on the same ticket type.
+        var converted = await db.TicketTypes.Where(x => x.Id == order.TicketTypeId
+                && x.ReservedCount >= order.Quantity
+                && x.SoldCount + x.ReservedCount <= x.Capacity)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(x => x.ReservedCount, x => x.ReservedCount - order.Quantity)
+                .SetProperty(x => x.SoldCount, x => x.SoldCount + order.Quantity), ct);
+        if (converted != 1)
+            return PayableCompletionResult.Unavailable;
         order.Status = "Confirmed";
         order.ConfirmedAt = DateTimeOffset.UtcNow;
         order.PaidAt = DateTimeOffset.UtcNow;

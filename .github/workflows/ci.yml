@@ -17,24 +17,24 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm install
+      - run: npm ci
       - run: npm run build
-      - run: node --test tests/routes.test.mjs tests/homeTemplates.test.mjs tests/fundraisingAccess.test.mjs
+      - run: node --test tests/*.test.mjs
       - run: npm run lint
 
   backend:
     name: Backend build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - run: for script in deploy/oracle/*.sh; do bash -n "$script"; done
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: 10.0.x
       - run: dotnet restore backend/src/JSO.Api/JSO.Api.csproj
@@ -60,8 +60,8 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: 10.0.x
       - name: Install EF CLI
@@ -70,12 +70,18 @@ jobs:
         run: dotnet restore backend/src/JSO.Api/JSO.Api.csproj
       - name: Build
         run: dotnet build backend/src/JSO.Api/JSO.Api.csproj --configuration Release --no-restore
-      - name: Apply checked-in PostgreSQL migration
+      - name: Apply PostgreSQL migrations through the release command
         working-directory: backend
         env:
           Database__Provider: postgres
           ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=JSO;Username=jso;Password=jso_ci_password;Ssl Mode=Disable
-        run: dotnet ef database update --project src/JSO.Infrastructure --startup-project src/JSO.Infrastructure --configuration Release --no-build
+          ADMIN_BOOTSTRAP_EMAIL: admin@jso.test
+          ADMIN_BOOTSTRAP_PASSWORD: ci-only-initial-admin-password
+        run: dotnet src/JSO.Api/bin/Release/net10.0/JSO.Api.dll --release-init
+      - name: Run PostgreSQL inventory reservation integration tests
+        env:
+          JSO_TEST_POSTGRES: Host=localhost;Port=5432;Database=JSO;Username=jso;Password=jso_ci_password;Ssl Mode=Disable
+        run: dotnet test backend/tests/JSO.Api.Tests/JSO.Api.Tests.csproj --configuration Release --no-restore --filter FullyQualifiedName~InventoryReservationPostgresTests
       - name: Validate applied schema
         env:
           PGHOST: localhost
@@ -125,6 +131,7 @@ jobs:
           ASPNETCORE_URLS: http://127.0.0.1:5080
           DOTNET_ENVIRONMENT: Production
           Database__Provider: postgres
+          Database__MigrationMode: manual
           ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=JSO;Username=jso;Password=jso_ci_password;Ssl Mode=Disable
           Cors__AllowedOrigins__0: http://localhost:5173
           Jwt__Key: ci-only-jwt-secret-that-is-at-least-32-characters-long
@@ -466,8 +473,8 @@ jobs:
       run:
         working-directory: mobile
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: subosito/flutter-action@fd55f4c5af5b953cc57a2be44cb082c8f6635e8e # v2.21.0
         with:
           channel: stable
           cache: true

@@ -27,12 +27,14 @@ public sealed class FundraisingController(JsoDbContext db, AuditService audit) :
     {
         if (!await db.FundraisingProjects.AnyAsync(p => p.Id == id && p.Status == "Published", ct)) return NotFound();
         page = Math.Clamp(page, 1, 100_000);
+        // Cash supporters are public from registration; online supporters only
+        // appear after a real payment has been confirmed by the provider.
         var query = db.FundraisingCommitments.AsNoTracking().Where(c => c.ProjectId == id &&
             (c.PaymentMethod == "Cash" || db.SupporterBricks.Any(b => b.FundraisingCommitmentId == c.Id && b.PaymentStatus == "Paid")));
         if (!string.IsNullOrWhiteSpace(search)) query = query.Where(c => c.DisplayName.Contains(search.Trim()));
         var totalCount = await query.CountAsync(ct);
         var items = await query.OrderByDescending(c => c.CreatedAt).ThenBy(c => c.Id).Skip((page - 1) * 10).Take(10)
-            .Select(c => new { c.Id, c.DisplayName, c.MonthlyAmountTnd, c.Months, c.CreatedAt,
+            .Select(c => new { c.Id, c.DisplayName, c.MonthlyAmountTnd, c.Months, c.PaymentMethod, c.CreatedAt,
                 paidInstallments = db.SupporterBricks.Count(b => b.FundraisingCommitmentId == c.Id && b.PaymentStatus == "Paid"),
                 totalPaidTnd = db.SupporterBricks.Where(b => b.FundraisingCommitmentId == c.Id && b.PaymentStatus == "Paid").Sum(b => (decimal?)b.Amount) ?? 0m })
             .ToListAsync(ct);

@@ -33,5 +33,6 @@ public sealed class Order
     // online payment is initiated.
     public string? ChargedCurrency { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? ReservationExpiresAt { get; set; }
     public DateTimeOffset? PaidAt { get; set; }
 }

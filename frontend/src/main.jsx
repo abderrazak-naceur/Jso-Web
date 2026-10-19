@@ -2,6 +2,7 @@ import { Component, StrictMode, Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { I18nProvider } from './i18n/index.jsx'
+import { isKnownSitePath } from './features/site/routeResolution.js'
 
 const App = lazy(() => import('./App.jsx'))
 const AdminApp = lazy(() => import('./admin/AdminApp.jsx'))
@@ -11,6 +12,7 @@ const BilletteriePage = lazy(() => import('./features/tickets/BilletteriePage.js
 const DonationPage = lazy(() => import('./features/donations/DonationPage.jsx'))
 const CustomerDashboardPage = lazy(() => import('./features/account/CustomerDashboardPage.jsx'))
 const SupporterProfilePage = lazy(() => import('./features/account/SupporterProfilePage.jsx'))
+const NotFoundPage = lazy(() => import('./features/site/NotFoundPage.jsx'))
 
 class RootErrorBoundary extends Component {
   state = { error: null }
@@ -55,6 +57,7 @@ function Root() {
   }
   if (['/account', '/mon-espace', '/account/tickets', '/account/memberships', '/account/orders', '/account/supports', '/account/payments'].includes(path)) return <CustomerDashboardPage />
   if (path === '/profil' || path === '/profile') return <SupporterProfilePage />
+  if (!isKnownSitePath(path)) return <NotFoundPage />
   return <App />
 }
 

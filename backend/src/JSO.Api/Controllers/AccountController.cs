@@ -257,6 +257,7 @@ public sealed class AccountController(JsoDbContext db, JwtTokenService tokens, A
             return BadRequest(new { message = "The current password is incorrect." });
 
         fan.PasswordHash = PasswordHasher.Hash(request.NewPassword);
+        fan.SessionVersion++;
         await db.SaveChangesAsync(ct);
 
         await audit.LogAsync("CHANGE_PASSWORD", "FanUser", fan.Id.ToString(), fan.Id.ToString(), fan.Email,
