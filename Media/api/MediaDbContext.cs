@@ -2,22 +2,37 @@ using Microsoft.EntityFrameworkCore;
 
 namespace JSO.Media.Api;
 
-// Maps only the existing MediaAssets table. This context deliberately has no
-// migration or database-initialization code: the production schema is owned by JSO.
+// Maps existing JSO tables only. This context deliberately has no migration or
+// database-initialization code: the production schema is owned by JSO.
 public sealed class MediaDbContext(DbContextOptions<MediaDbContext> options) : DbContext(options)
 {
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
+    public DbSet<AdminAccess> AdminUsers => Set<AdminAccess>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        var entity = modelBuilder.Entity<MediaAsset>();
-        entity.ToTable("MediaAssets");
-        entity.HasKey(x => x.Id);
-        entity.Property(x => x.Title).IsRequired();
-        entity.Property(x => x.Url).IsRequired();
-        entity.Property(x => x.Type).IsRequired();
-        entity.Property(x => x.CreatedAt).HasColumnType("timestamp with time zone");
+        var media = modelBuilder.Entity<MediaAsset>();
+        media.ToTable("MediaAssets");
+        media.HasKey(x => x.Id);
+        media.Property(x => x.Title).IsRequired();
+        media.Property(x => x.Url).IsRequired();
+        media.Property(x => x.Type).IsRequired();
+        media.Property(x => x.CreatedAt).HasColumnType("timestamp with time zone");
+
+        // Only the fields needed for authorization are mapped. No writes or
+        // schema changes are performed against the existing AdminUsers table.
+        var admin = modelBuilder.Entity<AdminAccess>();
+        admin.ToTable("AdminUsers");
+        admin.HasKey(x => x.Id);
+        admin.Property(x => x.Role).IsRequired();
     }
+}
+
+public sealed class AdminAccess
+{
+    public Guid Id { get; set; }
+    public string Role { get; set; } = "";
+    public bool IsActive { get; set; }
 }
 
 public sealed class MediaAsset
