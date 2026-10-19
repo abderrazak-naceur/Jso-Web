@@ -56,10 +56,12 @@ public sealed class MediaStorageService(IConfiguration configuration)
             using var client = new SftpClient(host, port, username, password);
             client.HostKeyReceived += (_, e) =>
             {
-                var actual = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(e.HostKey)).ToLowerInvariant();
-                var expected = fingerprint.Replace("SHA256:", "", StringComparison.OrdinalIgnoreCase)
-                    .Replace(":", "", StringComparison.Ordinal).Trim().ToLowerInvariant();
-                e.CanTrust = string.Equals(actual, expected, StringComparison.OrdinalIgnoreCase);
+                var actual = Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(e.HostKey)).TrimEnd('=');
+                var expected = fingerprint.Trim();
+                if (expected.StartsWith("SHA256:", StringComparison.OrdinalIgnoreCase))
+                    expected = expected["SHA256:".Length..];
+                expected = expected.TrimEnd('=');
+                e.CanTrust = string.Equals(actual, expected, StringComparison.Ordinal);
             };
             client.Connect();
             try
