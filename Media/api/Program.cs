@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +34,37 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"] ?? "JSO.Admin",
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ClockSkew = TimeSpan.FromMinutes(1),
-            RoleClaimType = System.Security.Claims.ClaimTypes.Role
+            RoleClaimType = ClaimTypes.Role
+        };
+
+        // Match the existing JSO API's revocation behavior: a valid JWT alone
+        // is insufficient if the admin has been disabled or their role changed.
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var principal = context.Principal;
+                var role = principal?.FindFirst(ClaimTypes.Role)?.Value
+                    ?? principal?.FindFirst("role")?.Value;
+                var subject = principal?.FindFirst("sub")?.Value
+                    ?? principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrWhiteSpace(role) ||
+                    string.Equals(role, "Fan", StringComparison.OrdinalIgnoreCase) ||
+                    !Guid.TryParse(subject, out var adminId))
+                {
+                    context.Fail("An active JSO admin identity is required.");
+                    return;
+                }
+
+                await using var scope = context.HttpContext.RequestServices.CreateAsyncScope();
+                var db = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
+                var admin = await db.AdminUsers.AsNoTracking()
+                    .SingleOrDefaultAsync(x => x.Id == adminId && x.IsActive, context.HttpContext.RequestAborted);
+
+                if (admin is null || !string.Equals(admin.Role, role, StringComparison.OrdinalIgnoreCase))
+                    context.Fail("The JSO admin account is inactive or its role has changed.");
+            }
         };
     });
 
