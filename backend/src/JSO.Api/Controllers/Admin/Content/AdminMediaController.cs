@@ -12,7 +12,7 @@ namespace JSO.Api.Controllers;
 [ApiController]
 [Route("api/admin/media")]
 [Authorize(Roles = "SuperAdmin,ClubAdmin,Editor")]
-public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment env, AuditService audit, IHttpClientFactory httpClientFactory, IConfiguration configuration) : ControllerBase
+public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment env, AuditService audit, IHttpClientFactory httpClientFactory, IConfiguration configuration, JSO.Api.Services.MediaStorageService mediaStorage) : ControllerBase
 {
     private Task Audit(string action, Guid id, object? details, CancellationToken ct) =>
         audit.LogAsync(action, "MediaAsset", id.ToString(), User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value,
@@ -60,23 +60,25 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         var uploadedAtUtc = DateTime.UtcNow;
         var year = uploadedAtUtc.ToString("yyyy");
         var month = uploadedAtUtc.ToString("MM");
-        var relative = Path.Combine("uploads", "media", year, month, safeName);
-        var absolute = Path.Combine(env.ContentRootPath, relative);
-        Directory.CreateDirectory(Path.GetDirectoryName(absolute)!);
-        await using (var stream = System.IO.File.Create(absolute))
-            await file.CopyToAsync(stream, ct);
+        var relative = $"media/{year}/{month}/{safeName}";
+        JSO.Api.Services.StoredMediaFile stored;
+        try { stored = await mediaStorage.SaveAsync(file, relative, ct); }
+        catch (JSO.Api.Services.MediaStorageException)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "Media storage is unavailable. Verify the IONOS SFTP settings on the API service." });
+        }
 
         var asset = new MediaAsset
         {
             Title = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(file.FileName) : title.Trim(),
-            Url = "/uploads/media/" + year + "/" + month + "/" + safeName,
+            Url = stored.PublicUrl,
             Type = "Image",
             Caption = caption?.Trim(),
             IsPublished = true,
             FileName = Path.GetFileName(file.FileName),
             ContentType = file.ContentType.ToLowerInvariant(),
             FileSize = file.Length,
-            StoragePath = relative.Replace('\\', '/')
+            StoragePath = stored.StoragePath
         };
         // Match-specific uploads are stored on disk for the match, but enter Media House only by explicit opt-in.
         if (!addToMedia)
@@ -206,9 +208,13 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
     {
         var asset = await db.MediaAssets.FindAsync([id], ct);
         if (asset is null) return NotFound();
-        if (!string.IsNullOrWhiteSpace(asset.StoragePath)) {
-            var absolute=Path.Combine(env.ContentRootPath, asset.StoragePath.Replace('/', Path.DirectorySeparatorChar));
-            if (System.IO.File.Exists(absolute)) System.IO.File.Delete(absolute);
+        if (!string.IsNullOrWhiteSpace(asset.StoragePath))
+        {
+            try { await mediaStorage.DeleteAsync(asset.StoragePath, ct); }
+            catch (JSO.Api.Services.MediaStorageException)
+            {
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "The stored file could not be deleted. The media record was kept unchanged." });
+            }
         }
         db.MediaAssets.Remove(asset); await db.SaveChangesAsync(ct);
         await Audit("DELETE", asset.Id, new { asset.Title }, ct);

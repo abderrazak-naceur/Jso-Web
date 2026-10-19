@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.DataProtection;
 using JSO.Api;
 using JSO.Api.Security;
+using JSO.Api.Services;
 using JSO.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
@@ -45,6 +46,7 @@ else
 }
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuditService>();
+builder.Services.AddScoped<MediaStorageService>();
 builder.Services.AddScoped<StaffAuthorizationService>();
 builder.Services.AddScoped<DatabaseInitializer>();
 builder.Services.AddScoped<ContentTranslationService>();
@@ -166,6 +168,8 @@ builder.Services.AddCors(options =>
         .Append("https://jso-web.onrender.com")
         .Append("https://jsoudhref.com")
         .Append("https://www.jsoudhref.com")
+        .Append("https://jso-media.com")
+        .Append("https://www.jso-media.com")
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToArray();
 
