@@ -23,6 +23,12 @@ const dateOf = (item, ...keys) => {
   const date = new Date(raw)
   return Number.isNaN(date.getTime()) ? String(raw) : date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
+const kickoffOf = (item) => {
+  const raw = value(item, 'kickoffAt', 'KickoffAt')
+  if (!raw) return 'Date à confirmer'
+  const date = new Date(raw)
+  return Number.isNaN(date.getTime()) ? 'Date à confirmer' : date.toLocaleString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
 const moneyOf = (item) => {
   const amount = value(item, 'total', 'Total', 'totalAmount', 'TotalAmount', 'amount', 'Amount', 'price', 'Price')
   if (amount === undefined) return null
@@ -32,7 +38,7 @@ const moneyOf = (item) => {
 const statusOf = (item) => String(value(item, 'status', 'Status', 'paymentStatus', 'PaymentStatus') || '—')
 const prettyStatus = (status) => ({
   Paid: 'Payé', Confirmed: 'Confirmé', Active: 'Actif', Pending: 'En attente',
-  Cancelled: 'Annulé', Failed: 'Échoué', Expired: 'Expiré', Used: 'Utilisé',
+  Cancelled: 'Annulé', Failed: 'Échoué', Expired: 'Expiré', Used: 'Utilisé', CheckedIn: 'Contrôlé',
 }[status] || status)
 function EmptyState({ title, detail }) {
   return <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center"><p className="font-extrabold text-jso-ink">{title}</p><p className="mt-1 text-sm text-slate-500">{detail}</p></div>
@@ -146,8 +152,15 @@ export default function CustomerDashboardPage() {
         : accountSection === 'payments' ? [data.payments]
           : accountSection === 'supports' ? [] : [data.tickets, data.orders, data.memberships, data.payments]
   const allLoading = relevantData.length > 0 && relevantData.every((item) => item.status === 'loading')
-  const nextTicket = ticketItems[0]
+  const eligibleTickets = ticketItems.filter(ticket => !['Cancelled', 'Failed', 'Expired'].includes(statusOf(ticket)))
+  const upcomingTickets = eligibleTickets.filter(ticket => {
+    const kickoff = value(ticket, 'kickoffAt', 'KickoffAt')
+    return kickoff && new Date(kickoff).getTime() >= Date.now()
+  }).sort((a, b) => new Date(value(a, 'kickoffAt', 'KickoffAt')) - new Date(value(b, 'kickoffAt', 'KickoffAt')))
+  const nextTicket = upcomingTickets[0] || eligibleTickets[0] || ticketItems[0]
+  const hasUpcomingTicket = Boolean(upcomingTickets.length)
   const nextTicketId = nextTicket ? idOf(nextTicket) : null
+  const nextTicketHasDigitalAccess = nextTicket && ['Confirmed', 'CheckedIn'].includes(statusOf(nextTicket))
   const nextDigital = nextTicketId ? digital[nextTicketId] : null
   const nextQr = value(nextDigital, 'qrCodeDataUrl', 'QrCodeDataUrl', 'qrCodeUrl', 'QrCodeUrl', 'qrCode', 'QrCode', 'imageDataUrl', 'ImageDataUrl')
   const nextQrImage = typeof nextQr === 'string' && (nextQr.startsWith('data:image/') || /^https:\/\//i.test(nextQr))
@@ -172,8 +185,7 @@ export default function CustomerDashboardPage() {
       <NavItem icon={ShoppingBag} label="Mes commandes" href="/account/orders" active={accountSection === 'orders'} />
       <NavItem icon={ShieldCheck} label="Mes soutiens" href="/account/supports" active={accountSection === 'supports'} />
       <NavItem icon={CreditCard} label="Mes paiements" href="/account/payments" active={accountSection === 'payments'} />
-      <NavItem icon={UserRound} label="Mon profil" onClick={() => { window.location.href = "/profil" }} />
-      <NavItem icon={Settings} label="Paramètres" onClick={() => setAuthOpen(true)} />
+      <NavItem icon={Settings} label="Profil et paramètres" href="/profil" />
       <NavItem icon={LogOut} label="Se déconnecter" onClick={fan.signOut} />
     </nav>
     <div className="jso-sidebar-art" aria-hidden="true"><span>Plus qu’un club</span><em>Une famille</em></div>
@@ -198,11 +210,11 @@ export default function CustomerDashboardPage() {
         </div>
         <div className="jso-dashboard-panels">
           <section className="jso-panel jso-next-match" id="mes-billets">
-            <div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">BILLETTERIE</span><h2>Prochain match</h2></div><a href="/matchs">Voir tous les matchs <ChevronRight size={14} /></a></div>
+            <div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">BILLETTERIE</span><h2>{hasUpcomingTicket ? 'Prochain match' : nextTicket ? 'Dernier billet' : 'Prochain match'}</h2></div><a href="/matchs">Voir tous les matchs <ChevronRight size={14} /></a></div>
             {data.tickets.status === 'error' ? <DataError message={data.tickets.message} onRetry={() => setReload((n) => n + 1)} /> : data.tickets.status === 'loading' ? <p className="jso-muted">Chargement des billets…</p> : nextTicket ? <div className="jso-match-ticket">
-              <div className="jso-match-banner"><img src="/JSO-crest-regenerated-ok.png" alt="JSO" className="jso-match-crest" /><div className="jso-match-info"><p>{value(nextTicket, 'competitionName', 'CompetitionName', 'matchTitle', 'MatchTitle', 'matchName', 'MatchName', 'opponentName', 'OpponentName', 'ticketTypeName', 'TicketTypeName') || 'Billet JSO'}</p><h3>{value(nextTicket, 'opponentName', 'OpponentName') ? <>JSO <span>vs</span> {value(nextTicket, 'opponentName', 'OpponentName')}</> : 'Match JSO'}</h3><small><CalendarDays size={13} /> {dateOf(nextTicket, 'kickoffAt', 'KickoffAt')} · {value(nextTicket, 'venue', 'Venue') || 'Lieu à confirmer'}</small></div></div>
+              <div className="jso-match-banner"><img src="/JSO-crest-regenerated-ok.png" alt="JSO" className="jso-match-crest" /><div className="jso-match-info"><p>{value(nextTicket, 'competitionName', 'CompetitionName', 'matchTitle', 'MatchTitle', 'matchName', 'MatchName') || 'RENCONTRE JSO'}</p><h3>{value(nextTicket, 'opponentName', 'OpponentName') ? <>{value(nextTicket, 'isHome', 'IsHome') === false ? value(nextTicket, 'opponentName', 'OpponentName') : 'JSO'} <span>vs</span> {value(nextTicket, 'isHome', 'IsHome') === false ? 'JSO' : value(nextTicket, 'opponentName', 'OpponentName')}</> : 'Détails du match à confirmer'}</h3><small><CalendarDays size={13} /> {kickoffOf(nextTicket)}{value(nextTicket, 'venue', 'Venue') ? ` · ${value(nextTicket, 'venue', 'Venue')}` : ''}</small></div></div>
               <div className="jso-ticket-details"><span><small>Tribune</small><strong>{value(nextTicket, 'standName', 'StandName', 'tribune', 'Tribune') || '—'}</strong></span><span><small>Rang</small><strong>{value(nextTicket, 'row', 'Row', 'rank', 'Rank') || '—'}</strong></span><span><small>Siège</small><strong>{value(nextTicket, 'seat', 'Seat') || '—'}</strong></span>{nextQrImage && <img className="jso-ticket-qr" src={nextQr} alt="QR code du billet" />}</div>
-              <div className="jso-ticket-actions"><span className={'jso-status-pill ' + (['Confirmed', 'Paid', 'Active'].includes(statusOf(nextTicket)) ? 'is-ok' : '')}><CheckCircle2 size={14} /> {prettyStatus(statusOf(nextTicket))}</span><button type="button" onClick={() => showDigital(nextTicket)} disabled={!nextTicketId || Boolean(digitalBusy[nextTicketId])}>{digitalBusy[nextTicketId] ? 'Chargement…' : <><Ticket size={15} /> Voir mon billet</>}</button></div>
+              <div className="jso-ticket-actions"><span className={'jso-status-pill ' + (['Confirmed', 'Paid', 'Active', 'CheckedIn'].includes(statusOf(nextTicket)) ? 'is-ok' : '')}><CheckCircle2 size={14} /> {prettyStatus(statusOf(nextTicket))}</span><button type="button" onClick={() => showDigital(nextTicket)} disabled={!nextTicketId || !nextTicketHasDigitalAccess || Boolean(digitalBusy[nextTicketId])} title={!nextTicketHasDigitalAccess ? 'Disponible après confirmation du paiement' : undefined}>{digitalBusy[nextTicketId] ? 'Chargement…' : nextTicketHasDigitalAccess ? <><Ticket size={15} /> Voir mon billet</> : 'QR après confirmation'}</button></div>
               {digitalErrors[nextTicketId] && <p role="alert" className="jso-dashboard-error">{digitalErrors[nextTicketId]}</p>}
               {nextDigital && <div className="jso-ticket-extra" role="region" aria-label="Billet numérique"><div><p>Billet numérique</p><small>Présentez ce QR code à l’entrée du stade.</small></div>{nextQrImage && <img src={nextQr} alt="QR code valide pour le contrôle du billet" className="jso-ticket-qr-large" />}<div className="jso-ticket-extra-actions">{nextQrImage && <a href={nextQr} download={'jso-ticket-' + nextTicketId + '.png'}><Download size={16} /> Télécharger le QR</a>}<button type="button" onClick={() => setDigital((state) => { const next = { ...state }; delete next[nextTicketId]; return next })}>Fermer</button></div></div>}
             </div> : <EmptyState title="Aucun billet pour le moment" detail="Vos réservations apparaîtront ici après l’achat." />}
@@ -210,10 +222,9 @@ export default function CustomerDashboardPage() {
           <section className="jso-panel jso-membership-panel" id="mes-abonnements">
             <div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">VOTRE ADHÉSION</span><h2>Mon abonnement</h2></div><a href="#historique-abonnements">Voir les détails <ChevronRight size={14} /></a></div>
             {data.memberships.status === 'error' ? <DataError message={data.memberships.message} onRetry={() => setReload((n) => n + 1)} /> : data.memberships.status === 'loading' ? <p className="jso-muted">Chargement de votre abonnement…</p> : activeMembership ? <>
-              <div className="jso-membership-feature"><div className="jso-membership-cover"><img src="/JSO-crest-regenerated-ok.png" alt="" /><strong>ABONNEMENT</strong><small>SAISON 2026/27</small></div><div className="jso-membership-status"><span className="jso-status-pill is-ok"><CheckCircle2 size={14} /> {prettyStatus(statusOf(activeMembership))}</span><h3>{value(activeMembership, 'planName', 'PlanName', 'name', 'Name', 'membershipName', 'MembershipName') || 'Abonnement JSO'}</h3><p>Valide jusqu’au {dateOf(activeMembership, 'endDate', 'EndDate', 'expiresAt', 'ExpiresAt')}</p></div></div>
-              <div className="jso-membership-facts"><span><small>Nom</small><strong>{displayName}</strong></span><span><small>Catégorie</small><strong>{value(activeMembership, 'category', 'Category') || 'Adulte'}</strong></span><span><small>N° abonné</small><strong>{value(activeMembership, 'membershipNumber', 'MembershipNumber', 'number', 'Number') || '—'}</strong></span></div>
-              <div className="jso-membership-actions"><button type="button" onClick={() => setDigitalErrors((s) => ({ ...s, membership: 'La carte sera affichée ici lorsqu’elle sera fournie par l’API.' }))}><Ticket size={15} /> Voir la carte</button><button type="button" className="is-secondary" onClick={() => setDigitalErrors((s) => ({ ...s, membership: 'Le téléchargement sera disponible lorsque l’API fournira le document.' }))}><Download size={15} /> Télécharger</button></div>
-              {digitalErrors.membership && <p role="status" className="jso-dashboard-error">{digitalErrors.membership}</p>}
+              <div className="jso-membership-feature"><div className="jso-membership-cover"><img src="/JSO-crest-regenerated-ok.png" alt="" /><strong>ABONNEMENT</strong><small>{value(activeMembership, 'seasonName', 'SeasonName') || 'CARTE SUPPORTER'}</small></div><div className="jso-membership-status"><span className={'jso-status-pill ' + (['Active', 'Confirmed', 'Paid'].includes(statusOf(activeMembership)) ? 'is-ok' : '')}><CheckCircle2 size={14} /> {prettyStatus(statusOf(activeMembership))}</span><h3>{value(activeMembership, 'planName', 'PlanName', 'name', 'Name', 'membershipName', 'MembershipName') || 'Abonnement JSO'}</h3><p>Valide jusqu’au {dateOf(activeMembership, 'endDate', 'EndDate', 'expiresAt', 'ExpiresAt')}</p></div></div>
+              <div className="jso-membership-facts"><span><small>Nom</small><strong>{displayName}</strong></span><span><small>Catégorie</small><strong>{value(activeMembership, 'category', 'Category') || '—'}</strong></span><span><small>N° abonné</small><strong>{value(activeMembership, 'membershipNumber', 'MembershipNumber', 'number', 'Number') || '—'}</strong></span></div>
+              <p className="jso-membership-document-note" role="status"><ShieldCheck size={16} /> La carte numérique et son téléchargement ne sont pas encore disponibles.</p>
               {membershipItems.length > 1 && <div id="historique-abonnements" className="jso-membership-history"><strong>Historique</strong>{membershipItems.slice(1).map((membership, i) => <div key={idOf(membership) ?? i}><span>{value(membership, 'planName', 'PlanName', 'name', 'Name') || 'Abonnement JSO'}</span><span>{prettyStatus(statusOf(membership))}</span></div>)}</div>}
             </> : <EmptyState title="Aucun abonnement enregistré" detail="Les informations sur votre abonnement apparaîtront ici." />}
           </section>

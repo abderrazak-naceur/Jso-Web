@@ -82,6 +82,8 @@
 .jso-membership-actions button.is-secondary{background:#fff;color:#0755d9}.jso-membership-actions button.is-secondary:hover{background:#f0f5ff}
 .jso-membership-history{display:grid;gap:8px;margin-top:13px;padding-top:11px;border-top:1px solid #edf0f5;font-size:10px}
 .jso-membership-history>div{display:flex;justify-content:space-between;gap:10px;color:#6b7688}
+.jso-membership-document-note{display:flex;align-items:flex-start;gap:9px;margin-top:14px;padding:12px;border:1px solid #dbe7f5;border-radius:12px;background:#f5f8fd;color:#52647c;font-size:13px;line-height:1.5}
+.jso-membership-document-note svg{flex:0 0 auto;color:#0755d9}
 .jso-order-list{display:grid}
 .jso-order-row{display:grid;grid-template-columns:42px minmax(0,1fr) auto 13px;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid #edf0f5}
 .jso-order-row:last-child{border-bottom:0}

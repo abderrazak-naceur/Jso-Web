@@ -80,10 +80,25 @@ public sealed class TicketsController(
     {
         var fanId = CurrentFanId();
         if (fanId is null) return Unauthorized();
-        var orders = await db.TicketOrders.AsNoTracking()
-            .Where(x => x.FanUserId == fanId)
-            .OrderByDescending(x => x.CreatedAt)
-            .Select(x => new { x.Id, x.MatchId, x.TicketTypeName, x.Quantity, x.Total, x.Currency, x.Status, x.PaymentProvider, x.PromoCode, x.CreatedAt, x.ConfirmedAt })
+        var orders = await (
+            from x in db.TicketOrders.AsNoTracking()
+            join match in db.Matches.AsNoTracking() on x.MatchId equals match.Id into matchGroup
+            from match in matchGroup.DefaultIfEmpty()
+            where x.FanUserId == fanId
+            orderby x.CreatedAt descending
+            select new
+            {
+                x.Id, x.MatchId, x.TicketTypeName, x.Quantity, x.Total, x.Currency, x.Status,
+                x.PaymentProvider, x.PromoCode, x.CreatedAt, x.ConfirmedAt,
+                opponentName = match == null ? null : match.OpponentName,
+                kickoffAt = match == null ? (DateTimeOffset?)null : match.KickoffAt,
+                venue = match == null ? null : match.Venue,
+                isHome = match != null && match.IsHome,
+                competitionName = match == null ? null : db.Competitions
+                    .Where(competition => competition.Id == match.CompetitionId)
+                    .Select(competition => competition.Name)
+                    .FirstOrDefault()
+            })
             .ToListAsync(ct);
         return Ok(orders);
     }
@@ -96,9 +111,24 @@ public sealed class TicketsController(
     {
         var fanId = CurrentFanId();
         if (fanId is null) return Unauthorized();
-        var order = await db.TicketOrders.AsNoTracking()
-            .Where(x => x.Id == id && x.FanUserId == fanId)
-            .Select(x => new { x.Id, x.MatchId, x.TicketTypeName, x.Quantity, x.Total, x.Currency, x.Status, x.PaymentProvider, x.PromoCode, x.CreatedAt, x.ConfirmedAt })
+        var order = await (
+            from x in db.TicketOrders.AsNoTracking()
+            join match in db.Matches.AsNoTracking() on x.MatchId equals match.Id into matchGroup
+            from match in matchGroup.DefaultIfEmpty()
+            where x.Id == id && x.FanUserId == fanId
+            select new
+            {
+                x.Id, x.MatchId, x.TicketTypeName, x.Quantity, x.Total, x.Currency, x.Status,
+                x.PaymentProvider, x.PromoCode, x.CreatedAt, x.ConfirmedAt,
+                opponentName = match == null ? null : match.OpponentName,
+                kickoffAt = match == null ? (DateTimeOffset?)null : match.KickoffAt,
+                venue = match == null ? null : match.Venue,
+                isHome = match != null && match.IsHome,
+                competitionName = match == null ? null : db.Competitions
+                    .Where(competition => competition.Id == match.CompetitionId)
+                    .Select(competition => competition.Name)
+                    .FirstOrDefault()
+            })
             .SingleOrDefaultAsync(ct);
         if (order is null) return NotFound();
         return Ok(order);
