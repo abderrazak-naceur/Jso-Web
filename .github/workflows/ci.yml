@@ -411,6 +411,8 @@ jobs:
             -H 'Content-Type: application/json' \
             -d "$(jq -nc --arg token "$ticket_token" --arg gateId "$gate_code" --arg deviceId "$device_code"               '{token:$token,matchId:"00000000-0000-0000-0000-000000000001",gateId:$gateId,deviceId:$deviceId}')")
           test "$wrong_match_status" = 200
+          echo "Wrong-match validation response:"
+          cat /tmp/jso-wrong-match.json
           jq -e '.result == "WrongMatch"' /tmp/jso-wrong-match.json
 
           wrong_gate_status=$(curl -sS -o /tmp/jso-wrong-gate.json -w '%{http_code}' \
