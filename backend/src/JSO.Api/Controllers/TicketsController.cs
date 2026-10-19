@@ -83,7 +83,7 @@ public sealed class TicketsController(
         var orders = await db.TicketOrders.AsNoTracking()
             .Where(x => x.FanUserId == fanId)
             .OrderByDescending(x => x.CreatedAt)
-            .Select(x => new { x.Id, x.MatchId, x.TicketTypeName, x.Quantity, x.Total, x.Currency, x.Status, x.CreatedAt, x.ConfirmedAt })
+            .Select(x => new { x.Id, x.MatchId, x.TicketTypeName, x.Quantity, x.Total, x.Currency, x.Status, x.PaymentProvider, x.PromoCode, x.CreatedAt, x.ConfirmedAt })
             .ToListAsync(ct);
         return Ok(orders);
     }
@@ -98,7 +98,7 @@ public sealed class TicketsController(
         if (fanId is null) return Unauthorized();
         var order = await db.TicketOrders.AsNoTracking()
             .Where(x => x.Id == id && x.FanUserId == fanId)
-            .Select(x => new { x.Id, x.MatchId, x.TicketTypeName, x.Quantity, x.Total, x.Currency, x.Status, x.CreatedAt, x.ConfirmedAt })
+            .Select(x => new { x.Id, x.MatchId, x.TicketTypeName, x.Quantity, x.Total, x.Currency, x.Status, x.PaymentProvider, x.PromoCode, x.CreatedAt, x.ConfirmedAt })
             .SingleOrDefaultAsync(ct);
         if (order is null) return NotFound();
         return Ok(order);
@@ -152,6 +152,15 @@ public sealed class TicketsController(
         if (type.Capacity - type.SoldCount < request.Quantity)
             return BadRequest(new { message = "Not enough tickets available." });
 
+        var promoInput = NormalizePromo(request.PromoCode);
+        TicketPromoCode? promo = null;
+        if (promoInput.Length > 0)
+        {
+            promo = await db.TicketPromoCodes.SingleOrDefaultAsync(x => x.MatchId == type.MatchId && x.Code == promoInput, ct);
+            if (promo is null || !promo.IsEnabled || (promo.ExpiresAt.HasValue && promo.ExpiresAt.Value <= DateTimeOffset.UtcNow) || (promo.MaxUses.HasValue && promo.Uses >= promo.MaxUses.Value))
+                return BadRequest(new { message = "Code promo non valide, expiré ou épuisé." });
+        }
+
         var order = new TicketOrder
         {
             FanUserId = fanId.Value,
@@ -161,16 +170,29 @@ public sealed class TicketsController(
             UnitPrice = type.Price,
             Currency = type.Currency,
             Quantity = request.Quantity,
-            Total = type.Price * request.Quantity,
-            Status = "Pending"
+            Total = promo is null ? type.Price * request.Quantity : 0m,
+            PromoCode = promo?.Code,
+            Status = promo is null ? "Pending" : "Confirmed",
+            ConfirmedAt = promo is null ? null : DateTimeOffset.UtcNow,
+            PaymentProvider = promo is null ? null : "Promo"
         };
+        if (promo is not null)
+        {
+            var trackedType = await db.TicketTypes.SingleAsync(x => x.Id == type.Id, ct);
+            if (trackedType.SoldCount + request.Quantity > trackedType.Capacity)
+                return BadRequest(new { message = "Not enough tickets available." });
+            trackedType.SoldCount += request.Quantity;
+            promo.Uses++;
+            order.PublicTicketToken = TicketTokenGenerator.Generate();
+            order.IssuedAt = DateTimeOffset.UtcNow;
+        }
         db.TicketOrders.Add(order);
         await db.SaveChangesAsync(ct);
         await audit.LogAsync("CREATE", "TicketOrder", order.Id.ToString(), fanId.Value.ToString(),
             User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(),
-            new { order.MatchId, order.Total }, ct);
+            new { order.MatchId, order.Total, promoCode = order.PromoCode, order.Status }, ct);
 
-        return Created($"/api/tickets/mine", new { order.Id, order.TicketTypeName, order.Quantity, order.Total, order.Currency, order.Status });
+        return Created($"/api/tickets/mine", new { order.Id, order.TicketTypeName, order.Quantity, order.Total, order.Currency, order.Status, order.PromoCode });
     }
 
     // Starts an online payment for one of the fan's own Pending ticket
@@ -258,8 +280,10 @@ public sealed class TicketsController(
         var sub = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return Guid.TryParse(sub, out var id) ? id : null;
     }
+
+    private static string NormalizePromo(string? code) => (code ?? string.Empty).Trim().ToUpperInvariant();
 }
 
-public sealed record TicketReserveRequest(Guid TicketTypeId, int Quantity);
+public sealed record TicketReserveRequest(Guid TicketTypeId, int Quantity, string? PromoCode = null);
 
 public sealed record PayTicketRequest(string Country);

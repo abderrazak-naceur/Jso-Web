@@ -38,6 +38,8 @@ export default function TicketsModule({ onError }) {
   const [editing, setEditing] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [bulkCreating, setBulkCreating] = useState(false)
+  const [promoCodes, setPromoCodes] = useState([])
+  const [promoForm, setPromoForm] = useState({ code: '', expiresAt: '', maxUses: '', isEnabled: true })
 
   async function loadMatches() {
     try { const m = await api('/admin/matches'); setMatches(m); if (!matchId && m[0]) setMatchId(m[0].id) }
@@ -54,8 +56,34 @@ export default function TicketsModule({ onError }) {
     try { setOrders(await api('/admin/tickets/orders')) }
     catch (e) { onError(e.message) }
   }
+  async function loadPromoCodes() {
+    if (!matchId) { setPromoCodes([]); return }
+    try { setPromoCodes(await api('/admin/tickets/promo-codes?matchId=' + encodeURIComponent(matchId))) }
+    catch (e) { onError(e.message) }
+  }
   useEffect(() => { loadTypes() }, [matchId])
   useEffect(() => { loadOrders() }, [])
+  useEffect(() => { loadPromoCodes() }, [matchId])
+
+  async function createPromoCode(event) {
+    event.preventDefault()
+    try {
+      await api('/admin/tickets/promo-codes', { method: 'POST', body: JSON.stringify({
+        matchId, code: promoForm.code.trim().toUpperCase(), expiresAt: promoForm.expiresAt ? new Date(promoForm.expiresAt).toISOString() : null,
+        maxUses: promoForm.maxUses ? Number(promoForm.maxUses) : null, isEnabled: promoForm.isEnabled,
+      }) })
+      setPromoForm({ code: '', expiresAt: '', maxUses: '', isEnabled: true }); await loadPromoCodes(); onError('')
+    } catch (e) { onError(e.message) }
+  }
+  async function togglePromoCode(row) {
+    try { await api('/admin/tickets/promo-codes/' + row.id, { method: 'PUT', body: JSON.stringify({ expiresAt: row.expiresAt, maxUses: row.maxUses, isEnabled: !row.isEnabled }) }); await loadPromoCodes() }
+    catch (e) { onError(e.message) }
+  }
+  async function deletePromoCode(row) {
+    if (!confirm('Supprimer le code promo ' + row.code + ' ?')) return
+    try { await api('/admin/tickets/promo-codes/' + row.id, { method: 'DELETE' }); await loadPromoCodes() }
+    catch (e) { onError(e.message) }
+  }
 
   function reset() { setForm(emptyType); setEditing(null); setModalOpen(false) }
   function startCreate() { setForm(emptyType); setEditing(null); setModalOpen(true) }
@@ -122,10 +150,23 @@ export default function TicketsModule({ onError }) {
     </div>
 
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+      <h2 className="text-xl font-black">Codes promo pour tester les billets QR</h2>
+      <p className="mt-1 text-sm text-slate-500">Ces codes accordent un billet gratuit confirmé, sans enregistrer de paiement. Le QR sera créé dans le compte supporter et pourra être vérifié au scanner. Limitez les utilisations pour les essais.</p>
+      <form onSubmit={createPromoCode} className="mt-4 grid gap-3 md:grid-cols-2">
+        <label className="text-sm font-bold">Code<input required minLength="3" maxLength="40" pattern="[A-Za-z0-9_-]+" value={promoForm.code} onChange={e => setPromoForm(v => ({ ...v, code: e.target.value.toUpperCase() }))} placeholder="JSOQRTEST" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 uppercase" /></label>
+        <label className="text-sm font-bold">Utilisations maximum<input type="number" min="1" value={promoForm.maxUses} onChange={e => setPromoForm(v => ({ ...v, maxUses: e.target.value }))} placeholder="Ex. 5 (conseillé)" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" /></label>
+        <label className="text-sm font-bold">Date d’expiration (facultative)<input type="datetime-local" value={promoForm.expiresAt} onChange={e => setPromoForm(v => ({ ...v, expiresAt: e.target.value }))} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" /></label>
+        <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={promoForm.isEnabled} onChange={e => setPromoForm(v => ({ ...v, isEnabled: e.target.checked }))} /> Actif</label>
+        <button disabled={!matchId} className="rounded-xl bg-jso-navy px-4 py-2.5 font-bold text-white disabled:opacity-50">Créer le code gratuit</button>
+      </form>
+      <div className="mt-5 space-y-2">{promoCodes.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Aucun code pour ce match.</p> : promoCodes.map(row => <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 p-4"><div><strong>{row.code}</strong><p className="text-xs text-slate-500">Utilisé {row.uses}{row.maxUses ? ' / ' + row.maxUses : ' fois sans limite'}{row.expiresAt ? ' · Expire ' + new Date(row.expiresAt).toLocaleString('fr-FR') : ''}</p><p className="text-xs font-bold">{row.isEnabled ? 'Actif' : 'Désactivé'}</p></div><div className="flex gap-2"><button type="button" onClick={() => togglePromoCode(row)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold">{row.isEnabled ? 'Désactiver' : 'Activer'}</button><button type="button" onClick={() => deletePromoCode(row)} className="rounded-lg border border-red-200 px-3 py-2 text-sm font-bold text-red-700">Supprimer</button></div></div>)}</div>
+    </div>
+
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
       <div className="flex items-center justify-between"><h2 className="text-xl font-black">Réservations</h2><button onClick={loadOrders} className="rounded-xl border border-slate-200 p-2 text-slate-600" aria-label="Actualiser"><RefreshCw size={16}/></button></div>
       <div className="mt-4 overflow-x-auto">
         {orders.length === 0 ? <p className="text-sm text-slate-400">Aucune réservation.</p>
-          : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Date</th><th className="p-2">Billet</th><th className="p-2">Qté</th><th className="p-2">Total</th><th className="p-2">Statut</th><th className="p-2"></th></tr></thead><tbody>{orders.map((o) => <tr key={o.id} className="border-b last:border-0"><td className="p-2 whitespace-nowrap">{new Date(o.createdAt).toLocaleDateString('fr-FR', { dateStyle: 'short' })}</td><td className="p-2">{o.ticketTypeName}</td><td className="p-2">{o.quantity}</td><td className="p-2 whitespace-nowrap font-bold">{money(o.total, o.currency)}</td><td className="p-2"><span className={'rounded-full px-2.5 py-1 text-xs font-extrabold ' + (STATUS_STYLES[o.status] || 'bg-slate-100 text-slate-600')}>{o.status}</span></td><td className="p-2 whitespace-nowrap">{o.status === 'Pending' && <><button onClick={() => setOrderStatus(o.id, 'Confirmed')} className="mr-2 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-bold text-white"><Check size={13}/> Confirmer</button><button onClick={() => setOrderStatus(o.id, 'Cancelled')} className="text-red-600"><X size={16}/></button></>}</td></tr>)}</tbody></table>}
+          : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Date</th><th className="p-2">Billet</th><th className="p-2">Qté</th><th className="p-2">Total</th><th className="p-2">Mode</th><th className="p-2">Statut</th><th className="p-2"></th></tr></thead><tbody>{orders.map((o) => <tr key={o.id} className="border-b last:border-0"><td className="p-2 whitespace-nowrap">{new Date(o.createdAt).toLocaleDateString('fr-FR', { dateStyle: 'short' })}</td><td className="p-2">{o.ticketTypeName}</td><td className="p-2">{o.quantity}</td><td className="p-2 whitespace-nowrap font-bold">{money(o.total, o.currency)}</td><td className="p-2 text-xs">{o.paymentProvider === 'Promo' ? 'Promo · ' + o.promoCode : o.paymentProvider || '—'}</td><td className="p-2"><span className={'rounded-full px-2.5 py-1 text-xs font-extrabold ' + (STATUS_STYLES[o.status] || 'bg-slate-100 text-slate-600')}>{o.status}</span></td><td className="p-2 whitespace-nowrap">{o.status === 'Pending' && <><button onClick={() => setOrderStatus(o.id, 'Confirmed')} className="mr-2 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-bold text-white"><Check size={13}/> Confirmer</button><button onClick={() => setOrderStatus(o.id, 'Cancelled')} className="text-red-600"><X size={16}/></button></>}</td></tr>)}</tbody></table>}
       </div>
     </div>
     {modalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) reset() }}>

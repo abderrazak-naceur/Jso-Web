@@ -32,6 +32,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
  public DbSet<TicketType> TicketTypes => Set<TicketType>();
  public DbSet<TicketOrder> TicketOrders => Set<TicketOrder>();
  public DbSet<TicketCheckIn> TicketCheckIns => Set<TicketCheckIn>();
+ public DbSet<TicketPromoCode> TicketPromoCodes => Set<TicketPromoCode>();
  public DbSet<Volunteer> Volunteers => Set<Volunteer>();
  public DbSet<MatchAssignment> MatchAssignments => Set<MatchAssignment>();
  public DbSet<NewsletterSubscription> NewsletterSubscriptions => Set<NewsletterSubscription>();
@@ -139,6 +140,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<TicketOrder>().HasIndex(x=>new{x.MatchId,x.Status});
   modelBuilder.Entity<TicketOrder>().Property(x=>x.UnitPrice).HasPrecision(14,2);
   modelBuilder.Entity<TicketOrder>().Property(x=>x.Total).HasPrecision(14,2);
+  modelBuilder.Entity<TicketOrder>().Property(x=>x.PromoCode).HasMaxLength(40);
   modelBuilder.Entity<TicketOrder>().HasIndex(x=>x.ProviderRef).IsUnique().HasFilter("\"ProviderRef\" IS NOT NULL");
   modelBuilder.Entity<TicketOrder>().Property(x=>x.PaymentProvider).HasMaxLength(32);
   modelBuilder.Entity<TicketOrder>().Property(x=>x.Country).HasMaxLength(64);
@@ -275,6 +277,9 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<MatchStreamPromoCode>().Property(x => x.Code).HasMaxLength(40).IsRequired();
   modelBuilder.Entity<MatchStreamPromoCode>().Property(x => x.DiscountPercent).IsRequired();
   modelBuilder.Entity<MatchStreamPromoCode>().HasOne(x => x.MatchStream).WithMany().HasForeignKey(x => x.MatchStreamId).OnDelete(DeleteBehavior.Cascade);
+  modelBuilder.Entity<TicketPromoCode>().HasIndex(x => new { x.MatchId, x.Code }).IsUnique();
+  modelBuilder.Entity<TicketPromoCode>().Property(x => x.Code).HasMaxLength(40).IsRequired();
+  modelBuilder.Entity<TicketPromoCode>().HasOne<Match>().WithMany().HasForeignKey(x => x.MatchId).OnDelete(DeleteBehavior.Cascade);
   modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.PaymentProvider).HasMaxLength(32);
   modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.Country).HasMaxLength(64);
   modelBuilder.Entity<MatchStreamAccess>().Property(x=>x.ChargedAmount).HasPrecision(14,2);

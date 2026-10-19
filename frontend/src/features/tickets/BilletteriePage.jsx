@@ -107,6 +107,8 @@ function TicketTypeRow({ type, fan, onNeedAuth }) {
   const [reserving, setReserving] = useState(false)
   const [error, setError] = useState('')
   const [orderId, setOrderId] = useState(null)
+  const [orderStatus, setOrderStatus] = useState('')
+  const [promoCode, setPromoCode] = useState('')
 
   const max = Math.min(10, type.available ?? 0)
   const soldOut = max <= 0
@@ -119,8 +121,9 @@ function TicketTypeRow({ type, fan, onNeedAuth }) {
     setError('')
     setReserving(true)
     try {
-      const order = await ticketApi.reserve({ ticketTypeId: type.id, quantity }, fan.token)
+      const order = await ticketApi.reserve({ ticketTypeId: type.id, quantity, promoCode: promoCode.trim() || null }, fan.token)
       setOrderId(order.id)
+      setOrderStatus(order.status)
     } catch (e) {
       setError(e?.message || 'La réservation a échoué. Veuillez réessayer.')
     } finally {
@@ -166,7 +169,13 @@ function TicketTypeRow({ type, fan, onNeedAuth }) {
 
       {error && <p role="alert" className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p>}
 
-      {orderId ? (
+      {orderId && orderStatus === 'Confirmed' ? (
+        <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+          <p className="inline-flex items-center gap-2 text-sm font-extrabold text-emerald-800"><CheckCircle2 size={18} aria-hidden="true" /> Billet gratuit confirmé avec le code {promoCode.trim().toUpperCase()}.</p>
+          <p className="mt-1 text-sm font-semibold text-emerald-800">Le QR code est disponible dans votre espace supporter, rubrique « Mes billets ».</p>
+          <a href="/account#biglietti" className="mt-4 inline-flex rounded-xl bg-jso-navy px-5 py-3 font-extrabold text-white hover:bg-jso-blue">Voir mon billet et son QR</a>
+        </div>
+      ) : orderId ? (
         <div className="mt-4 rounded-2xl border border-slate-200 bg-jso-paper/60 p-5">
           <p className="inline-flex items-center gap-2 text-sm font-extrabold text-green-700">
             <CheckCircle2 size={18} aria-hidden="true" /> Réservation créée. Finalisez le paiement pour recevoir votre billet.
@@ -179,6 +188,10 @@ function TicketTypeRow({ type, fan, onNeedAuth }) {
           </div>
         </div>
       ) : !soldOut && (
+        <>
+        <label className="mt-4 block max-w-sm text-sm font-bold text-slate-700">Code promo (facultatif)
+          <input value={promoCode} onChange={event => setPromoCode(event.target.value.toUpperCase())} maxLength={40} autoComplete="off" placeholder="Code fourni par la JSO" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 uppercase" />
+        </label>
         <button
           type="button"
           onClick={handleReserve}
@@ -189,6 +202,7 @@ function TicketTypeRow({ type, fan, onNeedAuth }) {
             ? `Réserver ${quantity} billet${quantity > 1 ? 's' : ''}`
             : 'Se connecter pour réserver'}
         </button>
+        </>
       )}
     </div>
   )

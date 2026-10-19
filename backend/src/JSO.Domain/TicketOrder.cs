@@ -17,6 +17,7 @@ public sealed class TicketOrder
     public string Currency { get; set; } = "TND";
     public int Quantity { get; set; }
     public decimal Total { get; set; }
+    public string? PromoCode { get; set; }
     public string Status { get; set; } = "Pending";
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? ConfirmedAt { get; set; }

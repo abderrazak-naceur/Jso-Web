@@ -2624,6 +2624,10 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.Property<DateTimeOffset?>("PaidAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("PromoCode")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
                     b.Property<string>("PaymentProvider")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
@@ -2745,6 +2749,22 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.HasIndex("IsActive", "Role");
 
                     b.ToTable("Volunteers");
+                });
+
+            modelBuilder.Entity("JSO.Domain.TicketPromoCode", b =>
+                {
+                    b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                    b.Property<string>("Code").IsRequired().HasMaxLength(40).HasColumnType("character varying(40)");
+                    b.Property<DateTimeOffset>("CreatedAt").HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset?>("ExpiresAt").HasColumnType("timestamp with time zone");
+                    b.Property<bool>("IsEnabled").HasColumnType("boolean");
+                    b.Property<int?>("MaxUses").HasColumnType("integer");
+                    b.Property<Guid>("MatchId").HasColumnType("uuid");
+                    b.Property<int>("Uses").HasColumnType("integer");
+                    b.HasKey("Id");
+                    b.HasIndex("MatchId", "Code").IsUnique();
+                    b.HasOne("JSO.Domain.Match", null).WithMany().HasForeignKey("MatchId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.ToTable("TicketPromoCodes");
                 });
 
             modelBuilder.Entity("JSO.Domain.MatchStreamPromoCode", b =>
