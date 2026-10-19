@@ -17,16 +17,7 @@ public sealed class MediaStorageService(IConfiguration configuration)
 
         await Task.Run(() =>
         {
-            using var client = new SftpClient(host, port, username, password);
-            client.HostKeyReceived += (_, e) =>
-            {
-                var actual = Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(e.HostKey)).TrimEnd('=');
-                var expected = fingerprint.Trim();
-                if (expected.StartsWith("SHA256:", StringComparison.OrdinalIgnoreCase))
-                    expected = expected["SHA256:".Length..];
-                expected = expected.TrimEnd('=');
-                e.CanTrust = string.Equals(actual, expected, StringComparison.Ordinal);
-            };
+            using var client = CreateClient(host, port, username, password, fingerprint);
             client.Connect();
             try
             {
@@ -53,16 +44,7 @@ public sealed class MediaStorageService(IConfiguration configuration)
 
         await Task.Run(() =>
         {
-            using var client = new SftpClient(host, port, username, password);
-            client.HostKeyReceived += (_, e) =>
-            {
-                var actual = Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(e.HostKey)).TrimEnd('=');
-                var expected = fingerprint.Trim();
-                if (expected.StartsWith("SHA256:", StringComparison.OrdinalIgnoreCase))
-                    expected = expected["SHA256:".Length..];
-                expected = expected.TrimEnd('=');
-                e.CanTrust = string.Equals(actual, expected, StringComparison.Ordinal);
-            };
+            using var client = CreateClient(host, port, username, password, fingerprint);
             client.Connect();
             try
             {
@@ -75,6 +57,21 @@ public sealed class MediaStorageService(IConfiguration configuration)
 
     public string PublicUrl(string relativePath) =>
         Required("Sftp:PublicBaseUrl").TrimEnd('/') + "/" + Normalize(relativePath);
+
+    private SftpClient CreateClient(string host, int port, string username, string password, string fingerprint)
+    {
+        var client = new SftpClient(host, port, username, password);
+        client.HostKeyReceived += (_, e) =>
+        {
+            var actual = Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(e.HostKey)).TrimEnd('=');
+            var expected = fingerprint.Trim();
+            if (expected.StartsWith("SHA256:", StringComparison.OrdinalIgnoreCase))
+                expected = expected["SHA256:".Length..];
+            expected = expected.TrimEnd('=');
+            e.CanTrust = string.Equals(actual, expected, StringComparison.Ordinal);
+        };
+        return client;
+    }
 
     private string Required(string key) =>
         configuration[key] is { Length: > 0 } value ? value : throw new InvalidOperationException($"Missing configuration: {key}");
@@ -89,12 +86,18 @@ public sealed class MediaStorageService(IConfiguration configuration)
 
     private static void EnsureDirectory(SftpClient client, string directory)
     {
-        // SFTP account home is the safe starting point; relative paths avoid
-        // attempting to create protected ancestors such as /home or /var.
-        var current = ".";
+        // Preserve absolute document-root paths; relative roots are resolved
+        // from the SFTP account's home directory.
+        var isAbsolute = directory.StartsWith('/', StringComparison.Ordinal);
+        var current = isAbsolute ? "/" : ".";
         foreach (var part in directory.Split('/', StringSplitOptions.RemoveEmptyEntries))
         {
-            current = current == "." ? part : current + "/" + part;
+            current = current switch
+            {
+                "/" => "/" + part,
+                "." => part,
+                _ => current + "/" + part
+            };
             if (!client.Exists(current)) client.CreateDirectory(current);
         }
     }
