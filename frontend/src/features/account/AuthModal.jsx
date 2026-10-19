@@ -1,8 +1,13 @@
 import { useState } from 'react'
 import { X, Eye, EyeOff } from 'lucide-react'
 import { accountApi } from '../../lib/api'
+import { useDialog } from '../site/useDialog'
 
 export default function AuthModal({ open, initialMode = 'login', onClose, onAuthenticated }) {
+  return open ? <AuthForm initialMode={initialMode} onClose={onClose} onAuthenticated={onAuthenticated}/> : null
+}
+
+function AuthForm({ initialMode, onClose, onAuthenticated }) {
   const [mode, setMode] = useState(initialMode)
   const [email, setEmail] = useState('')
   const [firstName, setFirstName] = useState('')
@@ -14,8 +19,7 @@ export default function AuthModal({ open, initialMode = 'login', onClose, onAuth
   const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-
-  if (!open) return null
+  const dialogRef = useDialog(() => { if (!busy) onClose?.() })
 
   const isRegister = mode === 'register'
   const passwordLongEnough = password.length >= 12
@@ -57,6 +61,8 @@ export default function AuthModal({ open, initialMode = 'login', onClose, onAuth
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-title"
+      ref={dialogRef}
+      tabIndex={-1}
     >
       <div className="max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-[2rem] bg-white p-5 text-jso-ink shadow-2xl sm:p-8">
         <div className="flex items-start justify-between gap-4">
@@ -69,6 +75,7 @@ export default function AuthModal({ open, initialMode = 'login', onClose, onAuth
           <button
             type="button"
             onClick={onClose}
+            disabled={busy}
             aria-label="Fermer"
             className="rounded-full border border-slate-200 p-2"
           >

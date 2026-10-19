@@ -8,12 +8,15 @@ import uuid
 
 BASE = "http://127.0.0.1:5080/api"
 ADMIN = os.environ["FUNDRAISING_TEST_ADMIN_TOKEN"]
+FAN = os.environ["FUNDRAISING_TEST_FAN_TOKEN"]
 
 
-def request(path, *, method="GET", body=None, admin=False, access=None, status=200):
+def request(path, *, method="GET", body=None, admin=False, fan=False, access=None, status=200):
     headers = {"Content-Type": "application/json"}
     if admin:
         headers["Authorization"] = f"Bearer {ADMIN}"
+    elif fan:
+        headers["Authorization"] = f"Bearer {FAN}"
     if access:
         headers["X-Fundraising-Token"] = access
     req = urllib.request.Request(
@@ -46,6 +49,9 @@ request(f"/admin/fundraising/projects/{project_id}", method="PUT", body=project_
 assert request(public_path)["totalPaidTnd"] == 0
 
 first_installment = None
+first_commitment = None
+first_access = None
+last_commitment = None
 for amount in (5, 10, 20, 30, 50):
     access = secrets.token_urlsafe(32)
     join_body = {
@@ -54,6 +60,7 @@ for amount in (5, 10, 20, 30, 50):
         "paymentMethod": "Cash", "phone": "+21600000000", "email": "ci@example.invalid",
     }
     commitment = request(public_path + "/commitments", method="POST", body=join_body, status=201)
+    last_commitment = commitment["id"]
     retry = request(public_path + "/commitments", method="POST", body=join_body)
     assert retry["id"] == commitment["id"]
     assert len(commitment["installments"]) == 10
@@ -64,6 +71,8 @@ for amount in (5, 10, 20, 30, 50):
     assert request(private_path, access=access)["id"] == commitment["id"]
     if first_installment is None:
         first_installment = commitment["installments"][0]["id"]
+        first_commitment = commitment["id"]
+        first_access = access
 
 summary = request(public_path)
 assert summary["supporterCount"] == 5 and summary["totalPaidTnd"] == 0
@@ -83,4 +92,29 @@ request(public_path + "/commitments", method="POST", status=201, body={
 })
 assert request(public_path + "/supporters")["totalCount"] == 5
 assert request(public_path)["totalPaidTnd"] == 5
-print("Fundraising PostgreSQL HTTP checks passed: drafts, 5 plans, retries, privacy, cash totals, online pending.")
+
+# Claim uses real PostgreSQL conditional updates and a single transaction.
+claim_path = f"/fundraising/commitments/{first_commitment}/claim"
+request(claim_path, method="POST", access=first_access, status=401)
+request(claim_path, method="POST", fan=True, status=401)
+assert request(claim_path, method="POST", fan=True, access=first_access)["claimed"]
+owned = next(item for item in request("/fundraising/mine", fan=True) if item["id"] == first_commitment)
+assert len(owned["installments"]) == 10
+assert sum(item["amount"] for item in owned["installments"] if item["paymentStatus"] == "Paid") == 5
+
+# Paid histories survive archiving; unstarted test projects can be removed.
+admin_path = f"/admin/fundraising/projects/{project_id}"
+request(admin_path, method="DELETE", admin=True, status=409)
+request(admin_path + "/archive", method="POST", admin=True)
+request(public_path, status=404)
+assert any(item["id"] == first_commitment for item in request("/fundraising/mine", fan=True))
+request(f"{admin_path}/commitments/{last_commitment}", method="DELETE", admin=True, status=204)
+project_body["status"] = "Published"
+disposable = request("/admin/fundraising/projects", method="POST", body=project_body, admin=True)
+disposable_commitment = request(f'/fundraising/projects/{disposable["id"]}/commitments', method="POST", status=201, body={
+    "clientRequestId": str(uuid.uuid4()), "accessToken": secrets.token_urlsafe(32),
+    "displayName": "CI disposable unpaid", "monthlyAmountTnd": 5, "paymentMethod": "Cash",
+})
+request(f'/admin/fundraising/projects/{disposable["id"]}', method="DELETE", admin=True, status=204)
+request(f'/fundraising/commitments/{disposable_commitment["id"]}', status=404)
+print("Fundraising PostgreSQL HTTP checks passed: plans, retries, privacy, cash, claim, archive, protected deletion.")

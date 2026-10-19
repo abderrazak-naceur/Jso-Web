@@ -287,6 +287,22 @@ public sealed class DonationsController(
             PayableTypes.Donation, donation.Id, null, donation.Amount, "Soutien JSO 2026/2027",
             donation.DisplayName, "JSO", request.Email?.Trim(), donation.DonorPhone);
 
+        // Reserve the fundraising installment before contacting a provider.
+        // Admin deletion must see the attempt even while the remote call is running.
+        if (donation.FundraisingCommitmentId is not null)
+        {
+            donation.PaymentProvider = provider.Name;
+            donation.Country = country;
+            try { await db.SaveChangesAsync(ct); }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Conflict(new { message = "Cette participation a changé. Actualisez votre suivi avant de payer." });
+            }
+            await audit.LogAsync("FUNDRAISING_PAYMENT_ATTEMPT", "SupporterBrick", donation.Id.ToString(),
+                CurrentFanId()?.ToString(), null, HttpContext.Connection.RemoteIpAddress?.ToString(),
+                new { provider = provider.Name, country }, ct);
+        }
+
         PaymentInitiation initiation;
         try { initiation = await provider.InitiatePaymentAsync(paymentRequest, returnUrl, cancelUrl, ct); }
         catch (PaymentProviderNotConfiguredException)

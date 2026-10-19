@@ -8,16 +8,11 @@ import FundraisingProjectView from './FundraisingProjectView'
 import FundraisingRegistration, { ONLINE_PROVIDERS } from './FundraisingRegistration'
 import FundraisingDashboard from './FundraisingDashboard'
 import FundraisingEmptyState from './FundraisingEmptyState'
+import AuthModal from '../../account/AuthModal'
+import { readFundraisingAccess as readAccess, forgetFundraisingAccess, createFundraisingAccess as createAccess } from './fundraisingAccess'
 import { MONTHLY_AMOUNTS, PLAN_MONTHS, planTotal, projectImage, fundraisingMoney as money } from './fundraisingTemplates'
 import './fundraising.css'
 
-const ACCESS_KEY = 'jso_fundraising_access'
-function readAccess() { try { const items = JSON.parse(localStorage.getItem(ACCESS_KEY) || '[]'); return Array.isArray(items) ? items.filter(item => item.id && item.token && item.projectId) : [] } catch { return [] } }
-function saveAccess(record) { const list = [record, ...readAccess().filter(item => item.id !== record.id)].slice(0, 20); localStorage.setItem(ACCESS_KEY, JSON.stringify(list)) }
-function createAccess(projectId) {
-  const bytes = crypto.getRandomValues(new Uint8Array(32))
-  return { id: crypto.randomUUID(), projectId, token: btoa(String.fromCharCode(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '') }
-}
 const selectedFromUrl = () => new URLSearchParams(window.location.search).get('projet') || ''
 
 export default function FundraisingPage() {
@@ -30,6 +25,8 @@ export default function FundraisingPage() {
   const [amount, setAmount] = useState(5)
   const [methods, setMethods] = useState({})
   const [registration, setRegistration] = useState(false)
+  const [auth, setAuth] = useState(null)
+  const [continueSupport, setContinueSupport] = useState(false)
   const [menu, setMenu] = useState(false)
   const [supporters, setSupporters] = useState({ items: [], totalCount: 0, totalPages: 0 })
   const [supportersLoading, setSupportersLoading] = useState(false)
@@ -79,7 +76,14 @@ export default function FundraisingPage() {
       const responses = await Promise.allSettled(access.map(async record => ({ data: await fundraisingApi.commitment(record.id, record.token, fan.token), access: record.token })))
       const found = responses.filter(result => result.status === 'fulfilled').map(result => result.value)
       if (fan.token) {
-        try { for (const data of await fundraisingApi.mine(fan.token)) if (data.projectId === projectId && !found.some(item => item.data.id === data.id)) found.push({ data, access: '' }) }
+        try {
+          for (const data of await fundraisingApi.mine(fan.token)) {
+            try { forgetFundraisingAccess(data.id) } catch { /* Account ownership is stored on the server. */ }
+            const index = found.findIndex(item => item.data.id === data.id)
+            if (index >= 0) found[index] = { data, access: '' }
+            else if (data.projectId === projectId) found.push({ data, access: '' })
+          }
+        }
         catch (e) { if (active) setPrivateError(e.message) }
       }
       if (active) setEntries(found)
@@ -121,25 +125,34 @@ export default function FundraisingPage() {
     finally { setPayingId('') }
   }
   async function join(data, provider) {
+    if (fan.status !== 'authenticated' || !fan.token) throw new Error('Connectez-vous à votre compte avant de confirmer votre soutien.')
     if (!submission.current || submission.current.projectId !== projectId) submission.current = createAccess(projectId)
     const access = submission.current
-    saveAccess(access)
     const result = await fundraisingApi.join(projectId, { ...data, clientRequestId: access.id, accessToken: access.token }, fan.token)
-    setEntries(current => [{ data: result, access: access.token }, ...current.filter(item => item.data.id !== result.id)])
+    setEntries(current => [{ data: result, access: '' }, ...current.filter(item => item.data.id !== result.id)])
     setActiveCommitmentId(result.id); setRegistration(false); submission.current = null
     setRefreshKey(key => key + 1)
     setProjects(current => current.map(item => item.id === projectId && data.paymentMethod === 'Cash' ? { ...item, supporterCount: item.supporterCount + 1 } : item))
     window.history.replaceState({}, '', `${window.location.pathname}?projet=${encodeURIComponent(projectId)}#mon-engagement`)
     if (data.paymentMethod === 'Online') await payInstallment(result.installments[0], provider, data.email, access.token)
   }
-  function support() { if (project) { setRegistration(true); setMenu(false) } }
+  function support() {
+    if (!project || fan.status === 'unknown') return
+    setMenu(false)
+    if (fan.status !== 'authenticated') { setContinueSupport(true); setAuth('register') }
+    else setRegistration(true)
+  }
+  function authenticated(result) {
+    fan.signIn(result); setAuth(null)
+    if (continueSupport) { setContinueSupport(false); setRegistration(true) }
+  }
 
   return <div className="jso-fundraising">
     <a href="#le-projet" className="jso-skip-link">Aller au projet</a>
     <header className="fr-header"><div className="fr-container fr-header-inner">
       <a href="/" className="fr-brand"><img src={CREST_SRC} alt="JSO"/><span>JEUNESSE SPORTIVE<br/>DE OUDHREF</span></a>
-      <nav id="fr-navigation" className={menu ? 'is-open' : ''} aria-label="Navigation de la collecte"><a href="/">Accueil</a><a href="#le-projet" onClick={() => setMenu(false)}>Le projet</a><a href="#tous-les-projets" onClick={() => setMenu(false)}>Nos projets</a><a href="#soutiens" onClick={() => setMenu(false)}>Nos soutiens</a></nav>
-      <div className="fr-header-actions"><button type="button" className="fr-button fr-button-gold" onClick={support} disabled={!project}>Devenir soutien</button><a className="fr-login" href={entry ? '#mon-engagement' : '/account'}>{entry ? 'Mon suivi' : 'Mon espace'}</a><button type="button" className="fr-mobile-toggle" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-controls="fr-navigation" aria-label="Menu de la collecte">{menu ? <X size={18}/> : <Menu size={18}/>}</button></div>
+      <nav id="fr-navigation" className={menu ? 'is-open' : ''} aria-label="Navigation de la collecte"><a href="/">Accueil</a><a href="/actualites">Actualités</a><a href="#tous-les-projets" onClick={() => setMenu(false)}>Nos projets</a><a href="#soutiens" onClick={() => setMenu(false)}>Nos soutiens</a>{entry && <a href="#mon-engagement" onClick={() => setMenu(false)}>Mon suivi</a>}</nav>
+      <div className="fr-header-actions"><button type="button" className="fr-button fr-button-gold" onClick={support} disabled={!project || fan.status === 'unknown'}>Devenir soutien</button>{fan.status === 'authenticated' ? <a className="fr-login" href="/account#mes-soutiens">Mon dashboard</a> : <><button type="button" className="fr-login" onClick={() => { setContinueSupport(false); setAuth('login') }}>Se connecter</button><button type="button" className="fr-login fr-auth-register" onClick={() => { setContinueSupport(false); setAuth('register') }}>Créer un compte</button></>}<button type="button" className="fr-mobile-toggle" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-controls="fr-navigation" aria-label="Menu de la collecte">{menu ? <X size={18}/> : <Menu size={18}/>}</button></div>
     </div></header>
     <main id="le-projet">
       {loading ? <div className="fr-empty" role="status">Chargement des projets du club…</div> : loadError && !projects.length ? <div className="fr-empty"><h1>Les projets sont momentanément indisponibles</h1><p role="alert">{loadError}</p><button type="button" className="fr-button fr-button-blue" onClick={refresh}>Réessayer</button></div> : !project ? <FundraisingEmptyState unavailableProject={Boolean(selectedId)}/> : <>
@@ -154,5 +167,6 @@ export default function FundraisingPage() {
     </main>
     <footer className="fr-footer"><div className="fr-container fr-footer-inner"><a href="/" className="fr-brand"><img src={CREST_SRC} alt="JSO"/><span>{CLUB_FULL_NAME}<br/>Ensemble depuis 1973</span></a><nav><a href="/">Site du club</a><a href="/account">Mon espace</a><a href="/admin/fundraising-projects">Espace club</a></nav><span>© {new Date().getFullYear()} JSO Oudhref</span></div></footer>
     {registration && project && <FundraisingRegistration project={project} initialAmount={amount} methods={methods} user={fan.user} onClose={() => setRegistration(false)} onJoin={join}/>}
+    <AuthModal open={Boolean(auth)} initialMode={auth || 'login'} onClose={() => { setAuth(null); setContinueSupport(false) }} onAuthenticated={authenticated}/>
   </div>
 }

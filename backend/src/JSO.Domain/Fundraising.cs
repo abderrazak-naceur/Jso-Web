@@ -40,7 +40,7 @@ public static class FundraisingRules
         project.BudgetTnd is < 1m or > 10_000_000m ? "Le budget doit être compris entre 1 et 10 000 000 TND." :
         project.DurationMonths != 10 ? "Le plan de soutien comprend 10 mois." :
         !Templates.Contains(project.TemplateId) ? "Choisissez un modèle disponible." :
-        project.Status is not ("Draft" or "Published") ? "Le statut doit être brouillon ou publié." : null;
+        project.Status is not ("Draft" or "Published" or "Archived") ? "Le statut doit être brouillon, publié ou archivé." : null;
 
     public static List<SupporterBrick> CreateInstallments(FundraisingCommitment commitment)
     {

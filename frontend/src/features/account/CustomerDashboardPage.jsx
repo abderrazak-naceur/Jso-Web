@@ -3,6 +3,7 @@ import { ArrowLeft, CalendarDays, CheckCircle2, CircleAlert, CreditCard, Downloa
 import { membershipApi, paymentHistoryApi, shopOrderApi, ticketApi } from '../../lib/api'
 import { useFanSession } from './useFanSession'
 import AuthModal from './AuthModal'
+import AccountFundraising from '../donations/fundraising/AccountFundraising'
 import StandalonePageHeader from '../site/StandalonePageHeader'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import './CustomerDashboardPage.css'
@@ -45,6 +46,7 @@ function DataError({ message, onRetry }) {
 export default function CustomerDashboardPage() {
   const fan = useFanSession()
   const [authOpen, setAuthOpen] = useState(false)
+  const [authMode, setAuthMode] = useState('login')
   const [profilePhoto, setProfilePhoto] = useState(getProfilePhoto)
   useEffect(() => subscribeProfilePhoto(setProfilePhoto), [])
   const [reload, setReload] = useState(0)
@@ -62,6 +64,7 @@ export default function CustomerDashboardPage() {
   useEffect(() => {
     if (fan.status !== 'authenticated' || !fan.token) return
     let active = true
+    setData(Object.fromEntries(['tickets', 'orders', 'memberships', 'payments'].map(name => [name, { status: 'loading', items: [] }])))
     Promise.allSettled([ticketApi.mine(fan.token), shopOrderApi.myOrders(fan.token), membershipApi.mine(fan.token), paymentHistoryApi.mine(fan.token)]).then((tasks) => {
       if (!active) return
       const names = ['tickets', 'orders', 'memberships', 'payments']
@@ -72,6 +75,12 @@ export default function CustomerDashboardPage() {
     })
     return () => { active = false }
   }, [fan.status, fan.token, reload])
+
+  useEffect(() => {
+    if (fan.status === 'authenticated' && window.location.hash === '#mes-soutiens' &&
+      [data.tickets, data.orders, data.memberships].every(item => item.status !== 'loading'))
+      document.getElementById('mes-soutiens')?.scrollIntoView({ block: 'start' })
+  }, [fan.status, data.tickets.status, data.orders.status, data.memberships.status])
 
   async function showDigital(ticket) {
     const id = idOf(ticket)
@@ -100,11 +109,11 @@ export default function CustomerDashboardPage() {
           <p className="mt-6 text-xs font-extrabold tracking-[0.2em] text-jso-gold">ESPACE SUPPORTER</p>
           <h1 className="mt-2 text-3xl font-black sm:text-4xl">Votre espace personnel</h1>
           <p className="mt-4 max-w-xl leading-7 text-white/70">Retrouvez vos billets, vos abonnements et vos commandes dans un seul endroit sécurisé.</p>
-          <button type="button" onClick={() => setAuthOpen(true)} className="mt-7 inline-flex items-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy hover:bg-white"><LogIn size={18} /> Se connecter</button>
-          <p className="mt-4 text-sm text-white/55">Vous n’avez pas encore de compte ? Ouvrez la connexion puis choisissez « Créer un compte ».</p>
+          <button type="button" onClick={() => { setAuthMode('login'); setAuthOpen(true) }} className="mt-7 inline-flex items-center gap-2 rounded-full bg-jso-gold px-6 py-3 font-extrabold text-jso-navy hover:bg-white"><LogIn size={18} /> Se connecter</button>
+          <button type="button" onClick={() => { setAuthMode('register'); setAuthOpen(true) }} className="ml-3 mt-4 rounded-full border border-white/40 px-6 py-3 text-sm font-bold text-white">Créer un compte</button>
         </section>
       </main>
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onAuthenticated={(result) => { fan.signIn(result); setAuthOpen(false) }} />
+      <AuthModal open={authOpen} initialMode={authMode} onClose={() => setAuthOpen(false)} onAuthenticated={(result) => { fan.signIn(result); setAuthOpen(false) }} />
     </div>
   }
 
@@ -139,6 +148,7 @@ export default function CustomerDashboardPage() {
       <NavItem icon={Ticket} label="Mes billets" href="#mes-billets" onClick={() => jumpTo('mes-billets')} />
       <NavItem icon={Crown} label="Mes abonnements" href="#mes-abonnements" onClick={() => jumpTo('mes-abonnements')} />
       <NavItem icon={ShoppingBag} label="Mes commandes" href="#mes-commandes" onClick={() => jumpTo('mes-commandes')} />
+      <NavItem icon={ShieldCheck} label="Mes soutiens" href="#mes-soutiens" onClick={() => jumpTo('mes-soutiens')} />
       <NavItem icon={CreditCard} label="Mes paiements" href="#mes-paiements" onClick={() => jumpTo('mes-paiements')} />
       <NavItem icon={UserRound} label="Mon profil" onClick={() => { window.location.href = "/profil" }} />
       <NavItem icon={Settings} label="Paramètres" onClick={() => setAuthOpen(true)} />
@@ -195,6 +205,7 @@ export default function CustomerDashboardPage() {
             })}</div> : <EmptyState title="Aucune commande pour le moment" detail="Vos achats seront affichés ici avec leur statut et leur montant." />}
           </section>
         </div>
+        <AccountFundraising key={fan.token} token={fan.token} onChanged={() => setReload(n => n + 1)}/>
         <section className="jso-panel mt-4" id="mes-paiements">
           <div className="jso-panel-heading"><div><span className="jso-panel-eyebrow">SUIVI DE VOS ACHATS</span><h2>Historique des paiements</h2></div><span className="jso-status-pill">{data.payments.items.length} opération{data.payments.items.length === 1 ? '' : 's'}</span></div>
           <p className="mb-3 text-sm text-slate-500">Billets, boutique, abonnements, dons et accès aux directs, avec le statut et le montant enregistré.</p>
@@ -215,7 +226,7 @@ export default function CustomerDashboardPage() {
             <a href="/boutique" className="jso-news-card"><div className="jso-news-photo jso-news-photo-four" /><strong>Nouvelle collection disponible</strong><small>Boutique · JSO</small></a>
           </div>
         </section>
-        <div className="jso-mobile-bottom-nav"><a href="/mon-espace" className="is-active"><LayoutDashboard size={18} /><small>Mon espace</small></a><a href="#mes-billets"><Ticket size={18} /><small>Mes billets</small></a><a href="/boutique"><ShoppingBag size={18} /><small>Boutique</small></a><a href="/profil"><UserRound size={18} /><small>Profil</small></a></div>
+        <div className="jso-mobile-bottom-nav"><a href="/mon-espace" className="is-active"><LayoutDashboard size={18} /><small>Mon espace</small></a><a href="#mes-billets"><Ticket size={18} /><small>Mes billets</small></a><a href="#mes-soutiens"><ShieldCheck size={18} /><small>Mes soutiens</small></a><a href="/boutique"><ShoppingBag size={18} /><small>Boutique</small></a><a href="/profil"><UserRound size={18} /><small>Profil</small></a></div>
         <div className="jso-dashboard-footer">JSO Football Club · Espace supporter</div>
       </main>
     </div>

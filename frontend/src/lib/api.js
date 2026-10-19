@@ -153,6 +153,7 @@ export const fundraisingApi = {
   join: (id, data, token) => requestJson(`/fundraising/projects/${encodeURIComponent(id)}/commitments`, 'POST', data, token),
   commitment: (id, accessToken, token) => requestJson(`/fundraising/commitments/${encodeURIComponent(id)}`, 'GET', null, token, accessToken ? { 'X-Fundraising-Token': accessToken } : {}),
   mine: token => requestJson('/fundraising/mine', 'GET', null, token),
+  claim: (id, accessToken, token) => requestJson(`/fundraising/commitments/${encodeURIComponent(id)}/claim`, 'POST', null, token, { 'X-Fundraising-Token': accessToken }),
   pay: (id, country, provider, email, accessToken, token) => requestJson(`/donations/${encodeURIComponent(id)}/pay`, 'POST', { country, provider, email }, token, accessToken ? { 'X-Fundraising-Token': accessToken } : {}),
 }
 

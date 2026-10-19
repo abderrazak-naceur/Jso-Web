@@ -4,6 +4,8 @@ Questo documento registra le versioni presenti nel repository e indica separatam
 
 ## Modifiche locali — 19 ottobre 2026 — Raccolta fondi per progetti
 
+- Aggiornamento successivo al commit `dbf4f1e`: accesso e registrazione nel menu, calendario **Mes soutiens** nel dashboard personale, collegamento protetto delle vecchie adesioni ospite, CRUD delle raccolte/iscrizioni, archiviazione e duplicazione per i test. Nessuna nuova migrazione per questo aggiornamento; pubblicazione non dichiarata.
+- Controlli dell’aggiornamento: build riuscita, 107 test backend e 13 frontend passati; lint senza errori con i due avvisi preesistenti. Il collaudo locale comprende accesso, sostegno, calendario mobile e gestione bozze/archivio.
 - Nuovo template dedicato per `/nos-projets`, basato sul mockup approvato: intestazione navy, immagine del progetto, indicatori reali, elenco dei progetti e sostenitori.
 - Admin: **Obiettivi della raccolta fondi**, galleria, creazione personalizzata, bozze, pubblicazione, anteprima desktop/mobile e conferma delle rate in contanti.
 - Piani di 10 mesi da 5, 10, 20, 30 o 50 TND; calendario privato e collegamento ai gestori di pagamento esistenti.

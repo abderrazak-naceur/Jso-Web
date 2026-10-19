@@ -98,6 +98,47 @@ public sealed class FundraisingController(JsoDbContext db, AuditService audit) :
     }
 
     [Authorize(Roles = "Fan")]
+    [HttpPost("commitments/{id:guid}/claim")]
+    public async Task<IActionResult> Claim(Guid id, CancellationToken ct)
+    {
+        if (FanId() is not { } fanId) return Unauthorized();
+        var commitment = await db.FundraisingCommitments.SingleOrDefaultAsync(c => c.Id == id, ct);
+        if (commitment is null) return NotFound();
+        if (!FundraisingAccess.Matches(commitment.AccessTokenHash, Request.Headers["X-Fundraising-Token"].ToString()))
+            return Unauthorized();
+        if (commitment.FanUserId is { } ownerId)
+            return ownerId == fanId ? Ok(new { id, claimed = true }) : Conflict();
+
+        // The conditional ownership update prevents two accounts claiming the same
+        // guest record. Its installments and audit entry commit in the same transaction.
+        await using var transaction = db.Database.IsRelational() ? await db.Database.BeginTransactionAsync(ct) : null;
+        if (db.Database.IsRelational())
+        {
+            var updated = await db.FundraisingCommitments.Where(c => c.Id == id && c.FanUserId == null)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(c => c.FanUserId, (Guid?)fanId), ct);
+            if (updated == 0)
+            {
+                var currentOwner = await db.FundraisingCommitments.AsNoTracking().Where(c => c.Id == id).Select(c => c.FanUserId).SingleOrDefaultAsync(ct);
+                return currentOwner == fanId ? Ok(new { id, claimed = true }) : Conflict();
+            }
+            await db.SupporterBricks.Where(b => b.FundraisingCommitmentId == id)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(b => b.FanUserId, (Guid?)fanId), ct);
+            db.Entry(commitment).State = EntityState.Detached;
+        }
+        else
+        {
+            commitment.FanUserId = fanId;
+            foreach (var installment in await db.SupporterBricks.Where(b => b.FundraisingCommitmentId == id).ToListAsync(ct))
+                installment.FanUserId = fanId;
+            await db.SaveChangesAsync(ct);
+        }
+        await audit.LogAsync("FUNDRAISING_COMMITMENT_CLAIMED", "FundraisingCommitment", id.ToString(),
+            fanId.ToString(), null, HttpContext.Connection.RemoteIpAddress?.ToString(), ct: ct);
+        if (transaction is not null) await transaction.CommitAsync(ct);
+        return Ok(new { id, claimed = true });
+    }
+
+    [Authorize(Roles = "Fan")]
     [HttpGet("mine")]
     public async Task<IActionResult> Mine(CancellationToken ct)
     {

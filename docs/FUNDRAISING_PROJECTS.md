@@ -14,6 +14,7 @@ La pagina `/nos-projets` mostra solo progetti pubblicati. Il pulsante **Partager
 
 ## Partecipazione e incasso
 
+- Nel menu pubblico sono disponibili **Se connecter**, **Créer un compte** e, dopo l’accesso, **Mon dashboard**. Prima di confermare un nuovo sostegno dal sito è necessario accedere o creare il profilo supporter. Dopo l’accesso si riprende il progetto selezionato.
 - Il sostenitore sceglie 5, 10, 20, 30 o 50 TND al mese per 10 mesi. I dieci pagamenti sono separati: non viene creato un addebito automatico.
 - Il nome pubblico è obbligatorio; email e telefono restano privati. Il telefono permette al club di contattare chi sceglie i contanti. Paymee richiede anche i contatti.
 - **Contanti:** l’iscrizione compare nell’elenco come importo da confermare. L’Admin apre **Gérer les contributions**, individua la rata e usa **Confirmer les espèces reçues** soltanto dopo aver ricevuto il denaro. Ogni conferma aggiorna lo storico e il totale reale.
@@ -22,9 +23,17 @@ La pagina `/nos-projets` mostra solo progetti pubblicati. Il pulsante **Partager
 
 ## Area personale
 
-Il calendario delle dieci rate è visibile in **Mon suivi** nella pagina del progetto. I pagamenti delle iscrizioni effettuate con un account tifoso sono associati al suo account e compaiono anche nello storico pagamenti esistente. Il calendario è recuperabile tramite `GET /api/fundraising/mine` per il titolare autenticato.
+Il calendario delle dieci rate è visibile sia nella pagina del progetto sia in **Mon dashboard → Mes soutiens** (`/account#mes-soutiens`). Comprende importi, totale versato, residuo, istruzioni contanti e calendario. I pagamenti sono associati al titolare e compaiono anche nello storico pagamenti esistente. Il calendario è recuperabile tramite `GET /api/fundraising/mine`, compresi i progetti archiviati.
 
-Per gli ospiti il browser conserva un segreto casuale locale. Il server ne salva solo l’hash; gli endpoint privati e l’avvio dei pagamenti richiedono quel segreto o l’account proprietario. Cancellando i dati del browser si perde l’accesso ospite su quel dispositivo. Non viene promessa un’email automatica di attivazione.
+Le vecchie adesioni ospite si collegano dal dashboard con **Rattacher à mon compte**, usando lo stesso browser in cui furono create. Serve sia il segreto casuale già conservato sia l’accesso Fan: l’email coincidente non basta e un’adesione già posseduta non può essere trasferita. Le dieci rate, anche pagate, sono collegate atomicamente senza cambiare ricevute o stato. Una volta collegate, il segreto locale viene rimosso; i nuovi sostegni autenticati non lo salvano nel browser. Non viene promessa un’email automatica di attivazione.
+
+## Modificare, cancellare e ricominciare un test
+
+- **Modifier le projet** modifica i contenuti; **Modifier les coordonnées** aggiorna nome pubblico, email e telefono del sostenitore conservando i dati già utilizzati per ricevute e tentativi.
+- **Supprimer le projet** elimina progetto, iscrizioni e rate solo quando non esistono pagamenti o tentativi. **Supprimer l’inscription** segue la stessa regola per una sola partecipazione.
+- Se esistono pagamenti, riferimenti provider o audit finanziari, l’API risponde `409`: usare **Archiver** per togliere il progetto dal pubblico senza perdere lo storico.
+- **Dupliquer** prepara una nuova bozza con gli stessi contenuti e senza sostenitori né pagamenti. Verificare e salvare per ricominciare una raccolta di prova. **Restaurer en brouillon** recupera invece un progetto archiviato.
+- Nessun pagamento reale viene azzerato o trasformato in una promessa non pagata.
 
 ## Verifiche prima del deploy
 
@@ -36,4 +45,4 @@ Per gli ospiti il browser conserva un segreto casuale locale. Il server ne salva
 
 La migrazione non inserisce dati dimostrativi. Se nessun progetto è pubblicato, il sito presenta la nuova pagina di attesa JSO senza inventare obiettivi o importi raccolti.
 
-Verifiche locali del 19 ottobre 2026: build frontend riuscita, 10 test frontend e 75 test backend passati, incluso `HasPendingModelChanges() == false`. Lint senza errori, con due avvisi preesistenti. Verificati nel browser pagina pubblica, iscrizione e Admin a 390 px e desktop con fixture esclusivamente locali, poi rimosse. La migrazione su un server PostgreSQL reale e il test HTTP CI restano da eseguire; PR e deploy sono rinviati su richiesta.
+Verifiche locali del 19 ottobre 2026, aggiornamento account/CRUD: build frontend riuscita, 13 test frontend e 107 test backend passati, incluso `HasPendingModelChanges() == false`. Lint senza errori, con due avvisi preesistenti. Verificati nel browser menu e modulo account, accesso e ripresa del sostegno, calendario nel dashboard a 390 px, duplicazione in bozza, archiviazione/ripristino e dialog di cancellazione con fixture esclusivamente locali, poi rimosse. La migrazione su un server PostgreSQL reale e il test HTTP CI restano da eseguire; queste nuove modifiche non dichiarano un deploy.

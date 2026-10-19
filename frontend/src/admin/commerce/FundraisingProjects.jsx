@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowLeft, CheckCircle2, Eye, ExternalLink, Flag, Plus, RefreshCw, Save, X } from 'lucide-react'
 import { adminApi } from '../api'
 import { adminEditIdFromPath, navigateAdminEdit } from '../adminRoutes'
@@ -11,6 +11,52 @@ const blankProject = { title: '', description: '', budgetTnd: '', durationMonths
 const inputClass = 'mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-100'
 const money = value => new Intl.NumberFormat('fr-TN', { style: 'currency', currency: 'TND', currencyDisplay: 'code', maximumFractionDigits: 3 }).format(Number(value) || 0)
 const date = value => value ? new Date(value).toLocaleDateString('fr-FR') : '—'
+const statusLabel = status => ({ Draft: 'Brouillon privé', Published: 'Publié', Archived: 'Archivé' })[status] || status
+const projectPayload = (project, status = project.status) => ({ title: project.title.trim(), description: project.description.trim(), budgetTnd: Number(project.budgetTnd), durationMonths: 10, templateId: project.templateId, imageUrl: project.imageUrl?.trim() || null, status })
+
+function ManagementDialog({ title, children, onClose, busy = false, footer }) {
+  const ref = useDialog(() => { if (!busy) onClose() })
+  function containFocus(event) {
+    if (event.key !== 'Tab') return
+    const targets = [...(ref.current?.querySelectorAll('button:not(:disabled), input:not(:disabled), a[href], select:not(:disabled), textarea:not(:disabled)') || [])]
+    if (!targets.length) { event.preventDefault(); return }
+    const first = targets[0], last = targets[targets.length - 1]
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) { event.preventDefault(); last.focus() }
+    else if (!event.shiftKey && (document.activeElement === last || document.activeElement === ref.current)) { event.preventDefault(); first.focus() }
+  }
+  return <div className="fixed inset-0 z-[110] flex items-center justify-center overflow-y-auto bg-slate-950/75 p-4" onClick={event => { if (!busy && event.target === event.currentTarget) onClose() }}>
+    <section ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="fundraising-management-dialog-title" aria-busy={busy} onKeyDown={containFocus} className="my-auto max-h-[90dvh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl outline-none sm:p-6">
+      <div className="flex items-start justify-between gap-3"><h3 id="fundraising-management-dialog-title" className="text-xl font-black">{title}</h3><button type="button" onClick={onClose} disabled={busy} aria-label="Fermer la fenêtre" className="rounded-lg bg-slate-100 p-2 disabled:opacity-40"><X size={18}/></button></div>
+      <div className="mt-4">{children}</div>
+      {footer && <div className="mt-5 flex flex-wrap justify-end gap-3">{footer}</div>}
+    </section>
+  </div>
+}
+
+function ContactDialog({ commitment, onClose, onSave }) {
+  const [form, setForm] = useState({ displayName: commitment.displayName, phone: commitment.phone || '', email: commitment.email || '' })
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  async function submit(event) {
+    event.preventDefault()
+    if (busy) return
+    setBusy(true)
+    setError('')
+    try { await onSave({ displayName: form.displayName.trim(), phone: form.phone.trim() || null, email: form.email.trim() || null }); onClose() }
+    catch (failure) { setError(failure.message) }
+    finally { setBusy(false) }
+  }
+  return <ManagementDialog title="Modifier les coordonnées du supporter" onClose={onClose} busy={busy}>
+    <form onSubmit={submit} className="space-y-4">
+      <p className="text-sm leading-6 text-slate-600">Le nom public et les coordonnées de cette inscription seront corrigés. Les reçus et les détails utilisés pour les paiements déjà engagés sont conservés.</p>
+      <label className="block text-sm font-bold">Nom public *<input required maxLength={80} value={form.displayName} onChange={event => setForm({ ...form, displayName: event.target.value })} className={inputClass}/></label>
+      <label className="block text-sm font-bold">Téléphone privé<input type="tel" maxLength={32} value={form.phone} onChange={event => setForm({ ...form, phone: event.target.value })} className={inputClass}/></label>
+      <label className="block text-sm font-bold">Email privé<input type="email" maxLength={254} value={form.email} onChange={event => setForm({ ...form, email: event.target.value })} className={inputClass}/></label>
+      {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+      <div className="flex flex-wrap justify-end gap-3"><button type="button" onClick={onClose} disabled={busy} className="rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold">Annuler</button><button type="submit" disabled={busy} className="rounded-xl bg-blue-950 px-4 py-3 text-sm font-bold text-white disabled:opacity-50">{busy ? 'Enregistrement…' : 'Enregistrer les coordonnées'}</button></div>
+    </form>
+  </ManagementDialog>
+}
 
 function PreviewDialog({ project, onClose }) {
   const ref = useDialog(onClose)
@@ -42,6 +88,15 @@ export default function FundraisingProjects({ onError = noop }) {
   const [commitmentsError, setCommitmentsError] = useState('')
   const [search, setSearch] = useState('')
   const [confirmingId, setConfirmingId] = useState(null)
+  const [mutationBusy, setMutationBusy] = useState('')
+  const [mutationError, setMutationError] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleteAcknowledged, setDeleteAcknowledged] = useState(false)
+  const [contactTarget, setContactTarget] = useState(null)
+  const formRef = useRef(form)
+  const editingRef = useRef(editingId)
+  formRef.current = form
+  editingRef.current = editingId
 
   const loadProjects = useCallback(async signal => {
     setLoading(true)
@@ -62,15 +117,16 @@ export default function FundraisingProjects({ onError = noop }) {
   }, [loadProjects])
 
   useEffect(() => {
-    function syncRoute() {
+    function syncRoute(force = false) {
       const id = adminEditIdFromPath('fundraising-projects')
-      if (!id) { setForm(null); setEditingId(null); return }
+      if (!id) { if (!force && formRef.current && !editingRef.current) return; setForm(null); setEditingId(null); return }
       const found = projects.find(item => String(item.id) === id)
-      if (found) { setEditingId(found.id); setForm({ ...blankProject, ...found, imageUrl: found.imageUrl || '' }) }
+      if (found && (force || editingRef.current !== found.id || !formRef.current)) { setEditingId(found.id); setForm({ ...blankProject, ...found, imageUrl: found.imageUrl || '' }) }
     }
     syncRoute()
-    window.addEventListener('popstate', syncRoute)
-    return () => window.removeEventListener('popstate', syncRoute)
+    const popstate = () => syncRoute(true)
+    window.addEventListener('popstate', popstate)
+    return () => window.removeEventListener('popstate', popstate)
   }, [projects])
 
   useEffect(() => {
@@ -104,6 +160,70 @@ export default function FundraisingProjects({ onError = noop }) {
 
   function closeEditor() { navigateAdminEdit('fundraising-projects', null); setForm(null); setEditingId(null) }
 
+  function duplicate(project) {
+    navigateAdminEdit('fundraising-projects', null)
+    setEditingId(null)
+    setForm({ ...projectPayload(project, 'Draft'), title: `${project.title.slice(0, 150)} (copie)`, imageUrl: project.imageUrl || '' })
+    setMessage('Copie préparée en brouillon : vérifiez les informations puis enregistrez. Aucun supporter ni paiement n’est recopié.')
+    setMutationError('')
+    setDeleteTarget(null)
+    window.setTimeout(() => document.getElementById('fundraising-project-title')?.focus(), 0)
+  }
+
+  async function changeStatus(project, status) {
+    if (mutationBusy) return
+    setMutationBusy(project.id)
+    setMutationError('')
+    try {
+      await adminApi(`/admin/fundraising/projects/${project.id}${status === 'Archived' ? '/archive' : ''}`, status === 'Archived'
+        ? { method: 'POST' }
+        : { method: 'PUT', body: JSON.stringify(projectPayload(project, status)) })
+      if (editingId === project.id) setForm(current => current && ({ ...current, status }))
+      setDeleteTarget(null)
+      await loadProjects()
+      setMessage(status === 'Archived' ? 'Projet archivé. Il est retiré de la page publique ; les inscriptions et les paiements restent conservés.' : 'Projet restauré en brouillon. Vous pouvez le modifier avant de le republier.')
+      onError('')
+    } catch (error) { setMutationError(error.message); onError(error.message) }
+    finally { setMutationBusy('') }
+  }
+
+  function askDelete(project, commitment = null) {
+    setDeleteTarget({ project, commitment })
+    setDeleteAcknowledged(false)
+    setMutationError('')
+  }
+
+  async function deleteConfirmed() {
+    if (!deleteTarget || !deleteAcknowledged || mutationBusy) return
+    const { project, commitment } = deleteTarget
+    setMutationBusy(commitment?.id || project.id)
+    setMutationError('')
+    try {
+      await adminApi(`/admin/fundraising/projects/${project.id}${commitment ? `/commitments/${commitment.id}` : ''}`, { method: 'DELETE' })
+      if (commitment) setCommitments(current => current.filter(item => item.id !== commitment.id))
+      else {
+        if (editingId === project.id) closeEditor()
+        if (managedProject === project.id) { setManagedProject(null); setCommitments([]) }
+      }
+      setDeleteTarget(null)
+      await loadProjects()
+      setMessage(commitment ? 'Inscription sans paiement supprimée, avec ses échéances non réglées.' : 'Projet de test supprimé avec ses inscriptions et échéances non réglées. Vous pouvez le recréer.')
+      onError('')
+    } catch (error) {
+      const detail = error.status === 409 ? `${error.message} Pour recommencer les essais, archivez ce projet puis dupliquez-le en brouillon. Les traces financières restent conservées.` : error.message
+      setMutationError(detail)
+      onError(detail)
+    } finally { setMutationBusy('') }
+  }
+
+  async function saveContact(values) {
+    if (!contactTarget || !managedProject) return
+    const updated = await adminApi(`/admin/fundraising/projects/${managedProject}/commitments/${contactTarget.id}`, { method: 'PUT', body: JSON.stringify(values) })
+    setCommitments(current => current.map(item => item.id === contactTarget.id ? { ...item, ...updated } : item))
+    setMessage('Coordonnées du supporter mises à jour. Les paiements et leur historique sont conservés.')
+    onError('')
+  }
+
   async function save(event) {
     event.preventDefault()
     if (saving) return
@@ -112,11 +232,11 @@ export default function FundraisingProjects({ onError = noop }) {
     try {
       await adminApi(editingId ? `/admin/fundraising/projects/${editingId}` : '/admin/fundraising/projects', {
         method: editingId ? 'PUT' : 'POST',
-        body: JSON.stringify({ title: form.title.trim(), description: form.description.trim(), budgetTnd: Number(form.budgetTnd), durationMonths: 10, templateId: form.templateId, imageUrl: form.imageUrl.trim() || null, status: form.status }),
+        body: JSON.stringify(projectPayload(form)),
       })
       closeEditor()
       await loadProjects()
-      setMessage(form.status === 'Published' ? 'Projet enregistré et publié sur « Nos projets ».' : 'Brouillon enregistré. Il reste privé.')
+      setMessage(form.status === 'Published' ? 'Projet enregistré et publié sur « Nos projets ».' : form.status === 'Archived' ? 'Projet archivé. Son historique est conservé.' : 'Brouillon enregistré. Il reste privé.')
       onError('')
     } catch (error) { onError(error.message) }
     finally { setSaving(false) }
@@ -150,6 +270,7 @@ export default function FundraisingProjects({ onError = noop }) {
     </header>
 
     {message && <p role="status" className="rounded-xl bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">{message}</p>}
+    {mutationError && !deleteTarget && <p role="alert" className="rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-800">{mutationError}</p>}
     {loadError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 p-4 text-sm text-red-800"><p>{loadError}</p><button type="button" onClick={() => loadProjects()} className="inline-flex items-center gap-2 font-bold underline"><RefreshCw size={16}/> Réessayer</button></div>}
 
     {form && <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-labelledby="fundraising-editor-title">
@@ -161,10 +282,10 @@ export default function FundraisingProjects({ onError = noop }) {
           <label className="text-sm font-bold">Budget nécessaire (TND) *<input required type="number" min="1" max="10000000" step="0.01" value={form.budgetTnd} onChange={event => setForm({ ...form, budgetTnd: event.target.value })} className={inputClass}/></label>
           <label className="text-sm font-bold">Durée de l’engagement<select value={form.durationMonths} onChange={event => setForm({ ...form, durationMonths: Number(event.target.value) })} className={inputClass}><option value={10}>10 mois</option></select></label>
           <label className="text-sm font-bold">Modèle<select value={form.templateId} onChange={event => { const template = FUNDRAISING_TEMPLATES.find(item => item.id === event.target.value); setForm({ ...form, templateId: event.target.value, imageUrl: template?.imageUrl || '' }) }} className={inputClass}>{FUNDRAISING_TEMPLATES.map(template => <option key={template.id} value={template.id}>{template.title}</option>)}</select></label>
-          <label className="text-sm font-bold">Visibilité<select value={form.status} onChange={event => setForm({ ...form, status: event.target.value })} className={inputClass}><option value="Draft">Brouillon · privé</option><option value="Published">Publié · visible par tous</option></select></label>
+          <label className="text-sm font-bold">Visibilité<select value={form.status} onChange={event => setForm({ ...form, status: event.target.value })} className={inputClass}><option value="Draft">Brouillon · privé</option><option value="Published">Publié · visible par tous</option><option value="Archived">Archivé · historique conservé</option></select></label>
           <label className="text-sm font-bold sm:col-span-2">Image du projet (URL ou chemin du média)<input maxLength={2000} value={form.imageUrl} onChange={event => setForm({ ...form, imageUrl: event.target.value })} className={inputClass} placeholder="/img/mon-projet.jpg"/><span className="mt-2 block text-xs font-normal text-slate-500">Utilisez l’adresse d’une image disponible dans votre médiathèque.</span></label>
         </div>
-        <aside><div className="overflow-hidden rounded-xl bg-slate-100">{form.imageUrl ? <img src={form.imageUrl} alt="Image sélectionnée pour le projet" className="aspect-[4/3] w-full object-cover"/> : <div className="grid aspect-[4/3] place-items-center text-slate-400"><Flag size={40}/></div>}</div><p className="mt-4 rounded-xl bg-blue-50 p-4 text-sm leading-6 text-blue-950">Les supporters choisissent <strong>5, 10, 20, 30 ou 50 TND par mois</strong> sur 10 mois. Aucune promesse en espèces n’est considérée comme encaissée.</p><button type="button" onClick={() => setPreview(true)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold"><Eye size={17}/> Prévisualiser la page publique</button><button type="submit" disabled={saving} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-900 px-4 py-3 text-sm font-black text-white disabled:opacity-50"><Save size={17}/>{saving ? 'Enregistrement…' : form.status === 'Published' ? 'Enregistrer et publier' : 'Enregistrer le brouillon'}</button></aside>
+        <aside><div className="overflow-hidden rounded-xl bg-slate-100">{form.imageUrl ? <img src={form.imageUrl} alt="Image sélectionnée pour le projet" className="aspect-[4/3] w-full object-cover"/> : <div className="grid aspect-[4/3] place-items-center text-slate-400"><Flag size={40}/></div>}</div><p className="mt-4 rounded-xl bg-blue-50 p-4 text-sm leading-6 text-blue-950">Les supporters choisissent <strong>5, 10, 20, 30 ou 50 TND par mois</strong> sur 10 mois. Aucune promesse en espèces n’est considérée comme encaissée.</p><button type="button" onClick={() => setPreview(true)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold"><Eye size={17}/> Prévisualiser la page publique</button><button type="submit" disabled={saving} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-900 px-4 py-3 text-sm font-black text-white disabled:opacity-50"><Save size={17}/>{saving ? 'Enregistrement…' : form.status === 'Published' ? 'Enregistrer et publier' : form.status === 'Archived' ? 'Enregistrer l’archive' : 'Enregistrer le brouillon'}</button></aside>
       </form>
     </section>}
 
@@ -175,10 +296,21 @@ export default function FundraisingProjects({ onError = noop }) {
 
     <section aria-labelledby="fundraising-list-title" className="rounded-2xl border border-slate-200 bg-white p-5">
       <div className="flex flex-wrap items-center justify-between gap-3"><h3 id="fundraising-list-title" className="text-xl font-black">Vos projets</h3><button type="button" disabled={loading} onClick={() => loadProjects()} className="inline-flex items-center gap-2 text-sm font-bold text-blue-900 disabled:opacity-50"><RefreshCw size={16}/> Actualiser</button></div>
-      <div className="mt-4 flex flex-wrap gap-2" aria-label="Filtrer les projets">{[['All', 'Tous'], ['Published', 'Publiés'], ['Draft', 'Brouillons']].map(([value, label]) => <button type="button" key={value} aria-pressed={filter === value} onClick={() => setFilter(value)} className={'rounded-lg px-4 py-2 text-xs font-bold ' + (filter === value ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-600')}>{label} ({value === 'All' ? projects.length : projects.filter(project => project.status === value).length})</button>)}</div>
+      <p className="mt-3 rounded-xl bg-blue-50 p-4 text-sm leading-6 text-blue-950">Pour vos essais, supprimez et recréez un projet sans paiement. Dès qu’une tentative ou un reçu existe, archivez le projet puis dupliquez-le pour recommencer en conservant toutes les traces.</p>
+      <div className="mt-4 flex flex-wrap gap-2" aria-label="Filtrer les projets">{[['All', 'Tous'], ['Published', 'Publiés'], ['Draft', 'Brouillons'], ['Archived', 'Archivés']].map(([value, label]) => <button type="button" key={value} aria-pressed={filter === value} onClick={() => setFilter(value)} className={'rounded-lg px-4 py-2 text-xs font-bold ' + (filter === value ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-600')}>{label} ({value === 'All' ? projects.length : projects.filter(project => project.status === value).length})</button>)}</div>
       {loading && <p role="status" className="mt-5 text-sm text-slate-500">Chargement des projets…</p>}
-      {!loading && !loadError && !displayedProjects.length && <p className="mt-5 rounded-xl bg-slate-50 p-5 text-sm text-slate-600">Aucun projet {filter === 'Draft' ? 'en brouillon' : filter === 'Published' ? 'publié' : 'créé'}. Choisissez un modèle pour préparer votre premier objectif.</p>}
-      <div className="mt-5 space-y-4">{displayedProjects.map(project => <article key={project.id} className="flex flex-col gap-4 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center">{project.imageUrl && <img src={project.imageUrl} alt="" loading="lazy" className="h-32 w-full rounded-lg object-cover sm:h-24 sm:w-32"/>}<div className="min-w-0 flex-1"><span className={'rounded px-2 py-1 text-[10px] font-black ' + (project.status === 'Published' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600')}>{project.status === 'Published' ? 'Publié' : 'Brouillon privé'}</span><h4 className="mt-2 font-black">{project.title}</h4><p className="mt-2 text-sm font-bold">{money(project.totalPaidTnd)} <span className="font-normal text-slate-500">encaissés sur {money(project.budgetTnd)}</span></p><div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-amber-400" style={{ width: `${Math.min(100, Math.max(0, Number(project.progressPercent) || 0))}%` }}/></div><p className="mt-2 text-xs text-slate-500">{Math.round(Number(project.progressPercent) || 0)} % · {project.supporterCount || 0} soutien(s) · {project.durationMonths} mois</p></div><div className="flex flex-wrap gap-2 sm:w-36 sm:flex-col"><button type="button" onClick={() => edit(project)} className="rounded-lg bg-slate-950 px-3 py-2.5 text-xs font-bold text-white">Modifier le projet</button><button type="button" onClick={() => { setManagedProject(project.id); setSearch(''); window.setTimeout(() => document.getElementById('project-contributions')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0) }} className="rounded-lg border border-slate-300 px-3 py-2.5 text-xs font-bold">Gérer les contributions</button></div></article>)}</div>
+      {!loading && !loadError && !displayedProjects.length && <p className="mt-5 rounded-xl bg-slate-50 p-5 text-sm text-slate-600">Aucun projet {filter === 'Draft' ? 'en brouillon' : filter === 'Published' ? 'publié' : filter === 'Archived' ? 'archivé' : 'créé'}. Choisissez un modèle pour préparer votre premier objectif.</p>}
+      <div className="mt-5 space-y-4">{displayedProjects.map(project => <article key={project.id} className="flex flex-col gap-4 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center">
+        {project.imageUrl && <img src={project.imageUrl} alt="" loading="lazy" className="h-32 w-full rounded-lg object-cover sm:h-24 sm:w-32"/>}
+        <div className="min-w-0 flex-1"><span className={'rounded px-2 py-1 text-[10px] font-black ' + (project.status === 'Published' ? 'bg-emerald-100 text-emerald-800' : project.status === 'Archived' ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-600')}>{statusLabel(project.status)}</span><h4 className="mt-2 font-black">{project.title}</h4><p className="mt-2 text-sm font-bold">{money(project.totalPaidTnd)} <span className="font-normal text-slate-500">encaissés sur {money(project.budgetTnd)}</span></p><div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-amber-400" style={{ width: `${Math.min(100, Math.max(0, Number(project.progressPercent) || 0))}%` }}/></div><p className="mt-2 text-xs text-slate-500">{Math.round(Number(project.progressPercent) || 0)} % · {project.supporterCount || 0} soutien(s) · {project.durationMonths} mois</p></div>
+        <div className="grid grid-cols-2 gap-2 sm:w-48 sm:shrink-0">
+          <button type="button" disabled={Boolean(mutationBusy)} onClick={() => edit(project)} className="col-span-2 rounded-lg bg-slate-950 px-3 py-2.5 text-xs font-bold text-white disabled:opacity-50">Modifier le projet</button>
+          <button type="button" disabled={Boolean(mutationBusy)} onClick={() => { setManagedProject(project.id); setSearch(''); window.setTimeout(() => document.getElementById('project-contributions')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0) }} className="col-span-2 rounded-lg border border-slate-300 px-3 py-2.5 text-xs font-bold disabled:opacity-50">Gérer les contributions</button>
+          <button type="button" disabled={Boolean(mutationBusy)} onClick={() => duplicate(project)} className="rounded-lg border border-slate-300 px-3 py-2.5 text-xs font-bold disabled:opacity-50">Dupliquer</button>
+          <button type="button" disabled={Boolean(mutationBusy)} onClick={() => changeStatus(project, project.status === 'Archived' ? 'Draft' : 'Archived')} className="rounded-lg border border-slate-300 px-3 py-2.5 text-xs font-bold disabled:opacity-50">{mutationBusy === project.id ? 'Patientez…' : project.status === 'Archived' ? 'Restaurer en brouillon' : 'Archiver'}</button>
+          <button type="button" disabled={Boolean(mutationBusy)} onClick={() => askDelete(project)} className="col-span-2 rounded-lg border border-red-200 px-3 py-2.5 text-xs font-bold text-red-700 disabled:opacity-50">Supprimer le projet</button>
+        </div>
+      </article>)}</div>
     </section>
 
     {managedProject && <section id="project-contributions" aria-labelledby="project-contributions-title" className="scroll-mt-20 overflow-hidden rounded-2xl border border-slate-200 bg-white">
@@ -187,8 +319,17 @@ export default function FundraisingProjects({ onError = noop }) {
       {commitmentsLoading && <p role="status" className="p-5 text-sm text-slate-500">Chargement des contributions…</p>}
       {commitmentsError && <p role="alert" className="m-5 rounded-xl bg-red-50 p-4 text-sm text-red-800">{commitmentsError}</p>}
       {!commitmentsLoading && !commitmentsError && !displayedCommitments.length && <p className="p-5 text-sm text-slate-500">Aucune contribution trouvée.</p>}
-      <div className="space-y-4 p-5 pt-0">{displayedCommitments.map(commitment => <article key={commitment.id} className="overflow-hidden rounded-xl border border-slate-200"><div className="flex flex-wrap justify-between gap-3 bg-slate-50 p-4"><div><h4 className="font-black">{commitment.displayName}</h4><p className="mt-1 break-all text-xs text-slate-600">{commitment.phone || 'Téléphone non renseigné'} · {commitment.email || 'Email non renseigné'}</p></div><p className="text-sm font-bold text-blue-950">{money(commitment.monthlyAmountTnd)} / mois × {commitment.months} · {commitment.paymentMethod === 'Cash' ? 'Espèces' : commitment.paymentMethod}</p></div><div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-sm"><thead className="border-b border-slate-200 text-xs text-slate-500"><tr><th className="p-3">Échéance</th><th className="p-3">Montant</th><th className="p-3">Statut</th><th className="p-3">Paiement</th><th className="p-3">Action</th></tr></thead><tbody>{(commitment.installments || []).map(installment => <tr key={installment.id} className="border-b border-slate-100 last:border-0"><td className="p-3">Mois {installment.installmentNumber}<span className="mt-1 block text-xs text-slate-500">{date(installment.dueAt)}</span></td><td className="p-3 font-bold">{money(installment.amount)}</td><td className="p-3"><span className={'inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold ' + (installment.paymentStatus === 'Paid' ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800')}>{installment.paymentStatus === 'Paid' && <CheckCircle2 size={12}/>}{{ Paid: 'Payé', Pending: 'À payer', Failed: 'Échoué', Cancelled: 'Annulé' }[installment.paymentStatus] || installment.paymentStatus}</span></td><td className="p-3">{date(installment.paidAt)}</td><td className="p-3">{installment.paymentProvider === 'Cash' && installment.paymentStatus === 'Pending' ? <button type="button" disabled={Boolean(confirmingId)} onClick={() => confirmCash(commitment, installment)} className="rounded-lg bg-blue-950 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{confirmingId === installment.id ? 'Confirmation…' : 'Confirmer les espèces reçues'}</button> : '—'}</td></tr>)}</tbody></table></div></article>)}</div>
+      <div className="space-y-4 p-5 pt-0">{displayedCommitments.map(commitment => <article key={commitment.id} className="overflow-hidden rounded-xl border border-slate-200"><div className="flex flex-wrap justify-between gap-3 bg-slate-50 p-4"><div><h4 className="font-black">{commitment.displayName}</h4><p className="mt-1 break-all text-xs text-slate-600">{commitment.phone || 'Téléphone non renseigné'} · {commitment.email || 'Email non renseigné'}</p></div><div><p className="text-sm font-bold text-blue-950">{money(commitment.monthlyAmountTnd)} / mois × {commitment.months} · {commitment.paymentMethod === 'Cash' ? 'Espèces' : commitment.paymentMethod}</p><div className="mt-3 flex flex-wrap gap-2"><button type="button" disabled={Boolean(mutationBusy) || Boolean(confirmingId)} onClick={() => setContactTarget(commitment)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold disabled:opacity-50">Modifier les coordonnées</button><button type="button" disabled={Boolean(mutationBusy) || Boolean(confirmingId) || !managed} onClick={() => askDelete(managed, commitment)} className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50">Supprimer l’inscription</button></div></div></div><div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-sm"><thead className="border-b border-slate-200 text-xs text-slate-500"><tr><th className="p-3">Échéance</th><th className="p-3">Montant</th><th className="p-3">Statut</th><th className="p-3">Paiement</th><th className="p-3">Action</th></tr></thead><tbody>{(commitment.installments || []).map(installment => <tr key={installment.id} className="border-b border-slate-100 last:border-0"><td className="p-3">Mois {installment.installmentNumber}<span className="mt-1 block text-xs text-slate-500">{date(installment.dueAt)}</span></td><td className="p-3 font-bold">{money(installment.amount)}</td><td className="p-3"><span className={'inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold ' + (installment.paymentStatus === 'Paid' ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800')}>{installment.paymentStatus === 'Paid' && <CheckCircle2 size={12}/>}{{ Paid: 'Payé', Pending: 'À payer', Failed: 'Échoué', Cancelled: 'Annulé' }[installment.paymentStatus] || installment.paymentStatus}</span></td><td className="p-3">{date(installment.paidAt)}</td><td className="p-3">{installment.paymentProvider === 'Cash' && installment.paymentStatus === 'Pending' ? <button type="button" disabled={Boolean(confirmingId)} onClick={() => confirmCash(commitment, installment)} className="rounded-lg bg-blue-950 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{confirmingId === installment.id ? 'Confirmation…' : 'Confirmer les espèces reçues'}</button> : '—'}</td></tr>)}</tbody></table></div></article>)}</div>
     </section>}
+    {contactTarget && <ContactDialog commitment={contactTarget} onClose={() => setContactTarget(null)} onSave={saveContact}/>}
+    {deleteTarget && <ManagementDialog title={deleteTarget.commitment ? 'Supprimer cette inscription ?' : 'Supprimer ce projet ?'} onClose={() => { setDeleteTarget(null); setMutationError('') }} busy={Boolean(mutationBusy)} footer={<>
+      <button type="button" disabled={Boolean(mutationBusy)} onClick={() => { setDeleteTarget(null); setMutationError('') }} className="rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold">Annuler</button>
+      <button type="button" disabled={!deleteAcknowledged || Boolean(mutationBusy) || Boolean(confirmingId)} onClick={deleteConfirmed} className="rounded-xl bg-red-700 px-4 py-3 text-sm font-bold text-white disabled:opacity-50">{mutationBusy ? 'Suppression…' : deleteTarget.commitment ? 'Supprimer définitivement l’inscription' : 'Supprimer définitivement le projet'}</button>
+    </>}>
+      <p className="text-sm leading-6 text-slate-600">{deleteTarget.commitment ? <>L’inscription de <strong>{deleteTarget.commitment.displayName}</strong> au projet <strong>{deleteTarget.project.title}</strong> et ses échéances non réglées seront supprimées.</> : <>Le projet <strong>{deleteTarget.project.title}</strong>, ses inscriptions et ses échéances non réglées seront supprimés.</>} Cette opération est définitive et sera refusée si un paiement ou une tentative de paiement existe.</p>
+      <label className="mt-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-900"><input type="checkbox" checked={deleteAcknowledged} onChange={event => setDeleteAcknowledged(event.target.checked)} className="mt-1 h-4 w-4 shrink-0"/><span>Je confirme vouloir supprimer définitivement {deleteTarget.commitment ? 'cette inscription de test' : 'ce projet de test'} sans effacer de trace de paiement.</span></label>
+      {mutationError && <div role="alert" className="mt-4 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-950"><p>{mutationError}</p><div className="mt-3 flex flex-wrap gap-2">{deleteTarget.project.status !== 'Archived' && <button type="button" disabled={Boolean(mutationBusy)} onClick={() => changeStatus(deleteTarget.project, 'Archived')} className="rounded-lg bg-blue-950 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Archiver le projet</button>}<button type="button" disabled={Boolean(mutationBusy)} onClick={() => duplicate(deleteTarget.project)} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-bold disabled:opacity-50">Préparer une copie en brouillon</button></div></div>}
+    </ManagementDialog>}
     {preview && previewProject && <PreviewDialog project={previewProject} onClose={() => setPreview(false)}/>}
   </div>
 }

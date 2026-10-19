@@ -18,7 +18,7 @@ export default function FundraisingRegistration({ project, initialAmount, method
   const [amount, setAmount] = useState(initialAmount || 5)
   const [name, setName] = useState(user?.displayName || '')
   const [email, setEmail] = useState(user?.email || '')
-  const [phone, setPhone] = useState(user?.phone || '')
+  const [phone, setPhone] = useState(user?.phoneNumber || user?.phone || '')
   const [paymentMethod, setPaymentMethod] = useState('Cash')
   const [provider, setProvider] = useState(available[0]?.id || '')
   const [consent, setConsent] = useState(false)
@@ -41,6 +41,7 @@ export default function FundraisingRegistration({ project, initialAmount, method
       <div className="fr-modal-head"><img src={CREST_SRC} alt="JSO"/><button className="fr-close" type="button" aria-label="Fermer l’inscription" disabled={saving} onClick={onClose}><X size={18}/></button></div>
       <form className="fr-modal-body" onSubmit={submit}>
         <h2 id="fr-registration-title">Devenez soutien de la JSO</h2><p className="fr-modal-subtitle">{project.title} · Un petit geste, un grand impact.</p>
+        <p className="fr-plan-note">Ce soutien sera lié à votre compte et restera accessible dans « Mon dashboard → Mes soutiens ».</p>
         <div className="fr-steps" aria-label={`Étape ${step} sur 3`}>{['Vos coordonnées', 'Votre contribution', 'Confirmation'].map((text, i) => <span className={step === i + 1 ? 'is-active' : ''} key={text}><b>{i + 1}</b>{text}</span>)}</div>
         {step === 1 && <>
           <label className="fr-field">Nom public *<input required value={name} onChange={e => setName(e.target.value)} maxLength={80} autoComplete="name" placeholder="Prénom et nom"/><small>Ce nom apparaîtra dans la liste des soutiens. Aucun contact n’est affiché publiquement.</small></label>

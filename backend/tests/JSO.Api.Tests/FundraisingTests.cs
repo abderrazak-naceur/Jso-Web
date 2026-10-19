@@ -75,6 +75,7 @@ public sealed class FundraisingTests
     [Theory]
     [InlineData("Draft")]
     [InlineData("Published")]
+    [InlineData("Archived")]
     public void Valid_project_can_be_saved_as_draft_or_published(string status)
     {
         var project = Project();
@@ -105,7 +106,7 @@ public sealed class FundraisingTests
             p => p.Description = "", p => p.Description = new string('D', 6001),
             p => p.BudgetTnd = 0m, p => p.BudgetTnd = 10_000_001m,
             p => p.DurationMonths = 9, p => p.DurationMonths = 11,
-            p => p.TemplateId = "missing", p => p.Status = "Archived"
+            p => p.TemplateId = "missing", p => p.Status = "Unknown"
         ];
 
         foreach (var change in invalidChanges)
