@@ -97,6 +97,10 @@ public sealed class MediaController(MediaDbContext db, MediaStorageService stora
     {
         var asset = await db.MediaAssets.SingleOrDefaultAsync(x => x.Id == id, ct);
         if (asset is null) return NotFound();
+        if (!IsManagedByThisService(asset))
+            return Conflict(new { error = "Questo media è legacy o gestito da un altro sistema: modifica non consentita da JSO Media Manager." });
+        if (string.IsNullOrWhiteSpace(request.Title))
+            return BadRequest(new { error = "Il titolo è obbligatorio." });
         asset.Title = request.Title.Trim();
         asset.Caption = request.Caption;
         asset.IsPublished = request.IsPublished;
@@ -109,20 +113,22 @@ public sealed class MediaController(MediaDbContext db, MediaStorageService stora
     {
         var asset = await db.MediaAssets.SingleOrDefaultAsync(x => x.Id == id, ct);
         if (asset is null) return NotFound();
-        // Only delete files whose path explicitly identifies this service's SFTP storage.
-        if (asset.StoragePath?.StartsWith("sftp:media/", StringComparison.Ordinal) == true)
+        // Shared MediaAssets may contain legacy records. Never delete a record or file
+        // unless this service can prove ownership through its explicit storage prefix.
+        if (!IsManagedByThisService(asset))
+            return Conflict(new { error = "Questo media è legacy o gestito da un altro sistema: eliminazione bloccata per proteggere i contenuti esistenti." });
+        try { await storage.DeleteAsync(asset.StoragePath!["sftp:".Length..], ct); }
+        catch (Exception ex)
         {
-            try { await storage.DeleteAsync(asset.StoragePath["sftp:".Length..], ct); }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Media SFTP delete failed for asset {AssetId}", id);
-                return StatusCode(502, new { error = "File non eliminato; record mantenuto." });
-            }
+            logger.LogError(ex, "Media SFTP delete failed for asset {AssetId}", id);
+            return StatusCode(502, new { error = "File non eliminato; record mantenuto." });
         }
         db.MediaAssets.Remove(asset);
         await db.SaveChangesAsync(ct);
         return NoContent();
     }
+    private static bool IsManagedByThisService(MediaAsset asset) =>
+        asset.StoragePath?.StartsWith("sftp:media/", StringComparison.Ordinal) == true;
 }
 
 public sealed record UpdateMediaRequest(string Title, string? Caption, bool IsPublished);
