@@ -52,8 +52,9 @@ export default function FundraisingPage() {
   const project = selectedId ? projects.find(item => item.id === selectedId) : projects[0]
   const projectId = project?.id
   const providers = ONLINE_PROVIDERS.filter(provider => methods[provider.key])
-  const entry = entries.find(item => item.data.id === activeCommitmentId) || entries[0]
-  const alreadyParticipated = fan.status === 'authenticated' && entries.some(item => item.data.projectId === projectId)
+  const projectEntries = entries.filter(item => item.data.projectId === projectId)
+  const entry = projectEntries.find(item => item.data.id === activeCommitmentId) || projectEntries[0]
+  const alreadyParticipated = fan.status === 'authenticated' && projectEntries.length > 0
 
   useEffect(() => {
     const controller = new AbortController()
