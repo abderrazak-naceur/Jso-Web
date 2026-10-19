@@ -41,6 +41,7 @@ export default function FundraisingPage() {
   const [search, setSearch] = useState('')
   const [refreshKey, setRefreshKey] = useState(0)
   const [entries, setEntries] = useState([])
+  const [entriesLoading, setEntriesLoading] = useState(false)
   const [activeCommitmentId, setActiveCommitmentId] = useState('')
   const [privateError, setPrivateError] = useState('')
   const [paymentError, setPaymentError] = useState('')
@@ -52,6 +53,7 @@ export default function FundraisingPage() {
   const projectId = project?.id
   const providers = ONLINE_PROVIDERS.filter(provider => methods[provider.key])
   const entry = entries.find(item => item.data.id === activeCommitmentId) || entries[0]
+  const alreadyParticipated = fan.status === 'authenticated' && entries.some(item => item.data.projectId === projectId)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -77,6 +79,7 @@ export default function FundraisingPage() {
     if (!projectId) return
     let active = true
     setEntries([])
+    setEntriesLoading(Boolean(fan.token))
     async function load() {
       const access = readAccess().filter(item => item.projectId === projectId)
       const responses = await Promise.allSettled(access.map(async record => ({ data: await fundraisingApi.commitment(record.id, record.token, fan.token), access: record.token })))
@@ -94,7 +97,7 @@ export default function FundraisingPage() {
       }
       if (active) setEntries(found)
     }
-    load().catch(e => { if (active) setPrivateError(e.message) })
+    load().catch(e => { if (active) setPrivateError(e.message) }).finally(() => { if (active) setEntriesLoading(false) })
     return () => { active = false }
   }, [projectId, fan.token, refreshKey])
   useEffect(() => {
@@ -145,6 +148,10 @@ export default function FundraisingPage() {
   function support() {
     if (!project || fan.status === 'unknown') return
     setMenu(false)
+    if (alreadyParticipated) {
+      document.getElementById('mon-engagement')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
     if (fan.status !== 'authenticated') { setContinueSupport(true); setAuth('register') }
     else setRegistration(true)
   }
@@ -158,13 +165,13 @@ export default function FundraisingPage() {
     <header className="fr-header"><div className="fr-container fr-header-inner">
       <a href="/" className="fr-brand"><img src={CREST_SRC} alt="JSO"/><span>JEUNESSE SPORTIVE<br/>DE OUDHREF</span></a>
       <nav id="fr-navigation" className={menu ? 'is-open' : ''} aria-label={tr('navProjects')}><a href="/">{tr('navHome')}</a><a href="/actualites">{tr('navNews')}</a><a href="#tous-les-projets" onClick={() => setMenu(false)}>{tr('navProjects')}</a><a href="#soutiens" onClick={() => setMenu(false)}>{tr('navSupporters')}</a>{entry && fan.status === 'authenticated' && <a href="#mon-engagement" onClick={() => setMenu(false)}>{tr('navFollow')}</a>}<label className="fr-language-control"><span className="sr-only">{t('common.language', 'Langue')}</span><select aria-label={t('common.language', 'Langue')} value={language} onChange={event => setLanguage(event.target.value)}>{languages.map(item => <option key={item.code} value={item.code}>{item.flag} {item.label}</option>)}</select></label></nav>
-      <div className="fr-header-actions"><button type="button" className="fr-button fr-button-gold" onClick={support} disabled={!project || fan.status === 'unknown'}>{tr('becomeSupporter')}</button>{fan.status === 'authenticated' ? <a className="fr-login" href="/account/supports">{tr('dashboard')}</a> : <><button type="button" className="fr-login" onClick={() => { setContinueSupport(false); setAuth('login') }}>{tr('signIn')}</button><button type="button" className="fr-login fr-auth-register" onClick={() => { setContinueSupport(false); setAuth('register') }}>{tr('register')}</button></>}<button type="button" className="fr-mobile-toggle" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-controls="fr-navigation" aria-label={tr('menu')}>{menu ? <X size={18}/> : <Menu size={18}/>}</button></div>
+      <div className="fr-header-actions"><button type="button" className="fr-button fr-button-gold" onClick={support} disabled={!project || fan.status === 'unknown' || (fan.status === 'authenticated' && entriesLoading)}>{alreadyParticipated ? tr('viewMyParticipation') : fan.status === 'authenticated' && entriesLoading ? tr('checkingParticipation') : tr('becomeSupporter')}</button>{fan.status === 'authenticated' ? <a className="fr-login" href="/account/supports">{tr('dashboard')}</a> : <><button type="button" className="fr-login" onClick={() => { setContinueSupport(false); setAuth('login') }}>{tr('signIn')}</button><button type="button" className="fr-login fr-auth-register" onClick={() => { setContinueSupport(false); setAuth('register') }}>{tr('register')}</button></>}<button type="button" className="fr-mobile-toggle" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-controls="fr-navigation" aria-label={tr('menu')}>{menu ? <X size={18}/> : <Menu size={18}/>}</button></div>
     </div></header>
     <main id="le-projet">
       {loading ? <div className="fr-empty" role="status">{tr('loadingProjects')}</div> : loadError && !projects.length ? <div className="fr-empty"><h1>{tr('unavailable')}</h1><p role="alert">{loadError}</p><button type="button" className="fr-button fr-button-blue" onClick={refresh}>{tr('retry')}</button></div> : !project ? <FundraisingEmptyState unavailableProject={Boolean(selectedId)}/> : <>
-        <FundraisingProjectView project={project} onSupport={support}/>
+        <FundraisingProjectView project={project} onSupport={support} supportLabel={alreadyParticipated ? tr('viewMyParticipation') : fan.status === 'authenticated' && entriesLoading ? tr('checkingParticipation') : undefined} supportCompleted={alreadyParticipated} supportDisabled={fan.status === 'authenticated' && entriesLoading}/>
         <section className="fr-projects" id="tous-les-projets"><div className="fr-container"><div className="fr-section-heading"><div><p className="fr-eyebrow">{tr('projectGoals')}</p><h2 className="fr-section-title">{tr('projectImpact')}</h2><p>{tr('chooseProject')}</p></div><button className="fr-button fr-button-outline" type="button" onClick={share}><Share2 size={15}/>{copied ? tr('shared') : tr('share')}</button></div><div className="fr-project-grid">{projects.map(item => <button type="button" key={item.id} className={`fr-project-card ${item.id === projectId ? 'is-active' : ''}`} onClick={() => selectProject(item)}><img src={projectImage(item)} alt="" loading="lazy"/><div className="fr-project-card-body"><h3>{item.title}</h3><p>{fundraisingSupporterLabel(item.supporterCount, language)} · {item.durationMonths} {language === 'en' ? 'months' : language === 'it' ? 'mesi' : language === 'ar' ? 'أشهر' : 'mois'}</p><div className="fr-mini-progress"><span style={{ width: `${item.progressPercent}%` }}/></div><div className="fr-card-bottom"><span>{money(item.totalPaidTnd)} {language === 'en' ? 'collected' : language === 'it' ? 'raccolti' : language === 'ar' ? 'تم جمعها' : 'collectés'}</span><span>{money(item.budgetTnd)}</span></div></div></button>)}</div></div></section>
-        <section className="fr-plan" id="faire-un-don"><div className="fr-container fr-plan-layout"><div><p className="fr-eyebrow">{tr('planEyebrow')}</p><h2>{tr('planTitle')}</h2><p>{tr('planDescription')}</p><p className="fr-plan-note">{tr('cashOnlineInfo')}</p></div><div className="fr-plan-card"><p className="fr-eyebrow">{tr('monthlyContribution')}</p><div className="fr-plan-options">{MONTHLY_AMOUNTS.map(value => <button type="button" key={value} aria-pressed={value === amount} className={`fr-amount ${value === amount ? 'is-selected' : ''}`} onClick={() => setAmount(value)}><strong>{value}</strong><span>{tr('perMonth')}</span></button>)}</div><div className="fr-plan-total"><span>{PLAN_MONTHS} {tr('installmentsOf')} {money(amount)}</span><strong>{money(planTotal(amount))}</strong></div><button type="button" className="fr-button fr-button-gold" onClick={support}>{tr('supportProject')} <ArrowRight size={17}/></button><p className="fr-plan-note">{tr('noAutoDebit')}</p></div></div></section>
+        <section className="fr-plan" id="faire-un-don"><div className="fr-container fr-plan-layout"><div><p className="fr-eyebrow">{tr('planEyebrow')}</p><h2>{tr('planTitle')}</h2><p>{tr('planDescription')}</p><p className="fr-plan-note">{tr('cashOnlineInfo')}</p></div><div className="fr-plan-card"><p className="fr-eyebrow">{tr('monthlyContribution')}</p><div className="fr-plan-options">{MONTHLY_AMOUNTS.map(value => <button type="button" key={value} aria-pressed={value === amount} className={`fr-amount ${value === amount ? 'is-selected' : ''}`} onClick={() => setAmount(value)}><strong>{value}</strong><span>{tr('perMonth')}</span></button>)}</div><div className="fr-plan-total"><span>{PLAN_MONTHS} {tr('installmentsOf')} {money(amount)}</span><strong>{money(planTotal(amount))}</strong></div><button type="button" className="fr-button fr-button-gold" onClick={support} disabled={fan.status === 'authenticated' && entriesLoading}>{alreadyParticipated ? tr('viewMyParticipation') : fan.status === 'authenticated' && entriesLoading ? tr('checkingParticipation') : tr('supportProject')} {alreadyParticipated ? <CheckCircle2 size={17}/> : <ArrowRight size={17}/>}</button><p className="fr-plan-note">{tr('noAutoDebit')}</p></div></div></section>
         {(paymentError || privateError) && <div className="fr-container"><p role="alert" className="fr-alert fr-error">{paymentError || privateError}</p></div>}
         {entry && fan.status !== 'authenticated' && <div className="fr-container"><div className="fr-alert"><p>{tr('privateSupport')}</p><button type="button" className="fr-button fr-button-blue" onClick={() => { setContinueSupport(false); setAuth('login') }}>{tr('signIn')}</button></div></div>}
         {entries.length > 1 && fan.status === 'authenticated' && <div className="fr-container"><label className="fr-field">{tr('myCommitments')}<select value={entry.data.id} onChange={e => setActiveCommitmentId(e.target.value)}>{entries.map(item => <option key={item.data.id} value={item.data.id}>{money(item.data.monthlyAmountTnd)} / mois · {date(item.data.createdAt)}</option>)}</select></label></div>}

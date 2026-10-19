@@ -4,7 +4,7 @@ import { fundraisingMoney, projectImage } from './fundraisingTemplates'
 import { fundraisingCopy as copy } from './fundraisingCopy'
 import './fundraising.css'
 
-export default function FundraisingProjectView({ project, preview = false, onSupport }) {
+export default function FundraisingProjectView({ project, preview = false, onSupport, supportLabel, supportCompleted = false, supportDisabled = false }) {
   const { language } = useI18n()
   const t = (key, values) => copy(language, key, values)
   const money = value => fundraisingMoney(value, language)
@@ -20,7 +20,7 @@ export default function FundraisingProjectView({ project, preview = false, onSup
         <p className="fr-kicker"><span /> {t('campaign')}</p>
         <h1 id="fr-project-title">{project.title || t('projectTitleFallback')}</h1>
         <p className="fr-hero-description">{project.description || t('projectSupportDescription')}</p>
-        <div className="fr-hero-buttons"><button className="fr-button fr-button-gold" onClick={onSupport} type="button" disabled={preview}>{t('becomeSupporter')} <ArrowRight size={18}/></button><a className="fr-hero-link" href="#soutiens">{t('discoverSupporters')} <Users size={16}/></a></div>
+        <div className="fr-hero-buttons"><button className="fr-button fr-button-gold" onClick={onSupport} type="button" disabled={preview || supportDisabled}>{supportLabel || t('becomeSupporter')} {supportCompleted ? <CheckCircle2 size={18}/> : <ArrowRight size={18}/>}</button><a className="fr-hero-link" href="#soutiens">{t('discoverSupporters')} <Users size={16}/></a></div>
         <p className="fr-hero-caption"><ShieldCheck size={15}/> {t('trackedPayments')}</p>
       </div>
     </section>
