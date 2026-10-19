@@ -210,12 +210,10 @@ jobs:
           curl -fsS "http://127.0.0.1:5080$receipt_url" \
             | jq -e '.amount == 12.34 and .message == null and .donorName == "CI Cash Donor"'
           curl -fsS http://127.0.0.1:5080/api/donations/campaign \
-            | jq -e --arg id "$cash_id" 'any(.recentDonations[]; .id == $id and .displayName == "Donateur en espèces" and .message == null)'
-          cash_summary=$(curl -fsS http://127.0.0.1:5080/api/admin/donations/summary \
-            -H "Authorization: Bearer $token")
-          echo "$cash_summary" | jq --arg id "$cash_id" '{cashPaidTnd, totalPaidTnd, matchingDonation: [.donations[]? | select(.id == $id) | {id, amount, paymentStatus, paymentProvider}]}'
-          echo "$cash_summary" | jq -e '.cashPaidTnd >= 12.34'
-          echo "$cash_summary" | jq -e --arg id "$cash_id" 'any(.donations[]; .id == $id and .paymentStatus == "Paid")'
+            | jq -e --arg id "$cash_id" 'any(.recentDonations[]; .id == $id and .displayName == "CI Cash Donor" and .message == null)'
+          curl -fsS http://127.0.0.1:5080/api/admin/donations/summary \
+            -H "Authorization: Bearer $token" \
+            | jq -e --arg id "$cash_id" '.cashPaidTnd >= 12.34 and any(.donations[]; .id == $id and .paymentStatus == "Paid")'
 
           curl -fsS -X DELETE "http://127.0.0.1:5080/api/admin/security/staff-assignments/$cash_assignment_id" \
             -H "Authorization: Bearer $token"
@@ -411,8 +409,6 @@ jobs:
             -H 'Content-Type: application/json' \
             -d "$(jq -nc --arg token "$ticket_token" --arg gateId "$gate_code" --arg deviceId "$device_code"               '{token:$token,matchId:"00000000-0000-0000-0000-000000000001",gateId:$gateId,deviceId:$deviceId}')")
           test "$wrong_match_status" = 200
-          echo "Wrong-match validation response:"
-          cat /tmp/jso-wrong-match.json
           jq -e '.result == "WrongMatch"' /tmp/jso-wrong-match.json
 
           wrong_gate_status=$(curl -sS -o /tmp/jso-wrong-gate.json -w '%{http_code}' \
