@@ -28,7 +28,7 @@ input,textarea,select{width:100%;background:#07152a;border:1px solid var(--line)
 </section>
 <section id="appPanel" class="hidden">
 <div class="panel"><div class="topline"><div><h1>La tua libreria</h1><p class="muted">Gestisci le immagini senza cambiare i riferimenti esistenti di JSO.</p></div><div><div class="stat" id="total">—</div><small>immagini nel catalogo</small></div></div>
-<label for="mediaApi">URL nuova Media API</label><input id="mediaApi" type="url" placeholder="https://jso-media-api.onrender.com">
+<label for="mediaApi">URL nuova Media API</label><input id="mediaApi" type="url" value="https://jso-media-api.onrender.com" readonly aria-describedby="mediaApiHelp"><small id="mediaApiHelp">Endpoint configurato automaticamente. Non è necessario reinserirlo.</small>
 <div class="row"><div><label for="search">Cerca immagini</label><input id="search" placeholder="Nome file o titolo"></div><div style="flex:0 0 auto;align-self:end"><button id="refreshBtn">Aggiorna galleria</button></div></div>
 <div id="appMessage" class="message hidden" role="status"></div></div>
 <div class="panel"><h2>Carica immagini</h2><p class="muted">JPG, PNG, WebP o GIF · massimo 10 MB per file.</p><label for="files">Seleziona immagini</label><input id="files" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple><label for="uploadTitle">Titolo (facoltativo, per singolo file)</label><input id="uploadTitle" placeholder="Es. Partita JSO Oudhref"><label for="uploadCaption">Descrizione (facoltativa)</label><input id="uploadCaption" placeholder="Descrizione immagine"><button id="uploadBtn" style="margin-top:14px">Carica selezionate</button><div id="uploadMessage" class="message hidden" role="status" aria-live="polite"></div></div>
