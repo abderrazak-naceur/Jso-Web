@@ -1,0 +1,33 @@
+name: JSO Media MVP
+
+on:
+  pull_request:
+    paths:
+      - "Media/**"
+      - ".github/workflows/media-mvp.yml"
+  push:
+    branches:
+      - main
+      - "feature/jso-media-mvp"
+    paths:
+      - "Media/**"
+      - ".github/workflows/media-mvp.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-api:
+    name: Build standalone Media API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore
+        run: dotnet restore Media/api/JSO.Media.Api.csproj
+      - name: Build
+        run: dotnet build Media/api/JSO.Media.Api.csproj --configuration Release --no-restore
