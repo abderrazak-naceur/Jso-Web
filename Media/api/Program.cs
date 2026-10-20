@@ -78,10 +78,17 @@ builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
-app.UseHttpsRedirection();
+// Render terminates external HTTPS and forwards traffic to the container over HTTP.
+// Do not redirect at the container layer: it has no HTTPS listener/port to redirect to.
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapGet("/", () => Results.Ok(new
+{
+    service = "JSO Media API",
+    status = "running",
+    health = "/health"
+})).AllowAnonymous();
 app.MapHealthChecks("/health");
 app.MapControllers();
 app.Run();
