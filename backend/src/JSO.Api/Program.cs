@@ -209,6 +209,7 @@ builder.Services.AddCors(options =>
     var allowedOrigins = origins
         .Append("https://jso-web.onrender.com")
         .Append("https://jsoudhref.com")
+        .Append("https://jso-media.com")
         .Append("https://www.jsoudhref.com")
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToArray();
