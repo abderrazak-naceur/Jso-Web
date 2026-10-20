@@ -84,9 +84,17 @@ public sealed class MediaController(MediaDbContext db, MediaStorageService stora
         catch (Exception ex)
         {
             logger.LogError(ex, "Media metadata insert failed for asset {AssetId}", id);
-            // The uploaded file is intentionally retained for manual recovery;
-            // never risk deleting a file if DB state is uncertain.
-            return StatusCode(500, new { error = "File caricato ma metadati non salvati. Contatta l'amministratore." });
+            // This path was generated uniquely for this request. If metadata
+            // persistence fails, best-effort cleanup prevents orphaned uploads.
+            try
+            {
+                await storage.DeleteAsync(relativePath, ct);
+            }
+            catch (Exception cleanupEx)
+            {
+                logger.LogWarning(cleanupEx, "Could not clean up orphaned media file for asset {AssetId}", id);
+            }
+            return StatusCode(500, new { error = "Registrazione non riuscita: il sistema ha tentato di annullare il caricamento. Riprova o contatta l'amministratore." });
         }
 
         return Created(asset.Url, asset);
