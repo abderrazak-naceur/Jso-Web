@@ -2,7 +2,7 @@ using Renci.SshNet;
 
 namespace JSO.Media.Api;
 
-public sealed class MediaStorageService(IConfiguration configuration)
+public sealed class MediaStorageService(IConfiguration configuration, ILogger<MediaStorageService> logger)
 {
     public async Task SaveAsync(Stream content, string relativePath, CancellationToken cancellationToken)
     {
@@ -10,7 +10,7 @@ public sealed class MediaStorageService(IConfiguration configuration)
         var username = Required("Sftp:Username");
         var password = Required("Sftp:Password");
         var root = Required("Sftp:RootPath").TrimEnd('/');
-        var fingerprint = Required("Sftp:HostKeyFingerprint");
+        var fingerprint = OptionalFingerprint();
         var port = int.TryParse(configuration["Sftp:Port"], out var parsedPort) ? parsedPort : 22;
         var normalized = Normalize(relativePath);
         var remotePath = $"{root}/{normalized}";
@@ -39,7 +39,7 @@ public sealed class MediaStorageService(IConfiguration configuration)
         var username = Required("Sftp:Username");
         var password = Required("Sftp:Password");
         var root = Required("Sftp:RootPath").TrimEnd('/');
-        var fingerprint = Required("Sftp:HostKeyFingerprint");
+        var fingerprint = OptionalFingerprint();
         var port = int.TryParse(configuration["Sftp:Port"], out var parsedPort) ? parsedPort : 22;
 
         await Task.Run(() =>
@@ -58,11 +58,26 @@ public sealed class MediaStorageService(IConfiguration configuration)
     public string PublicUrl(string relativePath) =>
         Required("Sftp:PublicBaseUrl").TrimEnd('/') + "/" + Normalize(relativePath);
 
-    private SftpClient CreateClient(string host, int port, string username, string password, string fingerprint)
+    private string? OptionalFingerprint()
+    {
+        var fingerprint = configuration["Sftp:HostKeyFingerprint"];
+        if (string.IsNullOrWhiteSpace(fingerprint))
+            logger.LogWarning("Sftp:HostKeyFingerprint is not configured. SFTP host key verification is disabled; configure the fingerprint to secure this connection.");
+        return string.IsNullOrWhiteSpace(fingerprint) ? null : fingerprint.Trim();
+    }
+
+    private SftpClient CreateClient(string host, int port, string username, string password, string? fingerprint)
     {
         var client = new SftpClient(host, port, username, password);
         client.HostKeyReceived += (_, e) =>
         {
+            if (string.IsNullOrWhiteSpace(fingerprint))
+            {
+                // Compatibility mode: allow the connection, but warn that host identity is not verified.
+                e.CanTrust = true;
+                return;
+            }
+
             var actual = Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(e.HostKey)).TrimEnd('=');
             var expected = fingerprint.Trim();
             if (expected.StartsWith("SHA256:", StringComparison.OrdinalIgnoreCase))
