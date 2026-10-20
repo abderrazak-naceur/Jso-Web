@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<meta name="jso-media-build" content="2026-10-20-token-fix-1">
 <title>JSO Media Manager</title>
 <style>
 :root{color-scheme:dark;--bg:#071329;--panel:#10213e;--line:#294261;--text:#f4f7fc;--muted:#9eafc8;--blue:#2785f5;--gold:#e6b54a;--red:#ef4444}
@@ -73,17 +74,32 @@ button:hover:not(:disabled){filter:brightness(1.09);transform:translateY(-1px);b
 </section>
 </main>
 <script>
-const $=id=>document.getElementById(id);let token=sessionStorage.getItem('jsoMediaToken'),page=1,pageSize=24,total=0,items=[];
+const $=id=>document.getElementById(id);
+const TOKEN_KEY='jsoMediaToken';
+function readToken(){try{return sessionStorage.getItem(TOKEN_KEY)||''}catch{return ''}}
+function saveToken(value){if(typeof value!=='string'||!value.trim())return false;try{sessionStorage.setItem(TOKEN_KEY,value.trim());return sessionStorage.getItem(TOKEN_KEY)===value.trim()}catch{return false}}
+function clearToken(){try{sessionStorage.removeItem(TOKEN_KEY)}catch{}}
+let token=readToken(),page=1,pageSize=24,total=0,items=[];
 function message(id,text,error=false){const el=$(id);el.textContent=text;el.classList.remove('hidden','error');if(error)el.classList.add('error')}
 function clearMessage(id){$(id).classList.add('hidden')}
 function apiBase(){return $('mediaApi').value.trim().replace(/\/$/,'')}
 function assetUrl(value){if(!value)return '';try{const u=new URL(value,location.origin);if(u.origin===location.origin&&u.pathname.startsWith('/uploads/media/'))return 'https://jsoudhref.com'+u.pathname+u.search+u.hash;return u.href}catch{return value}}
-async function request(path,options={}){const base=apiBase();if(!base)throw new Error('Inserisci l’URL della nuova Media API.');const response=await fetch(base+path,{...options,headers:{...(options.headers||{}),Authorization:'Bearer '+token}});if(response.status===401||response.status===403){sessionStorage.removeItem('jsoMediaToken');showLogin();message('loginMessage','Sessione scaduta o accesso non autorizzato. Accedi di nuovo.',true);throw new Error('Sessione scaduta o accesso non autorizzato.');}if(!response.ok){let text='Richiesta non riuscita ('+response.status+').';try{const body=await response.json();text=body.error||body.title||text}catch{}throw new Error(text)}if(response.status===204)return null;return response.json()}
+async function request(path,options={}){const base=apiBase();if(!base)throw new Error('Inserisci l’URL della nuova Media API.');const response=await fetch(base+path,{...options,headers:{...(options.headers||{}),Authorization:'Bearer '+token}});if(response.status===401||response.status===403){clearToken();showLogin();message('loginMessage','Sessione scaduta o accesso non autorizzato. Accedi di nuovo.',true);throw new Error('Sessione scaduta o accesso non autorizzato.');}if(!response.ok){let text='Richiesta non riuscita ('+response.status+').';try{const body=await response.json();text=body.error||body.title||text}catch{}throw new Error(text)}if(response.status===204)return null;return response.json()}
 function showApp(){ $('loginPanel').classList.add('hidden');$('appPanel').classList.remove('hidden');$('logout').classList.remove('hidden');$('userLabel').textContent='Sessione amministratore';}
 function showLogin(){ $('appPanel').classList.add('hidden');$('loginPanel').classList.remove('hidden');$('logout').classList.add('hidden');$('userLabel').textContent='';token=null;}
-function pickToken(data){return data?.accessToken||data?.token||data?.jwt||data?.access_token||data?.data?.accessToken||data?.data?.token||null}
-$('loginBtn').onclick=async()=>{clearMessage('loginMessage');const btn=$('loginBtn');btn.disabled=true;try{const base=$('authApi').value.trim().replace(/\/$/,'');const res=await fetch(base+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('email').value.trim(),password:$('password').value})});let data={};try{data=await res.json()}catch{}if(!res.ok)throw new Error(data.message||data.error||'Login non riuscito.');token=pickToken(data);if(!token)throw new Error('Il login non ha restituito un token riconosciuto. Verificare la risposta del servizio di autenticazione JSO.');sessionStorage.setItem('jsoMediaToken',token);showApp();await load();}catch(e){message('loginMessage',e.message,true)}finally{btn.disabled=false}};
-$('logout').onclick=()=>{sessionStorage.removeItem('jsoMediaToken');showLogin();$('password').value='';$('gallery').replaceChildren()};
+function pickToken(data){
+  const candidates=[
+    data?.accessToken,data?.token,data?.jwt,data?.access_token,data?.access_token?.token,
+    data?.data?.accessToken,data?.data?.token,data?.data?.jwt,data?.data?.access_token,
+    data?.result?.accessToken,data?.result?.token,data?.authentication?.accessToken
+  ];
+  return candidates.find(value=>typeof value==='string'&&value.trim().length>0)||null
+}
+$('loginBtn').onclick=async()=>{clearMessage('loginMessage');const btn=$('loginBtn');btn.disabled=true;try{const base=$('authApi').value.trim().replace(/\/$/,'');const res=await fetch(base+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('email').value.trim(),password:$('password').value})});let data={};try{data=await res.json()}catch{}if(!res.ok)throw new Error(data.message||data.error||'Login non riuscito.');token=pickToken(data);
+if(!token)throw new Error('Login riuscito ma il token non è presente nel formato previsto dalla Media Library.');
+if(!saveToken(token)){token=null;throw new Error('Il browser non consente di salvare la sessione. Abilita lo storage del sito e riprova.')}
+showApp();await load();}catch(e){message('loginMessage',e.message,true)}finally{btn.disabled=false}};
+$('logout').onclick=()=>{clearToken();showLogin();$('password').value='';$('gallery').replaceChildren()};
 async function load(){clearMessage('appMessage');$('gallery').replaceChildren();try{const q=new URLSearchParams({page:String(page),pageSize:String(pageSize)});if($('search').value.trim())q.set('q',$('search').value.trim());const data=await request('/api/media?'+q);items=data.items||[];total=data.total||0;$('total').textContent=total;$('pageInfo').textContent='Pagina '+page+' · '+items.length+' risultati';$('prevBtn').disabled=page<=1;$('nextBtn').disabled=page*pageSize>=total;for(const asset of items){const card=document.createElement('article');card.className='asset';const img=document.createElement('img');img.src=assetUrl(asset.url);img.alt=asset.title||asset.fileName||'Immagine JSO';img.loading='lazy';img.onerror=()=>{img.onerror=null;img.alt='Immagine non disponibile: '+(asset.fileName||asset.title||'file');img.style.objectFit='contain';img.style.padding='12px';};const body=document.createElement('div');body.className='body';const title=document.createElement('h3');title.textContent=asset.title||asset.fileName||'Senza titolo';const info=document.createElement('div');info.className='url';info.textContent=(asset.fileName||'')+' · '+(asset.isPublished?'Pubblicata':'Non pubblicata');const url=document.createElement('div');url.className='url';url.textContent=asset.url;const actions=document.createElement('div');actions.className='actions';const edit=document.createElement('button');edit.className='secondary';edit.textContent='Modifica';edit.onclick=()=>editAsset(asset);const copy=document.createElement('button');copy.className='secondary';copy.textContent='Copia URL';copy.onclick=async()=>{try{await navigator.clipboard.writeText(asset.url);message('appMessage','URL copiato.')}catch{message('appMessage',asset.url)}};const del=document.createElement('button');del.className='danger';del.textContent='Elimina';del.onclick=()=>deleteAsset(asset);actions.append(edit,copy,del);body.append(title,info,url,actions);card.append(img,body);$('gallery').append(card)}}catch(e){message('appMessage',e.message,true)}}
 async function editAsset(asset){const title=prompt('Titolo immagine:',asset.title||'');if(title===null)return;const caption=prompt('Descrizione:',asset.caption||'');if(caption===null)return;const published=confirm('Premi OK per mantenere l’immagine pubblicata. Annulla per non pubblicarla.');try{await request('/api/media/'+encodeURIComponent(asset.id),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:title.trim(),caption:caption,isPublished:published})});message('appMessage','Metadati aggiornati.');await load()}catch(e){message('appMessage',e.message,true)}}
 async function deleteAsset(asset){if(!confirm('Eliminare "'+(asset.title||asset.fileName)+'"? L’operazione rimuove il record e, solo per i file gestiti da Media, anche il file su IONOS.'))return;try{await request('/api/media/'+encodeURIComponent(asset.id),{method:'DELETE'});message('appMessage','Immagine eliminata.');await load()}catch(e){message('appMessage',e.message,true)}}
