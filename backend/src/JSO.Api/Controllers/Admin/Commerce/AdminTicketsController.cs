@@ -82,10 +82,11 @@ public sealed class AdminTicketsController(JsoDbContext db, AuditService audit, 
         if (type is null) return NotFound();
         if (await db.TicketOrders.AnyAsync(x => x.TicketTypeId == id, ct))
         {
-            // Preserve order history: a type referenced by orders cannot be physically deleted.
-            // Deactivate it instead so it no longer appears as a purchasable option.
-            type.IsActive = false;
-            await db.SaveChangesAsync(ct);
+            // Preserve order history: keep this type record but deactivate it so
+            // public ticket listings and new reservations can no longer use it.
+            var affected = await db.TicketTypes.Where(x => x.Id == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.IsActive, false), ct);
+            if (affected == 0) return NotFound();
             await audit.LogAsync("DEACTIVATE", "TicketType", id.ToString(), User.FindFirst("sub")?.Value,
                 User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(),
                 new { Reason = "Ticket type has existing orders." }, ct);
