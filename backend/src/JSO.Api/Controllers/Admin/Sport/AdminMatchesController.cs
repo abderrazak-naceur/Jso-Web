@@ -40,6 +40,7 @@ public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) 
             TeamId = request.TeamId,
             OpponentName = request.OpponentName.Trim(),
             OpponentLogoUrl = NormalizeLogoUrl(request.OpponentLogoUrl),
+            TicketArtworkUrl = NormalizeLogoUrl(request.TicketArtworkUrl),
             KickoffAt = request.KickoffAt,
             Venue = request.Venue?.Trim(),
             IsHome = request.IsHome,
@@ -66,6 +67,7 @@ public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) 
 
         match.OpponentName = request.OpponentName.Trim();
         match.OpponentLogoUrl = NormalizeLogoUrl(request.OpponentLogoUrl);
+        match.TicketArtworkUrl = NormalizeLogoUrl(request.TicketArtworkUrl);
         match.KickoffAt = request.KickoffAt;
         match.Venue = request.Venue?.Trim();
         match.IsHome = request.IsHome;
@@ -181,5 +183,5 @@ public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) 
     }
 }
 
-public sealed record MatchRequest(Guid SeasonId, Guid CompetitionId, Guid TeamId, string OpponentName, DateTimeOffset KickoffAt, string? Venue, bool IsHome, int? HomeScore, int? AwayScore, string? Status, bool IsPublished, string? OpponentLogoUrl = null);
+public sealed record MatchRequest(Guid SeasonId, Guid CompetitionId, Guid TeamId, string OpponentName, DateTimeOffset KickoffAt, string? Venue, bool IsHome, int? HomeScore, int? AwayScore, string? Status, bool IsPublished, string? OpponentLogoUrl = null, string? TicketArtworkUrl = null);
 public sealed record MatchEventRequest(int Minute, string Type, string? PlayerName, string? SecondaryPlayerName, string? Team, string? Notes);

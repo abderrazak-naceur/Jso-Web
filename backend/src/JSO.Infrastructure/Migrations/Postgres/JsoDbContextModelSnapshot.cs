@@ -1172,6 +1172,9 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.Property<string>("OpponentLogoUrl")
                         .HasColumnType("text");
 
+                    b.Property<string>("TicketArtworkUrl")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("SeasonId")
                         .HasColumnType("uuid");
 

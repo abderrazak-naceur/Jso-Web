@@ -34,6 +34,7 @@ export function normalizeMatch(raw) {
     id: pick(raw, 'Id', 'id'),
     opponentName: matchOpponentName(raw) || 'Adversaire à confirmer',
     opponentLogoUrl: pick(raw, 'OpponentLogoUrl', 'opponentLogoUrl') || '',
+    ticketArtworkUrl: pick(raw, 'TicketArtworkUrl', 'ticketArtworkUrl') || '',
     kickoffAt: pick(raw, 'KickoffAt', 'kickoffAt'),
     venue: pick(raw, 'Venue', 'venue'),
     isHome: Boolean(pick(raw, 'IsHome', 'isHome')),

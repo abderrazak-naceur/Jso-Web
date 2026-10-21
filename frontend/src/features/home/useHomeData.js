@@ -28,6 +28,7 @@ const INITIAL_STATE = {
   content: {},
   nextMatch: null,
   recentMatches: [],
+  matches: [],
   news: [],
   players: [],
   media: [],
@@ -104,6 +105,12 @@ export function useHomeData() {
         setStatus(key, 'error')
       })
 
+    // Fetch the complete public fixture list separately: /home only exposes
+    // nextMatch plus the three recent results.
+    loadList('matches', publicApi.getMatches(signal).then((value) =>
+      (Array.isArray(value) ? value : []).map(normalizeMatch),
+    ))
+
     publicApi.getHome(signal)
       .then((home) => merge({
         status: 'ready',
@@ -111,6 +118,7 @@ export function useHomeData() {
         content: home?.content || {},
         nextMatch: normalizeMatch(home?.nextMatch),
         recentMatches: (home?.recentMatches || []).map(normalizeMatch),
+        matches: Array.isArray(home?.matches) ? home.matches.map(normalizeMatch) : [],
         news: (home?.news || []).map(normalizeArticle),
       }))
       .catch(() => merge({ status: 'offline' }))
