@@ -15,10 +15,13 @@ async function api(path, options = {}) {
   })
   if (!response.ok) {
     let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
+    try { const payload = await response.json(); message = payload.message || message } catch { /* ignore */ }
     throw new Error(message)
   }
   if (response.status === 204) return null
+  if (response.status === 200 && options.method === 'DELETE') {
+    try { return await response.json() } catch { return null }
+  }
   return response.json()
 }
 
@@ -99,9 +102,20 @@ export default function TicketsModule({ onError }) {
     } catch (e) { onError(e.message) }
   }
   async function removeType(id) {
-    if (!confirm('Supprimer ce type de billet ?')) return
-    try { await api('/admin/tickets/types/' + id, { method: 'DELETE' }); await loadTypes() }
-    catch (e) { onError(e.message) }
+    const ticket = types.find((item) => item.id === id)
+    if (!ticket) return
+    const hasOrders = orders.some((order) => order.ticketTypeId === id || order.ticketTypeId?.toLowerCase() === id.toLowerCase())
+      || Number(ticket.soldCount || 0) > 0
+    const prompt = hasOrders
+      ? 'Questo tipo di biglietto è collegato a ordini o vendite. Non elimineremo lo storico: vuoi disattivarlo per impedirne nuovi acquisti?'
+      : 'Eliminare definitivamente questo tipo di biglietto?'
+    if (!confirm(prompt)) return
+    try {
+      const result = await api('/admin/tickets/types/' + id, { method: 'DELETE' })
+      await loadTypes()
+      if (result?.deactivated) onError('Il biglietto è stato disattivato perché collegato a ordini esistenti. Lo storico è stato conservato.')
+      else onError('')
+    } catch (e) { onError(e.message) }
   }
   async function createTicketsForUpcomingMatches() {
     const upcoming = matches.filter((match) => match.kickoffAt && new Date(match.kickoffAt) >= new Date())
