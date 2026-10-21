@@ -34,7 +34,8 @@ public sealed class MediaController(MediaDbContext db, MediaStorageService stora
 
     [HttpPost("upload")]
     [EnableRateLimiting("media-upload")]
-    [RequestSizeLimit(10 * 1024 * 1024)]
+    [RequestSizeLimit((10 * 1024 * 1024) + (256 * 1024))]
+    [RequestFormLimits(MultipartBodyLengthLimit = (10 * 1024 * 1024) + (256 * 1024))]
     public async Task<IActionResult> Upload(IFormFile file, [FromForm] string? title, [FromForm] string? caption, CancellationToken ct)
     {
         if (file is null || file.Length == 0) return BadRequest(new { error = "Seleziona un'immagine non vuota." });
