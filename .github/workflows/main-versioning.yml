@@ -40,9 +40,15 @@ jobs:
             minor=1
           fi
           next="V${major}.$(printf '%02d' "$minor")"
+          # Tags are immutable release identifiers. If a prior attempt already
+          # created this tag, advance to the next unused version instead of failing.
+          while git ls-remote --exit-code --tags origin "refs/tags/$next" >/dev/null 2>&1; do
+            minor=$((minor + 1))
+            next="V${major}.$(printf '%02d' "$minor")"
+          done
           echo "next=$next" >> "$GITHUB_OUTPUT"
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+actions@users.noreply.github.com"
           # Tag the code commit that triggered this workflow.
           git tag -a "$next" "$GITHUB_SHA" -m "Release $next"
           git push origin "$next"
