@@ -1,6 +1,6 @@
+using JSO.Infrastructure;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
-using JSO.Infrastructure;
 
 #nullable disable
 
@@ -21,8 +21,6 @@ public sealed class AddMatchTicketArtworkUrl : Migration
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.DropColumn(
-            name: "TicketArtworkUrl",
-            table: "Matches");
+        migrationBuilder.DropColumn(name: "OpponentLogoUrl", table: "Matches");
     }
 }
