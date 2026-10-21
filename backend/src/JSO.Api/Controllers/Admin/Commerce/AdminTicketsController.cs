@@ -81,7 +81,16 @@ public sealed class AdminTicketsController(JsoDbContext db, AuditService audit, 
         var type = await db.TicketTypes.FindAsync([id], ct);
         if (type is null) return NotFound();
         if (await db.TicketOrders.AnyAsync(x => x.TicketTypeId == id, ct))
-            return Conflict(new { message = "This ticket type has orders and cannot be deleted." });
+        {
+            // Preserve order history: a type referenced by orders cannot be physically deleted.
+            // Deactivate it instead so it no longer appears as a purchasable option.
+            type.IsActive = false;
+            await db.SaveChangesAsync(ct);
+            await audit.LogAsync("DEACTIVATE", "TicketType", id.ToString(), User.FindFirst("sub")?.Value,
+                User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(),
+                new { Reason = "Ticket type has existing orders." }, ct);
+            return Ok(new { deactivated = true, message = "This ticket type has existing orders, so it was deactivated instead of deleted." });
+        }
         db.TicketTypes.Remove(type);
         await db.SaveChangesAsync(ct);
         await audit.LogAsync("DELETE", "TicketType", id.ToString(), User.FindFirst("sub")?.Value,
