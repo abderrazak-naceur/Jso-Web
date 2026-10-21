@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace JSO.Media.Api.Controllers;
 
@@ -32,21 +33,27 @@ public sealed class MediaController(MediaDbContext db, MediaStorageService stora
     }
 
     [HttpPost("upload")]
-    [RequestSizeLimit(10 * 1024 * 1024)]
+    [EnableRateLimiting("media-upload")]
+    [RequestSizeLimit((10 * 1024 * 1024) + (256 * 1024))]
+    [RequestFormLimits(MultipartBodyLengthLimit = (10 * 1024 * 1024) + (256 * 1024))]
     public async Task<IActionResult> Upload(IFormFile file, [FromForm] string? title, [FromForm] string? caption, CancellationToken ct)
     {
         if (file is null || file.Length == 0) return BadRequest(new { error = "Seleziona un'immagine non vuota." });
         if (file.Length > 10 * 1024 * 1024) return BadRequest(new { error = "Dimensione massima: 10 MB." });
         if (!AllowedTypes.TryGetValue(file.ContentType, out var type)) return BadRequest(new { error = "Formato non supportato." });
 
-        await using var stream = file.OpenReadStream();
-        var header = new byte[Math.Min(12, (int)file.Length)];
-        var read = await stream.ReadAsync(header, ct);
-        if (read < type.Signature.Length || !header.AsSpan(0, type.Signature.Length).SequenceEqual(type.Signature))
-            return BadRequest(new { error = "Il contenuto del file non corrisponde al formato dichiarato." });
-        if (file.ContentType == "image/webp" && (read < 12 || System.Text.Encoding.ASCII.GetString(header, 8, 4) != "WEBP"))
-            return BadRequest(new { error = "File WebP non valido." });
-        stream.Position = 0;
+        await using var inputStream = file.OpenReadStream();
+        MemoryStream sanitizedStream;
+        try
+        {
+            sanitizedStream = await ImageUploadSanitizer.SanitizeAsync(inputStream, file.ContentType, ct);
+        }
+        catch (Exception ex) when (ex is InvalidDataException or SixLabors.ImageSharp.UnknownImageFormatException or SixLabors.ImageSharp.InvalidImageContentException)
+        {
+            logger.LogWarning(ex, "Rejected invalid image upload");
+            return BadRequest(new { error = "Il file non è un'immagine valida oppure supera i limiti di dimensione." });
+        }
+        await using var stream = sanitizedStream;
 
         var id = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
@@ -72,7 +79,7 @@ public sealed class MediaController(MediaDbContext db, MediaStorageService stora
             CreatedAt = now,
             FileName = Path.GetFileName(file.FileName),
             ContentType = file.ContentType,
-            FileSize = file.Length,
+            FileSize = stream.Length,
             StoragePath = "sftp:" + relativePath
         };
 
