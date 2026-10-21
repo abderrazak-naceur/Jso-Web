@@ -126,6 +126,7 @@ export default function HomePage({
         status={data.status}
         nextMatch={data.nextMatch}
         recentMatches={data.recentMatches}
+        matches={data.matches}
         onOpenMatch={onOpenMatch}
       />
     ),
