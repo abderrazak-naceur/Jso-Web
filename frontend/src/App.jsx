@@ -199,7 +199,7 @@ function App() {
   const footerLinks = useNavigation('Footer')
   const homeLayout = useHomeLayout()
   const focusSection = sectionFromPath()
-  const isMatchListRoute = window.location.pathname.replace(/\\/$/, '') === '/matchs'
+  const isMatchListRoute = window.location.pathname === '/matchs' || window.location.pathname === '/matchs/'
   const isAdminStreamsRoute = window.location.pathname === '/admin/live-streams'
   const isPasswordResetRoute = window.location.pathname === '/password-reset'
   const productSlug = productSlugFromPath()
