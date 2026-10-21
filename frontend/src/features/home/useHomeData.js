@@ -105,6 +105,12 @@ export function useHomeData() {
         setStatus(key, 'error')
       })
 
+    // Fetch the complete public fixture list separately: /home only exposes
+    // nextMatch plus the three recent results.
+    loadList('matches', publicApi.getMatches(signal).then((value) =>
+      (Array.isArray(value) ? value : []).map(normalizeMatch),
+    ))
+
     publicApi.getHome(signal)
       .then((home) => merge({
         status: 'ready',
