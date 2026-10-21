@@ -106,7 +106,7 @@ public sealed class AdminTicketsController(JsoDbContext db, AuditService audit, 
         if (!string.IsNullOrWhiteSpace(status)) query = query.Where(x => x.Status == status);
         var orders = await query
             .OrderByDescending(x => x.CreatedAt)
-            .Select(x => new { x.Id, x.MatchId, x.TicketTypeName, x.Quantity, x.Total, x.Currency, x.Status, x.PaymentProvider, x.PromoCode, x.CreatedAt, x.ConfirmedAt })
+            .Select(x => new { x.Id, x.MatchId, x.TicketTypeId, x.TicketTypeName, x.Quantity, x.Total, x.Currency, x.Status, x.PaymentProvider, x.PromoCode, x.CreatedAt, x.ConfirmedAt })
             .ToListAsync(ct);
         return Ok(orders);
     }
