@@ -28,6 +28,7 @@ const INITIAL_STATE = {
   content: {},
   nextMatch: null,
   recentMatches: [],
+  matches: [],
   news: [],
   players: [],
   media: [],
@@ -111,6 +112,7 @@ export function useHomeData() {
         content: home?.content || {},
         nextMatch: normalizeMatch(home?.nextMatch),
         recentMatches: (home?.recentMatches || []).map(normalizeMatch),
+        matches: Array.isArray(home?.matches) ? home.matches.map(normalizeMatch) : [],
         news: (home?.news || []).map(normalizeArticle),
       }))
       .catch(() => merge({ status: 'offline' }))
