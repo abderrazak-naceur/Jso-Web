@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace JSO.Media.Api.Controllers;
 
@@ -32,6 +33,7 @@ public sealed class MediaController(MediaDbContext db, MediaStorageService stora
     }
 
     [HttpPost("upload")]
+    [EnableRateLimiting("media-upload")]
     [RequestSizeLimit(10 * 1024 * 1024)]
     public async Task<IActionResult> Upload(IFormFile file, [FromForm] string? title, [FromForm] string? caption, CancellationToken ct)
     {
