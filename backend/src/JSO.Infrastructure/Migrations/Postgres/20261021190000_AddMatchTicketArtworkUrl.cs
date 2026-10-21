@@ -21,6 +21,6 @@ public sealed class AddMatchTicketArtworkUrl : Migration
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.DropColumn(name: "OpponentLogoUrl", table: "Matches");
+        migrationBuilder.DropColumn(name: "TicketArtworkUrl", table: "Matches");
     }
 }
