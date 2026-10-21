@@ -61,35 +61,31 @@ function MainMatch({ match, onOpenMatch }) {
 }
 
 function NextMatchTicket({ match, onOpenMatch }) {
-  if (!match) {
-    return (
-      <article className="jso-next-match-ticket hidden rounded-[1.5rem] border border-white/10 bg-white p-5 text-jso-navy">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-blue">Billetterie JSO</p>
-        <h3 className="mt-2 text-lg font-black">Prochain match à confirmer</h3>
-        <p className="mt-1 text-sm text-slate-600">Les informations du billet apparaîtront ici dès la publication du calendrier.</p>
-      </article>
-    )
-  }
+  if (!match || !match.isHome) return null
 
   const { home, away } = matchSides(match)
   return (
-    <article className="jso-next-match-ticket hidden overflow-hidden rounded-[1.5rem] border border-white/15 bg-white text-jso-navy shadow-xl shadow-black/10">
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#123b78] via-[#071a35] to-[#123b78] p-5 text-white">
-        <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full border border-white/10" aria-hidden="true" />
-        <div className="absolute -right-2 -top-4 h-20 w-20 rounded-full border border-[#ffc629]/30" aria-hidden="true" />
-        <p className="relative flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[#ffc629]"><Ticket size={16} aria-hidden="true" /> Billet · Prochain match</p>
-        <div className="relative mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-          <p className="line-clamp-2 text-sm font-black sm:text-base">{home.name}</p>
-          <span className="text-xs font-black text-[#ffc629]">VS</span>
-          <p className="line-clamp-2 text-right text-sm font-black sm:text-base">{away.name}</p>
+    <article className="jso-next-match-ticket overflow-hidden rounded-[1.5rem] border border-white/15 bg-white text-jso-navy shadow-xl shadow-black/10">
+      {match.ticketArtworkUrl ? (
+        <img src={match.ticketArtworkUrl} alt={`Billet JSO — ${home.name} contre ${away.name}`} className="block max-h-64 w-full bg-white object-contain" loading="lazy" />
+      ) : (
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#123b78] via-[#071a35] to-[#123b78] p-5 text-white">
+          <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full border border-white/10" aria-hidden="true" />
+          <div className="absolute -right-2 -top-4 h-20 w-20 rounded-full border border-[#ffc629]/30" aria-hidden="true" />
+          <p className="relative flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[#ffc629]"><Ticket size={16} aria-hidden="true" /> Billet · Match à domicile</p>
+          <div className="relative mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+            <p className="line-clamp-2 text-sm font-black sm:text-base">{home.name}</p>
+            <span className="text-xs font-black text-[#ffc629]">VS</span>
+            <p className="line-clamp-2 text-right text-sm font-black sm:text-base">{away.name}</p>
+          </div>
+          <div className="relative mt-4 border-t border-dashed border-white/30 pt-4 text-sm text-white/85">
+            <p className="flex items-start gap-2"><CalendarDays size={16} className="mt-0.5 shrink-0 text-[#ffc629]" aria-hidden="true" />{formatDate(match.kickoffAt, { weekday: 'long', day: 'numeric', month: 'long' })} · {formatTime(match.kickoffAt)}</p>
+            <p className="mt-2 flex items-start gap-2"><MapPin size={16} className="mt-0.5 shrink-0 text-[#ffc629]" aria-hidden="true" />{match.venue || 'Lieu à confirmer'}</p>
+          </div>
         </div>
-        <div className="relative mt-4 border-t border-dashed border-white/30 pt-4 text-sm text-white/85">
-          <p className="flex items-start gap-2"><CalendarDays size={16} className="mt-0.5 shrink-0 text-[#ffc629]" aria-hidden="true" />{formatDate(match.kickoffAt, { weekday: 'long', day: 'numeric', month: 'long' })} · {formatTime(match.kickoffAt)}</p>
-          <p className="mt-2 flex items-start gap-2"><MapPin size={16} className="mt-0.5 shrink-0 text-[#ffc629]" aria-hidden="true" />{match.venue || 'Lieu à confirmer'}</p>
-        </div>
-      </div>
+      )}
       <div className="flex items-center justify-between gap-3 p-4">
-        <p className="text-xs leading-5 text-slate-500">Les informations officielles du match</p>
+        <p className="text-xs leading-5 text-slate-500">Stade Oudhref · Tarif indicatif 5 DT</p>
         <button type="button" onClick={() => onOpenMatch(match)} className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#ffc629] px-4 py-2.5 text-xs font-black text-[#071a35] transition hover:bg-[#123b78] hover:text-white">
           Billetterie <ArrowUpRight size={14} aria-hidden="true" />
         </button>
