@@ -10,6 +10,7 @@ import { useFanSession } from './features/account/useFanSession'
 import HomePage from './features/home/HomePage'
 import { useHomeData } from './features/home/useHomeData'
 import MatchCenterModal from './features/matches/MatchCenterModal'
+import MatchsPage from './features/matches/MatchsPage'
 import { normalizeMatch } from './features/matches/matchUtils'
 import { publicApi } from './lib/api'
 import ArticleModal from './features/news/ArticleModal'
@@ -198,6 +199,7 @@ function App() {
   const footerLinks = useNavigation('Footer')
   const homeLayout = useHomeLayout()
   const focusSection = sectionFromPath()
+  const isMatchListRoute = window.location.pathname.replace(/\\/$/, '') === '/matchs'
   const isAdminStreamsRoute = window.location.pathname === '/admin/live-streams'
   const isPasswordResetRoute = window.location.pathname === '/password-reset'
   const productSlug = productSlugFromPath()
@@ -239,23 +241,29 @@ function App() {
         </main>
       ) : (
         <>
-          <HomePage
-            data={data}
-            cart={cart}
-            fan={fan}
-            onOpenCart={() => setCartOpen(true)}
-            onOpenAuth={openAuth}
-            onOpenMatch={openMatch}
-            onOpenArticle={openArticle}
-            sections={sections}
-            hiddenSections={hiddenSections}
-            homeLayout={homeLayout}
-            focusSection={focusSection}
-            productSlug={productSlug}
-            eventSlug={eventSlug}
-            templatePreview={templatePreview}
-          />
-          <SiteFooter sections={sections} extraLinks={footerLinks} />
+          {isMatchListRoute ? (
+            <MatchsPage onOpenMatch={openMatch} />
+          ) : (
+            <>
+              <HomePage
+                data={data}
+                cart={cart}
+                fan={fan}
+                onOpenCart={() => setCartOpen(true)}
+                onOpenAuth={openAuth}
+                onOpenMatch={openMatch}
+                onOpenArticle={openArticle}
+                sections={sections}
+                hiddenSections={hiddenSections}
+                homeLayout={homeLayout}
+                focusSection={focusSection}
+                productSlug={productSlug}
+                eventSlug={eventSlug}
+                templatePreview={templatePreview}
+              />
+              <SiteFooter sections={sections} extraLinks={footerLinks} />
+            </>
+          )}
         </>
       )}
 
