@@ -39,7 +39,7 @@ public sealed class MediaStorageService(IConfiguration configuration, ILogger<Me
         var username = Required("Sftp:Username");
         var password = Required("Sftp:Password");
         var root = Required("Sftp:RootPath").TrimEnd('/');
-        var fingerprint = OptionalFingerprint();
+        var fingerprint = GetFingerprint();
         var port = int.TryParse(configuration["Sftp:Port"], out var parsedPort) ? parsedPort : 22;
 
         await Task.Run(() =>
