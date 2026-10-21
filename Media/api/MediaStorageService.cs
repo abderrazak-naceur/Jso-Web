@@ -2,7 +2,7 @@ using Renci.SshNet;
 
 namespace JSO.Media.Api;
 
-public sealed class MediaStorageService(IConfiguration configuration, ILogger<MediaStorageService> logger)
+public sealed class MediaStorageService(IConfiguration configuration, ILogger<MediaStorageService> logger, IHostEnvironment environment)
 {
     public async Task SaveAsync(Stream content, string relativePath, CancellationToken cancellationToken)
     {
@@ -10,7 +10,7 @@ public sealed class MediaStorageService(IConfiguration configuration, ILogger<Me
         var username = Required("Sftp:Username");
         var password = Required("Sftp:Password");
         var root = Required("Sftp:RootPath").TrimEnd('/');
-        var fingerprint = OptionalFingerprint();
+        var fingerprint = GetFingerprint();
         var port = int.TryParse(configuration["Sftp:Port"], out var parsedPort) ? parsedPort : 22;
         var normalized = Normalize(relativePath);
         var remotePath = $"{root}/{normalized}";
@@ -58,12 +58,17 @@ public sealed class MediaStorageService(IConfiguration configuration, ILogger<Me
     public string PublicUrl(string relativePath) =>
         Required("Sftp:PublicBaseUrl").TrimEnd('/') + "/" + Normalize(relativePath);
 
-    private string? OptionalFingerprint()
+    private string? GetFingerprint()
     {
         var fingerprint = configuration["Sftp:HostKeyFingerprint"];
         if (string.IsNullOrWhiteSpace(fingerprint))
-            logger.LogWarning("Sftp:HostKeyFingerprint is not configured. SFTP host key verification is disabled; configure the fingerprint to secure this connection.");
-        return string.IsNullOrWhiteSpace(fingerprint) ? null : fingerprint.Trim();
+        {
+            if (environment.IsProduction())
+                throw new InvalidOperationException("Sftp:HostKeyFingerprint is required in Production; refusing an unverified SFTP connection.");
+            logger.LogWarning("Sftp:HostKeyFingerprint is not configured. SFTP host key verification is disabled outside Production.");
+            return null;
+        }
+        return fingerprint.Trim();
     }
 
     private SftpClient CreateClient(string host, int port, string username, string password, string? fingerprint)
