@@ -104,19 +104,19 @@ export default function TicketsModule({ onError }) {
   async function removeType(id) {
     const ticket = types.find((item) => item.id === id)
     if (!ticket) return
-    const hasOrders = orders.some((order) => order.ticketTypeId === id || order.ticketTypeId?.toLowerCase() === id.toLowerCase())
-      || Number(ticket.soldCount || 0) > 0
-    const prompt = hasOrders
-      ? 'Questo tipo di biglietto è collegato a ordini o vendite. Non elimineremo lo storico: vuoi disattivarlo per impedirne nuovi acquisti?'
+    const hasSales = Number(ticket.soldCount || 0) > 0
+    const prompt = hasSales
+      ? 'Questo tipo di biglietto ha già vendite. Lo storico verrà conservato e il biglietto sarà disattivato per impedire nuovi acquisti. Continuare?'
       : 'Eliminare definitivamente questo tipo di biglietto?'
     if (!confirm(prompt)) return
     try {
       const result = await api('/admin/tickets/types/' + id, { method: 'DELETE' })
       await loadTypes()
-      if (result?.deactivated) onError('Il biglietto è stato disattivato perché collegato a ordini esistenti. Lo storico è stato conservato.')
+      if (result?.deactivated) onError('Biglietto disattivato: gli ordini esistenti sono stati conservati.')
       else onError('')
     } catch (e) { onError(e.message) }
   }
+
   async function createTicketsForUpcomingMatches() {
     const upcoming = matches.filter((match) => match.kickoffAt && new Date(match.kickoffAt) >= new Date())
     if (!upcoming.length) { onError('Aucune partie future avec une date valide. Ajoutez d’abord les parties dans le calendrier.'); return }
