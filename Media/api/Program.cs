@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using JSO.Media.Api;
 
@@ -16,6 +17,20 @@ if (!string.Equals(provider, "postgres", StringComparison.OrdinalIgnoreCase) &&
 
 builder.Services.AddDbContext<MediaDbContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddScoped<MediaStorageService>();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("media-upload", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(10),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        }));
+});
 
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
@@ -80,7 +95,9 @@ builder.Services.AddHealthChecks();
 var app = builder.Build();
 // Render terminates external HTTPS and forwards traffic to the container over HTTP.
 // Do not redirect at the container layer: it has no HTTPS listener/port to redirect to.
+app.UseRouting();
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapGet("/", () => Results.Ok(new
