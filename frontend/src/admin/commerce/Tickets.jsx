@@ -104,9 +104,11 @@ export default function TicketsModule({ onError }) {
   async function removeType(id) {
     const ticket = types.find((item) => item.id === id)
     if (!ticket) return
-    const hasSales = Number(ticket.soldCount || 0) > 0
-    const prompt = hasSales
-      ? 'Questo tipo di biglietto ha già vendite. Lo storico verrà conservato e il biglietto sarà disattivato per impedire nuovi acquisti. Continuare?'
+    const hasOrders = Number(ticket.soldCount || 0) > 0 || orders.some((order) =>
+      String(order.ticketTypeId || '').toLowerCase() === String(id).toLowerCase()
+    )
+    const prompt = hasOrders
+      ? 'Questo tipo di biglietto è collegato a ordini. Lo storico verrà conservato e il biglietto sarà disattivato per impedire nuovi acquisti. Continuare?'
       : 'Eliminare definitivamente questo tipo di biglietto?'
     if (!confirm(prompt)) return
     try {
