@@ -75,9 +75,28 @@ public sealed class AdminDocumentsController(JsoDbContext db, AuditService audit
 
     private static string? Validate(DocumentRequest r)
     {
-        if (string.IsNullOrWhiteSpace(r.Title)) return "Title is required.";
+        if (string.IsNullOrWhiteSpace(r.Title) || r.Title.Trim().Length > 180)
+            return "Title is required and must be at most 180 characters.";
         if (string.IsNullOrWhiteSpace(r.FileUrl)) return "FileUrl is required.";
+        if (!IsSafeDocumentUrl(r.FileUrl))
+            return "FileUrl must be a relative site path or an absolute http/https URL.";
+        if (r.Category?.Trim().Length > 100)
+            return "Category must be at most 100 characters.";
         return null;
+    }
+
+    private static bool IsSafeDocumentUrl(string value)
+    {
+        value = value.Trim();
+        if (value.Length == 0 || value.Length > 2048 || value.Any(char.IsControl)
+            || value.StartsWith("//", StringComparison.Ordinal)
+            || value.StartsWith(@"\\", StringComparison.Ordinal))
+            return false;
+        if (Uri.TryCreate(value, UriKind.Absolute, out var absolute))
+            return absolute.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+                || absolute.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
+        return !value.StartsWith('\\') && !value.StartsWith(':');
+
     }
 }
 

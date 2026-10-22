@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using JSO.Domain;
 using JSO.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
@@ -87,17 +88,20 @@ public sealed class AdminFanAccountsController(JsoDbContext db, AuditService aud
         if (!allowedRoles.Contains(role))
             return BadRequest(new { message = "Rôle administratif non autorisé pour cette opération." });
         // An administrative account may already exist for this email. In that case,
-        // promote/update that account instead of rejecting the operation or creating a duplicate.
-        // Keep its existing password hash so promotion does not unexpectedly change credentials.
+        // promote/update that account instead of creating a duplicate.
+        // Never copy a fan password hash into the privileged admin identity. A newly
+        // created admin gets a random unknown password and must use password recovery
+        // to set their own admin credential.
         var admin = await db.AdminUsers.SingleOrDefaultAsync(x => x.Email.ToLower() == fan.Email.ToLower(), ct);
         var created = admin is null;
         if (admin is null)
         {
+            var randomInitialPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(48));
             admin = new AdminUser
             {
                 Email = fan.Email,
                 DisplayName = fan.DisplayName,
-                PasswordHash = fan.PasswordHash,
+                PasswordHash = PasswordHasher.Hash(randomInitialPassword),
                 Role = role,
                 IsActive = true
             };
@@ -105,6 +109,8 @@ public sealed class AdminFanAccountsController(JsoDbContext db, AuditService aud
         }
         else
         {
+            if (!string.Equals(admin.Role, role, StringComparison.Ordinal) || !admin.IsActive)
+                admin.SessionVersion++;
             admin.Role = role;
             admin.DisplayName = fan.DisplayName;
             admin.IsActive = true;
@@ -126,6 +132,8 @@ public sealed class AdminFanAccountsController(JsoDbContext db, AuditService aud
         var fan = await db.FanUsers.SingleOrDefaultAsync(x => x.Id == id, ct);
         if (fan is null) return NotFound(new { message = "Compte supporter introuvable." });
 
+        if (fan.IsActive != request.IsActive)
+            fan.SessionVersion++;
         fan.IsActive = request.IsActive;
         await db.SaveChangesAsync(ct);
         await audit.LogAsync(request.IsActive ? "UNBLOCK" : "BLOCK", "FanUser", fan.Id.ToString(),

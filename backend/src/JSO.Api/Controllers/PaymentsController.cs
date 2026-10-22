@@ -44,6 +44,7 @@ public sealed class PaymentsController(
     private const string FlouciWebhookSecretHeader = "X-Flouci-Webhook-Secret";
 
     [HttpPost("stripe/webhook")]
+    [RequestSizeLimit(1_048_576)]
     public async Task<IActionResult> StripeWebhook(CancellationToken ct)
     {
         if (!stripe.IsConfigured)
@@ -121,6 +122,7 @@ public sealed class PaymentsController(
     }
 
     [HttpPost("flouci/webhook")]
+    [RequestSizeLimit(1_048_576)]
     public async Task<IActionResult> FlouciWebhook(CancellationToken ct)
     {
         var flouci = selector.Flouci;

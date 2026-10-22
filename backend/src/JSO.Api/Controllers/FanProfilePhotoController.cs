@@ -1,7 +1,9 @@
 using JSO.Domain;
+using JSO.Api.Security;
 using JSO.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace JSO.Api.Controllers;
@@ -27,6 +29,7 @@ public sealed class FanProfilePhotoController(JsoDbContext db, IWebHostEnvironme
     }
 
     [HttpPost]
+    [EnableRateLimiting("fan-photo-upload")]
     [RequestSizeLimit(MaxBytes + 1024)]
     public async Task<IActionResult> Upload(IFormFile file, CancellationToken ct)
     {
@@ -45,6 +48,19 @@ public sealed class FanProfilePhotoController(JsoDbContext db, IWebHostEnvironme
                 return BadRequest(new { message = "Le fichier ne semble pas être une image valide." });
         }
 
+        byte[] sanitizedBytes;
+        await using (var input = file.OpenReadStream())
+        {
+            try
+            {
+                sanitizedBytes = await ImageUploadSanitizer.SanitizeAsync(input, file.ContentType ?? string.Empty, ct);
+            }
+            catch (InvalidDataException)
+            {
+                return BadRequest(new { message = "La photo n'est pas valide ou dépasse les limites autorisées." });
+            }
+        }
+
         var fan = await db.FanUsers.SingleOrDefaultAsync(x => x.Id == id && x.IsActive, ct);
         if (fan is null) return NotFound();
         var now = DateTime.UtcNow;
@@ -53,7 +69,7 @@ public sealed class FanProfilePhotoController(JsoDbContext db, IWebHostEnvironme
         var relative = Path.Combine(relativeDir, safeName);
         var absolute = Path.Combine(env.ContentRootPath, relative);
         Directory.CreateDirectory(Path.GetDirectoryName(absolute)!);
-        await using (var output = System.IO.File.Create(absolute)) await file.CopyToAsync(output, ct);
+        await System.IO.File.WriteAllBytesAsync(absolute, sanitizedBytes, ct);
 
         var oldUrl = fan.ProfilePhotoUrl;
         fan.ProfilePhotoUrl = "/" + relative.Replace('\\', '/');
@@ -82,9 +98,23 @@ public sealed class FanProfilePhotoController(JsoDbContext db, IWebHostEnvironme
 
     private void DeleteOldFile(string? url)
     {
-        if (string.IsNullOrWhiteSpace(url) || !url.StartsWith("/uploads/fan-profiles/", StringComparison.Ordinal)) return;
+        const string allowedPrefix = "/uploads/fan-profiles/";
+        if (string.IsNullOrWhiteSpace(url) ||
+            !url.StartsWith(allowedPrefix, StringComparison.Ordinal))
+            return;
+
+        var profileRoot = Path.GetFullPath(Path.Combine(env.ContentRootPath, "uploads", "fan-profiles"));
         var relative = url.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-        var absolute = Path.Combine(env.ContentRootPath, relative);
-        if (System.IO.File.Exists(absolute)) System.IO.File.Delete(absolute);
+        var absolute = Path.GetFullPath(Path.Combine(env.ContentRootPath, relative));
+        var profilePrefix = profileRoot.EndsWith(Path.DirectorySeparatorChar)
+            ? profileRoot
+            : profileRoot + Path.DirectorySeparatorChar;
+
+        // Normalize first, then enforce containment to block ../ traversal.
+        if (absolute.StartsWith(profilePrefix, StringComparison.OrdinalIgnoreCase) &&
+            System.IO.File.Exists(absolute))
+        {
+            System.IO.File.Delete(absolute);
+        }
     }
 }

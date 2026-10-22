@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text.Json;
 using JSO.Domain;
 using JSO.Infrastructure;
+using JSO.Api.Security;
 
 namespace JSO.Api.Controllers;
 
@@ -24,7 +26,6 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
             ["image/jpeg"] = (".jpg", [0xFF, 0xD8, 0xFF]),
             ["image/png"] = (".png", [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
             ["image/webp"] = (".webp", [0x52, 0x49, 0x46, 0x46]),
-            ["image/gif"] = (".gif", [0x47, 0x49, 0x46, 0x38])
         };
     private const long MaxUploadBytes = 10 * 1024 * 1024;
 
@@ -33,13 +34,24 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         Ok(await db.MediaAssets.AsNoTracking().OrderByDescending(x => x.CreatedAt).Take(200).ToListAsync(ct));
 
     [HttpPost("upload")]
+    [EnableRateLimiting("media-upload")]
     [RequestSizeLimit(MaxUploadBytes + 1024 * 1024)]
     public async Task<IActionResult> Upload(IFormFile file, [FromForm] string? title, [FromForm] string? caption, [FromForm] bool addToMedia = true, CancellationToken ct = default)
     {
         if (file is null || file.Length == 0) return BadRequest(new { message = "File is required." });
         if (file.Length > MaxUploadBytes) return BadRequest(new { message = "Maximum file size is 10 MB." });
+        var assetTitle = string.IsNullOrWhiteSpace(title)
+            ? Path.GetFileNameWithoutExtension(file.FileName)
+            : title.Trim();
+        if (string.IsNullOrWhiteSpace(assetTitle) || assetTitle.Length > 180)
+            return BadRequest(new { message = "Title is required and must be at most 180 characters." });
+        if (caption?.Trim().Length > 500)
+            return BadRequest(new { message = "Caption must be at most 500 characters." });
+        var originalFileName = Path.GetFileName(file.FileName);
+        if (string.IsNullOrWhiteSpace(originalFileName) || originalFileName.Length > 255)
+            return BadRequest(new { message = "File name must be at most 255 characters." });
         if (string.IsNullOrWhiteSpace(file.ContentType) || !AllowedImageTypes.TryGetValue(file.ContentType, out var imageType))
-            return BadRequest(new { message = "Only JPEG, PNG, WebP and GIF images are supported." });
+            return BadRequest(new { message = "Only JPEG, PNG and WebP images are supported." });
 
         var signature = new byte[12];
         await using (var input = file.OpenReadStream())
@@ -55,6 +67,19 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
                 return BadRequest(new { message = "The file content does not match its declared image type." });
         }
 
+        byte[] sanitizedBytes;
+        await using (var input = file.OpenReadStream())
+        {
+            try
+            {
+                sanitizedBytes = await ImageUploadSanitizer.SanitizeAsync(input, file.ContentType, ct);
+            }
+            catch (InvalidDataException)
+            {
+                return BadRequest(new { message = "The uploaded file is not a valid supported image or exceeds image limits." });
+            }
+        }
+
         var extension = imageType.Extension;
         var safeName = $"{Guid.NewGuid():N}{extension}";
         var uploadedAtUtc = DateTime.UtcNow;
@@ -63,19 +88,18 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         var relative = Path.Combine("uploads", "media", year, month, safeName);
         var absolute = Path.Combine(env.ContentRootPath, relative);
         Directory.CreateDirectory(Path.GetDirectoryName(absolute)!);
-        await using (var stream = System.IO.File.Create(absolute))
-            await file.CopyToAsync(stream, ct);
+        await System.IO.File.WriteAllBytesAsync(absolute, sanitizedBytes, ct);
 
         var asset = new MediaAsset
         {
-            Title = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(file.FileName) : title.Trim(),
+            Title = assetTitle,
             Url = "/uploads/media/" + year + "/" + month + "/" + safeName,
             Type = "Image",
             Caption = caption?.Trim(),
             IsPublished = true,
-            FileName = Path.GetFileName(file.FileName),
+            FileName = originalFileName,
             ContentType = file.ContentType.ToLowerInvariant(),
-            FileSize = file.Length,
+            FileSize = sanitizedBytes.Length,
             StoragePath = relative.Replace('\\', '/')
         };
         // Match-specific uploads are stored on disk for the match, but enter Media House only by explicit opt-in.
@@ -91,6 +115,7 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
     // Store membership card artwork as versioned repository assets so it survives API container replacements.
     // Configure GitHub__Token on the API service with repository Contents: Read and write permission.
     [HttpPost("membership-artwork/{side}")]
+    [EnableRateLimiting("media-upload")]
     [RequestSizeLimit(MaxUploadBytes + 1024 * 1024)]
     public async Task<IActionResult> UploadMembershipArtwork(string side, IFormFile file, CancellationToken ct)
     {
@@ -126,6 +151,16 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         if (!System.Text.RegularExpressions.Regex.IsMatch(repository, @"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$") ||
             !System.Text.RegularExpressions.Regex.IsMatch(branch, @"^[A-Za-z0-9_./-]+$"))
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = "GitHub repository or branch configuration is invalid." });
+
+        try
+        {
+            await using var rawInput = new MemoryStream(bytes, writable: false);
+            bytes = await ImageUploadSanitizer.SanitizeAsync(rawInput, file.ContentType, ct);
+        }
+        catch (InvalidDataException)
+        {
+            return BadRequest(new { message = "The uploaded file is not a valid supported image or exceeds image limits." });
+        }
 
         var hash = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
         var fileName = $"{side}-{hash[..16]}{imageType.Extension}";
@@ -182,8 +217,8 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
     [HttpPost]
     public async Task<IActionResult> Create(MediaRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.Title) || string.IsNullOrWhiteSpace(request.Url))
-            return BadRequest(new { message = "Title and URL are required." });
+        var validation = ValidateMediaRequest(request);
+        if (validation is not null) return BadRequest(new { message = validation });
         var asset = new MediaAsset { Title=request.Title.Trim(), Url=request.Url.Trim(), Type=request.Type?.Trim() ?? "Image", ThumbnailUrl=request.ThumbnailUrl?.Trim(), Caption=request.Caption?.Trim(), IsPublished=request.IsPublished };
         db.MediaAssets.Add(asset); await db.SaveChangesAsync(ct);
         await Audit("CREATE", asset.Id, new { asset.Title }, ct);
@@ -195,10 +230,39 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
     {
         var asset = await db.MediaAssets.FindAsync([id], ct);
         if (asset is null) return NotFound();
+        var validation = ValidateMediaRequest(request);
+        if (validation is not null) return BadRequest(new { message = validation });
         asset.Title=request.Title.Trim(); asset.Url=request.Url.Trim(); asset.Type=request.Type?.Trim() ?? asset.Type; asset.ThumbnailUrl=request.ThumbnailUrl?.Trim(); asset.Caption=request.Caption?.Trim(); asset.IsPublished=request.IsPublished;
         await db.SaveChangesAsync(ct);
         await Audit("UPDATE", asset.Id, new { asset.Title, asset.IsPublished }, ct);
         return Ok(asset);
+    }
+
+    private static string? ValidateMediaRequest(MediaRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Title) || request.Title.Trim().Length > 180)
+            return "Title is required and must be at most 180 characters.";
+        if (!IsSafeMediaUrl(request.Url) || !IsSafeOptionalMediaUrl(request.ThumbnailUrl))
+            return "Media URLs must be relative site paths or absolute http/https URLs.";
+        if (request.Type?.Trim().Length > 40 || request.Caption?.Trim().Length > 500)
+            return "Media type or caption exceeds the allowed length.";
+        return null;
+    }
+
+    private static bool IsSafeOptionalMediaUrl(string? value) =>
+        string.IsNullOrWhiteSpace(value) || IsSafeMediaUrl(value);
+
+    private static bool IsSafeMediaUrl(string value)
+    {
+        value = value.Trim();
+        if (value.Length == 0 || value.Length > 2048 || value.Any(char.IsControl)
+            || value.StartsWith("//", StringComparison.Ordinal)
+            || value.StartsWith(@"\\", StringComparison.Ordinal))
+            return false;
+        if (Uri.TryCreate(value, UriKind.Absolute, out var absolute))
+            return absolute.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+                || absolute.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
+        return !value.StartsWith('\\') && !value.StartsWith(':');
     }
 
     [HttpDelete("{id:guid}")]
@@ -206,9 +270,23 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
     {
         var asset = await db.MediaAssets.FindAsync([id], ct);
         if (asset is null) return NotFound();
-        if (!string.IsNullOrWhiteSpace(asset.StoragePath)) {
-            var absolute=Path.Combine(env.ContentRootPath, asset.StoragePath.Replace('/', Path.DirectorySeparatorChar));
-            if (System.IO.File.Exists(absolute)) System.IO.File.Delete(absolute);
+        if (!string.IsNullOrWhiteSpace(asset.StoragePath))
+        {
+            // Only delete files within the managed uploads directory. StoragePath is persisted
+            // data and must not be trusted as a filesystem path.
+            var uploadsRoot = Path.GetFullPath(Path.Combine(env.ContentRootPath, "uploads"));
+            var absolute = Path.GetFullPath(Path.Combine(
+                env.ContentRootPath,
+                asset.StoragePath.Replace('/', Path.DirectorySeparatorChar)));
+            var uploadsPrefix = uploadsRoot.EndsWith(Path.DirectorySeparatorChar)
+                ? uploadsRoot
+                : uploadsRoot + Path.DirectorySeparatorChar;
+
+            if (absolute.StartsWith(uploadsPrefix, StringComparison.OrdinalIgnoreCase) &&
+                System.IO.File.Exists(absolute))
+            {
+                System.IO.File.Delete(absolute);
+            }
         }
         db.MediaAssets.Remove(asset); await db.SaveChangesAsync(ct);
         await Audit("DELETE", asset.Id, new { asset.Title }, ct);

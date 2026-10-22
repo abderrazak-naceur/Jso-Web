@@ -98,14 +98,33 @@ public sealed class AdminNewsController(JsoDbContext db, AuditService audit) : C
             return BadRequest(new { message = "Title is required and must be at most 180 characters." });
         if (string.IsNullOrWhiteSpace(request.Slug) || request.Slug.Trim().Length > 180)
             return BadRequest(new { message = "Slug is required and must be at most 180 characters." });
-        if (string.IsNullOrWhiteSpace(request.Body))
-            return BadRequest(new { message = "Article body is required." });
+        if (string.IsNullOrWhiteSpace(request.Body) || request.Body.Length > 200_000)
+            return BadRequest(new { message = "Article body is required and must be at most 200,000 characters." });
+        if (!string.IsNullOrWhiteSpace(request.CoverImageUrl) && !IsSafeCoverUrl(request.CoverImageUrl))
+            return BadRequest(new { message = "CoverImageUrl must be a relative site path or an absolute http/https URL." });
+        if (request.Excerpt?.Trim().Length > 1000 || request.AuthorName?.Trim().Length > 120
+            || request.Category?.Trim().Length > 100 || request.Tags?.Trim().Length > 1000
+            || request.MetaTitle?.Trim().Length > 180 || request.MetaDescription?.Trim().Length > 500)
+            return BadRequest(new { message = "Article metadata exceeds the allowed length." });
         var slug = request.Slug.Trim().ToLowerInvariant();
         if (await db.Articles.AnyAsync(x => x.Id != id && x.Slug == slug, ct))
             return Conflict(new { message = "Slug already exists." });
         if (request.Status is not null && request.Status is not ("Draft" or "Published"))
             return BadRequest(new { message = "Status must be Draft or Published." });
         return null;
+    }
+
+    private static bool IsSafeCoverUrl(string value)
+    {
+        value = value.Trim();
+        if (value.Length == 0 || value.Length > 2048 || value.Any(char.IsControl)
+            || value.StartsWith("//", StringComparison.Ordinal)
+            || value.StartsWith(@"\\", StringComparison.Ordinal))
+            return false;
+        if (Uri.TryCreate(value, UriKind.Absolute, out var absolute))
+            return absolute.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+                || absolute.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
+        return !value.StartsWith('\\') && !value.StartsWith(':');
     }
 
     private async Task SaveMetadata(Guid articleId, ArticleRequest request, CancellationToken ct)

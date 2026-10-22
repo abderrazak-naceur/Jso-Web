@@ -103,9 +103,32 @@ public sealed class AdminNavigationController(JsoDbContext db, AuditService audi
     {
         if (string.IsNullOrWhiteSpace(r.Label)) return "Label is required.";
         if (string.IsNullOrWhiteSpace(r.Url)) return "Url is required.";
+        if (r.Label.Trim().Length > 120) return "Label must be 120 characters or fewer.";
+        if (r.Url.Trim().Length > 2048 || !IsSafeNavigationUrl(r.Url.Trim()))
+            return "Url must be a relative site path or use an allowed http, https, mailto or tel scheme.";
         if (string.IsNullOrWhiteSpace(r.Position) || !AllowedPositions.Contains(r.Position.Trim()))
             return $"Position must be one of: {string.Join(", ", AllowedPositions)}.";
         return null;
+    }
+
+    private static bool IsSafeNavigationUrl(string value)
+    {
+        if (value.Any(char.IsControl) || value.StartsWith("//", StringComparison.Ordinal)
+            || value.StartsWith(@"\\", StringComparison.Ordinal))
+            return false;
+
+        if (Uri.TryCreate(value, UriKind.Absolute, out var absolute))
+        {
+            return absolute.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+                || absolute.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+                || absolute.Scheme.Equals("mailto", StringComparison.OrdinalIgnoreCase)
+                || absolute.Scheme.Equals("tel", StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Relative links must not begin with a backslash (browser URL parsing
+        // can treat it as a network-path reference). Ordinary /path and #anchor
+        // links, plus simple relative paths, remain supported.
+        return !value.StartsWith('\\') && !value.StartsWith(':');
     }
 }
 

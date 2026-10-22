@@ -1,7 +1,9 @@
+using JSO.Api.Security;
 using JSO.Domain;
 using JSO.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace JSO.Api.Controllers;
@@ -15,9 +17,8 @@ namespace JSO.Api.Controllers;
 //  - Every route requires the "Fan" role; admin tokens never carry "Fan".
 //  - The FanUserId is ALWAYS resolved from the token claim, never from client
 //    input, so a fan can only ever submit/list their OWN photos.
-//  - Uploads are validated by declared content type AND magic-byte signature
-//    (rejecting files disguised as images), max 10 MB, mirroring the storage
-//    rules of AdminMediaController.
+//  - Uploads are validated by declared content type and file signature, decoded
+//    and re-encoded, dimension-limited, and capped at 10 MB.
 //  - Uploading implies consent to publication in the moderated community
 //    gallery; the fan can later request removal (see FanPrivacy / admin delete).
 [ApiController]
@@ -59,14 +60,59 @@ public sealed class FanPhotosController(JsoDbContext db, IWebHostEnvironment env
                 p.Caption,
                 p.Status,
                 p.SubmittedAt,
-                Url = m.Url
+                Url = $"/api/fan/photos/{p.Id}/image"
             })
             .ToListAsync(ct);
 
         return Ok(rows);
     }
 
+
+    // Authenticated fan can preview their own upload even while moderation is
+    // pending. Ownership is always checked against the JWT subject.
+    [HttpGet("{id:guid}/image")]
+    public async Task<IActionResult> GetOwnImage(Guid id, CancellationToken ct)
+    {
+        var fanId = CurrentFanId();
+        if (fanId is null) return Unauthorized();
+
+        var asset = await db.FanPhotos.AsNoTracking()
+            .Where(p => p.Id == id && p.FanUserId == fanId)
+            .Join(db.MediaAssets.AsNoTracking(), p => p.MediaAssetId, m => m.Id, (p, m) => new
+            {
+                m.StoragePath,
+                m.ContentType
+            })
+            .SingleOrDefaultAsync(ct);
+
+        if (asset is null || string.IsNullOrWhiteSpace(asset.StoragePath) || string.IsNullOrWhiteSpace(asset.ContentType))
+            return NotFound();
+
+        var contentType = asset.ContentType.ToLowerInvariant();
+        if (contentType is not ("image/jpeg" or "image/png" or "image/webp"))
+            return NotFound();
+
+        var relative = asset.StoragePath.Replace('\\', '/').TrimStart('/');
+        if (!relative.StartsWith("private-uploads/fan-photos/", StringComparison.Ordinal)
+            && !relative.StartsWith("uploads/fan-photos/", StringComparison.Ordinal))
+            return NotFound();
+
+        var fullPath = Path.GetFullPath(Path.Combine(env.ContentRootPath, relative));
+        var privateRoot = Path.GetFullPath(Path.Combine(env.ContentRootPath, "private-uploads", "fan-photos")) + Path.DirectorySeparatorChar;
+        var legacyRoot = Path.GetFullPath(Path.Combine(env.ContentRootPath, "uploads", "fan-photos")) + Path.DirectorySeparatorChar;
+        if (!fullPath.StartsWith(privateRoot, StringComparison.Ordinal)
+            && !fullPath.StartsWith(legacyRoot, StringComparison.Ordinal))
+            return NotFound();
+        if (!System.IO.File.Exists(fullPath))
+            return NotFound();
+
+        Response.Headers.CacheControl = "private,no-store";
+        Response.Headers["X-Content-Type-Options"] = "nosniff";
+        return PhysicalFile(fullPath, contentType);
+    }
+
     [HttpPost]
+    [EnableRateLimiting("fan-photo-upload")]
     [RequestSizeLimit(MaxUploadBytes + 1024 * 1024)]
     public async Task<IActionResult> Upload(IFormFile file, [FromForm] string? caption, CancellationToken ct)
     {
@@ -94,31 +140,42 @@ public sealed class FanPhotosController(JsoDbContext db, IWebHostEnvironment env
                 return BadRequest(new { message = "The file content does not match its declared image type." });
         }
 
+        byte[] sanitizedBytes;
+        await using (var input = file.OpenReadStream())
+        {
+            try
+            {
+                sanitizedBytes = await ImageUploadSanitizer.SanitizeAsync(input, file.ContentType, ct);
+            }
+            catch (InvalidDataException)
+            {
+                return BadRequest(new { message = "The uploaded file is not a valid supported image or exceeds image limits." });
+            }
+        }
+
         var extension = imageType.Extension;
         var safeName = $"{Guid.NewGuid():N}{extension}";
         var uploadedAtUtc = DateTime.UtcNow;
         var year = uploadedAtUtc.ToString("yyyy");
         var month = uploadedAtUtc.ToString("MM");
-        var relative = Path.Combine("uploads", "fan-photos", year, month, safeName);
+        var relative = Path.Combine("private-uploads", "fan-photos", year, month, safeName);
         var absolute = Path.Combine(env.ContentRootPath, relative);
         Directory.CreateDirectory(Path.GetDirectoryName(absolute)!);
-        await using (var stream = System.IO.File.Create(absolute))
-            await file.CopyToAsync(stream, ct);
+        await System.IO.File.WriteAllBytesAsync(absolute, sanitizedBytes, ct);
 
-        // Reuse MediaAsset for storage. The asset is not published on its own
-        // (IsPublished = false); publication is driven exclusively by FanPhoto
-        // moderation so nothing leaks before approval.
+        // The original bytes and metadata are discarded; only the sanitized
+        // re-encoded image is persisted and exposed after moderator approval.
         var trimmedCaption = string.IsNullOrWhiteSpace(caption) ? null : caption.Trim();
         var asset = new MediaAsset
         {
             Title = "Photo supporter",
-            Url = "/uploads/fan-photos/" + year + "/" + month + "/" + safeName,
+            Url = "/api/fan-photos/image",
             Type = "Image",
             Caption = trimmedCaption,
             IsPublished = false,
-            FileName = Path.GetFileName(file.FileName),
+            FileName = safeName,
             ContentType = file.ContentType.ToLowerInvariant(),
-            FileSize = file.Length,
+            FileSize = sanitizedBytes.Length,
             StoragePath = relative.Replace('\\', '/')
         };
         db.MediaAssets.Add(asset);
@@ -131,6 +188,8 @@ public sealed class FanPhotosController(JsoDbContext db, IWebHostEnvironment env
             Status = "Pending"
         };
         db.FanPhotos.Add(photo);
+        await db.SaveChangesAsync(ct);
+        asset.Url = $"/api/fan-photos/{photo.Id}/image";
         await db.SaveChangesAsync(ct);
 
         return Accepted(new

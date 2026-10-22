@@ -262,6 +262,33 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0,
             AutoReplenishment = true
         }));
+    // Limit fan photo uploads separately because each accepted upload consumes
+    // persistent storage and image-decoding memory. Key by authenticated fan,
+    // falling back to the connection IP when no subject is available.
+    options.AddPolicy("fan-photo-upload", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User?.FindFirst("sub")?.Value
+            ?? context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromHours(1),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        }));
+    // Limit administrator uploads separately because image decoding and storage
+    // are comparatively expensive. Key by authenticated identity, falling back to IP.
+    options.AddPolicy("media-upload", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User?.FindFirst("sub")?.Value
+            ?? context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 20,
+            Window = TimeSpan.FromHours(1),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        }));
     // Anti-spam limiter for authenticated fan community writes (comments,
     // reactions, reports). Partitioned per fan identity when available so a
     // single account cannot flood the moderation queue, falling back to IP.
@@ -287,6 +314,27 @@ await using (var startupScope = app.Services.CreateAsyncScope())
 
 app.UseForwardedHeaders();
 
+// Apply baseline browser security headers to API, error and static-file
+// responses. CSP/HSTS are managed at the public edge because TLS terminates
+// there and the API's proxy trust must remain explicitly configured.
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        var headers = context.Response.Headers;
+        headers["X-Content-Type-Options"] = "nosniff";
+        // Render terminates TLS at the edge; browsers receive this header on the
+        // public HTTPS response and enforce HTTPS for the API host for one year.
+        headers["Strict-Transport-Security"] = "max-age=31536000";
+        headers["X-Frame-Options"] = "DENY";
+        headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+        headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+        return Task.CompletedTask;
+    });
+
+    await next();
+});
+
 // Swagger is available by default only in Development. In production it exposes
 // the API surface and must be explicitly enabled for a short, controlled review
 // window using the Swagger__Enabled environment variable. This does not replace
@@ -305,6 +353,20 @@ if (builder.Configuration.GetValue("Swagger:Enabled", builder.Environment.IsDeve
 
 // Render terminates TLS at the edge. The app listens on the internal HTTP port,
 // so HTTPS redirection here would only create an unnecessary warning.
+
+// Never serve fan-photo files directly from the public static directory.
+// Approved images are delivered by FanPhotoGalleryController after checking
+// moderation state; this also blocks direct access to legacy pending uploads.
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/uploads/fan-photos", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    await next();
+});
 
 var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "uploads");
 Directory.CreateDirectory(uploadsPath);
