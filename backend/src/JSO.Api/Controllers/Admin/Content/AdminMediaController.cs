@@ -235,9 +235,23 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
     {
         var asset = await db.MediaAssets.FindAsync([id], ct);
         if (asset is null) return NotFound();
-        if (!string.IsNullOrWhiteSpace(asset.StoragePath)) {
-            var absolute=Path.Combine(env.ContentRootPath, asset.StoragePath.Replace('/', Path.DirectorySeparatorChar));
-            if (System.IO.File.Exists(absolute)) System.IO.File.Delete(absolute);
+        if (!string.IsNullOrWhiteSpace(asset.StoragePath))
+        {
+            // Only delete files within the managed uploads directory. StoragePath is persisted
+            // data and must not be trusted as a filesystem path.
+            var uploadsRoot = Path.GetFullPath(Path.Combine(env.ContentRootPath, "uploads"));
+            var absolute = Path.GetFullPath(Path.Combine(
+                env.ContentRootPath,
+                asset.StoragePath.Replace('/', Path.DirectorySeparatorChar)));
+            var uploadsPrefix = uploadsRoot.EndsWith(Path.DirectorySeparatorChar)
+                ? uploadsRoot
+                : uploadsRoot + Path.DirectorySeparatorChar;
+
+            if (absolute.StartsWith(uploadsPrefix, StringComparison.OrdinalIgnoreCase) &&
+                System.IO.File.Exists(absolute))
+            {
+                System.IO.File.Delete(absolute);
+            }
         }
         db.MediaAssets.Remove(asset); await db.SaveChangesAsync(ct);
         await Audit("DELETE", asset.Id, new { asset.Title }, ct);
