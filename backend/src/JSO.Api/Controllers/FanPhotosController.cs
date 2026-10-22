@@ -3,6 +3,7 @@ using JSO.Domain;
 using JSO.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace JSO.Api.Controllers;
@@ -67,6 +68,7 @@ public sealed class FanPhotosController(JsoDbContext db, IWebHostEnvironment env
     }
 
     [HttpPost]
+    [EnableRateLimiting("community-write")]
     [RequestSizeLimit(MaxUploadBytes + 1024 * 1024)]
     public async Task<IActionResult> Upload(IFormFile file, [FromForm] string? caption, CancellationToken ct)
     {
