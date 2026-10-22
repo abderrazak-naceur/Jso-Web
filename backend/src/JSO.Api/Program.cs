@@ -320,6 +320,20 @@ if (builder.Configuration.GetValue("Swagger:Enabled", builder.Environment.IsDeve
 // Render terminates TLS at the edge. The app listens on the internal HTTP port,
 // so HTTPS redirection here would only create an unnecessary warning.
 
+// Never serve fan-photo files directly from the public static directory.
+// Approved images are delivered by FanPhotoGalleryController after checking
+// moderation state; this also blocks direct access to legacy pending uploads.
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/uploads/fan-photos", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    await next();
+});
+
 var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "uploads");
 Directory.CreateDirectory(uploadsPath);
 app.UseStaticFiles(new StaticFileOptions
