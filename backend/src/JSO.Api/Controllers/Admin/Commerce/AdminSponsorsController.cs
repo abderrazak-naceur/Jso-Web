@@ -160,11 +160,32 @@ public sealed class AdminSponsorsController(JsoDbContext db, AuditService audit)
     private static string? Validate(SponsorRequest r)
     {
         if (string.IsNullOrWhiteSpace(r.Name)) return "Name is required.";
+        if (r.Name.Trim().Length > 160) return "Name must be 160 characters or fewer.";
+        if (!IsSafeUrl(r.WebsiteUrl, allowRelative: false))
+            return "WebsiteUrl must be an absolute http or https URL.";
+        if (!IsSafeUrl(r.LogoUrl, allowRelative: true) || !IsSafeUrl(r.BannerImageUrl, allowRelative: true))
+            return "Image URLs must be relative site paths or absolute http or https URLs.";
         if (!Tiers.Contains(r.Tier)) return $"Tier must be one of: {string.Join(", ", Tiers)}.";
         if (!Placements.Contains(r.Placement)) return $"Placement must be one of: {string.Join(", ", Placements)}.";
         if (r.StartDate is not null && r.EndDate is not null && r.EndDate < r.StartDate)
             return "EndDate must be on or after StartDate.";
         return null;
+    }
+
+    private static bool IsSafeUrl(string? value, bool allowRelative)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return true;
+        value = value.Trim();
+        if (value.Length > 2048 || value.Any(char.IsControl)
+            || value.StartsWith("//", StringComparison.Ordinal)
+            || value.StartsWith(@"\\", StringComparison.Ordinal))
+            return false;
+
+        if (Uri.TryCreate(value, UriKind.Absolute, out var absolute))
+            return absolute.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+                || absolute.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
+
+        return allowRelative && !value.StartsWith('\\') && !value.StartsWith(':');
     }
 }
 
