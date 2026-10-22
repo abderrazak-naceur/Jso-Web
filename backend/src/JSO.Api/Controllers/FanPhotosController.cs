@@ -1,3 +1,4 @@
+using JSO.Api.Security;
 using JSO.Domain;
 using JSO.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
@@ -15,9 +16,8 @@ namespace JSO.Api.Controllers;
 //  - Every route requires the "Fan" role; admin tokens never carry "Fan".
 //  - The FanUserId is ALWAYS resolved from the token claim, never from client
 //    input, so a fan can only ever submit/list their OWN photos.
-//  - Uploads are validated by declared content type AND magic-byte signature
-//    (rejecting files disguised as images), max 10 MB, mirroring the storage
-//    rules of AdminMediaController.
+//  - Uploads are validated by declared content type and file signature, decoded
+//    and re-encoded, dimension-limited, and capped at 10 MB.
 //  - Uploading implies consent to publication in the moderated community
 //    gallery; the fan can later request removal (see FanPrivacy / admin delete).
 [ApiController]
@@ -94,6 +94,19 @@ public sealed class FanPhotosController(JsoDbContext db, IWebHostEnvironment env
                 return BadRequest(new { message = "The file content does not match its declared image type." });
         }
 
+        byte[] sanitizedBytes;
+        await using (var input = file.OpenReadStream())
+        {
+            try
+            {
+                sanitizedBytes = await ImageUploadSanitizer.SanitizeAsync(input, file.ContentType, ct);
+            }
+            catch (InvalidDataException)
+            {
+                return BadRequest(new { message = "The uploaded file is not a valid supported image or exceeds image limits." });
+            }
+        }
+
         var extension = imageType.Extension;
         var safeName = $"{Guid.NewGuid():N}{extension}";
         var uploadedAtUtc = DateTime.UtcNow;
@@ -102,12 +115,10 @@ public sealed class FanPhotosController(JsoDbContext db, IWebHostEnvironment env
         var relative = Path.Combine("uploads", "fan-photos", year, month, safeName);
         var absolute = Path.Combine(env.ContentRootPath, relative);
         Directory.CreateDirectory(Path.GetDirectoryName(absolute)!);
-        await using (var stream = System.IO.File.Create(absolute))
-            await file.CopyToAsync(stream, ct);
+        await System.IO.File.WriteAllBytesAsync(absolute, sanitizedBytes, ct);
 
-        // Reuse MediaAsset for storage. The asset is not published on its own
-        // (IsPublished = false); publication is driven exclusively by FanPhoto
-        // moderation so nothing leaks before approval.
+        // The original bytes and metadata are discarded; only the sanitized
+        // re-encoded image is persisted and exposed after moderator approval.
         var trimmedCaption = string.IsNullOrWhiteSpace(caption) ? null : caption.Trim();
         var asset = new MediaAsset
         {
@@ -116,9 +127,9 @@ public sealed class FanPhotosController(JsoDbContext db, IWebHostEnvironment env
             Type = "Image",
             Caption = trimmedCaption,
             IsPublished = false,
-            FileName = Path.GetFileName(file.FileName),
+            FileName = safeName,
             ContentType = file.ContentType.ToLowerInvariant(),
-            FileSize = file.Length,
+            FileSize = sanitizedBytes.Length,
             StoragePath = relative.Replace('\\', '/')
         };
         db.MediaAssets.Add(asset);
