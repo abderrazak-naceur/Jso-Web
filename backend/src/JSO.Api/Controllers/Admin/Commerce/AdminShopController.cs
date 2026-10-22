@@ -108,11 +108,32 @@ public sealed class AdminShopController(JsoDbContext db, AuditService audit) : C
     {
         if (string.IsNullOrWhiteSpace(r.Name) || r.Name.Trim().Length > 160)
             return "Name is required and must be at most 160 characters.";
-        if (string.IsNullOrWhiteSpace(r.Slug) || r.Slug.Trim().Length > 160)
-            return "Slug is required and must be at most 160 characters.";
+        if (string.IsNullOrWhiteSpace(r.Slug) || r.Slug.Trim().Length > 160 ||
+            !System.Text.RegularExpressions.Regex.IsMatch(r.Slug.Trim(), @"^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*$"))
+            return "Slug must contain only letters, numbers and single hyphens.";
         if (r.Price < 0) return "Price must be zero or greater.";
         if (r.Stock < 0) return "Stock must be zero or greater.";
+        if (r.Description?.Length > 5000 || r.Category?.Trim().Length > 100)
+            return "Description or category exceeds the allowed length.";
+        if (!string.IsNullOrWhiteSpace(r.ImageUrl) && !IsSafeImageUrl(r.ImageUrl))
+            return "ImageUrl must be a relative site path or an absolute http/https URL.";
+        if (!string.IsNullOrWhiteSpace(r.Currency) &&
+            (r.Currency.Trim().Length != 3 || !r.Currency.Trim().All(char.IsAsciiLetter)))
+            return "Currency must be a three-letter code.";
         return null;
+    }
+
+    private static bool IsSafeImageUrl(string value)
+    {
+        value = value.Trim();
+        if (value.Length == 0 || value.Length > 2048 || value.Any(char.IsControl)
+            || value.StartsWith("//", StringComparison.Ordinal)
+            || value.StartsWith(@"\\", StringComparison.Ordinal))
+            return false;
+        if (Uri.TryCreate(value, UriKind.Absolute, out var absolute))
+            return absolute.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+                || absolute.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
+        return !value.StartsWith('\\') && !value.StartsWith(':');
     }
 }
 
