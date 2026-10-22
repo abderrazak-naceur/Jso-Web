@@ -68,7 +68,7 @@ public sealed class FanPhotosController(JsoDbContext db, IWebHostEnvironment env
     }
 
     [HttpPost]
-    [EnableRateLimiting("community-write")]
+    [EnableRateLimiting("fan-photo-upload")]
     [RequestSizeLimit(MaxUploadBytes + 1024 * 1024)]
     public async Task<IActionResult> Upload(IFormFile file, [FromForm] string? caption, CancellationToken ct)
     {
