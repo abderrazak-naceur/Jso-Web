@@ -15,17 +15,62 @@ function languageHeaders() {
   return { Accept: 'application/json', 'Accept-Language': getRequestLanguage() }
 }
 
-async function request(path, signal) {
-  const response = await fetch(API_BASE_URL + path, {
-    headers: languageHeaders(),
-    signal,
-  })
+const PUBLIC_CACHE_PREFIX = 'jso_public_api_v1:'
+const PUBLIC_CACHE_FRESH_MS = 30 * 1000
+const PUBLIC_CACHE_MAX_AGE_MS = 10 * 60 * 1000
+const publicRequestInFlight = new Map()
+
+function publicCacheKey(path) {
+  let language = 'fr'
+  try { language = window.localStorage.getItem(LANGUAGE_STORAGE_KEY) || DEFAULT_LANGUAGE } catch { /* storage unavailable */ }
+  return PUBLIC_CACHE_PREFIX + language + ':' + path
+}
+
+function readPublicCache(key) {
+  try {
+    const entry = JSON.parse(window.localStorage.getItem(key) || 'null')
+    if (!entry || !Number.isFinite(entry.savedAt) || Date.now() - entry.savedAt > PUBLIC_CACHE_MAX_AGE_MS) return null
+    return entry
+  } catch {
+    return null
+  }
+}
+
+function writePublicCache(key, value) {
+  try { window.localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), value })) } catch { /* quota/private mode: network still works */ }
+}
+
+async function fetchPublicJson(path, signal) {
+  const response = await fetch(API_BASE_URL + path, { headers: languageHeaders(), signal })
   if (!response.ok) {
     if (response.status >= 500)
       throw new Error(`Le service est momentanément indisponible. Réessayez plus tard. (HTTP ${response.status})`)
     throw new Error('API request failed: ' + response.status)
   }
   return response.json()
+}
+
+async function request(path, signal) {
+  const key = publicCacheKey(path)
+  const cached = readPublicCache(key)
+  if (cached) {
+    // Fresh cache is served immediately. Older cached data is also served
+    // immediately, then refreshed in the background for the next visit.
+    if (Date.now() - cached.savedAt > PUBLIC_CACHE_FRESH_MS) {
+      if (!publicRequestInFlight.has(key)) {
+        const refresh = fetchPublicJson(path)
+          .then((value) => writePublicCache(key, value))
+          .catch(() => { /* keep the last known-good public response */ })
+          .finally(() => publicRequestInFlight.delete(key))
+        publicRequestInFlight.set(key, refresh)
+      }
+    }
+    return cached.value
+  }
+
+  const value = await fetchPublicJson(path, signal)
+  if (!signal?.aborted) writePublicCache(key, value)
+  return value
 }
 
 export const publicApi = {
