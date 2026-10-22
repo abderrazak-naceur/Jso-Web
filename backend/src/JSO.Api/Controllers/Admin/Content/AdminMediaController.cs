@@ -182,8 +182,8 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
     [HttpPost]
     public async Task<IActionResult> Create(MediaRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.Title) || string.IsNullOrWhiteSpace(request.Url))
-            return BadRequest(new { message = "Title and URL are required." });
+        var validation = ValidateMediaRequest(request);
+        if (validation is not null) return BadRequest(new { message = validation });
         var asset = new MediaAsset { Title=request.Title.Trim(), Url=request.Url.Trim(), Type=request.Type?.Trim() ?? "Image", ThumbnailUrl=request.ThumbnailUrl?.Trim(), Caption=request.Caption?.Trim(), IsPublished=request.IsPublished };
         db.MediaAssets.Add(asset); await db.SaveChangesAsync(ct);
         await Audit("CREATE", asset.Id, new { asset.Title }, ct);
@@ -195,10 +195,39 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
     {
         var asset = await db.MediaAssets.FindAsync([id], ct);
         if (asset is null) return NotFound();
+        var validation = ValidateMediaRequest(request);
+        if (validation is not null) return BadRequest(new { message = validation });
         asset.Title=request.Title.Trim(); asset.Url=request.Url.Trim(); asset.Type=request.Type?.Trim() ?? asset.Type; asset.ThumbnailUrl=request.ThumbnailUrl?.Trim(); asset.Caption=request.Caption?.Trim(); asset.IsPublished=request.IsPublished;
         await db.SaveChangesAsync(ct);
         await Audit("UPDATE", asset.Id, new { asset.Title, asset.IsPublished }, ct);
         return Ok(asset);
+    }
+
+    private static string? ValidateMediaRequest(MediaRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Title) || request.Title.Trim().Length > 180)
+            return "Title is required and must be at most 180 characters.";
+        if (!IsSafeMediaUrl(request.Url) || !IsSafeOptionalMediaUrl(request.ThumbnailUrl))
+            return "Media URLs must be relative site paths or absolute http/https URLs.";
+        if (request.Type?.Trim().Length > 40 || request.Caption?.Trim().Length > 500)
+            return "Media type or caption exceeds the allowed length.";
+        return null;
+    }
+
+    private static bool IsSafeOptionalMediaUrl(string? value) =>
+        string.IsNullOrWhiteSpace(value) || IsSafeMediaUrl(value);
+
+    private static bool IsSafeMediaUrl(string value)
+    {
+        value = value.Trim();
+        if (value.Length == 0 || value.Length > 2048 || value.Any(char.IsControl)
+            || value.StartsWith("//", StringComparison.Ordinal)
+            || value.StartsWith(@"\\", StringComparison.Ordinal))
+            return false;
+        if (Uri.TryCreate(value, UriKind.Absolute, out var absolute))
+            return absolute.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+                || absolute.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
+        return !value.StartsWith('\\') && !value.StartsWith(':');
     }
 
     [HttpDelete("{id:guid}")]
