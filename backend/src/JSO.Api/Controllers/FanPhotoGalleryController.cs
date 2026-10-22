@@ -47,7 +47,7 @@ public sealed class FanPhotoGalleryController(JsoDbContext db, IWebHostEnvironme
             })
             .SingleOrDefaultAsync(ct);
 
-        if (asset is null || string.IsNullOrWhiteSpace(asset.StoragePath))
+        if (asset is null || string.IsNullOrWhiteSpace(asset.StoragePath) || string.IsNullOrWhiteSpace(asset.ContentType))
             return NotFound();
 
         var contentType = asset.ContentType.ToLowerInvariant();
