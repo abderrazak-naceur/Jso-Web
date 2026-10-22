@@ -75,20 +75,38 @@ function MatchCard({ match, onOpenMatch }) {
   )
 }
 
+const MATCHES_CACHE_KEY = 'jso_matches_cache_v1'
+
+function readCachedMatches() {
+  try {
+    const cached = JSON.parse(window.localStorage.getItem(MATCHES_CACHE_KEY) || 'null')
+    return Array.isArray(cached) ? cached.map(normalizeMatch).filter(Boolean) : []
+  } catch {
+    return []
+  }
+}
+
 export default function MatchsPage({ onOpenMatch }) {
-  const [matches, setMatches] = useState([])
+  const [matches, setMatches] = useState(readCachedMatches)
   const [filter, setFilter] = useState('all')
   const [query, setQuery] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => readCachedMatches().length === 0)
   const [error, setError] = useState('')
 
   useEffect(() => {
     const controller = new AbortController()
     publicApi.getMatches(controller.signal)
       .then((items) => {
-        if (!controller.signal.aborted) setMatches(Array.isArray(items) ? items.map(normalizeMatch).filter(Boolean) : [])
+        if (controller.signal.aborted) return
+        const normalized = Array.isArray(items) ? items.map(normalizeMatch).filter(Boolean) : []
+        setMatches(normalized)
+        try { window.localStorage.setItem(MATCHES_CACHE_KEY, JSON.stringify(normalized)) } catch { /* storage may be unavailable */ }
+        setError('')
       })
-      .catch((reason) => { if (!controller.signal.aborted) setError(reason?.message || 'Impossible de charger le calendrier.') })
+      .catch((reason) => {
+        if (controller.signal.aborted) return
+        setError(readCachedMatches().length ? '' : (reason?.message || 'Impossible de charger le calendrier.'))
+      })
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => controller.abort()
   }, [])
