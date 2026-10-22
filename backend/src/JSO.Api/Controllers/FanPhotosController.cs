@@ -114,7 +114,7 @@ public sealed class FanPhotosController(JsoDbContext db, IWebHostEnvironment env
         var uploadedAtUtc = DateTime.UtcNow;
         var year = uploadedAtUtc.ToString("yyyy");
         var month = uploadedAtUtc.ToString("MM");
-        var relative = Path.Combine("uploads", "fan-photos", year, month, safeName);
+        var relative = Path.Combine("private-uploads", "fan-photos", year, month, safeName);
         var absolute = Path.Combine(env.ContentRootPath, relative);
         Directory.CreateDirectory(Path.GetDirectoryName(absolute)!);
         await System.IO.File.WriteAllBytesAsync(absolute, sanitizedBytes, ct);
@@ -125,7 +125,7 @@ public sealed class FanPhotosController(JsoDbContext db, IWebHostEnvironment env
         var asset = new MediaAsset
         {
             Title = "Photo supporter",
-            Url = "/uploads/fan-photos/" + year + "/" + month + "/" + safeName,
+            Url = "/api/fan-photos/image",
             Type = "Image",
             Caption = trimmedCaption,
             IsPublished = false,
@@ -144,6 +144,8 @@ public sealed class FanPhotosController(JsoDbContext db, IWebHostEnvironment env
             Status = "Pending"
         };
         db.FanPhotos.Add(photo);
+        await db.SaveChangesAsync(ct);
+        asset.Url = $"/api/fan-photos/{photo.Id}/image";
         await db.SaveChangesAsync(ct);
 
         return Accepted(new
