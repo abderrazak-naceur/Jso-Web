@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, CheckCircle2, Menu, Search, Share2, X } from 'lucide-react'
+import { ArrowRight, CheckCircle2, Search, Share2 } from 'lucide-react'
 import { fundraisingApi, donationsApi } from '../../../lib/api'
 import { useFanSession } from '../../account/useFanSession'
 import { useDocumentTitle } from '../../../lib/useDocumentTitle'
@@ -13,6 +13,9 @@ import { readFundraisingAccess as readAccess, forgetFundraisingAccess, createFun
 import { MONTHLY_AMOUNTS, PLAN_MONTHS, planTotal, projectImage, fundraisingDate, fundraisingMoney, fundraisingSupporterLabel } from './fundraisingTemplates'
 import { fundraisingCopy as copy, publicSupportStatus } from './fundraisingCopy'
 import { useI18n } from '../../../i18n/index.jsx'
+import SiteHeader from '../../site/SiteHeader'
+import { visibleSections } from '../../site/navigation'
+import { useNavigation } from '../../site/useNavigation'
 import './fundraising.css'
 
 const selectedFromUrl = () => new URLSearchParams(window.location.search).get('projet') || ''
@@ -33,7 +36,7 @@ export default function FundraisingPage() {
   const [registration, setRegistration] = useState(false)
   const [auth, setAuth] = useState(null)
   const [continueSupport, setContinueSupport] = useState(false)
-  const [menu, setMenu] = useState(false)
+  const headerLinks = useNavigation('Header')
   const [supporters, setSupporters] = useState({ items: [], totalCount: 0, totalPages: 0 })
   const [supportersLoading, setSupportersLoading] = useState(false)
   const [supportersError, setSupportersError] = useState('')
@@ -148,7 +151,6 @@ export default function FundraisingPage() {
   }
   function support() {
     if (!project || fan.status === 'unknown') return
-    setMenu(false)
     if (alreadyParticipated) {
       document.getElementById('mon-engagement')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       return
@@ -163,11 +165,19 @@ export default function FundraisingPage() {
 
   return <div className="jso-fundraising">
     <a href="#le-projet" className="jso-skip-link">{tr('skipProject')}</a>
-    <header className="fr-header"><div className="fr-container fr-header-inner">
-      <a href="/" className="fr-brand"><img src={CREST_SRC} alt="JSO"/><span>JEUNESSE SPORTIVE<br/>DE OUDHREF</span></a>
-      <nav id="fr-navigation" className={menu ? 'is-open' : ''} aria-label={tr('navProjects')}><a href="/">{tr('navHome')}</a><a href="/actualites">{tr('navNews')}</a><a href="#tous-les-projets" onClick={() => setMenu(false)}>{tr('navProjects')}</a><a href="#soutiens" onClick={() => setMenu(false)}>{tr('navSupporters')}</a>{entry && fan.status === 'authenticated' && <a href="#mon-engagement" onClick={() => setMenu(false)}>{tr('navFollow')}</a>}<label className="fr-language-control"><span className="sr-only">{t('common.language', 'Langue')}</span><select aria-label={t('common.language', 'Langue')} value={language} onChange={event => setLanguage(event.target.value)}>{languages.map(item => <option key={item.code} value={item.code}>{item.flag} {item.label}</option>)}</select></label></nav>
-      <div className="fr-header-actions"><button type="button" className="fr-button fr-button-gold" onClick={support} disabled={!project || fan.status === 'unknown' || (fan.status === 'authenticated' && entriesLoading)}>{alreadyParticipated ? tr('viewMyParticipation') : fan.status === 'authenticated' && entriesLoading ? tr('checkingParticipation') : tr('becomeSupporter')}</button>{fan.status === 'authenticated' ? <a className="fr-login" href="/account/supports">{tr('dashboard')}</a> : <><button type="button" className="fr-login" onClick={() => { setContinueSupport(false); setAuth('login') }}>{tr('signIn')}</button><button type="button" className="fr-login fr-auth-register" onClick={() => { setContinueSupport(false); setAuth('register') }}>{tr('register')}</button></>}<button type="button" className="fr-mobile-toggle" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-controls="fr-navigation" aria-label={tr('menu')}>{menu ? <X size={18}/> : <Menu size={18}/>}</button></div>
-    </div></header>
+    <SiteHeader
+      sections={visibleSections({})}
+      extraLinks={headerLinks}
+      activeId="donation"
+      cartCount={0}
+      onOpenCart={() => { window.location.href = '/#boutique' }}
+      user={fan.user}
+      onLogin={() => { setContinueSupport(false); setAuth('login') }}
+      onRegister={() => { setContinueSupport(false); setAuth('register') }}
+      onOpenProfile={() => { window.location.href = '/profil' }}
+      onOpenSettings={() => { window.location.href = '/account' }}
+      onLogout={fan.signOut}
+    />
     <main id="le-projet">
       {loading ? <div className="fr-empty" role="status">{tr('loadingProjects')}</div> : loadError && !projects.length ? <div className="fr-empty"><h1>{tr('unavailable')}</h1><p role="alert">{loadError}</p><button type="button" className="fr-button fr-button-blue" onClick={refresh}>{tr('retry')}</button></div> : !project ? <FundraisingEmptyState unavailableProject={Boolean(selectedId)}/> : <>
         <FundraisingProjectView project={project} onSupport={support} supportLabel={alreadyParticipated ? tr('viewMyParticipation') : fan.status === 'authenticated' && entriesLoading ? tr('checkingParticipation') : undefined} supportCompleted={alreadyParticipated} supportDisabled={fan.status === 'authenticated' && entriesLoading}/>
