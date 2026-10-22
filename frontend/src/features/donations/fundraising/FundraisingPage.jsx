@@ -21,7 +21,7 @@ import './fundraising.css'
 const selectedFromUrl = () => new URLSearchParams(window.location.search).get('projet') || ''
 
 export default function FundraisingPage() {
-  const { language, setLanguage, languages, t } = useI18n()
+  const { language } = useI18n()
   const tr = (key, values) => copy(language, key, values)
   const money = value => fundraisingMoney(value, language)
   const date = value => fundraisingDate(value, language)
