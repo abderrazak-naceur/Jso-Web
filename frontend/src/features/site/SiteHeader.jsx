@@ -12,7 +12,7 @@ const desktopLinkClass = (active) =>
 
 const panelButtonClass = 'flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-white/85 transition hover:bg-white/10'
 
-const sectionHref = (section) => section.id === 'donation' ? '/soutenir' : sectionHref(section)
+const sectionHref = (section) => section.id === 'donation' ? '/soutenir' : sectionUrl(section.id)
 
 // Public site header. Primary sections are always visible on desktop, the others
 // are grouped under "Plus"; below 1024px everything (account included) lives in
