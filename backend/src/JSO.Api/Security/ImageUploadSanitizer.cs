@@ -1,8 +1,4 @@
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Jpeg;
-using SixLabors.ImageSharp.Formats.Png;
-using SixLabors.ImageSharp.Formats.Webp;
-using SixLabors.ImageSharp.PixelFormats;
+using SkiaSharp;
 
 namespace JSO.Api.Security;
 
@@ -29,34 +25,37 @@ public static class ImageUploadSanitizer
                 throw new InvalidDataException("Image exceeds the allowed input size.");
 
             source.Position = 0;
-            var info = await Image.IdentifyAsync(source, cancellationToken);
-            if (info is null || info.Width <= 0 || info.Height <= 0 ||
-                info.Width > MaxDimension || info.Height > MaxDimension ||
-                (long)info.Width * info.Height > MaxPixels)
+            using var codec = SKCodec.Create(source);
+            if (codec is null)
+                throw new InvalidDataException("The uploaded file is not a supported image.");
+
+            var width = codec.Info.Width;
+            var height = codec.Info.Height;
+            if (width <= 0 || height <= 0 ||
+                width > MaxDimension || height > MaxDimension ||
+                (long)width * height > MaxPixels)
                 throw new InvalidDataException("Image dimensions are invalid or exceed the allowed limit.");
 
-            source.Position = 0;
-            using var image = await Image.LoadAsync<Rgba32>(source, cancellationToken);
-            await using var output = new MemoryStream();
-            switch (contentType.ToLowerInvariant())
-            {
-                case "image/jpeg":
-                    await image.SaveAsync(output, new JpegEncoder(), cancellationToken);
-                    break;
-                case "image/png":
-                    await image.SaveAsync(output, new PngEncoder(), cancellationToken);
-                    break;
-                case "image/webp":
-                    await image.SaveAsync(output, new WebpEncoder(), cancellationToken);
-                    break;
-                default:
-                    throw new InvalidDataException("Unsupported image format.");
-            }
+            cancellationToken.ThrowIfCancellationRequested();
+            using var bitmap = SKBitmap.Decode(codec);
+            if (bitmap is null || bitmap.Width != width || bitmap.Height != height)
+                throw new InvalidDataException("The uploaded file could not be decoded.");
 
-            if (output.Length == 0 || output.Length > MaxBytes)
+            var format = contentType.ToLowerInvariant() switch
+            {
+                "image/jpeg" => SKEncodedImageFormat.Jpeg,
+                "image/png" => SKEncodedImageFormat.Png,
+                "image/webp" => SKEncodedImageFormat.Webp,
+                _ => throw new InvalidDataException("Unsupported image format.")
+            };
+
+            using var image = SKImage.FromBitmap(bitmap);
+            using var encoded = image.Encode(format, quality: 90);
+            if (encoded is null || encoded.Size == 0 || encoded.Size > MaxBytes)
                 throw new InvalidDataException("Sanitized image exceeds the allowed output size.");
 
-            return output.ToArray();
+            cancellationToken.ThrowIfCancellationRequested();
+            return encoded.ToArray();
         }
         catch (OperationCanceledException)
         {
