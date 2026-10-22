@@ -12,6 +12,8 @@ const desktopLinkClass = (active) =>
 
 const panelButtonClass = 'flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-white/85 transition hover:bg-white/10'
 
+const sectionHref = (section) => section.id === 'donation' ? '/soutenir' : sectionUrl(section.id)
+
 // Public site header. Primary sections are always visible on desktop, the others
 // are grouped under "Plus"; below 1024px everything (account included) lives in
 // the mobile panel. `sections` comes from visibleSections(), so every link
@@ -43,7 +45,7 @@ export default function SiteHeader({
     [t('common.ticketing'), BILLETTERIE_PATH, Ticket],
     [t('common.news'), NEWS_LIST_PATH, Newspaper],
     ...(sections.some((section) => section.id === 'shop') ? [['Boutique', sectionUrl('shop'), ShoppingBag]] : []),
-    ...(sections.some((section) => section.id === 'donation') ? [['Soutenir', sectionUrl('donation'), HeartHandshake]] : []),
+    ...(sections.some((section) => section.id === 'donation') ? [['Soutenir', '/soutenir', HeartHandshake]] : []),
   ]
 
   // Escape closes whichever menu is open (and gives focus back to its button);
@@ -102,14 +104,10 @@ export default function SiteHeader({
 
         <nav aria-label={t('common.mainNavigation')} className="ml-4 hidden items-center gap-1 lg:flex xl:ml-8">
           {primary.map((section) => (
-            <a key={section.id} href={sectionUrl(section.id)} onClick={closeMenus} aria-current={current(section.id)} className={desktopLinkClass(activeId === section.id)}>
+            <a key={section.id} href={sectionHref(section)} onClick={closeMenus} aria-current={current(section.id)} className={desktopLinkClass(activeId === section.id)}>
               {section.label}
             </a>
           ))}
-          <a href="/soutenir" onClick={closeMenus} className={desktopLinkClass(window.location.pathname === '/soutenir')}>
-            Soutenir
-          </a>
-
           {(secondary.length > 0 || extraLinks.length > 0) && (
             <div ref={moreRef} className="relative">
               <button
@@ -147,7 +145,7 @@ export default function SiteHeader({
                     {secondary.map((section) => (
                       <li key={section.id}>
                         <a
-                          href={sectionUrl(section.id)}
+                          href={sectionHref(section)}
                           onClick={closeMenus}
                           aria-current={current(section.id)}
                           className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold transition hover:bg-slate-100 ${activeId === section.id ? 'text-jso-blue' : 'text-jso-ink'}`}
@@ -273,7 +271,7 @@ export default function SiteHeader({
                 {primary.map((section) => (
                   <li key={section.id}>
                     <a
-                      href={sectionUrl(section.id)}
+                      href={sectionHref(section)}
                       onClick={closeMenus}
                       aria-current={current(section.id)}
                       className={`flex items-center justify-between py-4 text-xl font-black ${activeId === section.id ? 'text-jso-gold' : 'text-white'}`}
@@ -292,7 +290,7 @@ export default function SiteHeader({
                     {secondary.map((section) => (
                       <li key={section.id}>
                         <a
-                          href={sectionUrl(section.id)}
+                          href={sectionHref(section)}
                           onClick={closeMenus}
                           aria-current={current(section.id)}
                           className={`block rounded-xl px-4 py-3 text-sm font-bold transition hover:bg-white/10 ${activeId === section.id ? 'bg-white/10 text-jso-gold' : 'bg-white/5 text-white/85'}`}
