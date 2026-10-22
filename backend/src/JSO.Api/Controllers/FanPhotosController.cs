@@ -60,11 +60,55 @@ public sealed class FanPhotosController(JsoDbContext db, IWebHostEnvironment env
                 p.Caption,
                 p.Status,
                 p.SubmittedAt,
-                Url = m.Url
+                Url = $"/api/fan/photos/{p.Id}/image"
             })
             .ToListAsync(ct);
 
         return Ok(rows);
+    }
+
+
+    // Authenticated fan can preview their own upload even while moderation is
+    // pending. Ownership is always checked against the JWT subject.
+    [HttpGet("{id:guid}/image")]
+    public async Task<IActionResult> GetOwnImage(Guid id, CancellationToken ct)
+    {
+        var fanId = CurrentFanId();
+        if (fanId is null) return Unauthorized();
+
+        var asset = await db.FanPhotos.AsNoTracking()
+            .Where(p => p.Id == id && p.FanUserId == fanId)
+            .Join(db.MediaAssets.AsNoTracking(), p => p.MediaAssetId, m => m.Id, (p, m) => new
+            {
+                m.StoragePath,
+                m.ContentType
+            })
+            .SingleOrDefaultAsync(ct);
+
+        if (asset is null || string.IsNullOrWhiteSpace(asset.StoragePath) || string.IsNullOrWhiteSpace(asset.ContentType))
+            return NotFound();
+
+        var contentType = asset.ContentType.ToLowerInvariant();
+        if (contentType is not ("image/jpeg" or "image/png" or "image/webp"))
+            return NotFound();
+
+        var relative = asset.StoragePath.Replace('\\', '/').TrimStart('/');
+        if (!relative.StartsWith("private-uploads/fan-photos/", StringComparison.Ordinal)
+            && !relative.StartsWith("uploads/fan-photos/", StringComparison.Ordinal))
+            return NotFound();
+
+        var fullPath = Path.GetFullPath(Path.Combine(env.ContentRootPath, relative));
+        var privateRoot = Path.GetFullPath(Path.Combine(env.ContentRootPath, "private-uploads", "fan-photos")) + Path.DirectorySeparatorChar;
+        var legacyRoot = Path.GetFullPath(Path.Combine(env.ContentRootPath, "uploads", "fan-photos")) + Path.DirectorySeparatorChar;
+        if (!fullPath.StartsWith(privateRoot, StringComparison.Ordinal)
+            && !fullPath.StartsWith(legacyRoot, StringComparison.Ordinal))
+            return NotFound();
+        if (!System.IO.File.Exists(fullPath))
+            return NotFound();
+
+        Response.Headers.CacheControl = "private,no-store";
+        Response.Headers["X-Content-Type-Options"] = "nosniff";
+        return PhysicalFile(fullPath, contentType);
     }
 
     [HttpPost]
