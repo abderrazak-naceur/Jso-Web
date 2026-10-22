@@ -310,11 +310,13 @@ public sealed class TicketsController(
             return StatusCode(StatusCodes.Status503ServiceUnavailable,
                 new { message = $"Le paiement en ligne via {provider.Name} n'est pas encore disponible. Veuillez réessayer plus tard." });
         }
-        catch (PaymentProviderException ex)
+        catch (PaymentProviderException)
         {
             order.ReservationExpiresAt = DateTimeOffset.UtcNow.Add(InventoryReservationService.ReservationLifetime);
             await db.SaveChangesAsync(ct);
-            return StatusCode(StatusCodes.Status502BadGateway, new { message = ex.Message });
+            // Provider exception details may contain internal URLs or diagnostic data.
+            return StatusCode(StatusCodes.Status502BadGateway,
+                new { message = "Le prestataire di pagamento non è riuscito ad avviare il pagamento. Riprova più tardi." });
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
