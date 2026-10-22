@@ -323,6 +323,9 @@ app.Use(async (context, next) =>
     {
         var headers = context.Response.Headers;
         headers["X-Content-Type-Options"] = "nosniff";
+        // Render terminates TLS at the edge; browsers receive this header on the
+        // public HTTPS response and enforce HTTPS for the API host for one year.
+        headers["Strict-Transport-Security"] = "max-age=31536000";
         headers["X-Frame-Options"] = "DENY";
         headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
         headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
