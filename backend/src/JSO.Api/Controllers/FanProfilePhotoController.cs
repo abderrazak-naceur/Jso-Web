@@ -82,9 +82,23 @@ public sealed class FanProfilePhotoController(JsoDbContext db, IWebHostEnvironme
 
     private void DeleteOldFile(string? url)
     {
-        if (string.IsNullOrWhiteSpace(url) || !url.StartsWith("/uploads/fan-profiles/", StringComparison.Ordinal)) return;
+        const string allowedPrefix = "/uploads/fan-profiles/";
+        if (string.IsNullOrWhiteSpace(url) ||
+            !url.StartsWith(allowedPrefix, StringComparison.Ordinal))
+            return;
+
+        var profileRoot = Path.GetFullPath(Path.Combine(env.ContentRootPath, "uploads", "fan-profiles"));
         var relative = url.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-        var absolute = Path.Combine(env.ContentRootPath, relative);
-        if (System.IO.File.Exists(absolute)) System.IO.File.Delete(absolute);
+        var absolute = Path.GetFullPath(Path.Combine(env.ContentRootPath, relative));
+        var profilePrefix = profileRoot.EndsWith(Path.DirectorySeparatorChar)
+            ? profileRoot
+            : profileRoot + Path.DirectorySeparatorChar;
+
+        // Normalize first, then enforce containment to block ../ traversal.
+        if (absolute.StartsWith(profilePrefix, StringComparison.OrdinalIgnoreCase) &&
+            System.IO.File.Exists(absolute))
+        {
+            System.IO.File.Delete(absolute);
+        }
     }
 }
