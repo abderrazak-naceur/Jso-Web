@@ -1,4 +1,5 @@
 using JSO.Domain;
+using JSO.Api.Security;
 using JSO.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -45,6 +46,19 @@ public sealed class FanProfilePhotoController(JsoDbContext db, IWebHostEnvironme
                 return BadRequest(new { message = "Le fichier ne semble pas être une image valide." });
         }
 
+        byte[] sanitizedBytes;
+        await using (var input = file.OpenReadStream())
+        {
+            try
+            {
+                sanitizedBytes = await ImageUploadSanitizer.SanitizeAsync(input, file.ContentType, ct);
+            }
+            catch (InvalidDataException)
+            {
+                return BadRequest(new { message = "La photo n'est pas valide ou dépasse les limites autorisées." });
+            }
+        }
+
         var fan = await db.FanUsers.SingleOrDefaultAsync(x => x.Id == id && x.IsActive, ct);
         if (fan is null) return NotFound();
         var now = DateTime.UtcNow;
@@ -53,7 +67,7 @@ public sealed class FanProfilePhotoController(JsoDbContext db, IWebHostEnvironme
         var relative = Path.Combine(relativeDir, safeName);
         var absolute = Path.Combine(env.ContentRootPath, relative);
         Directory.CreateDirectory(Path.GetDirectoryName(absolute)!);
-        await using (var output = System.IO.File.Create(absolute)) await file.CopyToAsync(output, ct);
+        await System.IO.File.WriteAllBytesAsync(absolute, sanitizedBytes, ct);
 
         var oldUrl = fan.ProfilePhotoUrl;
         fan.ProfilePhotoUrl = "/" + relative.Replace('\\', '/');
