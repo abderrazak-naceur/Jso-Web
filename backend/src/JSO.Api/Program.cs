@@ -262,6 +262,20 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0,
             AutoReplenishment = true
         }));
+    // Limit fan photo uploads separately because each accepted upload consumes
+    // persistent storage and image-decoding memory. Key by authenticated fan,
+    // falling back to the connection IP when no subject is available.
+    options.AddPolicy("fan-photo-upload", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User?.FindFirst("sub")?.Value
+            ?? context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromHours(1),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        }));
     // Anti-spam limiter for authenticated fan community writes (comments,
     // reactions, reports). Partitioned per fan identity when available so a
     // single account cannot flood the moderation queue, falling back to IP.
