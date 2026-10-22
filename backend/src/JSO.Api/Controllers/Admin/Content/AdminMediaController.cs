@@ -40,6 +40,16 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
     {
         if (file is null || file.Length == 0) return BadRequest(new { message = "File is required." });
         if (file.Length > MaxUploadBytes) return BadRequest(new { message = "Maximum file size is 10 MB." });
+        var assetTitle = string.IsNullOrWhiteSpace(title)
+            ? Path.GetFileNameWithoutExtension(file.FileName)
+            : title.Trim();
+        if (string.IsNullOrWhiteSpace(assetTitle) || assetTitle.Length > 180)
+            return BadRequest(new { message = "Title is required and must be at most 180 characters." });
+        if (caption?.Trim().Length > 500)
+            return BadRequest(new { message = "Caption must be at most 500 characters." });
+        var originalFileName = Path.GetFileName(file.FileName);
+        if (string.IsNullOrWhiteSpace(originalFileName) || originalFileName.Length > 255)
+            return BadRequest(new { message = "File name must be at most 255 characters." });
         if (string.IsNullOrWhiteSpace(file.ContentType) || !AllowedImageTypes.TryGetValue(file.ContentType, out var imageType))
             return BadRequest(new { message = "Only JPEG, PNG and WebP images are supported." });
 
@@ -82,12 +92,12 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
 
         var asset = new MediaAsset
         {
-            Title = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(file.FileName) : title.Trim(),
+            Title = assetTitle,
             Url = "/uploads/media/" + year + "/" + month + "/" + safeName,
             Type = "Image",
             Caption = caption?.Trim(),
             IsPublished = true,
-            FileName = Path.GetFileName(file.FileName),
+            FileName = originalFileName,
             ContentType = file.ContentType.ToLowerInvariant(),
             FileSize = sanitizedBytes.Length,
             StoragePath = relative.Replace('\\', '/')
