@@ -301,6 +301,24 @@ await using (var startupScope = app.Services.CreateAsyncScope())
 
 app.UseForwardedHeaders();
 
+// Apply baseline browser security headers to API, error and static-file
+// responses. CSP/HSTS are managed at the public edge because TLS terminates
+// there and the API's proxy trust must remain explicitly configured.
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        var headers = context.Response.Headers;
+        headers["X-Content-Type-Options"] = "nosniff";
+        headers["X-Frame-Options"] = "DENY";
+        headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+        headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+        return Task.CompletedTask;
+    });
+
+    await next();
+});
+
 // Swagger is available by default only in Development. In production it exposes
 // the API surface and must be explicitly enabled for a short, controlled review
 // window using the Swagger__Enabled environment variable. This does not replace
