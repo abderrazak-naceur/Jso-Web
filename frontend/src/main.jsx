@@ -10,6 +10,7 @@ const PaymentReturn = lazy(() => import('./features/shop/PaymentReturn.jsx'))
 const NewsListPage = lazy(() => import('./features/news/NewsListPage.jsx'))
 const BilletteriePage = lazy(() => import('./features/tickets/BilletteriePage.jsx'))
 const DonationPage = lazy(() => import('./features/donations/DonationPage.jsx'))
+const SoutenirPage = lazy(() => import('./features/donations/SoutenirPage.jsx'))
 const CustomerDashboardPage = lazy(() => import('./features/account/CustomerDashboardPage.jsx'))
 const SupporterProfilePage = lazy(() => import('./features/account/SupporterProfilePage.jsx'))
 const NotFoundPage = lazy(() => import('./features/site/NotFoundPage.jsx'))
@@ -51,8 +52,12 @@ function Root() {
   if (path.startsWith('/payment/')) return <PaymentReturn />
   if (path === '/actualites') return <NewsListPage />
   if (path === '/billetterie') return <BilletteriePage />
-  if (['/nos-projets', '/soutenir', '/support-campaign-preview'].includes(path)) {
-    if (path !== '/nos-projets') window.history.replaceState({}, '', '/nos-projets' + window.location.search + window.location.hash)
+  if (path === '/nos-projets') return <DonationPage />
+  // Keep the legacy donation campaign URL and page intact; do not silently
+  // redirect supporters to the newer multi-project fundraising experience.
+  if (path === '/soutenir') return <SoutenirPage />
+  if (path === '/support-campaign-preview') {
+    window.history.replaceState({}, '', '/nos-projets' + window.location.search + window.location.hash)
     return <DonationPage />
   }
   if (['/account', '/mon-espace', '/account/tickets', '/account/memberships', '/account/orders', '/account/supports', '/account/payments'].includes(path)) return <CustomerDashboardPage />
