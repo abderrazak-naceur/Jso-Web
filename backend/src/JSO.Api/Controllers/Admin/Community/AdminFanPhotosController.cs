@@ -78,8 +78,20 @@ public sealed class AdminFanPhotosController(JsoDbContext db, AuditService audit
         {
             if (!string.IsNullOrWhiteSpace(asset.StoragePath))
             {
-                var absolute = Path.Combine(env.ContentRootPath, asset.StoragePath.Replace('/', Path.DirectorySeparatorChar));
-                if (System.IO.File.Exists(absolute)) System.IO.File.Delete(absolute);
+                // StoragePath is database data; never allow it to delete outside fan-photo uploads.
+                var photoRoot = Path.GetFullPath(Path.Combine(env.ContentRootPath, "uploads", "fan-photos"));
+                var absolute = Path.GetFullPath(Path.Combine(
+                    env.ContentRootPath,
+                    asset.StoragePath.Replace('/', Path.DirectorySeparatorChar)));
+                var photoPrefix = photoRoot.EndsWith(Path.DirectorySeparatorChar)
+                    ? photoRoot
+                    : photoRoot + Path.DirectorySeparatorChar;
+
+                if (absolute.StartsWith(photoPrefix, StringComparison.OrdinalIgnoreCase) &&
+                    System.IO.File.Exists(absolute))
+                {
+                    System.IO.File.Delete(absolute);
+                }
             }
             db.MediaAssets.Remove(asset);
         }
