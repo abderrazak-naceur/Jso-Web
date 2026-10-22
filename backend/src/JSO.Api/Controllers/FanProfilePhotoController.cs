@@ -53,7 +53,7 @@ public sealed class FanProfilePhotoController(JsoDbContext db, IWebHostEnvironme
         {
             try
             {
-                sanitizedBytes = await ImageUploadSanitizer.SanitizeAsync(input, file.ContentType, ct);
+                sanitizedBytes = await ImageUploadSanitizer.SanitizeAsync(input, file.ContentType ?? string.Empty, ct);
             }
             catch (InvalidDataException)
             {
