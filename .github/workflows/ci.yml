@@ -165,6 +165,56 @@ jobs:
             http://127.0.0.1:5080/api/admin/matches)
           test "$admin_unauth_status" = 401
 
+          # Visitor analytics is opt-in at the browser and aggregates only sanitized public page views.
+          page_view_status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+            http://127.0.0.1:5080/api/analytics/page-view \
+            -H 'Content-Type: application/json' \
+            -d '{"path":"/","referrer":"https://example.com/article","deviceClass":"desktop","visitorId":"ci-visitor-001"}')
+          test "$page_view_status" = 204
+          sensitive_page_status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+            http://127.0.0.1:5080/api/analytics/page-view \
+            -H 'Content-Type: application/json' \
+            -d '{"path":"/account?email=private@example.com","deviceClass":"desktop","visitorId":"ci-visitor-002"}')
+          test "$sensitive_page_status" = 204
+          curl -fsS 'http://127.0.0.1:5080/api/admin/visitor-analytics?days=7' \
+            -H "Authorization: Bearer $token" \
+            | jq -e '.pageViews >= 1 and .uniqueVisitors >= 1 and any(.topPages[]; .path == "/")'
+          visitor_unauth_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            'http://127.0.0.1:5080/api/admin/visitor-analytics?days=7')
+          test "$visitor_unauth_status" = 401
+
+          # IP/CIDR rules and traffic events are SuperAdmin-only and must validate input.
+          ip_blocks_unauth_status=$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:5080/api/admin/security/ip-blocks)
+          test "$ip_blocks_unauth_status" = 401
+          ip_rule_invalid_status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+            http://127.0.0.1:5080/api/admin/security/ip-blocks \
+            -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+            -d '{"networkCidr":"not-an-ip","reason":"CI invalid input"}')
+          test "$ip_rule_invalid_status" = 400
+          ip_rule_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/security/ip-blocks \
+            -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+            -d '{"networkCidr":"192.0.2.0/24","reason":"CI smoke test rule","expiresAt":null}')
+          jq -e '.networkCidr == "192.0.2.0/24" and .enforcementEnabled == false' <<< "$ip_rule_response"
+          curl -fsS http://127.0.0.1:5080/api/admin/security/ip-blocks \
+            -H "Authorization: Bearer $token" | jq -e 'any(.rules[]; .networkCidr == "192.0.2.0/24")'
+          ip_rule_bad_expiry_status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+            http://127.0.0.1:5080/api/admin/security/ip-blocks \
+            -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+            -d '{"networkCidr":"2001:db8::/32","reason":"CI expired rule","expiresAt":"2020-01-01T00:00:00Z"}')
+          test "$ip_rule_bad_expiry_status" = 400
+          ipv6_rule_response=$(curl -fsS -X POST http://127.0.0.1:5080/api/admin/security/ip-blocks \
+            -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+            -d '{"networkCidr":"2001:db8::/32","reason":"CI IPv6 smoke test rule"}')
+          ipv6_rule_id=$(jq -r '.id // empty' <<< "$ipv6_rule_response")
+          test -n "$ipv6_rule_id"
+          jq -e '.networkCidr == "2001:db8::/32" and .enforcementEnabled == false' <<< "$ipv6_rule_response"
+          curl -fsS -X PATCH "http://127.0.0.1:5080/api/admin/security/ip-blocks/$ipv6_rule_id/disable" \
+            -H "Authorization: Bearer $token" -o /dev/null
+          curl -fsS http://127.0.0.1:5080/api/admin/security/ip-blocks \
+            -H "Authorization: Bearer $token" | jq -e --arg id "$ipv6_rule_id" 'any(.rules[]; .id == $id and .isEnabled == false)'
+          curl -fsS 'http://127.0.0.1:5080/api/admin/security/traffic-events?limit=10' \
+            -H "Authorization: Bearer $token" | jq -e '.detectionMode == "signals-only" and (.events | type == "array") and any(.events[]; .category == "automation-signal" and .verifiedBot == false)'
+
           # Browsers must be able to read authorization failures instead of
           # reporting a generic "Failed to fetch" for the donation screens.
           for path in admin/donations/summary staff/donations/cash/capabilities; do
@@ -401,6 +451,16 @@ jobs:
             -H 'Content-Type: application/json' \
             -d "$(jq -nc --arg token "$ticket_token" --arg matchId "$match_id" --arg gateId "$gate_code" --arg deviceId "$device_code"               '{token:$token,matchId:$matchId,gateId:$gateId,deviceId:$deviceId}')")
           jq -e '.result == "AlreadyUsed"' <<< "$second_checkin"
+
+          # Security management is SuperAdmin-only; ordinary Fan identities must be denied.
+          fan_ip_blocks_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            http://127.0.0.1:5080/api/admin/security/ip-blocks \
+            -H "Authorization: Bearer $fan_token")
+          test "$fan_ip_blocks_status" = 403
+          fan_traffic_events_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            http://127.0.0.1:5080/api/admin/security/traffic-events \
+            -H "Authorization: Bearer $fan_token")
+          test "$fan_traffic_events_status" = 403
 
           # Wrong match is a ticket outcome, while wrong gate/device are authorization failures.
           wrong_match_status=$(curl -sS -o /tmp/jso-wrong-match.json -w '%{http_code}' \
