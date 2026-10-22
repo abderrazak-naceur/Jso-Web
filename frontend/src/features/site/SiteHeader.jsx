@@ -44,7 +44,6 @@ export default function SiteHeader({
     [t('common.news'), NEWS_LIST_PATH, Newspaper],
     ...(sections.some((section) => section.id === 'shop') ? [['Boutique', sectionUrl('shop'), ShoppingBag]] : []),
     ...(sections.some((section) => section.id === 'donation') ? [['Soutenir', sectionUrl('donation'), HeartHandshake]] : []),
-    ['Nos projets', '/nos-projets', HeartHandshake],
   ]
 
   // Escape closes whichever menu is open (and gives focus back to its button);
@@ -107,8 +106,8 @@ export default function SiteHeader({
               {section.label}
             </a>
           ))}
-          <a href="/nos-projets" onClick={closeMenus} className={desktopLinkClass(window.location.pathname === '/nos-projets')}>
-            Nos projets
+          <a href="/soutenir" onClick={closeMenus} className={desktopLinkClass(window.location.pathname === '/soutenir')}>
+            Soutenir
           </a>
 
           {(secondary.length > 0 || extraLinks.length > 0) && (
