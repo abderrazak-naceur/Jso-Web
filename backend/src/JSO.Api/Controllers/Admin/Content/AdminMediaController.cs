@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using JSO.Domain;
 using JSO.Infrastructure;
+using JSO.Api.Security;
 
 namespace JSO.Api.Controllers;
 
@@ -24,7 +25,6 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
             ["image/jpeg"] = (".jpg", [0xFF, 0xD8, 0xFF]),
             ["image/png"] = (".png", [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
             ["image/webp"] = (".webp", [0x52, 0x49, 0x46, 0x46]),
-            ["image/gif"] = (".gif", [0x47, 0x49, 0x46, 0x38])
         };
     private const long MaxUploadBytes = 10 * 1024 * 1024;
 
@@ -55,6 +55,19 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
                 return BadRequest(new { message = "The file content does not match its declared image type." });
         }
 
+        byte[] sanitizedBytes;
+        await using (var input = file.OpenReadStream())
+        {
+            try
+            {
+                sanitizedBytes = await ImageUploadSanitizer.SanitizeAsync(input, file.ContentType, ct);
+            }
+            catch (InvalidDataException)
+            {
+                return BadRequest(new { message = "The uploaded file is not a valid supported image or exceeds image limits." });
+            }
+        }
+
         var extension = imageType.Extension;
         var safeName = $"{Guid.NewGuid():N}{extension}";
         var uploadedAtUtc = DateTime.UtcNow;
@@ -63,8 +76,7 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         var relative = Path.Combine("uploads", "media", year, month, safeName);
         var absolute = Path.Combine(env.ContentRootPath, relative);
         Directory.CreateDirectory(Path.GetDirectoryName(absolute)!);
-        await using (var stream = System.IO.File.Create(absolute))
-            await file.CopyToAsync(stream, ct);
+        await System.IO.File.WriteAllBytesAsync(absolute, sanitizedBytes, ct);
 
         var asset = new MediaAsset
         {
@@ -75,7 +87,7 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
             IsPublished = true,
             FileName = Path.GetFileName(file.FileName),
             ContentType = file.ContentType.ToLowerInvariant(),
-            FileSize = file.Length,
+            FileSize = sanitizedBytes.Length,
             StoragePath = relative.Replace('\\', '/')
         };
         // Match-specific uploads are stored on disk for the match, but enter Media House only by explicit opt-in.
@@ -126,6 +138,16 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         if (!System.Text.RegularExpressions.Regex.IsMatch(repository, @"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$") ||
             !System.Text.RegularExpressions.Regex.IsMatch(branch, @"^[A-Za-z0-9_./-]+$"))
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = "GitHub repository or branch configuration is invalid." });
+
+        try
+        {
+            await using var rawInput = new MemoryStream(bytes, writable: false);
+            bytes = await ImageUploadSanitizer.SanitizeAsync(rawInput, file.ContentType, ct);
+        }
+        catch (InvalidDataException)
+        {
+            return BadRequest(new { message = "The uploaded file is not a valid supported image or exceeds image limits." });
+        }
 
         var hash = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
         var fileName = $"{side}-{hash[..16]}{imageType.Extension}";
