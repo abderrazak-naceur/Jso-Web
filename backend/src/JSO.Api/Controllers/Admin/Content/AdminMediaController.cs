@@ -39,7 +39,7 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         if (file is null || file.Length == 0) return BadRequest(new { message = "File is required." });
         if (file.Length > MaxUploadBytes) return BadRequest(new { message = "Maximum file size is 10 MB." });
         if (string.IsNullOrWhiteSpace(file.ContentType) || !AllowedImageTypes.TryGetValue(file.ContentType, out var imageType))
-            return BadRequest(new { message = "Only JPEG, PNG, WebP and GIF images are supported." });
+            return BadRequest(new { message = "Only JPEG, PNG and WebP images are supported." });
 
         var signature = new byte[12];
         await using (var input = file.OpenReadStream())
