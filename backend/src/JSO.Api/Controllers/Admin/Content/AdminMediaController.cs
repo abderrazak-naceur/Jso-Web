@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
@@ -33,6 +34,7 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
         Ok(await db.MediaAssets.AsNoTracking().OrderByDescending(x => x.CreatedAt).Take(200).ToListAsync(ct));
 
     [HttpPost("upload")]
+    [EnableRateLimiting("media-upload")]
     [RequestSizeLimit(MaxUploadBytes + 1024 * 1024)]
     public async Task<IActionResult> Upload(IFormFile file, [FromForm] string? title, [FromForm] string? caption, [FromForm] bool addToMedia = true, CancellationToken ct = default)
     {
@@ -103,6 +105,7 @@ public sealed class AdminMediaController(JsoDbContext db, IWebHostEnvironment en
     // Store membership card artwork as versioned repository assets so it survives API container replacements.
     // Configure GitHub__Token on the API service with repository Contents: Read and write permission.
     [HttpPost("membership-artwork/{side}")]
+    [EnableRateLimiting("media-upload")]
     [RequestSizeLimit(MaxUploadBytes + 1024 * 1024)]
     public async Task<IActionResult> UploadMembershipArtwork(string side, IFormFile file, CancellationToken ct)
     {
