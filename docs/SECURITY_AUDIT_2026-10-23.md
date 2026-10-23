@@ -6,46 +6,54 @@ Commit di partenza: `da616b8c470a50c32fc4f30c907e6f7c5f82b985` (main)
 
 ## Stato e limiti
 
-Questa è una prima revisione statica del codice su GitHub. Non è stato possibile eseguire build, test, scanner SCA/SAST o test dinamici contro un ambiente deployato in questa sessione. Non dichiarare quindi l'applicazione “sicura” né trattare i punti da verificare come vulnerabilità confermate. Il branch è stato creato da main ed è inizialmente identico a main; nessun file di produzione è stato ancora modificato.
+Prima revisione statica del sorgente GitHub. Non è stato possibile eseguire build, test, scanner SCA/SAST o test dinamici contro un ambiente distribuito in questa sessione. Non è quindi corretto concludere che il progetto sia sicuro o classificare tutti i punti aperti come vulnerabilità confermate.
 
-## Riepilogo iniziale
+## Finding iniziale
 
-### Rischio da approfondire — override URL API controllabile via localStorage (frontend)
-File: `frontend/src/lib/apiConfig.js`
+### F-001 — L'URL base API può essere impostato dal localStorage
+- **Severità iniziale:** media come rischio di configurazione; non è una vulnerabilità remota autonoma confermata.
+- **Evidenza:** `frontend/src/lib/apiConfig.js` legge la chiave `jso_api_base_url` dal localStorage e la usa come `API_BASE_URL`. Le funzioni in `frontend/src/lib/api.js` inviano token `Authorization: Bearer` alle richieste protette verso `API_BASE_URL + path`.
+- **Scenario:** se un utente o codice eseguito nello stesso origin salva un URL non attendibile (per esempio dopo un XSS o una configurazione manuale malevola), successive richieste autenticate possono inviare il bearer token a quell'host. L'host deve essere HTTPS per non esporre il token sulla rete in chiaro, ma può comunque riceverlo.
+- **Limiti:** la possibilità pratica dipende da chi può accedere alla funzione UI che modifica l'API, dal tipo di token persistito e dal modello XSS; non è stato dimostrato un attaccante remoto che modifica il localStorage senza altra debolezza.
+- **Fix raccomandato:** in produzione accettare solo URL HTTPS con host allowlist configurata oppure disabilitare l'override runtime, mantenere override libero solo in sviluppo; prima di ogni richiesta autenticata validare l'origine target e non inviare token a origin non approvati.
+- **Test richiesti:** override HTTPS ostile, URL HTTP, origine non allowlisted, input con credenziali/URL malformati, token bearer non inviato in caso di blocco.
 
-Il client legge `jso_api_base_url` dal localStorage e lo antepone alle richieste API. Se un utente incolla o imposta accidentalmente un URL non attendibile, il browser invierà lì richieste e token Bearer per chiamate autenticante. Un XSS nello stesso origin potrebbe anche modificarlo. Questo non è, da solo, un bypass remoto: va controllato chi può cambiare l'impostazione nell'interfaccia e quali controlli esistono. Raccomandazione: in produzione restringere protocollo/host consentiti o consentire override solo in sviluppo/admin esplicito; evitare di inviare credenziali verso origini arbitrarie.
+## Rischi da verificare — non ancora classificati come vulnerabilità confermate
 
-### Rischio da approfondire — header di rate limiting e proxy
+### F-002 — Rate limiting basato sull'IP e proxy reale
 File: `backend/src/JSO.Api/Program.cs`
+Il limiter `public-api` (120/min) e `auth-login` (5/5 min) partiziona in base a `Connection.RemoteIpAddress`. L'app abilita `X-Forwarded-For`/proto e marca loopback come proxy noto. Verificare sul reverse proxy effettivo che l'IP sia normalizzato correttamente e che un client non possa alterare l'identità con header forwarding. Il codice letto non dimostra da solo che il limite sia aggirabile.
 
-Il limiter pubblico/login usa `Connection.RemoteIpAddress`, e forwarded headers è configurato per fidarsi di loopback. Verificare che il reverse proxy reale normalizzi correttamente IP e X-Forwarded-For e che i limiti siano efficaci in produzione. L'app ha limiti globali pubblici e per login; altre policy specifiche sono definite ma va verificato ogni endpoint. Non è ancora provata un'esposizione sfruttabile.
+### F-003 — Tutti i percorsi di upload amministrativi da mappare
+Il percorso foto tifosi in `backend/src/JSO.Api/Controllers/FanPhotosController.cs` ha controlli utili: limite di 10 MiB, allowlist MIME, firma del file, decodifica/ricodifica e rate limiting. Questo non prova che il percorso distinto di upload media per admin applichi difese equivalenti. Identificare il controller corretto e verificare autorizzazione, limite request e immagine decodificata, estensioni/percorso, rate limit e accesso pubblico ai file.
 
-### Controllo prioritario — upload media admin
-File: `backend/src/JSO.Api/Controllers/FanPhotosController.cs` contiene validazione per immagini fan: limite 10 MiB, allowlist MIME, firma, decodifica e ricodifica, path generato dal server e rate limit dedicato. È una buona protezione nel percorso fan, ma non dimostra che il diverso endpoint di upload admin abbia controlli equivalenti. Individuare e verificare l'endpoint admin, i limiti della richiesta, i controlli sul contenuto decodificato, path traversal, autorizzazioni e policy `media-upload`.
-
-### Dipendenze e CI — scansione non ancora dimostrata
-Il repository contiene Dependabot per GitHub Actions, npm e NuGet e una CI per build/test. In questa revisione non è stato eseguito `npm audit`, `dotnet list package --vulnerable`, CodeQL o uno scanner di segreti. I numeri di versione nel manifest, da soli, non provano né escludono vulnerabilità.
+### F-004 — Dipendenze: scansione non eseguita
+Il repository ha Dependabot configurato per GitHub Actions, npm e NuGet. In questa sessione non è stato eseguito `npm audit`, `dotnet list package --vulnerable --include-transitive`, CodeQL o secret scanning. Nessuna conclusione sulle CVE delle dipendenze è quindi giustificata.
 
 ## Controlli positivi osservati nel sorgente
-- La chiave JWT è richiesta da configurazione e deve essere lunga almeno 32 caratteri; il valore in `appsettings.json` è vuoto, non un segreto hardcoded.
-- JWT verifica issuer, audience, lifetime e firma; le richieste controllano anche stato/ruolo/versione sessione corrente in database.
-- La registrazione fan richiede password di almeno 12 caratteri; login e registrazione applicano una policy di rate limit per IP.
-- Le foto dei fan sono limitate a JPEG/PNG/WebP, validate per firma e decodificate/ricodificate; in attesa di moderazione sono private e le route verificano ownership.
-- Il webhook Stripe verifica la firma e il webhook Flouci esegue verifica lato provider, seguita da confronto importo/valuta.
-- Il CORS usa origini esplicite e non usa `AllowAnyOrigin`; i controller vengono autenticati/ autorizzati tramite middleware.
+- `Jwt:Key` è richiesto da configurazione e deve essere lungo almeno 32 caratteri; `appsettings.json` contiene il campo vuoto, non una chiave statica.
+- JWT verifica issuer, audience, scadenza e firma; token di fan e admin sono confrontati con lo stato/ruolo/versione sessione salvati nel database.
+- Login e registrazione fan hanno rate limiting; registrazione richiede password di almeno 12 caratteri.
+- Upload foto fan: allowlist JPEG/PNG/WebP, validazione della firma, decodifica e ricodifica, path generato dal server, stato Pending e controllo di ownership per la preview privata.
+- Stripe webhook verifica la firma; Flouci esegue verifica lato provider e confronta importo/valuta prima di completare il pagamento.
+- CORS usa origini esplicite, senza `AllowAnyOrigin`.
 
-Questi sono segnali positivi nel codice letto, non la prova di assenza di bug in altri percorsi.
+Sono osservazioni sui file controllati, non una garanzia d'assenza di bug altrove.
 
-## Piano tecnico immediato
-1. Mappare tutti i controller admin, attributi `[Authorize]`, policy/ruoli e accessi per-ID (IDOR/BOLA).
-2. Ispezionare ogni upload admin (MIME/signature/decoder/size/path/rate limit e accesso pubblico ai file).
-3. Controllare `getAssetUrl` e il rendering di HTML/URL nei contenuti admin per XSS e protocolli non sicuri; controllare CORS, cookie/token storage e CSP effettivamente servita.
-4. Eseguire nella CI su una runner pulita: `npm ci`, `npm audit --omit=dev` e audit completo per triage; `dotnet restore`, `dotnet list ... package --vulnerable --include-transitive`; CodeQL e secret scanning; build/test dopo ogni correzione.
-5. Testare staging autorizzato: accesso anonimo/fan/admin ai percorsi sensibili, upload file ostili innocui, abuso rate limit e webhook con firme invalide. Non fare prove distruttive o pagamenti reali.
-6. Registrare ogni finding con severità, file/riga, scenario d'attacco, evidenza riproducibile, impatto, fix e risultato di retest.
+## Piano di verifica successivo
+1. Mappare tutti i controller admin, attributi `[Authorize]`, ruoli/policy e accessi per ID (IDOR/BOLA).
+2. Trovare e verificare il vero endpoint di upload media admin.
+3. Controllare rendering di HTML e URL nei contenuti CMS, `getAssetUrl`, XSS e protocolli non sicuri; verificare gli header CSP effettivamente serviti dal frontend.
+4. Eseguire su runner pulita `npm ci`, `npm audit` e `dotnet list package --vulnerable --include-transitive`; abilitare/controllare CodeQL e secret scanning.
+5. Testare su staging autorizzato accesso anonimo/fan/admin, upload innocui ma malformati, rate limiting e webhook con firma non valida. Nessuna transazione reale o prova distruttiva.
+6. Registrare finding confermati con severità, file/riga, scenario, prova riproducibile, impatto, fix e retest.
 
-## Risultati esecuzione
+## Risultati d'esecuzione
 - Lettura sorgenti GitHub: eseguita.
-- Confronto branch con main: `identical`, 0 commit avanti, 0 indietro al momento della prima verifica.
+- Confronto iniziale branch/main: uguali prima del report.
+- Commit creato: documentazione del primo audit.
 - Build/test/SCA/SAST/DAST: non eseguiti in questa sessione.
-- Correzioni codice: nessuna ancora; prima completare la mappatura e riprodurre i finding.
+- Correzioni al codice di produzione: nessuna ancora; la prima modifica è solo documentazione, per evitare fix speculativi.
+
+## Richiesta al Team Leader
+Dopo il mapping di controller e autorizzazioni, prioritizzare F-001 e il percorso di upload admin; richiedere evidenze riproducibili e scanner eseguiti prima di classificare una finding come confermata.
