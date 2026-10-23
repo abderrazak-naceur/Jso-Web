@@ -131,3 +131,52 @@ Esecuzione completata della workflow [Security dependency audit](https://github.
 - Il workflow è volutamente informativo e non aggiorna dipendenze automaticamente; non sono stati cambiati manifest o lockfile. Il log dettagliato è disponibile nella [run GitHub Actions](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/40030898300).
 
 **Priorità immediata:** aggiornare la catena frontend interessata dopo aver confermato l'advisory e la versione corretta; rigenerare il lockfile e ripetere `npm audit`, build, lint e test. Non considerare la workflow "success" come assenza di vulnerabilità: gli step registrano i risultati e terminano con exit 0 per non interrompere la raccolta.
+
+
+## SEC-11 — Inventario token frontend e verifica XSS mirata (24 ottobre 2026)
+
+### Inventario verificato dei token di autenticazione
+
+La revisione dei file di autenticazione/API frontend ha confermato questi punti:
+
+| Area | File e righe | Operazione | Evidenza |
+|---|---|---|---|
+| Fan session | `frontend/src/features/account/useFanSession.js:4, 15-18` | Lettura | Legge `jso_fan_token` da `localStorage`; legge separatamente `jso_fan_user`. |
+| Fan login | `frontend/src/features/account/useFanSession.js:37-42` | Salvataggio | Dopo login, salva `result.accessToken` in `jso_fan_token` e i dati utente in `jso_fan_user`. |
+| Fan logout | `frontend/src/features/account/useFanSession.js:46-50` | Cancellazione | Rimuove token e dati fan dal localStorage. |
+| Fan session revalidation | `frontend/src/features/account/useFanSession.js:64-73` | Uso | Se il token è presente, chiama `accountApi.me(token)` per convalidare la sessione. |
+| Fan API | `frontend/src/lib/api.js:70-90, 111-197` | Uso | `requestJson` aggiunge `Authorization: Bearer <token>` quando il chiamante passa un token. Gli endpoint account, ordini, ticket, donazioni, membership, stream e community lo ricevono esplicitamente. |
+| Admin login | `frontend/src/admin/AdminApp.jsx:19-20` | Salvataggio | Salva `result.accessToken` come `jso_admin_token` e `result.user` come `jso_admin_user`. |
+| Admin state | `frontend/src/admin/AdminApp.jsx:301` | Lettura | Ricostruisce l'utente admin da `jso_admin_user`; il token viene letto dal client API. |
+| Admin API | `frontend/src/admin/api.js:4, 12` | Lettura/uso | Legge `jso_admin_token` e lo invia in header Bearer alle richieste amministrative. |
+| Admin 401/logout | `frontend/src/admin/api.js:24-26`, `frontend/src/admin/AdminApp.jsx:145-146` | Cancellazione | Rimuove token e utente quando l'API restituisce 401 e durante il logout. |
+
+Altri usi di storage rilevati nei file esaminati riguardano lingua e override della base URL API (`frontend/src/lib/api.js:8`, `frontend/src/lib/apiConfig.js:11, 38-40`), non token di autenticazione. Il client API supporta anche un `X-Fundraising-Token` fornito come argomento da flussi di raccolta fondi (`frontend/src/lib/api.js:154-157)); in questa verifica non è stato individuato come token di sessione persistito in localStorage.
+
+**Limite di copertura:** questi sono tutti i punti di token confermati nei moduli auth/API individuati e letti. La scansione automatica testuale completa di tutti i 151 file JS/JSX/TS/TSX della cartella `frontend/src` non è stata completata in questa sessione; quindi non si afferma che l'intero repository sia stato esaustivamente inventariato. Va completata con una ricerca repository-wide e revisione dei risultati prima di dichiarare chiuso questo controllo.
+
+### XSS: esito e portata della prova
+
+**Esito: nessuna XSS sfruttabile è stata riprodotta o confermata.** La verifica statica mirata precedente su dieci moduli di contenuto/account non ha trovato `dangerouslySetInnerHTML`, assegnazioni a `innerHTML`/`outerHTML`, `document.write`, `eval` o `new Function`. Non sono stati eseguiti payload XSS sul sito di produzione.
+
+Questo non equivale a certificare l'assenza di XSS: non è stato completato il controllo esaustivo di ogni componente, dipendenza e sink DOM. Le priorità per chiudere la verifica sono tutti i percorsi CMS/rich text, commenti/news, URL dinamici in `href`/`src`, rendering di HTML ricevuto dal backend e librerie di sanitizzazione.
+
+**Distinzione importante:** `localStorage` non è di per sé una vulnerabilità XSS. È però una scelta di conservazione che consente a JavaScript eseguito nella stessa origine di leggere i token. Se fosse introdotta o sfruttata una XSS nella stessa origine, sia `jso_fan_token` sia `jso_admin_token` sarebbero esposti allo script. Il rischio è architetturale e condizionato a un'esecuzione di script; in questo passaggio non è stata trovata una prova concreta che tale XSS esista.
+
+### Raccomandazioni
+
+1. Completare la ricerca repository-wide di tutte le letture/scritture storage e dei sink XSS, annotando ogni risultato con file e riga.
+2. Aggiungere test statici/CI per vietare sink HTML non sanitizzati e verificare URL non attendibili.
+3. Valutare una sessione backend con cookie `HttpOnly; Secure; SameSite` e difese CSRF, oppure access token solo in memoria con un refresh flow progettato; non cambiare storage senza migrazione e test E2E.
+4. Applicare una CSP restrittiva e valutare Trusted Types dove compatibili; sanificare l'HTML CMS con allow-list mantenuta, oppure renderizzare contenuto come testo.
+5. Eseguire test controllati di login/logout, scadenza e revoca per fan e admin, inclusi cambio password e disattivazione account.
+
+### Verifica backend JWT (codice statico)
+
+- `backend/src/JSO.Api/Program.cs:94-109`: `TokenValidationParameters` richiede firma, issuer, audience e lifetime validi; skew temporale configurato a un minuto.
+- `backend/src/JSO.Api/Program.cs:112-167`: `OnTokenValidated` controlla che il subject sia valido, che l'account sia attivo e che la versione di sessione nel token corrisponda a quella nel database per fan/admin.
+- `backend/src/JSO.Infrastructure/AdminSecurity.cs:31-59`: JWT admin firmati HMAC-SHA256 con ruolo/session-version e scadenza a otto ore.
+- `backend/src/JSO.Infrastructure/AdminSecurity.cs:61-90`: JWT fan firmati HMAC-SHA256 con solo ruolo `Fan`, session-version e scadenza a otto ore.
+- `backend/src/JSO.Api/Controllers/AccountController.cs:114, 153, 240-260`: endpoint profilo/cambio password protetti da `[Authorize(Roles = "Fan")]`; cambio password incrementa la session version per invalidare token precedenti.
+
+**Conclusione backend:** le protezioni risultano presenti nel codice letto. Non sono stati eseguiti test dinamici di JWT contraffatti/scaduti, escalation di ruolo, disattivazione account o revoca in runtime; quindi non sono certificati dal solo esame statico.
