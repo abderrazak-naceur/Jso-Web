@@ -32,7 +32,7 @@ jobs:
           set +e
           npm audit --json > "$RUNNER_TEMP/npm-audit.json"
           audit_exit=$?
-          node -e "const a=require(process.env.RUNNER_TEMP + '/npm-audit.json'); const m=a.metadata?.vulnerabilities ?? {}; console.log(JSON.stringify({vulnerabilities:m, advisories:Object.keys(a.vulnerabilities ?? {})}, null, 2))"
+          node -e "const a=require(process.env.RUNNER_TEMP + '/npm-audit.json'); const m=a.metadata?.vulnerabilities ?? {}; const findings=Object.entries(a.vulnerabilities ?? {}).map(([name,v])=>({name,severity:v.severity,range:v.range,via:v.via.map(x=>typeof x==='string'?x:{title:x.title,url:x.url,range:x.range,severity:x.severity}),nodes:v.nodes,fixAvailable:v.fixAvailable})); console.log(JSON.stringify({vulnerabilities:m,findings}, null, 2))"
           echo "npm_audit_exit_code=$audit_exit" >> "$GITHUB_STEP_SUMMARY"
           exit 0
 
