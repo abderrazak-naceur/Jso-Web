@@ -81,3 +81,42 @@ Ogni vulnerabilità confermata deve includere file/endpoint, precondizioni, grav
 
 ## Regole di branch
 Tutte le modifiche devono rimanere su `security/audit-jso-web-2026-10`. Non aggiornare `main`, non fondere PR automaticamente, non eseguire scansioni invasive o transazioni reali e non usare/stampare segreti reali.
+
+
+## SEC-09 — Token storage and XSS review (static review, 23 ottobre 2026)
+
+### Token locations verified
+
+- **Fan token storage/read/delete:** `frontend/src/features/account/useFanSession.js:3-18, 37-51`. Uses key `jso_fan_token`; login writes `result.accessToken`, session restore reads it, logout removes it. The hook revalidates a stored token through `accountApi.me(token)` at lines 55-73.
+- **Fan token use:** `frontend/src/lib/api.js:68-91` defines `requestJson`, which adds `Authorization: Bearer` only when a caller supplies a token. Account and other authenticated API methods pass that token explicitly.
+- **Admin token storage/logout:** `frontend/src/admin/AdminApp.jsx:12-20, 139-143`. Uses `jso_admin_token` and `jso_admin_user`, stores them after successful login and removes them on logout.
+- **Admin token read/use:** `frontend/src/admin/api.js:3-13` reads `jso_admin_token` and adds it as a Bearer header. On a 401 it clears the admin token/user at lines 21-24.
+- `frontend/src/lib/apiConfig.js` also stores an API base URL override and language preference in localStorage; these are not authentication tokens.
+
+### XSS conclusion
+
+**No reproducible XSS was confirmed in this pass.** A targeted static scan of 10 high-risk content/account modules (including `NewsModule.jsx`, `ContentModule.jsx`, `MediaModule.jsx`, `ArticleModal.jsx`, `NewsCard.jsx`, `CommentsSection.jsx`, `ClubSection.jsx`, `SupporterProfilePage.jsx`, `HomeContentSections.jsx`, and `FundraisingProjectView.jsx`) found no executable sinks such as `dangerouslySetInnerHTML`, assignments to `innerHTML`/`outerHTML`, `document.write`, `eval`, or `new Function`. React text interpolation is escaped by default. This is a scoped static check, not proof that every frontend file is free of XSS; all render paths for CMS content, rich text, URL attributes and dependencies still need a full repository scan and browser-based reproduction tests.
+
+The risk identified here is **primarily token exposure by design**, not a demonstrated XSS. If any same-origin XSS is later confirmed, both fan and admin bearer tokens could be read by injected JavaScript while stored in localStorage. The admin area shares the frontend origin, so this risk also affects the administrative token.
+
+**Recommended changes:** do not change auth storage without a migration/test plan. Prefer a backend-managed session using Secure, HttpOnly, SameSite cookies and CSRF protections where the architecture permits; otherwise keep short-lived access tokens in memory and use a carefully designed refresh mechanism. Add CSP and Trusted Types where compatible, ensure CMS/user content is rendered as text or sanitized through a maintained allow-list sanitizer, and validate URL protocols before placing untrusted values into `href` or `src`.
+
+### JWT signature, expiry, role and revocation checks
+
+- `backend/src/JSO.Api/Program.cs:92-105` requires issuer, audience, lifetime and signing-key validation and allows a one-minute clock skew.
+- `backend/src/JSO.Infrastructure/AdminSecurity.cs:30-50, 52-75` signs admin and fan JWTs with HMAC-SHA256, includes subject/email/role/session-version claims and sets an eight-hour expiry. Fan tokens contain only the `Fan` role.
+- `backend/src/JSO.Api/Program.cs:106-153` rejects missing role/invalid subject, checks active fan accounts and compares `fan_session_version`; admin validation compares the token's role/session version with the current active database record. This provides per-request revocation when the account is disabled, role changes, or the session version changes.
+- `backend/src/JSO.Api/Controllers/AccountController.cs` requires `[Authorize(Roles = "Fan")]` on fan profile endpoints; password change increments `SessionVersion`, invalidating previous fan tokens.
+
+**Static conclusion:** core JWT controls appear correctly configured in the reviewed code. Runtime behavior, role-change pathways and revocation tests have not been executed; the conclusion is not a penetration-test result.
+
+## Dependency audit automation
+
+Added `.github/workflows/security-audit.yml` on this branch only. It runs `npm audit --json` against `frontend/package-lock.json` and `dotnet list backend/JSO.sln package --vulnerable --include-transitive` on pushes to this audit branch or manual dispatch. The workflow is running as GitHub Actions run [40030823003](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/40030823003); the npm step has completed, while the NuGet step was still running at the time of this update. Dependency findings and versions will be added once the run completes. No dependencies or application behavior have been changed.
+
+## Scope/limitations update
+
+- No reproducible XSS confirmed in the targeted static scan; full-project XSS scanning and browser reproduction remain pending.
+- JWT validation controls reviewed statically; no live authentication test was executed.
+- npm/NuGet automated results are pending from the branch-only workflow.
+- No changes to `main`, no merge, no real payments and no intrusive production testing.
