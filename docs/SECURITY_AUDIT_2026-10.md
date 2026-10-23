@@ -1,71 +1,67 @@
 # Audit di sicurezza JSO-Web — 23 ottobre 2026
 
-## Stato
+## Stato e metodo
+Revisione statica iniziale del repository GitHub sul branch dedicato `security/audit-jso-web-2026-10`. I rilievi distinguono rischi di architettura da vulnerabilità sfruttabili. Non sono stati eseguiti penetration test sul servizio pubblico e l'audit non è completo.
 
-Audit preliminare basato su revisione statica dei file del branch `main`, con branch di lavoro dedicato `security/audit-jso-web-2026-10`. Questo documento non dichiara completato un penetration test: i risultati vanno confermati tramite revisione degli endpoint, test automatizzati e verifica dell'ambiente configurato.
+## Rilievi preliminari
 
-## Perimetro iniziale
+### SEC-01 — Token supporter accessibile da JavaScript
+**Priorità: alta (rischio architetturale, non prova di XSS).**
 
-- Frontend React/Vite e dipendenze npm.
-- API ASP.NET Core .NET 10, autenticazione JWT e autorizzazione.
-- Upload/media e directory pubbliche statiche.
-- CORS, forwarded headers, security headers, Swagger e configurazione runtime.
-- Flussi di pagamento/webhook e gestione di segreti/configurazioni.
-- CI, Docker e dipendenze backend/frontend.
+Il README dichiara che la sessione fan usa `localStorage`; `frontend/src/lib/api.js` invia il token come Bearer e `backend/src/JSO.Api/Controllers/AccountController.cs` restituisce `accessToken`. Qualunque XSS eseguibile sull'origine frontend potrebbe leggere il token. Il solo uso di localStorage non dimostra che esista una XSS sfruttabile.
 
-## Risultati preliminari — da confermare
+**Verificare:** render di HTML/CMS, sanitizzazione, URL dinamici, logout/cambio password/revoca e durata dei JWT.  
+**Possibile rimedio:** cookie HttpOnly/Secure/SameSite e protezione CSRF oppure token in memoria con rinnovo sicuro; ogni modifica richiede test E2E.
 
-### S1 — Sessione supporter memorizzata in localStorage
-**Priorità: alta (design risk, impatto dipendente dal modello di minaccia).**
+### SEC-02 — Uploads serviti staticamente
+**Priorità: media, dipende dal tipo di contenuto.**
 
-Il README dichiara che la sessione dei fan usa `localStorage` e che il passaggio a cookie HttpOnly è ancora da completare. Gli access token accessibili da JavaScript sono esposti in caso di XSS. Il solo README non dimostra una vulnerabilità XSS sfruttabile, ma conferma un rischio di architettura da valutare insieme a rendering HTML, sanitizzazione e durata dei token.
+In `backend/src/JSO.Api/Program.cs`, la directory `uploads` viene servita con `UseStaticFiles` su `/uploads`. È bloccato espressamente `/uploads/fan-photos`, ma altre sottocartelle sono pubbliche. Ciò può essere intenzionale per le immagini pubbliche, ma è rischioso per documenti privati o contenuti non moderati.
 
-**Verifica richiesta:** seguire login/logout/refresh, controllare tutti i punti che renderizzano HTML fornito dall'utente o dal CMS; verificare durata, scope e revoca dei token. Non registrare token reali nel report.
+**Verificare:** tutte le route di upload e le directory di destinazione, distinguendo storage pubblico e privato, inclusi i flussi di moderazione. Non modificare la policy dei media prima di confermare l'intento del prodotto.
 
-**Direzione correttiva:** valutare cookie HttpOnly, Secure e SameSite con protezione CSRF adeguata, oppure mantenere token solo in memoria; non introdurre una modifica di autenticazione senza test E2E e revisione delle implicazioni CSRF.
+### SEC-03 — Decoder immagini: consumo risorse da verificare
+**Priorità: media-bassa, superficie DoS da testare.**
 
-### S2 — File caricati esposti tramite URL statici pubblici
-**Priorità: media, dipendente dal contenuto e dalla policy di accesso.**
+`backend/src/JSO.Api/Security/ImageUploadSanitizer.cs` limita l'input a 10 MiB, la dimensione a 12.000 px per lato e 40 milioni di pixel, poi decodifica/ricodifica con SkiaSharp. I limiti riducono il rischio, ma le immagini massime possono consumare memoria significativa. Il metodo rilancia `OutOfMemoryException`.
 
-In `backend/src/JSO.Api/Program.cs`, il contenuto della directory `uploads` è servito tramite `UseStaticFiles` su `/uploads`. Il codice blocca esplicitamente `/uploads/fan-photos`, ma il resto della directory viene servito pubblicamente. Potrebbe essere corretto per le immagini pubbliche della media library; non è invece adatto a file privati o in attesa di moderazione.
+**Verificare:** che tutti gli endpoint usino il sanitizer; che limiti multipart/request agiscano prima del buffering; che esistano limiti di concorrenza. Test di carico solo in ambiente isolato.
 
-**Verifica richiesta:** mappare gli upload su sottocartelle e categorie, accertare che nessun documento privato o upload pendente possa finire in una directory pubblica; verificare nomi, estensioni, MIME, contenuto effettivo e limiti.
+### SEC-04 — Proxy fidati e rate limiting per IP
+**Priorità: media-bassa, configurazione da verificare.**
 
-**Direzione correttiva:** separare in modo esplicito media pubblici e privati; servire i privati tramite controller autorizzato. Evitare modifiche finché la policy attesa di ciascuna categoria non è documentata.
+`Program.cs` abilita `X-Forwarded-For` e `X-Forwarded-Proto` e configura Loopback tra i proxy noti; le policy usano `RemoteIpAddress`. L'efficacia dipende dalla topologia effettiva.
 
-### S3 — Forwarded headers e identificazione IP per rate limiting
-**Priorità: media/bassa, configurazione da verificare.**
+**Verificare:** proxy/hop reali, header accettati solo da intermediari fidati, rate limiting attraverso il proxy di produzione.
 
-Il codice configura `X-Forwarded-For` e `X-Forwarded-Proto` e aggiunge `IPAddress.Loopback` tra i proxy noti. Le policy rate-limit usano `RemoteIpAddress`. In produzione dietro un reverse proxy, una configurazione incompleta o non allineata alla topologia effettiva potrebbe far ricadere molte richieste sulla stessa chiave o permettere un'identificazione IP errata. Non è dimostrabile dal solo codice che l'installazione attuale sia sfruttabile.
+### SEC-05 — CORS con origini statiche
+**Priorità: bassa, hardening.**
 
-**Verifica richiesta:** documentare il proxy realmente usato, i proxy fidati e la quantità di hop; verificare che header inoltrati da client non fidati non vengano accettati e testare i rate limit dietro il proxy di produzione.
+`Program.cs` aggiunge domini statici alla lista `Cors:AllowedOrigins`. Nel codice esaminato non ci sono wildcard né `AllowCredentials`; questo frammento non dimostra un bypass CORS. Confermare che tutte le origini consentite siano controllate, necessarie e aggiornate.
 
-### S4 — CORS con origini statiche ammesse
-**Priorità: bassa, revisione di configurazione.**
+### SEC-06 — Swagger abilitabile in produzione
+**Priorità: informativa, dipendente dalla configurazione runtime.**
 
-La policy aggiunge una lista statica di domini frontend oltre a `Cors:AllowedOrigins`. Non usa wildcard né `AllowCredentials` nel frammento esaminato, quindi non costituisce da sola una vulnerabilità. È però necessario confermare che ogni dominio elencato sia controllato e ancora necessario.
+Swagger è abilitabile tramite `Swagger:Enabled`. L'esposizione della descrizione API agevola la ricognizione ma non equivale a un bypass di autorizzazione. Verificare il valore in produzione e mantenere Swagger disabilitato salvo finestra controllata.
 
-**Verifica richiesta:** validare proprietà e uso dei domini consentiti e rimuovere origin obsolete; controllare anche CORS effettivo sul servizio pubblicato.
+## Segnali positivi osservati
+- La chiave JWT viene rifiutata all'avvio se assente o inferiore a 32 caratteri.
+- Login admin: messaggio generico per credenziali errate e rate limiting.
+- La validazione JWT controlla lo stato, il ruolo e la versione sessione per gli account fan/admin.
+- Il sanitizer immagini ricodifica i file invece di conservare i byte originali.
+- README e codice distinguono le verifiche locali dalle configurazioni/deploy reali.
 
-### S5 — Swagger abilitabile in produzione via configurazione
-**Priorità: bassa/informativa, dipendente dalla configurazione.**
+## Controlli ancora necessari
+1. Audit SCA con advisory correnti npm/NuGet.
+2. Revisione sistematica dei controller admin: autenticazione, permessi, IDOR/BOLA, ruoli e proprietà risorse.
+3. Controllo di tutti gli endpoint di upload e directory di storage.
+4. Ricerca di segreti nella cronologia Git, configurazioni, Docker e workflow senza riportare valori sensibili.
+5. Revisione di pagamenti/webhook, URL di ritorno, ownership di ordini/ticket e check-in.
+6. Test di accesso anonimo e permessi 401/403, escalation di ruolo e rate limit in locale/CI controllato.
+7. Verifica dei domini, CORS, TLS e header sull'ambiente reale da una rete raggiungibile.
 
-Swagger è attivabile in produzione attraverso `Swagger:Enabled`. L'esposizione della descrizione API può agevolare la ricognizione, ma non è di per sé un bypass di autorizzazione. Il codice commenta che l'abilitazione deve essere temporanea e controllata.
+## Criteri di chiusura
+Ogni vulnerabilità confermata deve includere file/endpoint, precondizioni, gravità motivata, prova non distruttiva, impatto e rimedio proposto. I controlli non eseguiti resteranno elencati come limitazioni. L'assenza di finding non prova l'assenza di vulnerabilità.
 
-**Verifica richiesta:** controllare la configurazione effettiva di produzione e confermare che Swagger sia disabilitato quando non serve. Verificare separatamente l'autorizzazione di ciascun endpoint.
-
-## Controlli non ancora eseguiti
-
-- Audit automatico SCA di npm e NuGet con advisory correnti.
-- Test dei controller sensibili (401/403, escalation tra ruoli, IDOR/BOLA).
-- Verifica dei segreti nella cronologia Git e nei file di deployment.
-- Analisi dei workflow GitHub Actions, immagini Docker e configurazione Nginx.
-- Test del sito e dell'API in produzione, inclusi cookie, CORS, TLS, webhook e rate limiting.
-
-## Regole di lavoro
-
-- Tutte le modifiche di questo audit devono rimanere in questo branch.
-- Non fare push su `main`, non aprire o fondere automaticamente una PR e non svolgere test distruttivi.
-- Non usare credenziali reali, non effettuare pagamenti reali e non eseguire scansioni invasive su servizi pubblici.
-- Ogni risultato definitivo dovrà contenere file/riga o endpoint, precondizioni, impatto, prova riproducibile non distruttiva e rimedio.
-- L'assenza di finding nei controlli eseguiti non equivale a prova di assenza di vulnerabilità.
+## Regole di branch
+Tutte le aggiunte di questo audit devono rimanere su `security/audit-jso-web-2026-10`. Non aggiornare `main`, non fondere automaticamente una PR, non fare scansioni invasive né transazioni reali, e non usare o stampare segreti reali.
