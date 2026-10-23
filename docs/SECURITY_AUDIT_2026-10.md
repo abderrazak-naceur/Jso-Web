@@ -120,3 +120,14 @@ Added `.github/workflows/security-audit.yml` on this branch only. It runs `npm a
 - JWT validation controls reviewed statically; no live authentication test was executed.
 - npm/NuGet automated results are pending from the branch-only workflow.
 - No changes to `main`, no merge, no real payments and no intrusive production testing.
+
+
+## SEC-10 — Esito effettivo SCA (GitHub Actions, 23 ottobre 2026)
+
+Esecuzione completata della workflow [Security dependency audit](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/40030823003):
+
+- `npm audit --json` sul lockfile frontend: **2 high, 0 critical, 0 moderate, 0 low**. I pacchetti riportati dal primo output sono `vite` e `source-map-js`. La workflow è stata ampliata per mostrare advisory, range, percorsi e disponibilità della correzione; il nuovo run è in corso, quindi le versioni/fix precisi sono ancora da confermare nel log aggiornato.
+- `dotnet list backend/JSO.sln package --vulnerable --include-transitive`: **nessun pacchetto vulnerabile rilevato** per i progetti JSO.Api, JSO.Application, JSO.Domain e JSO.Infrastructure sulle fonti NuGet configurate al momento dell'esecuzione.
+- Il workflow è volutamente informativo e non aggiorna dipendenze automaticamente; non sono stati cambiati manifest o lockfile.
+
+**Priorità immediata:** aggiornare la catena frontend interessata dopo aver confermato l'advisory e la versione corretta; rigenerare il lockfile e ripetere `npm audit`, build, lint e test. Non considerare la workflow "success" come assenza di vulnerabilità: gli step registrano i risultati e terminano con exit 0 per non interrompere la raccolta.
