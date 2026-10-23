@@ -6,9 +6,9 @@ Revisione statica sul branch dedicato `security/audit-jso-web-2026-10`, con veri
 ## SEC-00 — Vite 6.4.3 richiede aggiornamento/verifica immediata
 **Priorità: alta per la catena di build/dev; sfruttabilità in produzione da valutare.**
 
-`frontend/package.json` e `frontend/package-lock.json` fissano Vite a `6.4.3`. Fonti pubbliche correnti elencano advisory per versioni fino a 6.4.3, incluse vulnerabilità con fix nelle patch successive e un advisory del 20 ottobre 2026 per CVE-2026-112942. Fonti: [Snyk — Vite 6.4.3](https://security.snyk.io/package/npm/vite/6.4.3), [Patchstack — CVE-2026-112942](https://patchstack.com/database/npm/npm/vite/vulnerability/npm-launch-editor-fs-existssync-existence-check-can-be-bypassed-on-windows-2). Il rischio specifico dipende dalla superficie esposta: alcuni difetti sono legati al server di sviluppo/editor. Il manifest da solo non prova che il sito pubblico sia sfruttabile.
+`frontend/package.json` e `frontend/package-lock.json` fissano Vite a `6.4.3`. L'esecuzione effettiva di `npm audit` ha segnalato Vite con range vulnerabile `<=6.4.3` e correzione disponibile `6.4.5`. Tra gli advisory segnalati: [GHSA-587h-7wmj-h5pm](https://github.com/advisories/GHSA-587h-7wmj-h5pm) (bypass del controllo `fs.existsSync()` su Windows, high), oltre ad altri advisory di gravità inferiore relativi a `launch-editor` e al server Vite. Il rischio specifico dipende dalla superficie esposta: alcuni difetti sono legati al server di sviluppo/editor; il risultato non dimostra automaticamente che il sito pubblico sia sfruttabile.
 
-**Azione:** eseguire `npm audit` sul lockfile, correlare gli advisory e aggiornare Vite a una versione corretta compatibile con il progetto; quindi rigenerare lockfile ed eseguire build, lint e test. Non sono state modificate dipendenze in questo passaggio.
+**Azione:** aggiornare Vite almeno alla patch correttiva indicata dall'audit (`6.4.5` o una versione supportata più recente compatibile), rigenerare il lockfile ed eseguire build, lint, test e una nuova scansione. Nessuna dipendenza è stata aggiornata in questo passaggio.
 
 ## SEC-01 — Token supporter accessibile da JavaScript
 **Priorità: alta come rischio architetturale; XSS non dimostrata.**
@@ -124,10 +124,10 @@ Added `.github/workflows/security-audit.yml` on this branch only. It runs `npm a
 
 ## SEC-10 — Esito effettivo SCA (GitHub Actions, 23 ottobre 2026)
 
-Esecuzione completata della workflow [Security dependency audit](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/40030823003):
+Esecuzione completata della workflow [Security dependency audit](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/40030898300):
 
 - `npm audit --json` sul lockfile frontend: **2 high, 0 critical, 0 moderate, 0 low**. I pacchetti riportati dal primo output sono `vite` e `source-map-js`. La workflow è stata ampliata per mostrare advisory, range, percorsi e disponibilità della correzione; il nuovo run è in corso, quindi le versioni/fix precisi sono ancora da confermare nel log aggiornato.
 - `dotnet list backend/JSO.sln package --vulnerable --include-transitive`: **nessun pacchetto vulnerabile rilevato** per i progetti JSO.Api, JSO.Application, JSO.Domain e JSO.Infrastructure sulle fonti NuGet configurate al momento dell'esecuzione.
-- Il workflow è volutamente informativo e non aggiorna dipendenze automaticamente; non sono stati cambiati manifest o lockfile.
+- Il workflow è volutamente informativo e non aggiorna dipendenze automaticamente; non sono stati cambiati manifest o lockfile. Il log dettagliato è disponibile nella [run GitHub Actions](https://github.com/abderrazak-naceur/Jso-Web/actions/runs/40030898300).
 
 **Priorità immediata:** aggiornare la catena frontend interessata dopo aver confermato l'advisory e la versione corretta; rigenerare il lockfile e ripetere `npm audit`, build, lint e test. Non considerare la workflow "success" come assenza di vulnerabilità: gli step registrano i risultati e terminano con exit 0 per non interrompere la raccolta.
