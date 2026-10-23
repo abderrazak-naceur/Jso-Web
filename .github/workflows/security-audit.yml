@@ -1,0 +1,51 @@
+name: Security dependency audit
+
+on:
+  push:
+    branches:
+      - security/audit-jso-web-2026-10
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    name: npm and NuGet vulnerability checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Audit frontend dependencies
+        working-directory: frontend
+        shell: bash
+        run: |
+          set +e
+          npm audit --json > "$RUNNER_TEMP/npm-audit.json"
+          audit_exit=$?
+          node -e "const a=require(process.env.RUNNER_TEMP + '/npm-audit.json'); const m=a.metadata?.vulnerabilities ?? {}; console.log(JSON.stringify({vulnerabilities:m, advisories:Object.keys(a.vulnerabilities ?? {})}, null, 2))"
+          echo "npm_audit_exit_code=$audit_exit" >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Audit NuGet dependencies
+        shell: bash
+        run: |
+          set +e
+          dotnet list backend/JSO.sln package --vulnerable --include-transitive 2>&1 | tee "$RUNNER_TEMP/nuget-audit.txt"
+          audit_exit=${PIPESTATUS[0]}
+          echo "dotnet_list_vulnerable_exit_code=$audit_exit" >> "$GITHUB_STEP_SUMMARY"
+          exit 0
