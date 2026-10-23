@@ -5,55 +5,50 @@ Branch: `security/audit-vulnerabilities`
 Commit di partenza: `da616b8c470a50c32fc4f30c907e6f7c5f82b985` (main)
 
 ## Stato e limiti
-
-Prima revisione statica del sorgente GitHub. Non è stato possibile eseguire build, test, scanner SCA/SAST o test dinamici contro un ambiente distribuito in questa sessione. Non è quindi corretto concludere che il progetto sia sicuro o classificare tutti i punti aperti come vulnerabilità confermate.
+Prima revisione statica del sorgente GitHub. Non è stato possibile eseguire build, test, scanner SCA/SAST o test dinamici contro un ambiente distribuito in questa sessione. Non è quindi corretto concludere che il progetto sia sicuro né classificare tutti i punti aperti come vulnerabilità confermate.
 
 ## Finding iniziale
 
-### F-001 — L'URL base API può essere impostato dal localStorage
-- **Severità iniziale:** media come rischio di configurazione; non è una vulnerabilità remota autonoma confermata.
-- **Evidenza:** `frontend/src/lib/apiConfig.js` legge la chiave `jso_api_base_url` dal localStorage e la usa come `API_BASE_URL`. Le funzioni in `frontend/src/lib/api.js` inviano token `Authorization: Bearer` alle richieste protette verso `API_BASE_URL + path`.
-- **Scenario:** se un utente o codice eseguito nello stesso origin salva un URL non attendibile (per esempio dopo un XSS o una configurazione manuale malevola), successive richieste autenticate possono inviare il bearer token a quell'host. L'host deve essere HTTPS per non esporre il token sulla rete in chiaro, ma può comunque riceverlo.
-- **Limiti:** la possibilità pratica dipende da chi può accedere alla funzione UI che modifica l'API, dal tipo di token persistito e dal modello XSS; non è stato dimostrato un attaccante remoto che modifica il localStorage senza altra debolezza.
-- **Fix raccomandato:** in produzione accettare solo URL HTTPS con host allowlist configurata oppure disabilitare l'override runtime, mantenere override libero solo in sviluppo; prima di ogni richiesta autenticata validare l'origine target e non inviare token a origin non approvati.
-- **Test richiesti:** override HTTPS ostile, URL HTTP, origine non allowlisted, input con credenziali/URL malformati, token bearer non inviato in caso di blocco.
+### F-001 — URL base API modificabile tramite localStorage
+- **Priorità:** media come rischio di configurazione; non è una vulnerabilità remota autonoma confermata.
+- **Evidenza:** `frontend/src/lib/apiConfig.js` legge `jso_api_base_url` dal localStorage e la usa come `API_BASE_URL`. Le funzioni in `frontend/src/lib/api.js` inviano `Authorization: Bearer` a `API_BASE_URL + path` per richieste protette.
+- **Scenario:** se un utente o codice eseguito nello stesso origin salva un URL non attendibile, successive richieste autenticate possono inviare il bearer token a quell'host. Questo può succedere per configurazione manuale o in conseguenza di un'altra vulnerabilità come XSS; non è stato provato che un attaccante remoto possa modificare il localStorage autonomamente.
+- **Fix raccomandato:** in produzione consentire solo HTTPS e host API allowlisted, oppure disabilitare l'override runtime; non inviare token a origini non approvate.
+- **Retest:** URL HTTPS ostile, HTTP, host non allowlisted, URL malformati e prova che il token non venga inviato quando l'override è rifiutato.
 
-## Rischi da verificare — non ancora classificati come vulnerabilità confermate
-
-### F-002 — Rate limiting basato sull'IP e proxy reale
+### F-002 — Rate limiting: comportamento dipendente dal proxy
 File: `backend/src/JSO.Api/Program.cs`
-Il limiter `public-api` (120/min) e `auth-login` (5/5 min) partiziona in base a `Connection.RemoteIpAddress`. L'app abilita `X-Forwarded-For`/proto e marca loopback come proxy noto. Verificare sul reverse proxy effettivo che l'IP sia normalizzato correttamente e che un client non possa alterare l'identità con header forwarding. Il codice letto non dimostra da solo che il limite sia aggirabile.
+I limiti `public-api` (120/min) e `auth-login` (5/5 min) usano `Connection.RemoteIpAddress`. Forwarded headers sono abilitati e loopback è dichiarato proxy noto. Verificare configurazione e percorso effettivo del proxy in produzione; il sorgente da solo non dimostra che il limite sia aggirabile.
 
-### F-003 — Tutti i percorsi di upload amministrativi da mappare
-Il percorso foto tifosi in `backend/src/JSO.Api/Controllers/FanPhotosController.cs` ha controlli utili: limite di 10 MiB, allowlist MIME, firma del file, decodifica/ricodifica e rate limiting. Questo non prova che il percorso distinto di upload media per admin applichi difese equivalenti. Identificare il controller corretto e verificare autorizzazione, limite request e immagine decodificata, estensioni/percorso, rate limit e accesso pubblico ai file.
+### F-003 — Upload media amministrativi da verificare
+Il percorso foto tifosi in `backend/src/JSO.Api/Controllers/FanPhotosController.cs` applica limiti dimensione, allowlist MIME, firma, decodifica/ricodifica, nome generato e rate limit. Questo non dimostra che il percorso separato usato dall'admin abbia controlli equivalenti. Individuare il controller d'upload admin e verificare autorizzazione, limiti, validazione immagine decodificata, percorso, rate limit e accesso pubblico.
 
 ### F-004 — Dipendenze: scansione non eseguita
-Il repository ha Dependabot configurato per GitHub Actions, npm e NuGet. In questa sessione non è stato eseguito `npm audit`, `dotnet list package --vulnerable --include-transitive`, CodeQL o secret scanning. Nessuna conclusione sulle CVE delle dipendenze è quindi giustificata.
+Dependabot risulta configurato per GitHub Actions, npm e NuGet. In questa sessione non sono stati eseguiti `npm audit`, `dotnet list package --vulnerable --include-transitive`, CodeQL o secret scanning; non si possono quindi affermare risultati sulle CVE delle dipendenze.
 
-## Controlli positivi osservati nel sorgente
-- `Jwt:Key` è richiesto da configurazione e deve essere lungo almeno 32 caratteri; `appsettings.json` contiene il campo vuoto, non una chiave statica.
-- JWT verifica issuer, audience, scadenza e firma; token di fan e admin sono confrontati con lo stato/ruolo/versione sessione salvati nel database.
-- Login e registrazione fan hanno rate limiting; registrazione richiede password di almeno 12 caratteri.
-- Upload foto fan: allowlist JPEG/PNG/WebP, validazione della firma, decodifica e ricodifica, path generato dal server, stato Pending e controllo di ownership per la preview privata.
-- Stripe webhook verifica la firma; Flouci esegue verifica lato provider e confronta importo/valuta prima di completare il pagamento.
-- CORS usa origini esplicite, senza `AllowAnyOrigin`.
+## Controlli positivi osservati
+- `Jwt:Key` è richiesto e deve essere lungo almeno 32 caratteri; nel file di configurazione è vuoto anziché hardcoded.
+- JWT verifica issuer, audience, scadenza e firma; le versioni di sessione e il ruolo/stato account sono confrontati con il database.
+- Login/registrazione fan applicano rate limiting e la registrazione impone password di almeno 12 caratteri.
+- Foto fan: JPEG/PNG/WebP, firma validata, immagine decodificata e ricodificata, path generato dal server, moderazione Pending e controllo ownership sulle immagini private.
+- Stripe webhook verifica la firma; Flouci verifica il pagamento lato provider e controlla importo e valuta.
+- CORS usa origini esplicite e non `AllowAnyOrigin`.
 
-Sono osservazioni sui file controllati, non una garanzia d'assenza di bug altrove.
+Queste osservazioni sono limitate ai file esaminati e non dimostrano assenza di bug in tutto il progetto.
 
-## Piano di verifica successivo
-1. Mappare tutti i controller admin, attributi `[Authorize]`, ruoli/policy e accessi per ID (IDOR/BOLA).
-2. Trovare e verificare il vero endpoint di upload media admin.
-3. Controllare rendering di HTML e URL nei contenuti CMS, `getAssetUrl`, XSS e protocolli non sicuri; verificare gli header CSP effettivamente serviti dal frontend.
-4. Eseguire su runner pulita `npm ci`, `npm audit` e `dotnet list package --vulnerable --include-transitive`; abilitare/controllare CodeQL e secret scanning.
-5. Testare su staging autorizzato accesso anonimo/fan/admin, upload innocui ma malformati, rate limiting e webhook con firma non valida. Nessuna transazione reale o prova distruttiva.
-6. Registrare finding confermati con severità, file/riga, scenario, prova riproducibile, impatto, fix e retest.
+## Piano di verifica
+1. Mappare controller admin, attributi `[Authorize]`, ruoli/policy e accessi per ID (IDOR/BOLA).
+2. Individuare e analizzare l'endpoint reale di upload media admin.
+3. Controllare rendering di HTML/URL nel CMS, XSS e protocolli pericolosi; verificare la Content-Security-Policy servita in produzione.
+4. Eseguire su runner pulita `npm ci`, `npm audit` e `dotnet list package --vulnerable --include-transitive`; verificare CodeQL e secret scanning.
+5. Su staging autorizzato testare accessi anonimo/fan/admin, upload innocui malformati, rate limit e firme webhook invalide. Nessun pagamento reale o test distruttivo.
+6. Registrare finding confermati con severità, file/riga, scenario, evidenza riproducibile, impatto, fix e risultato retest.
 
-## Risultati d'esecuzione
+## Risultati esecuzione
 - Lettura sorgenti GitHub: eseguita.
-- Confronto iniziale branch/main: uguali prima del report.
-- Commit creato: documentazione del primo audit.
+- Confronto iniziale branch/main: uguali prima della creazione del report.
+- Commit documentale creato nella branch; nessun codice di produzione modificato.
 - Build/test/SCA/SAST/DAST: non eseguiti in questa sessione.
-- Correzioni al codice di produzione: nessuna ancora; la prima modifica è solo documentazione, per evitare fix speculativi.
 
 ## Richiesta al Team Leader
-Dopo il mapping di controller e autorizzazioni, prioritizzare F-001 e il percorso di upload admin; richiedere evidenze riproducibili e scanner eseguiti prima di classificare una finding come confermata.
+Dare priorità a F-001, al mapping delle autorizzazioni (IDOR/BOLA) e al percorso di upload admin. Richiedere prove riproducibili e risultati scanner prima di dichiarare una vulnerabilità confermata.
