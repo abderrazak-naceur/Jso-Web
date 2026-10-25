@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<meta name="jso-media-build" content="2026-10-21-library-loader-1">
+<meta name="jso-media-build" content="2026-10-25-fixed-login-endpoints-1">
 <title>JSO Media Manager</title>
 <style>
 :root{color-scheme:dark;--bg:#071329;--panel:#10213e;--line:#294261;--text:#f4f7fc;--muted:#9eafc8;--blue:#2785f5;--gold:#e6b54a;--red:#ef4444}
@@ -64,14 +64,12 @@ button:hover:not(:disabled){filter:brightness(1.09);transform:translateY(-1px);b
 <section id="loginPanel" class="panel" style="max-width:480px;margin:8vh auto">
 <div class="muted">MEDIA LIBRARY · ACCESSO AMMINISTRATORI</div><h1>Accedi</h1>
 <p class="muted">Usa le credenziali amministrative JSO. Il login viene verificato dal servizio di autenticazione JSO; le operazioni media sono eseguite dalla nuova API separata.</p>
-<label for="authApi">URL API autenticazione JSO</label><input id="authApi" type="url" value="https://jso-api.onrender.com" autocomplete="url">
 <label for="email">Email</label><input id="email" type="email" autocomplete="username" required>
 <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required>
 <button id="loginBtn" style="width:100%;margin-top:16px">Accedi</button><div id="loginMessage" class="message hidden" role="status"></div>
 </section>
 <section id="appPanel" class="hidden">
 <div class="panel"><div class="topline"><div><h1>La tua libreria</h1><p class="muted">Gestisci le immagini senza cambiare i riferimenti esistenti di JSO.</p></div><div><div class="stat" id="total">—</div><small>immagini nel catalogo</small></div></div>
-<label for="mediaApi">URL nuova Media API</label><input id="mediaApi" type="url" value="https://jso-media-api.onrender.com" readonly aria-describedby="mediaApiHelp"><small id="mediaApiHelp">Endpoint configurato automaticamente. Non è necessario reinserirlo.</small>
 <div class="row"><div><label for="search">Cerca immagini</label><input id="search" placeholder="Nome file o titolo"></div><div style="flex:0 0 auto;align-self:end"><button id="refreshBtn">Aggiorna galleria</button></div></div>
 <div id="appMessage" class="message hidden" role="status"></div></div>
 <div class="panel"><h2>Carica immagini</h2><p class="muted">JPG, PNG, WebP o GIF · massimo 10 MB per file.</p><label for="files">Seleziona immagini</label><input id="files" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple><label for="uploadTitle">Titolo (facoltativo, per singolo file)</label><input id="uploadTitle" placeholder="Es. Partita JSO Oudhref"><label for="uploadCaption">Descrizione (facoltativa)</label><input id="uploadCaption" placeholder="Descrizione immagine"><button id="uploadBtn" style="margin-top:14px">Carica selezionate</button><div id="uploadMessage" class="message hidden" role="status" aria-live="polite"></div></div>
@@ -80,16 +78,19 @@ button:hover:not(:disabled){filter:brightness(1.09);transform:translateY(-1px);b
 </main>
 <script>
 const $=id=>document.getElementById(id);
+// Deployment endpoints are fixed in code and cannot be overridden by login-page input.
 const TOKEN_KEY='jsoMediaToken';
+const AUTH_API_BASE='https://jso-api.onrender.com';
+const MEDIA_API_BASE='https://jso-media-api.onrender.com';
 function readToken(){try{return sessionStorage.getItem(TOKEN_KEY)||''}catch{return ''}}
 function saveToken(value){if(typeof value!=='string'||!value.trim())return false;try{sessionStorage.setItem(TOKEN_KEY,value.trim());return sessionStorage.getItem(TOKEN_KEY)===value.trim()}catch{return false}}
 function clearToken(){try{sessionStorage.removeItem(TOKEN_KEY)}catch{}}
 let token=readToken(),page=1,pageSize=24,total=0,items=[];
 function message(id,text,error=false){const el=$(id);el.textContent=text;el.classList.remove('hidden','error');if(error)el.classList.add('error')}
 function clearMessage(id){$(id).classList.add('hidden')}
-function apiBase(){return $('mediaApi').value.trim().replace(/\/$/,'')}
+function apiBase(){return MEDIA_API_BASE}
 function assetUrl(value){if(!value)return '';try{const u=new URL(value,location.origin);if(u.origin===location.origin&&u.pathname.startsWith('/uploads/media/'))return 'https://jsoudhref.com'+u.pathname+u.search+u.hash;return u.href}catch{return value}}
-async function request(path,options={}){const base=apiBase();if(!base)throw new Error('Inserisci l’URL della nuova Media API.');const response=await fetch(base+path,{...options,headers:{...(options.headers||{}),Authorization:'Bearer '+token}});if(response.status===401||response.status===403){clearToken();showLogin();message('loginMessage','Sessione scaduta o accesso non autorizzato. Accedi di nuovo.',true);throw new Error('Sessione scaduta o accesso non autorizzato.');}if(!response.ok){let text='Richiesta non riuscita ('+response.status+').';try{const body=await response.json();text=body.error||body.title||text}catch{}throw new Error(text)}if(response.status===204)return null;return response.json()}
+async function request(path,options={}){const base=apiBase();if(!base)throw new Error('Endpoint Media API non configurato. Contatta l’amministratore.');const response=await fetch(base+path,{...options,headers:{...(options.headers||{}),Authorization:'Bearer '+token}});if(response.status===401||response.status===403){clearToken();showLogin();message('loginMessage','Sessione scaduta o accesso non autorizzato. Accedi di nuovo.',true);throw new Error('Sessione scaduta o accesso non autorizzato.');}if(!response.ok){let text='Richiesta non riuscita ('+response.status+').';try{const body=await response.json();text=body.error||body.title||text}catch{}throw new Error(text)}if(response.status===204)return null;return response.json()}
 function showApp(){ $('loginPanel').classList.add('hidden');$('appPanel').classList.remove('hidden');$('logout').classList.remove('hidden');$('userLabel').textContent='Sessione amministratore';}
 function showLogin(){ $('appPanel').classList.add('hidden');$('loginPanel').classList.remove('hidden');$('logout').classList.add('hidden');$('userLabel').textContent='';token=null;}
 function pickToken(data){
@@ -100,7 +101,7 @@ function pickToken(data){
   ];
   return candidates.find(value=>typeof value==='string'&&value.trim().length>0)||null
 }
-$('loginBtn').onclick=async()=>{clearMessage('loginMessage');const btn=$('loginBtn');btn.disabled=true;try{const base=$('authApi').value.trim().replace(/\/$/,'');const res=await fetch(base+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('email').value.trim(),password:$('password').value})});let data={};try{data=await res.json()}catch{}if(!res.ok)throw new Error(data.message||data.error||'Login non riuscito.');token=pickToken(data);
+$('loginBtn').onclick=async()=>{clearMessage('loginMessage');const btn=$('loginBtn');btn.disabled=true;try{const res=await fetch(AUTH_API_BASE+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('email').value.trim(),password:$('password').value})});let data={};try{data=await res.json()}catch{}if(!res.ok)throw new Error(data.message||data.error||'Login non riuscito.');token=pickToken(data);
 if(!token)throw new Error('Login riuscito ma il token non è presente nel formato previsto dalla Media Library.');
 if(!saveToken(token)){token=null;throw new Error('Il browser non consente di salvare la sessione. Abilita lo storage del sito e riprova.')}
 showApp();await load();}catch(e){message('loginMessage',e.message,true)}finally{btn.disabled=false}};
