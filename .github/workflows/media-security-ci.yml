@@ -1,0 +1,50 @@
+name: JSO Media Security CI
+
+on:
+  push:
+    branches:
+      - "security/jso-media-login-hardening"
+    paths:
+      - "Media/**"
+      - "backend/**"
+      - ".github/workflows/media-security-ci.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "Media/**"
+      - "backend/**"
+      - ".github/workflows/media-security-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  media-build:
+    name: Build Media API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore Media API
+        run: dotnet restore Media/api/JSO.Media.Api.csproj
+      - name: Build Media API
+        run: dotnet build Media/api/JSO.Media.Api.csproj --configuration Release --no-restore
+
+  backend-tests:
+    name: Run existing JSO API tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore solution
+        run: dotnet restore backend/JSO.sln
+      - name: Run tests
+        run: dotnet test backend/JSO.sln --configuration Release --no-restore
