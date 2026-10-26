@@ -18,7 +18,7 @@ export function resolvePlayerPhoto(player) {
   const url = String(player?.photoUrl || '').trim()
   const isDemo = DEMO_HOSTS.some((host) => url.includes(host))
   if (url && !isDemo) {
-    const localMatch = url.match(/^(?:\\/|https?:\\/\\/[^/]+\\/)(?:.*\\/)?players\\/([^/?#]+)\\.(webp|svg|png|jpe?g)$/i)
+    const localMatch = url.match(/^(?:\/|https?:\/\/[^/]+\/)(?:.*\/)?players\/([^/?#]+)\.(webp|svg|png|jpe?g)$/i)
     if (localMatch) return `/players/${localMatch[1]}.${localMatch[2].toLowerCase()}`
     return url
   }
