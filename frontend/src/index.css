@@ -707,3 +707,51 @@ html[dir="rtl"] .jso-scroll {
   background: #10213e;
   border: 1px solid rgb(255 255 255 / 12%);
 }
+
+
+/* Branded route loader and responsive team portraits. */
+.jso-route-loading {
+  color: #fff;
+  background:
+    radial-gradient(ellipse at 50% 35%, rgba(23, 105, 224, 0.28), transparent 48%),
+    #071a3a;
+}
+.jso-route-loading__crest {
+  animation: jso-loading-float 1.8s ease-in-out infinite;
+}
+.jso-route-loading__progress {
+  animation: jso-loading-progress 1.25s ease-in-out infinite;
+}
+.player-portrait__loading {
+  background: linear-gradient(120deg, rgba(255,255,255,.03) 25%, rgba(255,255,255,.12) 42%, rgba(255,255,255,.03) 60%);
+  background-size: 220% 100%;
+  animation: jso-loading-shimmer 1.3s linear infinite;
+}
+@keyframes jso-loading-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes jso-loading-progress {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(250%); }
+}
+@keyframes jso-loading-shimmer {
+  to { background-position: -220% 0; }
+}
+@media (max-width: 639px) {
+  .player-portrait {
+    min-height: 0;
+    aspect-ratio: 4 / 4.35;
+  }
+  .player-portrait img {
+    object-position: center 20%;
+    padding: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jso-route-loading__crest,
+  .jso-route-loading__progress,
+  .player-portrait__loading {
+    animation: none;
+  }
+}
