@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import { I18nProvider } from './i18n/index.jsx'
 import { isKnownSitePath } from './features/site/routeResolution.js'
+import RouteFallback from './features/home/RouteFallback.jsx'
 
 const App = lazy(() => import('./App.jsx'))
 const AdminApp = lazy(() => import('./admin/AdminApp.jsx'))
@@ -33,14 +34,6 @@ class RootErrorBoundary extends Component {
       </main>
     )
   }
-}
-
-function RouteFallback() {
-  return (
-    <div role="status" className="grid min-h-screen place-items-center bg-jso-paper text-jso-ink">
-      <span className="text-sm font-semibold text-slate-500">Chargement…</span>
-    </div>
-  )
 }
 
 function Root() {
