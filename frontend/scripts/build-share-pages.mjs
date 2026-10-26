@@ -2,7 +2,7 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises'
 
 const dist = new URL('../dist/', import.meta.url)
 const source = await readFile(new URL('index.html', dist), 'utf8')
-const site = (process.env.VITE_PUBLIC_SITE_URL || 'https://jso-web.onrender.com').replace(/\/+$/, '')
+const site = (process.env.VITE_PUBLIC_SITE_URL || 'https://jsoudhref.com').replace(/\/+$/, '')
 
 const pages = [
   ['/matchs', 'Matchs et résultats', 'Calendrier, résultats et Match Center de la JSO.'],
