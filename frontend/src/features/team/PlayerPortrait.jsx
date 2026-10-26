@@ -10,11 +10,11 @@ export default function PlayerPortrait({ player }) {
       .filter(Boolean)
       .join(' ')
       .normalize('NFD')
-      .replace(/[\\u0300-\\u036f]/g, '')
+      .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
-    return slug ? [`/players/${slug}.webp`, `/players/${slug}.png`, `/players/${slug}.svg`] : []
+    return slug ? [\`/players/\${slug}.webp\`, \`/players/\${slug}.png\`, \`/players/\${slug}.svg\`] : []
   }, [player?.firstName, player?.lastName])
   const photoCandidates = useMemo(
     () => [...new Set([primaryPhoto, ...localPhotos].filter(Boolean))],
