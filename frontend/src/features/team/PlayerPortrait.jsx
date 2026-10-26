@@ -50,7 +50,7 @@ export default function PlayerPortrait({ player }) {
           loading="lazy"
           decoding="async"
           fetchPriority="low"
-          className="relative z-10 h-full w-full object-contain object-bottom p-1.5 drop-shadow-[0_18px_14px_rgba(0,0,0,.28)] transition duration-500 group-hover:drop-shadow-[0_20px_18px_rgba(255,216,61,.18)]"
+          className="relative z-10 h-full w-full scale-[0.78] object-contain object-bottom p-1.5 drop-shadow-[0_18px_14px_rgba(0,0,0,.28)] transition duration-500 sm:scale-100 group-hover:drop-shadow-[0_20px_18px_rgba(255,216,61,.18)]"
         />
       ) : (
         <div className="relative z-10 grid h-full place-items-center px-6 text-center">
