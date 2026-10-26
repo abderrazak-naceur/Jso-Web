@@ -5,27 +5,27 @@ import { resolvePlayerPhoto } from './playerPhoto'
 export default function PlayerPortrait({ player }) {
   const name = [player.firstName, player.lastName].filter(Boolean).join(' ') || 'Joueur JSO'
   const primaryPhoto = resolvePlayerPhoto(player)
-  const localPhoto = useMemo(() => {
+  const localPhotos = useMemo(() => {
     const slug = [player?.firstName, player?.lastName]
       .filter(Boolean)
       .join(' ')
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[\\u0300-\\u036f]/g, '')
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
-    return slug ? `/players/${slug}.png` : ''
+    return slug ? [`/players/${slug}.webp`, `/players/${slug}.png`, `/players/${slug}.svg`] : []
   }, [player?.firstName, player?.lastName])
   const photoCandidates = useMemo(
-    () => [...new Set([primaryPhoto, localPhoto].filter(Boolean))],
-    [primaryPhoto, localPhoto],
+    () => [...new Set([primaryPhoto, ...localPhotos].filter(Boolean))],
+    [primaryPhoto, localPhotos],
   )
   const [candidateIndex, setCandidateIndex] = useState(0)
   const [failedCandidates, setFailedCandidates] = useState([])
   useEffect(() => {
     setCandidateIndex(0)
     setFailedCandidates([])
-  }, [primaryPhoto, localPhoto])
+  }, [primaryPhoto, localPhotos])
   const photoUrl = photoCandidates[candidateIndex]
   const hasPhoto = Boolean(photoUrl) && !failedCandidates.includes(photoUrl)
   const position = String(player.position || 'Équipe première')
