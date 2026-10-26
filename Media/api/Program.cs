@@ -70,8 +70,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 var allowedOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? "https://jso-media.com")
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-    .Append("https://media.jsoudhref.com")
-    .Append("https://jso-media-manager.onrender.com")
+    .Concat(new[]
+    {
+        "https://media.jsoudhref.com",
+        "https://jso-media-manager.onrender.com",
+        "https://jsoudhref.com",
+        "https://www.jsoudhref.com"
+    })
     .Distinct(StringComparer.OrdinalIgnoreCase)
     .ToArray();
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
