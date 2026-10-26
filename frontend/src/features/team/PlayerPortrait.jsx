@@ -37,7 +37,7 @@ export default function PlayerPortrait({ player }) {
   }
 
   return (
-    <div className="relative aspect-[4/5] overflow-hidden bg-jso-navy">
+    <div className="relative aspect-[4/5] min-h-[260px] overflow-hidden bg-jso-navy sm:min-h-0">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_25%,rgba(255,216,61,.24),transparent_45%),linear-gradient(145deg,rgba(30,78,138,.75),transparent_55%)]" aria-hidden="true" />
       <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full border border-white/10" aria-hidden="true" />
       <div className="absolute -right-2 -top-2 h-24 w-24 rounded-full border border-jso-gold/20" aria-hidden="true" />
@@ -50,7 +50,7 @@ export default function PlayerPortrait({ player }) {
           loading="lazy"
           decoding="async"
           fetchPriority="low"
-          className="relative z-10 h-full w-full scale-[0.78] object-contain object-bottom p-1.5 drop-shadow-[0_18px_14px_rgba(0,0,0,.28)] transition duration-500 sm:scale-100 group-hover:drop-shadow-[0_20px_18px_rgba(255,216,61,.18)]"
+          className="relative z-10 h-full w-full scale-100 object-contain object-bottom p-0 drop-shadow-[0_18px_14px_rgba(0,0,0,.28)] transition duration-500 sm:p-1.5 group-hover:drop-shadow-[0_20px_18px_rgba(255,216,61,.18)]"
         />
       ) : (
         <div className="relative z-10 grid h-full place-items-center px-6 text-center">
