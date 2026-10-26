@@ -112,13 +112,27 @@ public sealed class MediaController(MediaDbContext db, MediaStorageService stora
     {
         var asset = await db.MediaAssets.SingleOrDefaultAsync(x => x.Id == id, ct);
         if (asset is null) return NotFound();
-        if (!IsManagedByThisService(asset))
-            return Conflict(new { error = "Questo media è legacy o gestito da un altro sistema: modifica non consentita da JSO Media Manager." });
-        if (string.IsNullOrWhiteSpace(request.Title))
-            return BadRequest(new { error = "Il titolo è obbligatorio." });
-        asset.Title = request.Title.Trim();
-        asset.Caption = request.Caption;
-        asset.IsPublished = request.IsPublished;
+        // URL corrections only update the database reference; they never move or delete the physical file.
+        if (!string.IsNullOrWhiteSpace(request.Url))
+        {
+            if (!Uri.TryCreate(request.Url.Trim(), UriKind.Absolute, out var mediaUri) ||
+                (mediaUri.Scheme != Uri.UriSchemeHttps && mediaUri.Scheme != Uri.UriSchemeHttp))
+                return BadRequest(new { error = "URL non valido: usa un indirizzo HTTP o HTTPS completo." });
+            asset.Url = mediaUri.AbsoluteUri;
+        }
+        // Legacy records may have their URL repaired, but their other metadata remains protected.
+        if (IsManagedByThisService(asset))
+        {
+            if (string.IsNullOrWhiteSpace(request.Title))
+                return BadRequest(new { error = "Il titolo è obbligatorio." });
+            asset.Title = request.Title.Trim();
+            asset.Caption = request.Caption;
+            asset.IsPublished = request.IsPublished;
+        }
+        else if (string.IsNullOrWhiteSpace(request.Url))
+        {
+            return Conflict(new { error = "Questo media è legacy: è consentita soltanto la correzione dell’URL." });
+        }
         await db.SaveChangesAsync(ct);
         return Ok(asset);
     }
@@ -146,4 +160,4 @@ public sealed class MediaController(MediaDbContext db, MediaStorageService stora
         asset.StoragePath?.StartsWith("sftp:media/", StringComparison.Ordinal) == true;
 }
 
-public sealed record UpdateMediaRequest(string Title, string? Caption, bool IsPublished);
+public sealed record UpdateMediaRequest(string? Title, string? Caption, bool IsPublished, string? Url = null);
