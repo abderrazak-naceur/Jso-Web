@@ -45,6 +45,7 @@ export default function SiteHeader({
     [t('common.ticketing'), BILLETTERIE_PATH, Ticket],
     [t('common.news'), NEWS_LIST_PATH, Newspaper],
     ...(sections.some((section) => section.id === 'shop') ? [['Boutique', sectionUrl('shop'), ShoppingBag]] : []),
+    ['Nos projets', '/nos-projets', HeartHandshake],
     ...(sections.some((section) => section.id === 'donation') ? [['Soutenir', '/soutenir', HeartHandshake]] : []),
   ]
 
@@ -140,6 +141,16 @@ export default function SiteHeader({
                         className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold text-jso-ink transition hover:bg-slate-100"
                       >
                         {t('common.news')}                        <Newspaper size={15} aria-hidden="true" className="text-slate-300" />
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href="/nos-projets"
+                        onClick={closeMenus}
+                        aria-current={window.location.pathname === '/nos-projets' ? 'page' : undefined}
+                        className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold text-jso-ink transition hover:bg-slate-100"
+                      >
+                        Nos projets <HeartHandshake size={15} aria-hidden="true" className="text-slate-300" />
                       </a>
                     </li>
                     {secondary.map((section) => (
