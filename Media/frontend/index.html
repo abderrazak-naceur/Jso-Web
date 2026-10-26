@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<meta name="jso-media-build" content="2026-10-25-fixed-login-endpoints-1">
+<meta name="jso-media-build" content="2026-10-26-login-compatibility-1">
 <title>JSO Media Manager</title>
 <style>
 :root{color-scheme:dark;--bg:#071329;--panel:#10213e;--line:#294261;--text:#f4f7fc;--muted:#9eafc8;--blue:#2785f5;--gold:#e6b54a;--red:#ef4444}
@@ -64,6 +64,8 @@ button:hover:not(:disabled){filter:brightness(1.09);transform:translateY(-1px);b
 <section id="loginPanel" class="panel" style="max-width:480px;margin:8vh auto">
 <div class="muted">MEDIA LIBRARY · ACCESSO AMMINISTRATORI</div><h1>Accedi</h1>
 <p class="muted">Usa le credenziali amministrative JSO. Il login viene verificato dal servizio di autenticazione JSO; le operazioni media sono eseguite dalla nuova API separata.</p>
+<label for="authApi">URL API autenticazione JSO</label><input id="authApi" type="url" value="https://jso-api.onrender.com" autocomplete="url" spellcheck="false">
+<small>Usa l’URL pubblico corretto del servizio JSO API, senza barra finale.</small>
 <label for="email">Email</label><input id="email" type="email" autocomplete="username" required>
 <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required>
 <button id="loginBtn" style="width:100%;margin-top:16px">Accedi</button><div id="loginMessage" class="message hidden" role="status"></div>
@@ -101,7 +103,7 @@ function pickToken(data){
   ];
   return candidates.find(value=>typeof value==='string'&&value.trim().length>0)||null
 }
-$('loginBtn').onclick=async()=>{clearMessage('loginMessage');const btn=$('loginBtn');btn.disabled=true;try{const res=await fetch(AUTH_API_BASE+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('email').value.trim(),password:$('password').value})});let data={};try{data=await res.json()}catch{}if(!res.ok)throw new Error(data.message||data.error||'Login non riuscito.');token=pickToken(data);
+$('loginBtn').onclick=async()=>{clearMessage('loginMessage');const btn=$('loginBtn');btn.disabled=true;try{const authBase=$('authApi').value.trim().replace(/\/$/,'');if(!/^https:\/\//i.test(authBase))throw new Error('Inserisci un URL HTTPS valido per l’API di autenticazione.');const res=await fetch(authBase+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('email').value.trim(),password:$('password').value})});let data={};try{data=await res.json()}catch{}if(!res.ok)throw new Error(data.message||data.error||'Login non riuscito.');token=pickToken(data);
 if(!token)throw new Error('Login riuscito ma il token non è presente nel formato previsto dalla Media Library.');
 if(!saveToken(token)){token=null;throw new Error('Il browser non consente di salvare la sessione. Abilita lo storage del sito e riprova.')}
 showApp();await load();}catch(e){message('loginMessage',e.message,true)}finally{btn.disabled=false}};
