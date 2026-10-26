@@ -83,7 +83,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-var allowedOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? "https://jso-media.com")
+var allowedOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? "https://jso-media.com,https://jsoudhref.com,https://www.jsoudhref.com")
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
     policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
