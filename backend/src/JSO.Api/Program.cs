@@ -211,6 +211,8 @@ builder.Services.AddCors(options =>
         .Append("https://jsoudhref.com")
         .Append("https://jso-media.com")
         .Append("https://www.jsoudhref.com")
+        .Append("https://media.jsoudhref.com")
+        .Append("https://jso-media-manager.onrender.com")
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToArray();
 
