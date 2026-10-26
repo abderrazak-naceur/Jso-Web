@@ -29,21 +29,44 @@ export default function MatchesModule({ onError }) {
   function setSelected(m){setEditing(m.id);setForm({...m,opponentLogoUrl:m.opponentLogoUrl||m.OpponentLogoUrl||'',kickoffAt:m.kickoffAt?.slice(0,16)||'',homeScore:m.homeScore??'',awayScore:m.awayScore??''});const ticket=m.ticketArtworkUrl||m.TicketArtworkUrl||'';setTicketArtworkUrl(ticket);setTicketArtworkPreview(ticket)}
   function startCreate(){setEditing(null);setTicketArtworkUrl('');setTicketArtworkPreview('');setForm(f=>({...f,opponentName:'',kickoffAt:'',venue:'',opponentLogoUrl:'',homeScore:'',awayScore:'',status:'Scheduled',isPublished:false}));setModalOpen(true)}
   function closeModal(){navigateAdminEdit('matches',null);setEditing(null);setModalOpen(false)}
-  async function uploadOpponentLogo(file){if(!file)return;try{const data=new FormData();data.append('file',file);data.append('title',`Logo adversaire - ${form.opponentName||'match'}`);data.append('caption','Logo de l’équipe adverse');data.append('addToMedia',String(addOpponentLogoToMedia));const asset=await adminApi('/admin/media/upload',{method:'POST',body:data});const origin=API_BASE_URL.endsWith('/api')?API_BASE_URL.slice(0,-4):API_BASE_URL;setForm(current=>({...current,opponentLogoUrl:asset.url?.startsWith('http')?asset.url:origin+asset.url}));}catch(e){onError(e.message)}}
+  async function uploadPersistentMedia(file, title, caption) {
+    const token = localStorage.getItem('jso_admin_token')
+    if (!token) throw new Error('Session administrateur expirée. Reconnectez-vous.')
+    const data = new FormData()
+    data.append('file', file)
+    data.append('title', title)
+    data.append('caption', caption)
+    let response
+    try {
+      response = await fetch('https://jso-media-api.onrender.com/api/media/upload', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' },
+        body: data,
+      })
+    } catch {
+      throw new Error('Le service de stockage média est inaccessible. Réessayez dans un instant.')
+    }
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(payload.error || payload.message || `Échec du téléversement (${response.status}).`)
+    if (!payload.url || !/^https?:\/\//i.test(payload.url)) throw new Error('Le stockage média n’a pas retourné une URL publique valide.')
+    return payload
+  }
+
+  async function uploadOpponentLogo(file) {
+    if (!file) return
+    try {
+      const asset = await uploadPersistentMedia(file, `Logo adversaire - ${form.opponentName || 'match'}`, 'Logo de l’équipe adverse')
+      setForm(current => ({ ...current, opponentLogoUrl: asset.url }))
+    } catch (e) { onError(e.message) }
+  }
   async function uploadTicketArtwork(file){
     if(!file)return
     if(!['image/png','image/jpeg','image/webp'].includes(file.type)){onError('Utilisez une image PNG, JPG ou WebP pour le billet.');return}
     if(file.size>10*1024*1024){onError('Le visuel du billet dépasse la limite de 10 Mo.');return}
     setTicketArtworkPreview(URL.createObjectURL(file))
     try{
-      const data=new FormData();data.append('file',file)
-      data.append('title',`Billet JSO - ${form.opponentName||'match à domicile'}`)
-      data.append('caption','Visuel de billetterie pour une rencontre à domicile')
-      data.append('addToMedia','false')
-      const asset=await adminApi('/admin/media/upload',{method:'POST',body:data})
-      const origin=API_BASE_URL.endsWith('/api')?API_BASE_URL.slice(0,-4):API_BASE_URL
-      const url=asset.url?.startsWith('http')?asset.url:origin+asset.url
-      setTicketArtworkUrl(url);setTicketArtworkPreview(url)
+      const asset=await uploadPersistentMedia(file, `Billet JSO - ${form.opponentName||'match à domicile'}`, 'Visuel de billetterie pour une rencontre à domicile')
+      setTicketArtworkUrl(asset.url);setTicketArtworkPreview(asset.url)
     }catch(e){setTicketArtworkPreview(ticketArtworkUrl);onError(e.message)}
   }
   function startEdit(m){navigateAdminEdit('matches',m.id);setSelected(m);setModalOpen(true)}
