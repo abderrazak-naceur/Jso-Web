@@ -56,22 +56,31 @@ async function loadImage(src) {
   const sameOrigin = /^(data:|blob:)/i.test(src) || (typeof window !== 'undefined' && src.startsWith(window.location.origin)) || src.startsWith('/')
   if (sameOrigin) return decode(src, false).then((img) => { if (img) img.__cors = true; return img })
 
-  // Cross-origin (media host): fetch the bytes and wrap them in a same-origin
-  // blob: URL. A blob: image never taints the canvas, so export keeps working
-  // regardless of the host's CORS headers. If the fetch is blocked, fall back
-  // to a direct load for the preview (canvas then tainted → export via URL).
-  try {
-    const response = await fetch(src, { mode: 'cors' })
-    if (response.ok) {
+  // Cross-origin (media host): route through the same-origin backend proxy.
+  // The static media host does not send CORS headers, so a direct fetch fails
+  // and a plain <img> taints the canvas (breaking export). The proxy fetches
+  // server-side and re-serves the image same-origin, keeping export working.
+  async function fetchBlob(url) {
+    try {
+      const response = await fetch(url)
+      if (!response.ok) return null
       const blob = await response.blob()
       const objectUrl = URL.createObjectURL(blob)
       const img = await decode(objectUrl, false)
       if (img) { img.__cors = true; img.__objectUrl = objectUrl; return img }
       URL.revokeObjectURL(objectUrl)
-    }
-  } catch { /* fall through to a tainting load */ }
+      return null
+    } catch { return null }
+  }
+  const proxyUrl = API_BASE_URL.replace(/\/$/, '') + '/media/proxy?url=' + encodeURIComponent(src)
+  const viaProxy = await fetchBlob(proxyUrl)
+  if (viaProxy) return viaProxy
 
-  // Try a CORS <img> load, then a plain one so the preview still shows.
+  // Fallbacks: a direct CORS fetch (if the host ever allows it), then a plain
+  // <img> load so the preview still shows (the canvas is then tainted and
+  // export reports a clear error instead of failing silently).
+  const direct = await fetchBlob(src)
+  if (direct) return direct
   return (await decode(src, true)) || (await decode(src, false))
 }
 
