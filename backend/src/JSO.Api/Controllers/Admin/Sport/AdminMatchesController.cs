@@ -11,9 +11,35 @@ namespace JSO.Api.Controllers;
 [Route("api/admin/matches")]
 public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) : ControllerBase
 {
+    // Admin match list. The projection keeps every Match field the admin UI
+    // already reads and additionally returns per-match ticket-type counts so
+    // the billetterie screen can show, across the whole list, which matches
+    // already have (active) ticket types — without N extra requests.
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken ct) =>
-        Ok(await db.Matches.AsNoTracking().OrderByDescending(x => x.KickoffAt).Take(100).ToListAsync(ct));
+        Ok(await db.Matches.AsNoTracking()
+            .OrderByDescending(x => x.KickoffAt)
+            .Take(100)
+            .Select(x => new
+            {
+                x.Id,
+                x.SeasonId,
+                x.CompetitionId,
+                x.TeamId,
+                x.OpponentName,
+                x.OpponentLogoUrl,
+                x.TicketArtworkUrl,
+                x.KickoffAt,
+                x.Venue,
+                x.IsHome,
+                x.HomeScore,
+                x.AwayScore,
+                x.Status,
+                x.IsPublished,
+                TicketTypeCount = db.TicketTypes.Count(t => t.MatchId == x.Id),
+                ActiveTicketTypeCount = db.TicketTypes.Count(t => t.MatchId == x.Id && t.IsActive)
+            })
+            .ToListAsync(ct));
 
     [HttpGet("references")]
     public async Task<IActionResult> GetReferences(CancellationToken ct)

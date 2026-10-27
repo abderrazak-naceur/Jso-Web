@@ -41,6 +41,8 @@ export function normalizeMatch(raw) {
     homeScore: pick(raw, 'HomeScore', 'homeScore') ?? null,
     awayScore: pick(raw, 'AwayScore', 'awayScore') ?? null,
     status: pick(raw, 'Status', 'status') || 'Scheduled',
+    competitionName: pick(raw, 'CompetitionName', 'competitionName') || '',
+    seasonName: pick(raw, 'SeasonName', 'seasonName') || '',
   }
 }
 

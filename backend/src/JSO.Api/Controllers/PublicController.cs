@@ -20,6 +20,11 @@ public sealed class PublicController(JsoDbContext db, ContentTranslationService 
         return Ok(club);
     }
 
+    // Published matches for the public /matchs calendar. The projection keeps
+    // every Match field the frontend already reads and additionally joins the
+    // competition and season names so the page can group/badge by competition
+    // without an extra round-trip. Additive: existing callers ignore the new
+    // fields, new callers can use them.
     [HttpGet("matches")]
     public async Task<IActionResult> GetMatches(CancellationToken ct)
     {
@@ -27,6 +32,26 @@ public sealed class PublicController(JsoDbContext db, ContentTranslationService 
             .Where(x => x.IsPublished)
             .OrderBy(x => x.KickoffAt)
             .Take(50)
+            .Select(x => new
+            {
+                x.Id,
+                x.SeasonId,
+                x.CompetitionId,
+                x.TeamId,
+                x.OpponentName,
+                x.OpponentLogoUrl,
+                x.TicketArtworkUrl,
+                x.KickoffAt,
+                x.Venue,
+                x.IsHome,
+                x.HomeScore,
+                x.AwayScore,
+                x.Status,
+                x.IsPublished,
+                CompetitionName = db.Competitions.Where(c => c.Id == x.CompetitionId).Select(c => c.Name).FirstOrDefault(),
+                CompetitionCountry = db.Competitions.Where(c => c.Id == x.CompetitionId).Select(c => c.Country).FirstOrDefault(),
+                SeasonName = db.Seasons.Where(s => s.Id == x.SeasonId).Select(s => s.Name).FirstOrDefault()
+            })
             .ToListAsync(ct);
 
         return Ok(matches);
