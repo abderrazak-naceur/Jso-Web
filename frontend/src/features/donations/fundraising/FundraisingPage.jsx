@@ -3,7 +3,6 @@ import { ArrowRight, CheckCircle2, Search, Share2 } from 'lucide-react'
 import { fundraisingApi, donationsApi } from '../../../lib/api'
 import { useFanSession } from '../../account/useFanSession'
 import { useDocumentTitle } from '../../../lib/useDocumentTitle'
-import { CREST_SRC, CLUB_FULL_NAME } from '../../site/brand'
 import FundraisingProjectView from './FundraisingProjectView'
 import FundraisingRegistration, { ONLINE_PROVIDERS } from './FundraisingRegistration'
 import FundraisingDashboard from './FundraisingDashboard'
@@ -14,8 +13,9 @@ import { MONTHLY_AMOUNTS, PLAN_MONTHS, planTotal, projectImage, fundraisingDate,
 import { fundraisingCopy as copy, publicSupportStatus } from './fundraisingCopy'
 import { useI18n } from '../../../i18n/index.jsx'
 import SiteHeader from '../../site/SiteHeader'
-import { visibleSections } from '../../site/navigation'
+import SiteFooter from '../../site/SiteFooter'
 import { useNavigation } from '../../site/useNavigation'
+import { useSiteSections } from '../../site/useSiteSections'
 import './fundraising.css'
 
 const selectedFromUrl = () => new URLSearchParams(window.location.search).get('projet') || ''
@@ -37,6 +37,8 @@ export default function FundraisingPage() {
   const [auth, setAuth] = useState(null)
   const [continueSupport, setContinueSupport] = useState(false)
   const headerLinks = useNavigation('Header')
+  const footerLinks = useNavigation('Footer')
+  const sections = useSiteSections()
   const [supporters, setSupporters] = useState({ items: [], totalCount: 0, totalPages: 0 })
   const [supportersLoading, setSupportersLoading] = useState(false)
   const [supportersError, setSupportersError] = useState('')
@@ -166,7 +168,7 @@ export default function FundraisingPage() {
   return <div className="jso-fundraising">
     <a href="#le-projet" className="jso-skip-link">{tr('skipProject')}</a>
     <SiteHeader
-      sections={visibleSections({})}
+      sections={sections}
       extraLinks={headerLinks}
       activeId="donation"
       cartCount={0}
@@ -190,7 +192,7 @@ export default function FundraisingPage() {
         <section className="fr-supporters" id="soutiens"><div className="fr-container"><div className="fr-section-heading"><div><p className="fr-eyebrow">{tr('supportersEyebrow')}</p><h2 className="fr-section-title">{tr('supportersTitle')}</h2><p>{tr('supportersThanks')}</p></div><span className="fr-badge fr-badge-paid"><CheckCircle2 size={13}/>{tr('verifiedPayments')}</span></div><label className="fr-search"><Search size={17}/><input aria-label={tr('searchSupporter')} value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder={tr('searchName')}/></label>{supportersError && <p className="fr-alert fr-error" role="alert">{supportersError}</p>}<div className="fr-table-scroll"><table className="fr-table"><thead><tr><th>{tr('rank')}</th><th>{tr('publicName')}</th><th>{tr('contribution')}</th><th>{tr('confirmedPayments')}</th><th>{tr('status')}</th></tr></thead><tbody>{supporters.items.map((item, index) => { const paymentStatus = publicSupportStatus(item); return <tr key={item.id}><td>{(page - 1) * 10 + index + 1}</td><td><span className="fr-person"><span className="fr-avatar">{item.displayName.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase()}</span>{item.displayName}</span></td><td>{money(item.monthlyAmountTnd)} / {language === 'en' ? 'month' : language === 'it' ? 'mese' : language === 'ar' ? 'شهر' : 'mois'}</td><td><strong>{money(item.totalPaidTnd)}</strong> · {item.paidInstallments}/{item.months}</td><td><span className={`fr-badge ${paymentStatus.paid ? 'fr-badge-paid' : 'fr-badge-pending'}`}>{tr(paymentStatus.key)}</span></td></tr>})}{!supporters.items.length && <tr><td colSpan={5} style={{ textAlign: 'center', padding: 35 }}>{supportersLoading ? tr('loadingSupporters') : search ? tr('noSearchResults') : tr('firstSupporter')}</td></tr>}</tbody></table></div><div className="fr-pagination"><p>{fundraisingSupporterLabel(supporters.totalCount, language)}</p><div><button type="button" disabled={page <= 1 || supportersLoading} onClick={() => setPage(page - 1)}>{tr('previous')}</button><span>{page} / {Math.max(1, supporters.totalPages)}</span><button type="button" disabled={page >= supporters.totalPages || supportersLoading} onClick={() => setPage(page + 1)}>{tr('next')}</button></div></div></div></section>
       </>}
     </main>
-    <footer className="fr-footer"><div className="fr-container fr-footer-inner"><a href="/" className="fr-brand"><img src={CREST_SRC} alt="JSO"/><span>{CLUB_FULL_NAME}<br/>{language === 'en' ? 'Together since 1973' : language === 'it' ? 'Insieme dal 1973' : language === 'ar' ? 'معًا منذ 1973' : 'Ensemble depuis 1973'}</span></a><nav><a href="/">{tr('footerClub')}</a><a href="/account">{tr('footerAccount')}</a><a href="/admin/fundraising-projects">{tr('footerAdmin')}</a></nav><span>© {new Date().getFullYear()} JSO Oudhref</span></div></footer>
+    <SiteFooter sections={sections} extraLinks={footerLinks} homeHref="/" />
     {registration && project && <FundraisingRegistration project={project} initialAmount={amount} methods={methods} user={fan.user} onClose={() => setRegistration(false)} onJoin={join}/>}
     <AuthModal open={Boolean(auth)} initialMode={auth || 'login'} onClose={() => { setAuth(null); setContinueSupport(false) }} onAuthenticated={authenticated}/>
   </div>
