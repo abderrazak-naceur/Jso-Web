@@ -21,6 +21,7 @@ export const ADMIN_MODULES = {
   shop: lazy(() => import('./commerce/ShopModule')),
   orders: lazy(() => import('./commerce/Orders')),
   tickets: lazy(() => import('./commerce/Tickets')),
+  'ticket-designer': lazy(() => import('./commerce/TicketDesigner')),
   memberships: lazy(() => import('./commerce/Memberships')),
   'match-streams': lazy(() => import('./sport/MatchStreamsWithPromos')),
   analytics: lazy(() => import('./sport/PlayerAnalyticsModule')),

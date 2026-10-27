@@ -45,7 +45,18 @@ export default function TicketsModule({ onError }) {
   const [promoForm, setPromoForm] = useState({ code: '', expiresAt: '', maxUses: '', isEnabled: true })
 
   async function loadMatches() {
-    try { const m = await api('/admin/matches'); setMatches(m); if (!matchId && m[0]) setMatchId(m[0].id) }
+    try {
+      const m = await api('/admin/matches')
+      // Sort by kickoff date so the dropdown reads chronologically (soonest
+      // first). Matches without a date fall to the bottom.
+      const sorted = (Array.isArray(m) ? m : []).slice().sort((a, b) => {
+        const ta = a.kickoffAt ? new Date(a.kickoffAt).getTime() : Infinity
+        const tb = b.kickoffAt ? new Date(b.kickoffAt).getTime() : Infinity
+        return ta - tb
+      })
+      setMatches(sorted)
+      if (!matchId && sorted[0]) setMatchId(sorted[0].id)
+    }
     catch (e) { onError(e.message) }
   }
   useEffect(() => { loadMatches() }, [])
