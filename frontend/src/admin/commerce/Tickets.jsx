@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Save, X, Plus, Check, RefreshCw, Home, Plane, Ticket } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Save, X, Plus, Check, RefreshCw, Home, Plane, Ticket, Palette, Users, Wallet, Clock, Tag } from 'lucide-react'
 import { API_BASE_URL } from '../../lib/apiConfig'
 
 async function api(path, options = {}) {
@@ -29,7 +29,24 @@ const emptyType = { name: 'Entrée générale — Stade Oudhref', price: '5', cu
 const STATUS_STYLES = {
   Pending: 'bg-amber-100 text-amber-700',
   Confirmed: 'bg-emerald-100 text-emerald-700',
+  CheckedIn: 'bg-blue-100 text-blue-700',
   Cancelled: 'bg-slate-100 text-slate-500',
+}
+const STATUS_LABELS = {
+  Pending: 'En attente', Confirmed: 'Confirmée', CheckedIn: 'Entré', Cancelled: 'Annulée',
+}
+
+const money = (n, c) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: c || 'TND' }).format(n || 0)
+
+// Small KPI card used in the per-match overview strip.
+function Kpi({ icon: Icon, label, value, tone = 'slate' }) {
+  const tones = { slate: 'text-slate-500', emerald: 'text-emerald-600', amber: 'text-amber-600', blue: 'text-jso-blue' }
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <p className={`flex items-center gap-1.5 text-xs font-bold ${tones[tone]}`}><Icon size={14}/>{label}</p>
+      <p className="mt-1 text-2xl font-black text-jso-navy">{value}</p>
+    </div>
+  )
 }
 
 export default function TicketsModule({ onError }) {
@@ -43,15 +60,11 @@ export default function TicketsModule({ onError }) {
   const [bulkCreating, setBulkCreating] = useState(false)
   const [promoCodes, setPromoCodes] = useState([])
   const [promoForm, setPromoForm] = useState({ code: '', expiresAt: '', maxUses: '', isEnabled: true })
-  // Per-match ticket-type summary so the admin sees, across the whole list,
-  // which matches already have active ticket types. { [matchId]: { active, total } }
   const [typeSummary, setTypeSummary] = useState({})
 
   async function loadMatches() {
     try {
       const m = await api('/admin/matches')
-      // Sort by kickoff date so the dropdown reads chronologically (soonest
-      // first). Matches without a date fall to the bottom.
       const sorted = (Array.isArray(m) ? m : []).slice().sort((a, b) => {
         const ta = a.kickoffAt ? new Date(a.kickoffAt).getTime() : Infinity
         const tb = b.kickoffAt ? new Date(b.kickoffAt).getTime() : Infinity
@@ -59,14 +72,12 @@ export default function TicketsModule({ onError }) {
       })
       setMatches(sorted)
       if (!matchId && sorted[0]) setMatchId(sorted[0].id)
-      // The admin matches endpoint now returns per-match ticket-type counts,
-      // so the whole-list indicator is built directly from the payload — no
-      // extra per-match requests. Tolerates both camelCase and PascalCase.
       const summary = {}
-      for (const m of sorted) {
-        const total = m.ticketTypeCount ?? m.TicketTypeCount ?? 0
-        const active = m.activeTicketTypeCount ?? m.ActiveTicketTypeCount ?? 0
-        summary[m.id] = { total, active }
+      for (const m2 of sorted) {
+        summary[m2.id] = {
+          total: m2.ticketTypeCount ?? m2.TicketTypeCount ?? 0,
+          active: m2.activeTicketTypeCount ?? m2.ActiveTicketTypeCount ?? 0,
+        }
       }
       setTypeSummary(summary)
     }
@@ -79,15 +90,16 @@ export default function TicketsModule({ onError }) {
     try {
       const rows = await api('/admin/tickets/types?matchId=' + matchId)
       setTypes(rows)
-      // Keep the whole-list indicator in sync for the match we just (re)loaded.
       const list = Array.isArray(rows) ? rows : []
       setTypeSummary((current) => ({ ...current, [matchId]: { total: list.length, active: list.filter((t) => t.isActive).length } }))
       onError('')
     }
     catch (e) { onError(e.message) }
   }
+  // Réservations are now scoped to the selected match.
   async function loadOrders() {
-    try { setOrders(await api('/admin/tickets/orders')) }
+    if (!matchId) { setOrders([]); return }
+    try { setOrders(await api('/admin/tickets/orders?matchId=' + encodeURIComponent(matchId))) }
     catch (e) { onError(e.message) }
   }
   async function loadPromoCodes() {
@@ -96,7 +108,7 @@ export default function TicketsModule({ onError }) {
     catch (e) { onError(e.message) }
   }
   useEffect(() => { loadTypes() }, [matchId])
-  useEffect(() => { loadOrders() }, [])
+  useEffect(() => { loadOrders() }, [matchId])
   useEffect(() => { loadPromoCodes() }, [matchId])
 
   async function createPromoCode(event) {
@@ -139,13 +151,13 @@ export default function TicketsModule({ onError }) {
       String(order.ticketTypeId || '').toLowerCase() === String(id).toLowerCase()
     )
     const prompt = hasOrders
-      ? 'Questo tipo di biglietto è collegato a ordini. Lo storico verrà conservato e il biglietto sarà disattivato per impedire nuovi acquisti. Continuare?'
-      : 'Eliminare definitivamente questo tipo di biglietto?'
+      ? 'Ce type de billet est lié à des réservations. L’historique sera conservé et le billet sera désactivé pour empêcher de nouveaux achats. Continuer ?'
+      : 'Supprimer définitivement ce type de billet ?'
     if (!confirm(prompt)) return
     try {
       const result = await api('/admin/tickets/types/' + id, { method: 'DELETE' })
       await loadTypes()
-      if (result?.deactivated) onError('Biglietto disattivato: gli ordini esistenti sono stati conservati.')
+      if (result?.deactivated) onError('Billet désactivé : les réservations existantes sont conservées.')
       else onError('')
     } catch (e) { onError(e.message) }
   }
@@ -166,7 +178,7 @@ export default function TicketsModule({ onError }) {
       }
       onError('')
       alert('Terminé : ' + created + ' billet(s) créé(s), ' + skipped + ' déjà existant(s) ignoré(s). Prix : 5 DT.')
-      await loadTypes()
+      await loadMatches(); await loadTypes()
     } catch (e) { onError('Création partielle des billets : ' + e.message + ' Rechargez la page pour vérifier les parties déjà traitées.') }
     finally { setBulkCreating(false) }
   }
@@ -176,54 +188,100 @@ export default function TicketsModule({ onError }) {
     catch (e) { onError(e.message) }
   }
 
-  const money = (n, c) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: c || 'TND' }).format(n || 0)
-  // Dropdown label: side marker (🏠 domicile / ✈ extérieur), opponent, date,
-  // and a ✓/• flag telling whether the match already has active ticket types.
-  const matchLabel = (m) => {
-    const summary = typeSummary[m.id]
-    const flag = summary ? (summary.active > 0 ? '✓ billets' : summary.total > 0 ? '• inactifs' : '— sans billet') : ''
-    const side = m.isHome ? '🏠 JSO' : '✈ Ext.'
-    const date = new Date(m.kickoffAt).toLocaleDateString('fr-FR', { dateStyle: 'short' })
-    return `${side} — ${m.opponentName || ''} · ${date}${flag ? ' · ' + flag : ''}`
-  }
   const selectedMatch = matches.find((m) => m.id === matchId)
   const selectedSummary = typeSummary[matchId]
   const matchesWithTickets = Object.values(typeSummary).filter((s) => s.active > 0).length
 
+  // Per-match KPIs computed from the loaded types and orders.
+  const kpis = useMemo(() => {
+    const sold = types.reduce((n, t) => n + Number(t.soldCount || 0), 0)
+    const capacity = types.reduce((n, t) => n + Number(t.capacity || 0), 0)
+    const pending = orders.filter((o) => o.status === 'Pending').length
+    const revenue = orders.filter((o) => o.status === 'Confirmed' || o.status === 'CheckedIn').reduce((n, o) => n + Number(o.total || 0), 0)
+    const currency = types[0]?.currency || orders[0]?.currency || 'TND'
+    return { sold, capacity, pending, revenue, currency }
+  }, [types, orders])
+
+  const designerHref = matchId ? `/admin/ticket-designer?match=${encodeURIComponent(matchId)}` : '/admin/ticket-designer'
+  const matchDate = selectedMatch?.kickoffAt ? new Date(selectedMatch.kickoffAt).toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' }) : ''
+
   return <div className="space-y-6">
+    {/* ——— Barre de sélection du match + actions ——— */}
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><h2 className="text-xl font-black">Billetterie — Types de billets</h2><p className="mt-1 text-sm text-slate-500">Billet général à 5 DT · Stade Oudhref · <b>{matchesWithTickets}</b> match(s) avec billets actifs</p></div>
-        <div className="flex flex-wrap items-center gap-2"><button type="button" onClick={createTicketsForUpcomingMatches} disabled={bulkCreating || matches.length === 0} className="rounded-xl border border-jso-navy px-3 py-2 text-sm font-bold text-jso-navy disabled:opacity-50">{bulkCreating ? "Création…" : "Créer pour les matchs futurs · 5 DT"}</button><button type="button" onClick={startCreate} className="inline-flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-black text-white"><Plus size={16}/> Nouveau billet</button>
-        <select value={matchId} onChange={(e) => setMatchId(e.target.value)} className="min-w-[18rem] rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-jso-blue">
-          {matches.map((m) => <option key={m.id} value={m.id}>{matchLabel(m)}</option>)}
-        </select></div>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-black">Billetterie par match</h2>
+          <p className="mt-1 text-sm text-slate-500">Gérez les billets, les réservations et les codes promo d’un match à la fois. <b>{matchesWithTickets}</b> match(s) avec billets actifs.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={createTicketsForUpcomingMatches} disabled={bulkCreating || matches.length === 0} className="rounded-xl border border-jso-navy px-3 py-2 text-sm font-bold text-jso-navy disabled:opacity-50">{bulkCreating ? 'Création…' : 'Créer pour les matchs futurs · 5 DT'}</button>
+          <button type="button" onClick={() => { loadMatches(); loadTypes(); loadOrders() }} className="rounded-xl border border-slate-200 p-2 text-slate-600" aria-label="Actualiser"><RefreshCw size={16}/></button>
+        </div>
       </div>
 
-      {/* Clear summary of the selected match: home/away and ticket status. */}
-      {selectedMatch && <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        {selectedMatch.isHome
-          ? <span className="inline-flex items-center gap-1.5 rounded-full bg-jso-navy px-3 py-1.5 text-xs font-black text-jso-gold"><Home size={13}/> À domicile · Stade Oudhref</span>
-          : <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-200 px-3 py-1.5 text-xs font-black text-slate-700"><Plane size={13}/> À l’extérieur</span>}
-        <span className="text-sm font-bold text-slate-700">{selectedMatch.opponentName || 'Adversaire'} · {new Date(selectedMatch.kickoffAt).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}</span>
-        {selectedSummary && (selectedSummary.active > 0
-          ? <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-black text-emerald-700"><Ticket size={13}/> {selectedSummary.active} billet(s) actif(s)</span>
-          : selectedSummary.total > 0
-            ? <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-black text-amber-700"><Ticket size={13}/> {selectedSummary.total} billet(s) inactif(s)</span>
-            : <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-200 px-3 py-1.5 text-xs font-black text-slate-500"><Ticket size={13}/> Aucun billet</span>)}
-      </div>}
+      <label className="mt-5 block text-sm font-bold">Match sélectionné
+        <select value={matchId} onChange={(e) => setMatchId(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-jso-blue">
+          {matches.length === 0 && <option value="">Aucun match</option>}
+          {matches.map((m) => {
+            const s = typeSummary[m.id]
+            const flag = s ? (s.active > 0 ? '✓ billets' : s.total > 0 ? '• inactifs' : '— sans billet') : ''
+            const date = new Date(m.kickoffAt).toLocaleDateString('fr-FR', { dateStyle: 'short' })
+            return <option key={m.id} value={m.id}>{(m.isHome ? '🏠 JSO' : '✈ Ext.')} — {m.opponentName || ''} · {date}{flag ? ' · ' + flag : ''}</option>
+          })}
+        </select>
+      </label>
 
-      <div className="mt-5">
-        <div className="overflow-x-auto">
-          {types.length === 0 ? <p className="text-sm text-slate-400">Aucun type de billet pour ce match.</p>
-            : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Type</th><th className="p-2">Prix</th><th className="p-2">Vendus / Capacité</th><th className="p-2">Actif</th><th className="p-2"></th></tr></thead><tbody>{types.map((t) => <tr key={t.id} className="border-b last:border-0"><td className="p-2 font-bold">{t.name}</td><td className="p-2 whitespace-nowrap">{money(t.price, t.currency)}</td><td className="p-2">{t.soldCount} / {t.capacity}</td><td className="p-2">{t.isActive ? 'Oui' : 'Non'}</td><td className="p-2 whitespace-nowrap"><button onClick={() => edit(t)} title="Modifica tipo biglietto" className="mr-2 text-jso-blue"><Save size={15}/></button>{t.isActive ? <button onClick={() => removeType(t.id)} title="Elimina o disattiva tipo biglietto" className="text-red-600"><X size={16}/></button> : <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-500">Archiviato</span>}</td></tr>)}</tbody></table>}
+      {selectedMatch && <>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          {selectedMatch.isHome
+            ? <span className="inline-flex items-center gap-1.5 rounded-full bg-jso-navy px-3 py-1.5 text-xs font-black text-jso-gold"><Home size={13}/> À domicile · Stade Oudhref</span>
+            : <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-200 px-3 py-1.5 text-xs font-black text-slate-700"><Plane size={13}/> À l’extérieur</span>}
+          <span className="text-sm font-bold text-slate-700">{selectedMatch.opponentName || 'Adversaire'}{matchDate ? ` · ${matchDate}` : ''}</span>
+          {selectedSummary && (selectedSummary.active > 0
+            ? <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-black text-emerald-700"><Ticket size={13}/> {selectedSummary.active} billet(s) actif(s)</span>
+            : selectedSummary.total > 0
+              ? <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-black text-amber-700"><Ticket size={13}/> billets inactifs</span>
+              : <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-200 px-3 py-1.5 text-xs font-black text-slate-500"><Ticket size={13}/> aucun billet</span>)}
+          <a href={designerHref} className="ml-auto inline-flex items-center gap-2 rounded-xl bg-jso-gold px-4 py-2.5 text-sm font-black text-jso-navy transition hover:-translate-y-0.5"><Palette size={16}/> Designer le billet</a>
         </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Kpi icon={Ticket} label="Vendus / capacité" value={`${kpis.sold} / ${kpis.capacity}`} tone="blue"/>
+          <Kpi icon={Users} label="Réservations" value={orders.length} tone="slate"/>
+          <Kpi icon={Clock} label="En attente" value={kpis.pending} tone="amber"/>
+          <Kpi icon={Wallet} label="Encaissé" value={money(kpis.revenue, kpis.currency)} tone="emerald"/>
+        </div>
+      </>}
+    </div>
+
+    {/* ——— Types de billets du match ——— */}
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="flex items-center gap-2 text-lg font-black"><Ticket size={18} className="text-jso-blue"/> Types de billets</h3>
+        <button type="button" onClick={startCreate} disabled={!matchId} className="inline-flex items-center gap-2 rounded-xl bg-jso-navy px-4 py-2.5 text-sm font-black text-white disabled:opacity-50"><Plus size={16}/> Nouveau billet</button>
+      </div>
+      <div className="mt-5 overflow-x-auto">
+        {types.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-400">Aucun type de billet pour ce match. Créez-en un ou utilisez « Créer pour les matchs futurs ».</p>
+          : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Type</th><th className="p-2">Prix</th><th className="p-2">Vendus / Capacité</th><th className="p-2">Actif</th><th className="p-2"></th></tr></thead><tbody>{types.map((t) => <tr key={t.id} className="border-b last:border-0"><td className="p-2 font-bold">{t.name}</td><td className="p-2 whitespace-nowrap">{money(t.price, t.currency)}</td><td className="p-2">{t.soldCount} / {t.capacity}</td><td className="p-2">{t.isActive ? 'Oui' : 'Non'}</td><td className="p-2 whitespace-nowrap"><button onClick={() => edit(t)} title="Modifier le type de billet" className="mr-2 text-jso-blue"><Save size={15}/></button>{t.isActive ? <button onClick={() => removeType(t.id)} title="Supprimer ou désactiver le type de billet" className="text-red-600"><X size={16}/></button> : <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-500">Archivé</span>}</td></tr>)}</tbody></table>}
       </div>
     </div>
 
+    {/* ——— Réservations DU MATCH ——— */}
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-black">Codes promo pour tester les billets QR</h2>
-      <p className="mt-1 text-sm text-slate-500">Ces codes accordent un billet gratuit confirmé, sans enregistrer de paiement. Le QR sera créé dans le compte supporter et pourra être vérifié au scanner. Limitez les utilisations pour les essais.</p>
+      <div className="flex items-center justify-between">
+        <h3 className="flex items-center gap-2 text-lg font-black"><Users size={18} className="text-jso-blue"/> Réservations du match</h3>
+        <button onClick={loadOrders} className="rounded-xl border border-slate-200 p-2 text-slate-600" aria-label="Actualiser"><RefreshCw size={16}/></button>
+      </div>
+      <div className="mt-4 overflow-x-auto">
+        {orders.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-400">Aucune réservation pour ce match.</p>
+          : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Date</th><th className="p-2">Billet</th><th className="p-2">Qté</th><th className="p-2">Total</th><th className="p-2">Mode</th><th className="p-2">Statut</th><th className="p-2"></th></tr></thead><tbody>{orders.map((o) => <tr key={o.id} className="border-b last:border-0"><td className="p-2 whitespace-nowrap">{new Date(o.createdAt).toLocaleDateString('fr-FR', { dateStyle: 'short' })}</td><td className="p-2">{o.ticketTypeName}</td><td className="p-2">{o.quantity}</td><td className="p-2 whitespace-nowrap font-bold">{money(o.total, o.currency)}</td><td className="p-2 text-xs">{o.paymentProvider === 'Promo' ? 'Promo · ' + o.promoCode : o.paymentProvider || '—'}</td><td className="p-2"><span className={'rounded-full px-2.5 py-1 text-xs font-extrabold ' + (STATUS_STYLES[o.status] || 'bg-slate-100 text-slate-600')}>{STATUS_LABELS[o.status] || o.status}</span></td><td className="p-2 whitespace-nowrap">{o.status === 'Pending' && <><button onClick={() => setOrderStatus(o.id, 'Confirmed')} className="mr-2 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-bold text-white"><Check size={13}/> Confirmer</button><button onClick={() => setOrderStatus(o.id, 'Cancelled')} className="text-red-600"><X size={16}/></button></>}</td></tr>)}</tbody></table>}
+      </div>
+    </div>
+
+    {/* ——— Codes promo du match ——— */}
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+      <h3 className="flex items-center gap-2 text-lg font-black"><Tag size={18} className="text-jso-blue"/> Codes promo (billets QR de test)</h3>
+      <p className="mt-1 text-sm text-slate-500">Ces codes accordent un billet gratuit confirmé, sans paiement. Le QR est créé dans le compte supporter et vérifiable au scanner. Limitez les utilisations pour les essais.</p>
       <form onSubmit={createPromoCode} className="mt-4 grid gap-3 md:grid-cols-2">
         <label className="text-sm font-bold">Code<input required minLength="3" maxLength="40" pattern="[A-Za-z0-9_-]+" value={promoForm.code} onChange={e => setPromoForm(v => ({ ...v, code: e.target.value.toUpperCase() }))} placeholder="JSOQRTEST" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 uppercase" /></label>
         <label className="text-sm font-bold">Utilisations maximum<input type="number" min="1" value={promoForm.maxUses} onChange={e => setPromoForm(v => ({ ...v, maxUses: e.target.value }))} placeholder="Ex. 5 (conseillé)" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" /></label>
@@ -234,13 +292,6 @@ export default function TicketsModule({ onError }) {
       <div className="mt-5 space-y-2">{promoCodes.length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Aucun code pour ce match.</p> : promoCodes.map(row => <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 p-4"><div><strong>{row.code}</strong><p className="text-xs text-slate-500">Utilisé {row.uses}{row.maxUses ? ' / ' + row.maxUses : ' fois sans limite'}{row.expiresAt ? ' · Expire ' + new Date(row.expiresAt).toLocaleString('fr-FR') : ''}</p><p className="text-xs font-bold">{row.isEnabled ? 'Actif' : 'Désactivé'}</p></div><div className="flex gap-2"><button type="button" onClick={() => togglePromoCode(row)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold">{row.isEnabled ? 'Désactiver' : 'Activer'}</button><button type="button" onClick={() => deletePromoCode(row)} className="rounded-lg border border-red-200 px-3 py-2 text-sm font-bold text-red-700">Supprimer</button></div></div>)}</div>
     </div>
 
-    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-      <div className="flex items-center justify-between"><h2 className="text-xl font-black">Réservations</h2><button onClick={loadOrders} className="rounded-xl border border-slate-200 p-2 text-slate-600" aria-label="Actualiser"><RefreshCw size={16}/></button></div>
-      <div className="mt-4 overflow-x-auto">
-        {orders.length === 0 ? <p className="text-sm text-slate-400">Aucune réservation.</p>
-          : <table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-slate-400"><th className="p-2">Date</th><th className="p-2">Billet</th><th className="p-2">Qté</th><th className="p-2">Total</th><th className="p-2">Mode</th><th className="p-2">Statut</th><th className="p-2"></th></tr></thead><tbody>{orders.map((o) => <tr key={o.id} className="border-b last:border-0"><td className="p-2 whitespace-nowrap">{new Date(o.createdAt).toLocaleDateString('fr-FR', { dateStyle: 'short' })}</td><td className="p-2">{o.ticketTypeName}</td><td className="p-2">{o.quantity}</td><td className="p-2 whitespace-nowrap font-bold">{money(o.total, o.currency)}</td><td className="p-2 text-xs">{o.paymentProvider === 'Promo' ? 'Promo · ' + o.promoCode : o.paymentProvider || '—'}</td><td className="p-2"><span className={'rounded-full px-2.5 py-1 text-xs font-extrabold ' + (STATUS_STYLES[o.status] || 'bg-slate-100 text-slate-600')}>{o.status}</span></td><td className="p-2 whitespace-nowrap">{o.status === 'Pending' && <><button onClick={() => setOrderStatus(o.id, 'Confirmed')} className="mr-2 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-bold text-white"><Check size={13}/> Confirmer</button><button onClick={() => setOrderStatus(o.id, 'Cancelled')} className="text-red-600"><X size={16}/></button></>}</td></tr>)}</tbody></table>}
-      </div>
-    </div>
     {modalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) reset() }}>
       <div role="dialog" aria-modal="true" aria-labelledby="ticket-modal-title" className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
         <div className="mb-5 flex items-start justify-between gap-4"><div><p className="text-xs font-black uppercase tracking-widest text-jso-blue">Billetterie</p><h3 id="ticket-modal-title" className="mt-1 text-xl font-black">{editing ? 'Modifier le billet' : 'Nouveau billet'}</h3></div><button type="button" onClick={reset} aria-label="Fermer" className="rounded-xl p-2 text-slate-500 hover:bg-slate-100"><X size={20}/></button></div>

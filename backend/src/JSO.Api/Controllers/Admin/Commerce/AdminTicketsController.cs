@@ -99,11 +99,14 @@ public sealed class AdminTicketsController(JsoDbContext db, AuditService audit, 
         return NoContent();
     }
 
+    // Ticket orders, optionally scoped to one match and/or one status. The
+    // matchId filter powers the per-match "Réservations" view in the admin.
     [HttpGet("orders")]
-    public async Task<IActionResult> GetOrders([FromQuery] string? status, CancellationToken ct)
+    public async Task<IActionResult> GetOrders([FromQuery] string? status, [FromQuery] Guid? matchId, CancellationToken ct)
     {
         var query = db.TicketOrders.AsNoTracking();
         if (!string.IsNullOrWhiteSpace(status)) query = query.Where(x => x.Status == status);
+        if (matchId is not null) query = query.Where(x => x.MatchId == matchId);
         var orders = await query
             .OrderByDescending(x => x.CreatedAt)
             .Select(x => new { x.Id, x.MatchId, x.TicketTypeId, x.TicketTypeName, x.Quantity, x.Total, x.Currency, x.Status, x.PaymentProvider, x.PromoCode, x.CreatedAt, x.ConfirmedAt })

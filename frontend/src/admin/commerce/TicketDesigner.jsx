@@ -142,7 +142,10 @@ function matchBody(match, fields, overrides) {
 
 export default function TicketDesignerModule({ onError }) {
   const [matches, setMatches] = useState([])
-  const [matchId, setMatchId] = useState('')
+  // Preselect the match passed by the billetterie screen (?match=<id>).
+  const [matchId, setMatchId] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get('match') || '' } catch { return '' }
+  })
   const [templateId, setTemplateId] = useState(TICKET_TEMPLATES[0].id)
   const [backgroundId, setBackgroundId] = useState(TICKET_BACKGROUNDS[0].id)
   const [customBackgroundUrl, setCustomBackgroundUrl] = useState('')
