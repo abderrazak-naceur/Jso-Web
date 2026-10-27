@@ -5,7 +5,7 @@ import { API_BASE_URL } from '../../lib/apiConfig'
 import { CREST_SRC } from '../../features/site/brand'
 import { teamInitials } from '../../features/matches/matchUtils'
 import { slugifyMatchPart } from '../../features/site/publicRoutes'
-import { TICKET_TEMPLATES, TICKET_BACKGROUNDS, backgroundUrl, backgroundFill, TICKET_WIDTH, TICKET_HEIGHT, paintTicket } from './ticketTemplates'
+import { TICKET_TEMPLATES, TICKET_BACKGROUNDS, TICKET_ACCENTS, backgroundUrl, backgroundFill, TICKET_WIDTH, TICKET_HEIGHT, paintTicket } from './ticketTemplates'
 
 // Admin API helper scoped to this module (same shape as the other commerce
 // modules so it keeps working independently of AdminApp internals).
@@ -150,6 +150,21 @@ export default function TicketDesignerModule({ onError }) {
   const [backgroundId, setBackgroundId] = useState(TICKET_BACKGROUNDS[0].id)
   const [customBackgroundUrl, setCustomBackgroundUrl] = useState('')
   const [priceText, setPriceText] = useState('5 DT')
+  // Editable text/customisation. homeTeam/awayTeam are typed by the admin and
+  // pre-filled from the match; the rest tune the look (title, accent, toggles).
+  const [homeTeam, setHomeTeam] = useState('')
+  const [awayTeam, setAwayTeam] = useState('')
+  const [titleText, setTitleText] = useState('Billet de match')
+  const [dateText, setDateText] = useState('')
+  const [venueText, setVenueText] = useState('')
+  const [accent, setAccent] = useState(TICKET_ACCENTS[0].color)
+  const [showQr, setShowQr] = useState(true)
+  const [showLogos, setShowLogos] = useState(true)
+  // Taille du titre et position verticale du bloc texte (texte + logos).
+  const [titleSize, setTitleSize] = useState('normal')
+  const [textPos, setTextPos] = useState('normal')
+  // Lets us pre-fill the text fields from a match once, without clobbering edits.
+  const [prefillFor, setPrefillFor] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [uploadingBg, setUploadingBg] = useState(false)
@@ -178,6 +193,17 @@ export default function TicketDesignerModule({ onError }) {
 
   const match = useMemo(() => matches.find((m) => String(read(m, 'Id', 'id')) === String(matchId)), [matches, matchId])
   const fields = useMemo(() => matchFields(match), [match])
+
+  // Pre-fill the editable text from the selected match (once per match), so the
+  // admin starts from the real names/date/venue and can then correct them.
+  useEffect(() => {
+    if (!fields || prefillFor === fields.id) return
+    setHomeTeam(fields.isHome ? 'JSO Oudhref' : fields.opponentName)
+    setAwayTeam(fields.isHome ? fields.opponentName : 'JSO Oudhref')
+    setDateText(fields.dateText)
+    setVenueText(fields.venue)
+    setPrefillFor(fields.id)
+  }, [fields, prefillFor])
 
   // Public URL encoded in the QR: the exact match page. The path ends with the
   // match UUID so the public app resolves it directly via matchIdFromPath
@@ -235,6 +261,17 @@ export default function TicketDesignerModule({ onError }) {
     const imgs = imagesRef.current
     paintTicket(ctx, templateId, {
       ...fields,
+      // Admin-editable text/customisation overrides the match defaults.
+      homeTeam,
+      awayTeam,
+      title: titleText || 'Billet de match',
+      dateText: dateText || fields.dateText,
+      venue: venueText || fields.venue,
+      accent,
+      showQr,
+      showLogos,
+      titleScale: titleSize === 'small' ? 0.8 : titleSize === 'large' ? 1.25 : 1,
+      textDy: textPos === 'top' ? -80 : textPos === 'bottom' ? 80 : 0,
       priceText: priceText || '5 DT',
       crestImage: imgs.crest,
       opponentImage: imgs.opponent,
@@ -242,7 +279,7 @@ export default function TicketDesignerModule({ onError }) {
       backgroundImage: imgs.background,
       backgroundFill: activeBackgroundFill,
     })
-  }, [fields, templateId, priceText, activeBackgroundFill])
+  }, [fields, templateId, priceText, activeBackgroundFill, homeTeam, awayTeam, titleText, dateText, venueText, accent, showQr, showLogos, titleSize, textPos])
 
   useEffect(() => { repaint() }, [repaint, imagesReady])
 
@@ -338,7 +375,7 @@ export default function TicketDesignerModule({ onError }) {
   return <div className="space-y-6">
     <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
       <div className="flex items-center gap-2"><Ticket className="text-jso-blue" size={20}/><h2 className="text-xl font-black">Designer de billets</h2></div>
-      <p className="mt-1 text-sm text-slate-500">Choisissez un match, un modèle et une photo de fond : le logo de l’adversaire, son nom, la date, le stade, le prix et le QR sont composés automatiquement. Enregistrez le visuel sur le match pour l’utiliser en billetterie.</p>
+      <p className="mt-1 text-sm text-slate-500">Choisissez un match, un modèle et une photo de fond, puis <b>modifiez tous les textes</b> : le nom des deux équipes, le titre, la date, le stade, le prix, la couleur d’accent et l’affichage du QR et des logos. Enregistrez le visuel sur le match pour l’utiliser en billetterie.</p>
     </div>
 
     <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
@@ -391,6 +428,70 @@ export default function TicketDesignerModule({ onError }) {
             </label>
           </div>
           <p className="mt-2 text-xs text-slate-400">Le logo est enregistré sur le match et réutilisé partout (fiche match, billet…). PNG, JPG ou WebP · 10 Mo max.</p>
+        </div>
+
+        {/* Textes modifiables : les 2 équipes, le titre, la date, le stade. */}
+        <div className="rounded-xl border border-slate-200 p-3">
+          <p className="text-sm font-bold">Textes du billet</p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <label className="text-xs font-bold text-slate-600">Équipe 1
+              <input value={homeTeam} onChange={(e) => setHomeTeam(e.target.value)} placeholder="JSO Oudhref" className="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm font-normal outline-none focus:border-jso-blue"/>
+            </label>
+            <label className="text-xs font-bold text-slate-600">Équipe 2
+              <input value={awayTeam} onChange={(e) => setAwayTeam(e.target.value)} placeholder="Adversaire" className="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm font-normal outline-none focus:border-jso-blue"/>
+            </label>
+          </div>
+          <label className="mt-2 block text-xs font-bold text-slate-600">Titre
+            <input value={titleText} onChange={(e) => setTitleText(e.target.value)} placeholder="Billet de match" className="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm font-normal outline-none focus:border-jso-blue"/>
+          </label>
+          <label className="mt-2 block text-xs font-bold text-slate-600">Date (texte)
+            <input value={dateText} onChange={(e) => setDateText(e.target.value)} placeholder="Date du match" className="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm font-normal outline-none focus:border-jso-blue"/>
+          </label>
+          <label className="mt-2 block text-xs font-bold text-slate-600">Stade / lieu
+            <input value={venueText} onChange={(e) => setVenueText(e.target.value)} placeholder="Stade Oudhref" className="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm font-normal outline-none focus:border-jso-blue"/>
+          </label>
+          {fields && <button type="button" onClick={() => setPrefillFor('')} className="mt-2 text-xs font-bold text-jso-blue">Reprendre les infos du match</button>}
+        </div>
+
+        {/* Couleur d’accent + options d’affichage. */}
+        <div className="rounded-xl border border-slate-200 p-3">
+          <p className="text-sm font-bold">Couleur d’accent</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {TICKET_ACCENTS.map((a) => (
+              <button key={a.id} type="button" onClick={() => setAccent(a.color)} aria-label={a.label} title={a.label}
+                className={`h-8 w-8 rounded-full border-2 transition ${accent === a.color ? 'border-jso-navy ring-2 ring-jso-blue/30' : 'border-slate-200'}`}
+                style={{ backgroundColor: a.color }}/>
+            ))}
+            <label className="inline-flex items-center gap-1 text-xs font-bold text-slate-600" title="Couleur personnalisée">
+              <input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} className="h-8 w-8 cursor-pointer rounded border border-slate-200 bg-white p-0.5"/>
+            </label>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={showQr} onChange={(e) => setShowQr(e.target.checked)}/> Afficher le QR</label>
+            <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={showLogos} onChange={(e) => setShowLogos(e.target.checked)}/> Afficher les logos</label>
+          </div>
+        </div>
+
+        {/* Taille du titre et position verticale du bloc texte. */}
+        <div className="rounded-xl border border-slate-200 p-3">
+          <p className="text-sm font-bold">Taille du titre</p>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {[['small', 'Petit'], ['normal', 'Normal'], ['large', 'Grand']].map(([value, label]) => (
+              <button key={value} type="button" onClick={() => setTitleSize(value)}
+                className={`rounded-lg border px-2 py-2 text-xs font-bold transition ${titleSize === value ? 'border-jso-blue bg-jso-blue/10 text-jso-navy' : 'border-slate-200 text-slate-600 hover:border-jso-blue'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-sm font-bold">Position du texte</p>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {[['top', 'Haut'], ['normal', 'Centre'], ['bottom', 'Bas']].map(([value, label]) => (
+              <button key={value} type="button" onClick={() => setTextPos(value)}
+                className={`rounded-lg border px-2 py-2 text-xs font-bold transition ${textPos === value ? 'border-jso-blue bg-jso-blue/10 text-jso-navy' : 'border-slate-200 text-slate-600 hover:border-jso-blue'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <label className="block text-sm font-bold">Prix affiché

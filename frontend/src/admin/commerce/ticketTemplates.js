@@ -17,8 +17,33 @@ export const TICKET_HEIGHT = 480
 
 // Club palette (mirrors the jso-navy / jso-gold Tailwind tokens used site-wide).
 const NAVY = '#0b1730'
-const GOLD = '#f5c518'
+const GOLD_DEFAULT = '#f5c518'
 const WHITE = '#ffffff'
+
+// The accent colour used by every template for highlights (bars, badges,
+// price pill, eyebrow text). It is the club gold by default and is reassigned
+// by paintTicket() to the admin-chosen accent before each render. Canvas
+// painting is synchronous, so a module-scoped value is safe here.
+let GOLD = GOLD_DEFAULT
+// When false, team logo badges are skipped (set per render by paintTicket).
+let SHOW_LOGOS = true
+// Admin's title-size multiplier and vertical offset for the main text block
+// (text + logos move together; the background and the QR stub stay fixed).
+let TITLE_SCALE = 1
+let TEXT_DY = 0
+
+// Headline font scaled by the admin's title-size control.
+function hf(weight, size) {
+  return `${weight} ${Math.round(size * TITLE_SCALE)}px Arial, sans-serif`
+}
+
+export const TICKET_ACCENTS = [
+  { id: 'gold', label: 'Or', color: '#f5c518' },
+  { id: 'white', label: 'Blanc', color: '#ffffff' },
+  { id: 'red', label: 'Rouge', color: '#e23b3b' },
+  { id: 'green', label: 'Vert', color: '#22b07d' },
+  { id: 'sky', label: 'Bleu ciel', color: '#38bdf8' },
+]
 
 // Bundled backgrounds shown in the designer. Photo backgrounds reference a
 // same-origin image in public/; colour backgrounds carry no URL and are painted
@@ -87,7 +112,9 @@ function drawContain(ctx, img, x, y, w, h) {
 }
 
 // Circular logo badge with a white background, falling back to initials.
+// Skipped entirely when the admin turned logos off.
 function drawLogoBadge(ctx, img, initials, cx, cy, radius, ring) {
+  if (!SHOW_LOGOS) return
   ctx.save()
   ctx.beginPath()
   ctx.arc(cx, cy, radius, 0, Math.PI * 2)
@@ -130,20 +157,23 @@ function drawStub(ctx, data, x, w, dark) {
   ctx.fillStyle = fg
   ctx.font = '800 26px Arial, sans-serif'
   ctx.fillText('JSO', x + w / 2, 72)
+  const showQr = data.showQr !== false
   const qrSize = Math.min(w - 56, 196)
   const qrX = x + (w - qrSize) / 2
   const qrY = 96
-  ctx.fillStyle = WHITE
-  ctx.shadowColor = 'rgba(0,0,0,0.3)'
-  ctx.shadowBlur = dark ? 16 : 0
-  roundRect(ctx, qrX - 10, qrY - 10, qrSize + 20, qrSize + 20, 14)
-  ctx.fill()
-  ctx.shadowBlur = 0
-  if (data.qrImage) ctx.drawImage(data.qrImage, qrX, qrY, qrSize, qrSize)
-  // price pill
+  if (showQr) {
+    ctx.fillStyle = WHITE
+    ctx.shadowColor = 'rgba(0,0,0,0.3)'
+    ctx.shadowBlur = dark ? 16 : 0
+    roundRect(ctx, qrX - 10, qrY - 10, qrSize + 20, qrSize + 20, 14)
+    ctx.fill()
+    ctx.shadowBlur = 0
+    if (data.qrImage) ctx.drawImage(data.qrImage, qrX, qrY, qrSize, qrSize)
+  }
+  // price pill (sits under the QR, or centred vertically when the QR is hidden)
   const pillW = w - 64
   const pillX = x + 32
-  const pillY = qrY + qrSize + 24
+  const pillY = showQr ? qrY + qrSize + 24 : TICKET_HEIGHT / 2 - 27
   ctx.fillStyle = GOLD
   roundRect(ctx, pillX, pillY, pillW, 54, 14)
   ctx.fill()
@@ -153,8 +183,20 @@ function drawStub(ctx, data, x, w, dark) {
   ctx.fillText(data.priceText, x + w / 2, pillY + 37)
 }
 
+// The two teams as shown on the ticket. Uses the admin's manual names when
+// provided, otherwise falls back to the match (JSO vs opponent, ordered by
+// home/away). A custom separator keeps "Équipe A · Équipe B" readable.
 function matchHeadline(data) {
+  const home = (data.homeTeam || '').trim()
+  const away = (data.awayTeam || '').trim()
+  if (home || away) return `${home || '—'} · ${away || '—'}`
   return data.isHome ? `JSO · ${data.opponentName}` : `${data.opponentName} · JSO`
+}
+
+// The eyebrow/title line ("BILLET DE MATCH · STADE OUDHREF" by default).
+function titleText(data, withVenue) {
+  const base = (data.title || 'BILLET DE MATCH').toUpperCase()
+  return withVenue ? `${base} · ${(data.venue || 'STADE OUDHREF').toUpperCase()}` : base
 }
 
 // Paint the background photo (cover) with a template-specific dark overlay so
@@ -192,6 +234,8 @@ function paintStadium(ctx, data) {
   ctx.fillStyle = GOLD
   ctx.fillRect(0, 0, TICKET_WIDTH, 8)
 
+  ctx.save()
+  ctx.translate(0, TEXT_DY)
   drawLogoBadge(ctx, data.crestImage, 'JSO', 110, 120, 60, GOLD)
   ctx.fillStyle = WHITE
   ctx.font = '800 26px Arial, sans-serif'
@@ -202,13 +246,14 @@ function paintStadium(ctx, data) {
   ctx.textAlign = 'left'
   ctx.fillStyle = GOLD
   ctx.font = '800 22px Arial, sans-serif'
-  ctx.fillText('BILLET DE MATCH · STADE OUDHREF', 56, 320)
+  ctx.fillText(titleText(data, true), 56, 320)
   ctx.fillStyle = WHITE
-  ctx.font = '900 50px Arial, sans-serif'
+  ctx.font = hf(900, 50)
   ctx.fillText(fitText(ctx, matchHeadline(data), bodyW - 110), 56, 375)
   ctx.fillStyle = 'rgba(255,255,255,0.82)'
   ctx.font = '600 25px Arial, sans-serif'
   ctx.fillText(fitText(ctx, `${data.dateText}  ·  ${data.venue}`, bodyW - 110), 56, 418)
+  ctx.restore()
 
   drawStub(ctx, data, bodyW, stubW, true)
 }
@@ -233,20 +278,23 @@ function paintSpotlight(ctx, data) {
   ctx.fillStyle = GOLD
   ctx.fillRect(0, 0, 10, TICKET_HEIGHT)
 
+  ctx.save()
+  ctx.translate(0, TEXT_DY)
   drawLogoBadge(ctx, data.opponentImage, data.opponentInitials, 130, 150, 72, GOLD)
   ctx.textAlign = 'left'
   ctx.fillStyle = GOLD
   ctx.font = '800 22px Arial, sans-serif'
-  ctx.fillText('BILLET DE MATCH', 230, 110)
+  ctx.fillText(titleText(data, false), 230, 110)
   ctx.fillStyle = WHITE
-  ctx.font = '900 46px Arial, sans-serif'
+  ctx.font = hf(900, 46)
   ctx.fillText('JSO OUDHREF', 230, 160)
-  ctx.font = '900 40px Arial, sans-serif'
+  ctx.font = hf(900, 40)
   ctx.fillText(fitText(ctx, `vs ${data.opponentName}`, bodyW - 260), 230, 215)
   ctx.fillStyle = 'rgba(255,255,255,0.82)'
   ctx.font = '600 25px Arial, sans-serif'
   ctx.fillText(fitText(ctx, data.dateText, bodyW - 90), 56, 400)
   ctx.fillText(fitText(ctx, data.venue, bodyW - 90), 56, 435)
+  ctx.restore()
 
   drawStub(ctx, data, bodyW, stubW, true)
 }
@@ -263,8 +311,9 @@ function paintTifo(ctx, data) {
   })
   const stubW = 300
   const bodyW = TICKET_WIDTH - stubW
-  // gold diagonal ribbon
   ctx.save()
+  ctx.translate(0, TEXT_DY)
+  // gold diagonal ribbon
   ctx.fillStyle = GOLD
   ctx.beginPath()
   ctx.moveTo(0, TICKET_HEIGHT - 150)
@@ -274,19 +323,20 @@ function paintTifo(ctx, data) {
   ctx.closePath()
   ctx.globalAlpha = 0.92
   ctx.fill()
-  ctx.restore()
+  ctx.globalAlpha = 1
 
   drawLogoBadge(ctx, data.opponentImage, data.opponentInitials, bodyW - 120, 120, 64, GOLD)
   ctx.textAlign = 'left'
   ctx.fillStyle = WHITE
   ctx.font = '800 22px Arial, sans-serif'
-  ctx.fillText('BILLET DE MATCH', 56, 90)
-  ctx.font = '900 56px Arial, sans-serif'
+  ctx.fillText(titleText(data, false), 56, 90)
+  ctx.font = hf(900, 56)
   ctx.fillText(fitText(ctx, matchHeadline(data), bodyW - 110), 56, 180)
   // text on the gold ribbon
   ctx.fillStyle = NAVY
   ctx.font = '800 26px Arial, sans-serif'
   ctx.fillText(fitText(ctx, `${data.dateText} · ${data.venue}`, bodyW - 90), 56, TICKET_HEIGHT - 105)
+  ctx.restore()
 
   drawStub(ctx, data, bodyW, stubW, true)
 }
@@ -308,12 +358,14 @@ function paintClassicPhoto(ctx, data) {
   ctx.fillStyle = GOLD
   ctx.fillRect(0, photoH, bodyW, 6)
 
+  ctx.save()
+  ctx.translate(0, TEXT_DY)
   drawLogoBadge(ctx, data.opponentImage, data.opponentInitials, bodyW - 110, 90, 56, GOLD)
   ctx.textAlign = 'left'
   ctx.fillStyle = WHITE
   ctx.font = '800 22px Arial, sans-serif'
-  ctx.fillText('BILLET DE MATCH · STADE OUDHREF', 56, 60)
-  ctx.font = '900 44px Arial, sans-serif'
+  ctx.fillText(titleText(data, true), 56, 60)
+  ctx.font = hf(900, 44)
   ctx.fillText(fitText(ctx, matchHeadline(data), bodyW - 200), 56, 210)
 
   ctx.fillStyle = GOLD
@@ -324,6 +376,7 @@ function paintClassicPhoto(ctx, data) {
   ctx.font = '700 26px Arial, sans-serif'
   ctx.fillText(fitText(ctx, data.dateText, bodyW - 110), 56, photoH + 105)
   ctx.fillText(fitText(ctx, data.venue, bodyW - 110), 56, photoH + 175)
+  ctx.restore()
 
   drawStub(ctx, data, bodyW, stubW, true)
 }
@@ -336,6 +389,8 @@ function paintBanner(ctx, data) {
   })
   const stubW = 300
   const bodyW = TICKET_WIDTH - stubW
+  ctx.save()
+  ctx.translate(0, TEXT_DY)
   // bottom navy band
   ctx.fillStyle = 'rgba(7,14,32,0.86)'
   ctx.fillRect(0, TICKET_HEIGHT - 150, bodyW, 150)
@@ -347,12 +402,13 @@ function paintBanner(ctx, data) {
   ctx.textAlign = 'left'
   ctx.fillStyle = WHITE
   ctx.font = '800 20px Arial, sans-serif'
-  ctx.fillText('BILLET DE MATCH', 56, TICKET_HEIGHT - 100)
-  ctx.font = '900 40px Arial, sans-serif'
+  ctx.fillText(titleText(data, false), 56, TICKET_HEIGHT - 100)
+  ctx.font = hf(900, 40)
   ctx.fillText(fitText(ctx, matchHeadline(data), bodyW - 110), 56, TICKET_HEIGHT - 55)
   ctx.fillStyle = 'rgba(255,255,255,0.8)'
   ctx.font = '600 22px Arial, sans-serif'
   ctx.fillText(fitText(ctx, `${data.dateText} · ${data.venue}`, bodyW - 110), 56, TICKET_HEIGHT - 24)
+  ctx.restore()
 
   drawStub(ctx, data, bodyW, stubW, true)
 }
@@ -365,21 +421,24 @@ function paintMinimal(ctx, data) {
   })
   const stubW = 300
   const bodyW = TICKET_WIDTH - stubW
+  ctx.save()
+  ctx.translate(0, TEXT_DY)
   ctx.textAlign = 'center'
   ctx.fillStyle = GOLD
   ctx.font = '800 22px Arial, sans-serif'
-  ctx.fillText('BILLET DE MATCH · STADE OUDHREF', bodyW / 2, 70)
+  ctx.fillText(titleText(data, true), bodyW / 2, 70)
 
   drawLogoBadge(ctx, data.crestImage, 'JSO', bodyW / 2 - 170, 190, 66, GOLD)
   drawLogoBadge(ctx, data.opponentImage, data.opponentInitials, bodyW / 2 + 170, 190, 66, GOLD)
   ctx.fillStyle = WHITE
   ctx.font = '900 54px Arial, sans-serif'
   ctx.fillText('VS', bodyW / 2, 208)
-  ctx.font = '900 34px Arial, sans-serif'
+  ctx.font = hf(900, 34)
   ctx.fillText(fitText(ctx, matchHeadline(data), bodyW - 120), bodyW / 2, 330)
   ctx.fillStyle = 'rgba(255,255,255,0.8)'
   ctx.font = '600 24px Arial, sans-serif'
   ctx.fillText(fitText(ctx, `${data.dateText} · ${data.venue}`, bodyW - 120), bodyW / 2, 375)
+  ctx.restore()
 
   drawStub(ctx, data, bodyW, stubW, true)
 }
@@ -402,16 +461,19 @@ function paintGold(ctx, data) {
   ctx.fillStyle = NAVY
   ctx.fillRect(0, 0, bodyW, 8)
 
+  ctx.save()
+  ctx.translate(0, TEXT_DY)
   drawLogoBadge(ctx, data.opponentImage, data.opponentInitials, bodyW - 120, 130, 68, NAVY)
   ctx.textAlign = 'left'
   ctx.fillStyle = NAVY
   ctx.font = '800 24px Arial, sans-serif'
-  ctx.fillText('BILLET DE MATCH', 56, 120)
-  ctx.font = '900 52px Arial, sans-serif'
+  ctx.fillText(titleText(data, false), 56, 120)
+  ctx.font = hf(900, 52)
   ctx.fillText(fitText(ctx, matchHeadline(data), bodyW - 110), 56, 200)
   ctx.font = '700 25px Arial, sans-serif'
   ctx.fillText(fitText(ctx, data.dateText, bodyW - 110), 56, 300)
   ctx.fillText(fitText(ctx, data.venue, bodyW - 110), 56, 338)
+  ctx.restore()
 
   // navy stub for contrast
   ctx.fillStyle = NAVY
@@ -435,8 +497,20 @@ export function getTemplate(id) {
 
 // Paint a template onto a canvas context. `data` carries both the match text
 // fields and any preloaded images (crestImage, opponentImage, qrImage,
-// backgroundImage). Missing images degrade gracefully.
+// backgroundImage), plus the admin's customisation (accent, title, homeTeam,
+// awayTeam, showQr, showLogos). Missing images degrade gracefully.
 export function paintTicket(ctx, templateId, data) {
+  // Resolve the per-render accent colour and logo visibility (module-scoped so
+  // the templates and shared helpers pick them up without threading params).
+  GOLD = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(data.accent || '')) ? data.accent : GOLD_DEFAULT
+  SHOW_LOGOS = data.showLogos !== false
+  TITLE_SCALE = Number(data.titleScale) > 0 ? Number(data.titleScale) : 1
+  TEXT_DY = Number(data.textDy) || 0
   ctx.clearRect(0, 0, TICKET_WIDTH, TICKET_HEIGHT)
   getTemplate(templateId).paint(ctx, data)
+  // Reset so a later render with no accent falls back to the club gold.
+  GOLD = GOLD_DEFAULT
+  SHOW_LOGOS = true
+  TITLE_SCALE = 1
+  TEXT_DY = 0
 }
