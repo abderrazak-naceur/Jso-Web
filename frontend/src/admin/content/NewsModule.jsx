@@ -4,6 +4,7 @@ import Field from '../components/Field'
 import { adminApi } from '../api'
 import { emptyNews } from '../constants'
 import { adminEditIdFromPath, adminEditUrl, navigateAdminEdit } from '../adminRoutes'
+import { articleShareUrl } from '../../features/news/articleUrl'
 import { sharePreviewUrl } from '../../lib/sharePreviewUrl'
 import { getAssetUrl } from '../../lib/apiConfig'
 
@@ -60,9 +61,16 @@ export default function NewsModule({ onError }) {
   async function publish(id){try{await adminApi('/admin/news/'+id+'/publish',{method:'POST'});await load()}catch(e){onError(e.message)}}
   async function unpublish(id){try{await adminApi('/admin/news/'+id+'/unpublish',{method:'POST'});await load()}catch(e){onError(e.message)}}
   async function remove(id){if(!confirm('Supprimer cet article ?'))return;try{await adminApi('/admin/news/'+id,{method:'DELETE'});if(editing===id)reset();await load()}catch(e){onError(e.message)}}
-  function publicUrl(slug){return sharePreviewUrl('article',slug)}
+  // Public, readable article URL (the SPA opens the article at this path). This
+  // is the link we COPY: it always resolves, unlike the /api/share Open-Graph
+  // endpoint which 404s for drafts and is not a frontend route.
+  function publicUrl(slug){return articleShareUrl(slug)}
+  // For Facebook sharing we use the /api/share endpoint instead: it serves the
+  // Open-Graph tags (title, description, cover image) that Facebook's crawler
+  // reads for a rich preview, then redirects a human to /actualites/{slug}.
+  function facebookShareUrl(slug){return sharePreviewUrl('article',slug)}
   async function copyLink(n){try{await navigator.clipboard.writeText(publicUrl(n.slug));setCopiedId(n.id);setTimeout(()=>setCopiedId(null),2000)}catch{onError('Impossible de copier le lien.')}}
-  function shareFacebook(n){window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(publicUrl(n.slug)),'_blank','noopener,noreferrer')}
+  function shareFacebook(n){window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(facebookShareUrl(n.slug)),'_blank','noopener,noreferrer')}
   async function publishToFacebook(n){setFbBusyId(n.id);setNotice('');try{const res=await adminApi('/admin/social/facebook/publish',{method:'POST',body:JSON.stringify({articleId:n.id})});setNotice(res?.message||'Publié sur Facebook.')}catch(e){onError(e.message+' — utilisez « Partager » pour publier manuellement.');shareFacebook(n)}finally{setFbBusyId(null)}}
   useEffect(() => { if (!modalOpen) return; const closeOnEscape = event => { if (event.key === 'Escape') { if(mediaOpen)setMediaOpen(false);else reset() } }; window.addEventListener('keydown', closeOnEscape); return () => window.removeEventListener('keydown', closeOnEscape) }, [modalOpen,mediaOpen])
   function openMedia(mode){setMediaMode(mode);setSelectedMedia([]);setMediaQuery('');setUploadFile(null);setUploadTitle('');setAddUploadToMedia(false);setMediaOpen(true);loadMedia()}

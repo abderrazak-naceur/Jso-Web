@@ -14,4 +14,13 @@
 /partenaires    /partenaires/index.html   200
 /infos    /infos/index.html   200
 /billetterie    /billetterie/index.html   200
+
+# Nested deep-links opened by the SPA (article slug, match, product, event).
+# Explicit rules keep routing deterministic across static hosts so a shared
+# link like /actualites/mon-article resolves instead of 404ing.
+/actualites/*    /actualites/index.html   200
+/matchs/*    /matchs/index.html   200
+/boutique/*    /boutique/index.html   200
+/agenda/*    /agenda/index.html   200
+
 /*    /index.html   200
