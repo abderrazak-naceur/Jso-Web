@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowLeft, CheckCircle2, ChevronDown, Eye, ExternalLink, Flag, Plus, RefreshCw, Save, X } from 'lucide-react'
 import { adminApi } from '../api'
 import { adminEditIdFromPath, navigateAdminEdit } from '../adminRoutes'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { useDialog } from '../../features/site/useDialog'
 import FundraisingProjectView from '../../features/donations/fundraising/FundraisingProjectView.jsx'
 import { FUNDRAISING_TEMPLATES, fundraisingDate, fundraisingMoney } from '../../features/donations/fundraising/fundraisingTemplates.js'
@@ -72,6 +73,7 @@ function PreviewDialog({ project, onClose }) {
 }
 
 export default function FundraisingProjects({ onError = noop }) {
+  const confirm = useConfirm()
   const { language, setLanguage, languages } = useI18n()
   const date = value => fundraisingDate(value, language)
   const money = value => fundraisingMoney(value, language)
@@ -261,7 +263,8 @@ export default function FundraisingProjects({ onError = noop }) {
   }
 
   async function confirmCash(commitment, installment) {
-    if (installment.paymentProvider !== 'Cash' || installment.paymentStatus !== 'Pending' || confirmingId || !window.confirm(`Avez-vous réellement reçu ${money(installment.amount)} de ${commitment.displayName} pour le mois ${installment.installmentNumber} ? Cette confirmation comptabilisera la somme encaissée.`)) return
+    if (installment.paymentProvider !== 'Cash' || installment.paymentStatus !== 'Pending' || confirmingId) return
+    if (!await confirm({ title: 'Confirmer la réception ?', message: `Avez-vous réellement reçu ${money(installment.amount)} de ${commitment.displayName} pour le mois ${installment.installmentNumber} ? Cette confirmation comptabilisera la somme encaissée.`, confirmLabel: 'Confirmer la réception' })) return
     setConfirmingId(installment.id)
     try {
       await adminApi(`/admin/donations/${installment.id}/confirm-cash`, { method: 'POST' })

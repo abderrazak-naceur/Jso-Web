@@ -1,27 +1,7 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
 import { QrCode, RefreshCw, Link2, Copy, BarChart3 } from 'lucide-react'
 import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 // Build the public, printable activation URL from a slug. API_BASE_URL may be
 // relative ('/api'), so resolve it against the current origin to obtain the
@@ -52,7 +32,7 @@ export default function SponsorQrModule({ onError }) {
   async function loadSponsors() {
     setLoading(true)
     try {
-      setSponsors(await api('/admin/sponsors'))
+      setSponsors(await adminApi('/admin/sponsors'))
       onError('')
     } catch (err) { onError(err.message) }
     finally { setLoading(false) }
@@ -62,7 +42,7 @@ export default function SponsorQrModule({ onError }) {
   async function generate(sponsor) {
     setBusyId(sponsor.id)
     try {
-      const res = await api('/admin/sponsors/' + sponsor.id + '/activation-slug', { method: 'POST' })
+      const res = await adminApi('/admin/sponsors/' + sponsor.id + '/activation-slug', { method: 'POST' })
       setSponsors(list => (list || []).map(s => s.id === sponsor.id ? { ...s, activationSlug: res.activationSlug } : s))
       if (selected?.id === sponsor.id) setSelected(s => ({ ...s, activationSlug: res.activationSlug }))
       onError('')
@@ -75,7 +55,7 @@ export default function SponsorQrModule({ onError }) {
     setReport(null)
     setReportLoading(true)
     try {
-      setReport(await api('/admin/sponsors/' + sponsor.id + '/activations'))
+      setReport(await adminApi('/admin/sponsors/' + sponsor.id + '/activations'))
       onError('')
     } catch (err) { onError(err.message) }
     finally { setReportLoading(false) }

@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Search, Users, UserRound, ShieldCheck, RefreshCw, Star, ShieldBan, Pencil, UserCog } from 'lucide-react'
 import { adminApi } from '../api'
 import { API_BASE_URL } from '../../lib/apiConfig'
 
 const dateLabel = (value) => value ? new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 export default function FanAccounts() {
+  const confirm = useConfirm()
   const [accounts, setAccounts] = useState([])
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('all')
@@ -33,7 +35,7 @@ export default function FanAccounts() {
 
   async function updateStatus(account) {
     const nextActive = !account.isActive
-    const confirmed = window.confirm(nextActive
+    const confirmed = await confirm(nextActive
       ? 'Réactiver ce compte supporter ?'
       : 'Bloquer ce compte ? Le supporter ne pourra plus utiliser son compte, même avec une session déjà ouverte.')
     if (!confirmed) return

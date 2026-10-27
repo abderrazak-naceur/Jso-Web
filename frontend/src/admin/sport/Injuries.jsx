@@ -1,27 +1,7 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Plus, Pencil, Save, X, HeartPulse } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const emptyInjury = { type: '', startDate: '', expectedReturn: '', status: 'Active', notes: '' }
 const STATUSES = ['Active', 'Recovering', 'Fit']
@@ -38,6 +18,7 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR') : '—'
 // category, so this section is admin-only (MatchManager / ClubAdmin) and never
 // exposed publicly. Notes stay optional to keep data minimised.
 export default function InjuriesModule({ onError }) {
+  const confirm = useConfirm()
   const [teams, setTeams] = useState([])
   const [teamId, setTeamId] = useState('')
   const [players, setPlayers] = useState([])
@@ -48,17 +29,17 @@ export default function InjuriesModule({ onError }) {
   const [editing, setEditing] = useState(null)
 
   async function loadTeams() {
-    try { const data = await api('/admin/teams'); setTeams(data); if (!teamId && data[0]) selectTeam(data[0].id); onError('') }
+    try { const data = await adminApi('/admin/teams'); setTeams(data); if (!teamId && data[0]) selectTeam(data[0].id); onError('') }
     catch (err) { onError(err.message) }
   }
   async function selectTeam(id) {
     setTeamId(id); setPlayerId(''); setInjuries([]); reset()
-    try { setPlayers(await api('/admin/teams/' + id + '/players')); onError('') }
+    try { setPlayers(await adminApi('/admin/teams/' + id + '/players')); onError('') }
     catch (err) { onError(err.message) }
   }
   async function selectPlayer(id) {
     setPlayerId(id); reset(); setLoading(true)
-    try { setInjuries(await api('/admin/players/' + id + '/injuries')); onError('') }
+    try { setInjuries(await adminApi('/admin/players/' + id + '/injuries')); onError('') }
     catch (err) { onError(err.message) }
     finally { setLoading(false) }
   }
@@ -87,16 +68,16 @@ export default function InjuriesModule({ onError }) {
         status: form.status,
         notes: form.notes.trim() || null,
       }
-      if (editing) await api('/admin/players/' + playerId + '/injuries/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/players/' + playerId + '/injuries', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/players/' + playerId + '/injuries/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/players/' + playerId + '/injuries', { method: 'POST', body: JSON.stringify(body) })
       reset()
       await selectPlayer(playerId)
     } catch (err) { onError(err.message) }
   }
 
   async function remove(id) {
-    if (!confirm('Supprimer cet enregistrement de blessure ?')) return
-    try { await api('/admin/players/' + playerId + '/injuries/' + id, { method: 'DELETE' }); if (editing === id) reset(); await selectPlayer(playerId) }
+    if (!await confirm('Supprimer cet enregistrement de blessure ?')) return
+    try { await adminApi('/admin/players/' + playerId + '/injuries/' + id, { method: 'DELETE' }); if (editing === id) reset(); await selectPlayer(playerId) }
     catch (err) { onError(err.message) }
   }
 

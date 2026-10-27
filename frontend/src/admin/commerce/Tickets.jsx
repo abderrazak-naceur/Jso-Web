@@ -1,29 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import { adminApi } from '../api'
 import { Save, X, Plus, Check, RefreshCw, Home, Plane, Ticket, Palette, Users, Wallet, Clock, Tag } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { const payload = await response.json(); message = payload.message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  if (response.status === 200 && options.method === 'DELETE') {
-    try { return await response.json() } catch { return null }
-  }
-  return response.json()
-}
+import { useToast } from '../components/ui/Toast'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 
 const emptyType = { name: 'Entrée générale — Stade Oudhref', price: '5', currency: 'TND', capacity: 100, isActive: true }
 const STATUS_STYLES = {
@@ -50,6 +29,8 @@ function Kpi({ icon: Icon, label, value, tone = 'slate' }) {
 }
 
 export default function TicketsModule({ onError }) {
+  const toast = useToast()
+  const confirm = useConfirm()
   const [matches, setMatches] = useState([])
   const [matchId, setMatchId] = useState('')
   const [types, setTypes] = useState([])
@@ -64,7 +45,7 @@ export default function TicketsModule({ onError }) {
 
   async function loadMatches() {
     try {
-      const m = await api('/admin/matches')
+      const m = await adminApi('/admin/matches')
       const sorted = (Array.isArray(m) ? m : []).slice().sort((a, b) => {
         const ta = a.kickoffAt ? new Date(a.kickoffAt).getTime() : Infinity
         const tb = b.kickoffAt ? new Date(b.kickoffAt).getTime() : Infinity
@@ -88,7 +69,7 @@ export default function TicketsModule({ onError }) {
   async function loadTypes() {
     if (!matchId) return
     try {
-      const rows = await api('/admin/tickets/types?matchId=' + matchId)
+      const rows = await adminApi('/admin/tickets/types?matchId=' + matchId)
       setTypes(rows)
       const list = Array.isArray(rows) ? rows : []
       setTypeSummary((current) => ({ ...current, [matchId]: { total: list.length, active: list.filter((t) => t.isActive).length } }))
@@ -99,12 +80,12 @@ export default function TicketsModule({ onError }) {
   // Réservations are now scoped to the selected match.
   async function loadOrders() {
     if (!matchId) { setOrders([]); return }
-    try { setOrders(await api('/admin/tickets/orders?matchId=' + encodeURIComponent(matchId))) }
+    try { setOrders(await adminApi('/admin/tickets/orders?matchId=' + encodeURIComponent(matchId))) }
     catch (e) { onError(e.message) }
   }
   async function loadPromoCodes() {
     if (!matchId) { setPromoCodes([]); return }
-    try { setPromoCodes(await api('/admin/tickets/promo-codes?matchId=' + encodeURIComponent(matchId))) }
+    try { setPromoCodes(await adminApi('/admin/tickets/promo-codes?matchId=' + encodeURIComponent(matchId))) }
     catch (e) { onError(e.message) }
   }
   useEffect(() => { loadTypes() }, [matchId])
@@ -114,7 +95,7 @@ export default function TicketsModule({ onError }) {
   async function createPromoCode(event) {
     event.preventDefault()
     try {
-      await api('/admin/tickets/promo-codes', { method: 'POST', body: JSON.stringify({
+      await adminApi('/admin/tickets/promo-codes', { method: 'POST', body: JSON.stringify({
         matchId, code: promoForm.code.trim().toUpperCase(), expiresAt: promoForm.expiresAt ? new Date(promoForm.expiresAt).toISOString() : null,
         maxUses: promoForm.maxUses ? Number(promoForm.maxUses) : null, isEnabled: promoForm.isEnabled,
       }) })
@@ -122,12 +103,12 @@ export default function TicketsModule({ onError }) {
     } catch (e) { onError(e.message) }
   }
   async function togglePromoCode(row) {
-    try { await api('/admin/tickets/promo-codes/' + row.id, { method: 'PUT', body: JSON.stringify({ expiresAt: row.expiresAt, maxUses: row.maxUses, isEnabled: !row.isEnabled }) }); await loadPromoCodes() }
+    try { await adminApi('/admin/tickets/promo-codes/' + row.id, { method: 'PUT', body: JSON.stringify({ expiresAt: row.expiresAt, maxUses: row.maxUses, isEnabled: !row.isEnabled }) }); await loadPromoCodes() }
     catch (e) { onError(e.message) }
   }
   async function deletePromoCode(row) {
-    if (!confirm('Supprimer le code promo ' + row.code + ' ?')) return
-    try { await api('/admin/tickets/promo-codes/' + row.id, { method: 'DELETE' }); await loadPromoCodes() }
+    if (!await confirm({ title: 'Supprimer le code promo ?', message: `Le code ${row.code} sera supprimé définitivement.`, confirmLabel: 'Supprimer', danger: true })) return
+    try { await adminApi('/admin/tickets/promo-codes/' + row.id, { method: 'DELETE' }); await loadPromoCodes(); toast.success('Code promo supprimé.') }
     catch (e) { onError(e.message) }
   }
 
@@ -139,9 +120,10 @@ export default function TicketsModule({ onError }) {
     e.preventDefault()
     try {
       const body = { matchId, name: form.name.trim(), price: Number(form.price) || 0, currency: (form.currency || 'TND').trim().toUpperCase(), capacity: Number(form.capacity) || 1, isActive: form.isActive }
-      if (editing) await api('/admin/tickets/types/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/tickets/types', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/tickets/types/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/tickets/types', { method: 'POST', body: JSON.stringify(body) })
       reset(); await loadTypes()
+      toast.success(editing ? 'Billet mis à jour.' : 'Billet créé.')
     } catch (e) { onError(e.message) }
   }
   async function removeType(id) {
@@ -150,41 +132,50 @@ export default function TicketsModule({ onError }) {
     const hasOrders = Number(ticket.soldCount || 0) > 0 || orders.some((order) =>
       String(order.ticketTypeId || '').toLowerCase() === String(id).toLowerCase()
     )
-    const prompt = hasOrders
-      ? 'Ce type de billet est lié à des réservations. L’historique sera conservé et le billet sera désactivé pour empêcher de nouveaux achats. Continuer ?'
-      : 'Supprimer définitivement ce type de billet ?'
-    if (!confirm(prompt)) return
+    if (!await confirm({
+      title: hasOrders ? 'Désactiver ce billet ?' : 'Supprimer ce billet ?',
+      message: hasOrders
+        ? 'Ce type de billet est lié à des réservations. L’historique sera conservé et le billet sera désactivé pour empêcher de nouveaux achats.'
+        : 'Ce type de billet sera supprimé définitivement.',
+      confirmLabel: hasOrders ? 'Désactiver' : 'Supprimer',
+      danger: true,
+    })) return
     try {
-      const result = await api('/admin/tickets/types/' + id, { method: 'DELETE' })
+      const result = await adminApi('/admin/tickets/types/' + id, { method: 'DELETE' })
       await loadTypes()
-      if (result?.deactivated) onError('Billet désactivé : les réservations existantes sont conservées.')
-      else onError('')
+      if (result?.deactivated) toast.info('Billet désactivé : les réservations existantes sont conservées.')
+      else toast.success('Type de billet supprimé.')
+      onError('')
     } catch (e) { onError(e.message) }
   }
 
   async function createTicketsForUpcomingMatches() {
     const upcoming = matches.filter((match) => match.kickoffAt && new Date(match.kickoffAt) >= new Date())
-    if (!upcoming.length) { onError('Aucune partie future avec une date valide. Ajoutez d’abord les parties dans le calendrier.'); return }
-    if (!confirm('Créer un billet « Entrée générale — Stade Oudhref » à 5 DT pour chacune des ' + upcoming.length + ' parties futures ? Les billets déjà présents ne seront pas dupliqués.')) return
+    if (!upcoming.length) { toast.error('Aucune partie future avec une date valide. Ajoutez d’abord les parties dans le calendrier.'); return }
+    if (!await confirm({
+      title: 'Créer les billets des matchs futurs ?',
+      message: `Un billet « Entrée générale — Stade Oudhref » à 5 DT sera créé pour chacune des ${upcoming.length} parties futures. Les billets déjà présents ne seront pas dupliqués.`,
+      confirmLabel: 'Créer',
+    })) return
     setBulkCreating(true)
     let created = 0
     let skipped = 0
     try {
       for (const match of upcoming) {
-        const existing = await api('/admin/tickets/types?matchId=' + encodeURIComponent(match.id))
+        const existing = await adminApi('/admin/tickets/types?matchId=' + encodeURIComponent(match.id))
         if (existing.some((ticket) => (ticket.name || '').trim().toLocaleLowerCase() === 'entrée générale — stade oudhref')) { skipped++; continue }
-        await api('/admin/tickets/types', { method: 'POST', body: JSON.stringify({ matchId: match.id, name: 'Entrée générale — Stade Oudhref', price: 5, currency: 'TND', capacity: 100, isActive: true }) })
+        await adminApi('/admin/tickets/types', { method: 'POST', body: JSON.stringify({ matchId: match.id, name: 'Entrée générale — Stade Oudhref', price: 5, currency: 'TND', capacity: 100, isActive: true }) })
         created++
       }
       onError('')
-      alert('Terminé : ' + created + ' billet(s) créé(s), ' + skipped + ' déjà existant(s) ignoré(s). Prix : 5 DT.')
+      toast.success(`Terminé : ${created} billet(s) créé(s), ${skipped} déjà existant(s) ignoré(s). Prix : 5 DT.`)
       await loadMatches(); await loadTypes()
     } catch (e) { onError('Création partielle des billets : ' + e.message + ' Rechargez la page pour vérifier les parties déjà traitées.') }
     finally { setBulkCreating(false) }
   }
 
   async function setOrderStatus(id, status) {
-    try { await api('/admin/tickets/orders/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status }) }); await loadOrders(); await loadTypes() }
+    try { await adminApi('/admin/tickets/orders/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status }) }); await loadOrders(); await loadTypes() }
     catch (e) { onError(e.message) }
   }
 

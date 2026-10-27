@@ -1,27 +1,7 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Plus, Pencil, Save, X, CalendarRange, Wrench } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const emptyFacility = { name: '', type: '', isActive: true }
 const emptyBooking = { startsAt: '', endsAt: '', purpose: '' }
@@ -44,6 +24,7 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR') : '—'
 // personal data. Overlapping bookings are rejected server-side (HTTP 409), so the
 // list here can never contain conflicts; the error surfaces in the form banner.
 export default function FacilitiesModule({ onError }) {
+  const confirm = useConfirm()
   const [facilities, setFacilities] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState('')
@@ -64,7 +45,7 @@ export default function FacilitiesModule({ onError }) {
 
   async function loadFacilities() {
     setLoading(true)
-    try { setFacilities(await api('/admin/facilities')); onError('') }
+    try { setFacilities(await adminApi('/admin/facilities')); onError('') }
     catch (err) { onError(err.message) }
     finally { setLoading(false) }
   }
@@ -72,13 +53,13 @@ export default function FacilitiesModule({ onError }) {
 
   async function loadBookings(id) {
     setBookingsLoading(true)
-    try { setBookings(await api('/admin/facilities/' + id + '/bookings')); onError('') }
+    try { setBookings(await adminApi('/admin/facilities/' + id + '/bookings')); onError('') }
     catch (err) { onError(err.message) }
     finally { setBookingsLoading(false) }
   }
   async function loadLogs(id) {
     setLogsLoading(true)
-    try { setLogs(await api('/admin/facilities/' + id + '/maintenance')); onError('') }
+    try { setLogs(await adminApi('/admin/facilities/' + id + '/maintenance')); onError('') }
     catch (err) { onError(err.message) }
     finally { setLogsLoading(false) }
   }
@@ -97,16 +78,16 @@ export default function FacilitiesModule({ onError }) {
     e.preventDefault()
     try {
       const body = { name: facForm.name.trim(), type: facForm.type.trim() || null, isActive: facForm.isActive }
-      if (editingFac) await api('/admin/facilities/' + editingFac, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/facilities', { method: 'POST', body: JSON.stringify(body) })
+      if (editingFac) await adminApi('/admin/facilities/' + editingFac, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/facilities', { method: 'POST', body: JSON.stringify(body) })
       resetFacility()
       await loadFacilities()
     } catch (err) { onError(err.message) }
   }
   async function removeFacility(id) {
-    if (!confirm('Supprimer cette installation ? Les réservations et l’historique de maintenance associés seront aussi supprimés.')) return
+    if (!await confirm('Supprimer cette installation ? Les réservations et l’historique de maintenance associés seront aussi supprimés.')) return
     try {
-      await api('/admin/facilities/' + id, { method: 'DELETE' })
+      await adminApi('/admin/facilities/' + id, { method: 'DELETE' })
       if (selectedId === id) selectFacility('')
       if (editingFac === id) resetFacility()
       await loadFacilities()
@@ -132,15 +113,15 @@ export default function FacilitiesModule({ onError }) {
         endsAt: new Date(bookingForm.endsAt).toISOString(),
         purpose: bookingForm.purpose.trim(),
       }
-      if (editingBooking) await api('/admin/facilities/' + selectedId + '/bookings/' + editingBooking, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/facilities/' + selectedId + '/bookings', { method: 'POST', body: JSON.stringify(body) })
+      if (editingBooking) await adminApi('/admin/facilities/' + selectedId + '/bookings/' + editingBooking, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/facilities/' + selectedId + '/bookings', { method: 'POST', body: JSON.stringify(body) })
       resetBooking()
       await loadBookings(selectedId)
     } catch (err) { setBookingError(err.message) }
   }
   async function removeBooking(id) {
-    if (!confirm('Supprimer cette réservation ?')) return
-    try { await api('/admin/facilities/' + selectedId + '/bookings/' + id, { method: 'DELETE' }); if (editingBooking === id) resetBooking(); await loadBookings(selectedId) }
+    if (!await confirm('Supprimer cette réservation ?')) return
+    try { await adminApi('/admin/facilities/' + selectedId + '/bookings/' + id, { method: 'DELETE' }); if (editingBooking === id) resetBooking(); await loadBookings(selectedId) }
     catch (err) { onError(err.message) }
   }
 
@@ -152,15 +133,15 @@ export default function FacilitiesModule({ onError }) {
     if (!selectedId) return
     try {
       const body = { date: logForm.date, type: logForm.type.trim(), notes: logForm.notes.trim() || null }
-      if (editingLog) await api('/admin/facilities/' + selectedId + '/maintenance/' + editingLog, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/facilities/' + selectedId + '/maintenance', { method: 'POST', body: JSON.stringify(body) })
+      if (editingLog) await adminApi('/admin/facilities/' + selectedId + '/maintenance/' + editingLog, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/facilities/' + selectedId + '/maintenance', { method: 'POST', body: JSON.stringify(body) })
       resetLog()
       await loadLogs(selectedId)
     } catch (err) { onError(err.message) }
   }
   async function removeLog(id) {
-    if (!confirm('Supprimer cet enregistrement de maintenance ?')) return
-    try { await api('/admin/facilities/' + selectedId + '/maintenance/' + id, { method: 'DELETE' }); if (editingLog === id) resetLog(); await loadLogs(selectedId) }
+    if (!await confirm('Supprimer cet enregistrement de maintenance ?')) return
+    try { await adminApi('/admin/facilities/' + selectedId + '/maintenance/' + id, { method: 'DELETE' }); if (editingLog === id) resetLog(); await loadLogs(selectedId) }
     catch (err) { onError(err.message) }
   }
 

@@ -1,27 +1,8 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Save, X, Plus, RefreshCw, ImagePlus } from 'lucide-react'
 import MembershipCardArtwork from './MembershipCardArtwork'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const emptyPlan = { name: '', description: '', price: '', currency: 'TND', durationDays: 365, isActive: true, displayOrder: 0 }
 const STATUS_STYLES = {
@@ -35,6 +16,7 @@ const STATUS_STYLES = {
 // read-only oversight of subscriptions. No card data is handled here: a
 // membership becomes Active only via the verified payment webhook.
 export default function MembershipsModule({ onError }) {
+  const confirm = useConfirm()
   const [plans, setPlans] = useState([])
   const [memberships, setMemberships] = useState([])
   const [form, setForm] = useState(emptyPlan)
@@ -45,12 +27,12 @@ export default function MembershipsModule({ onError }) {
 
   async function loadPlans() {
     setLoading(true)
-    try { setPlans(await api('/admin/membership-plans')); onError('') }
+    try { setPlans(await adminApi('/admin/membership-plans')); onError('') }
     catch (e) { onError(e.message) }
     finally { setLoading(false) }
   }
   async function loadMemberships() {
-    try { setMemberships(await api('/admin/memberships')) }
+    try { setMemberships(await adminApi('/admin/memberships')) }
     catch (e) { onError(e.message) }
   }
   useEffect(() => { loadPlans(); loadMemberships() }, [])
@@ -74,14 +56,14 @@ export default function MembershipsModule({ onError }) {
         isActive: form.isActive,
         displayOrder: Number(form.displayOrder) || 0,
       }
-      if (editing) await api('/admin/membership-plans/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/membership-plans', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/membership-plans/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/membership-plans', { method: 'POST', body: JSON.stringify(body) })
       reset(); await loadPlans()
     } catch (e) { onError(e.message) }
   }
   async function remove(id) {
-    if (!confirm('Supprimer cet abonnement ?')) return
-    try { await api('/admin/membership-plans/' + id, { method: 'DELETE' }); await loadPlans() }
+    if (!await confirm('Supprimer cet abonnement ?')) return
+    try { await adminApi('/admin/membership-plans/' + id, { method: 'DELETE' }); await loadPlans() }
     catch (e) { onError(e.message) }
   }
 

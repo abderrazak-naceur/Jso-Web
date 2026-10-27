@@ -7,6 +7,8 @@ import { adminEditIdFromPath, adminEditUrl, navigateAdminEdit } from '../adminRo
 import { articleShareUrl } from '../../features/news/articleUrl'
 import { sharePreviewUrl } from '../../lib/sharePreviewUrl'
 import { getAssetUrl } from '../../lib/apiConfig'
+import { useToast } from '../components/ui/Toast'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 
 const slugify = (value) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 const insertAtCursor = (textarea, current, insertion) => {
@@ -17,6 +19,8 @@ const insertAtCursor = (textarea, current, insertion) => {
 }
 
 export default function NewsModule({ onError }) {
+  const toast=useToast()
+  const confirm=useConfirm()
   const [items,setItems]=useState([])
   const [editing,setEditing]=useState(null)
   const [form,setForm]=useState(emptyNews)
@@ -60,7 +64,7 @@ export default function NewsModule({ onError }) {
   async function save(e){e.preventDefault();try{const body={...form,publishedAt:form.publishedAt?new Date(form.publishedAt).toISOString():null,status:form.status||'Draft'};if(editing)await adminApi('/admin/news/'+editing,{method:'PUT',body:JSON.stringify(body)});else await adminApi('/admin/news',{method:'POST',body:JSON.stringify(body)});reset();await load()}catch(e){onError(e.message)}}
   async function publish(id){try{await adminApi('/admin/news/'+id+'/publish',{method:'POST'});await load()}catch(e){onError(e.message)}}
   async function unpublish(id){try{await adminApi('/admin/news/'+id+'/unpublish',{method:'POST'});await load()}catch(e){onError(e.message)}}
-  async function remove(id){if(!confirm('Supprimer cet article ?'))return;try{await adminApi('/admin/news/'+id,{method:'DELETE'});if(editing===id)reset();await load()}catch(e){onError(e.message)}}
+  async function remove(id){if(!await confirm({title:'Supprimer cet article ?',message:'L’article sera supprimé définitivement.',confirmLabel:'Supprimer',danger:true}))return;try{await adminApi('/admin/news/'+id,{method:'DELETE'});if(editing===id)reset();await load();toast.success('Article supprimé.')}catch(e){onError(e.message)}}
   // Public, readable article URL (the SPA opens the article at this path). This
   // is the link we COPY: it always resolves, unlike the /api/share Open-Graph
   // endpoint which 404s for drafts and is not a frontend route.

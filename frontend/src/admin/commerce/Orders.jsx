@@ -1,26 +1,6 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
 import { Eye, RefreshCw } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const STATUSES = ['Pending', 'Paid', 'Shipped', 'Delivered', 'Cancelled', 'Failed']
 const STATUS_STYLES = {
@@ -49,20 +29,20 @@ export default function OrdersModule({ onError }) {
 
   async function load() {
     setLoading(true)
-    try { setOrders(await api('/admin/shop/orders' + (filter ? '?status=' + filter : ''))); onError('') }
+    try { setOrders(await adminApi('/admin/shop/orders' + (filter ? '?status=' + filter : ''))); onError('') }
     catch (e) { onError(e.message) }
     finally { setLoading(false) }
   }
   useEffect(() => { load() }, [filter])
 
   async function openDetail(id) {
-    try { setDetail(await api('/admin/shop/orders/' + id)) }
+    try { setDetail(await adminApi('/admin/shop/orders/' + id)) }
     catch (e) { onError(e.message) }
   }
 
   async function changeStatus(id, status) {
     try {
-      await api('/admin/shop/orders/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status }) })
+      await adminApi('/admin/shop/orders/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status }) })
       await load()
       if (detail?.id === id) await openDetail(id)
     } catch (e) { onError(e.message) }

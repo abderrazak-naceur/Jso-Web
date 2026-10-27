@@ -1,32 +1,13 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Plus, Pencil, Save, X, ListChecks, Sparkles } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 // Check-list match (idée D14) : standardise les opérations de la journée de match.
 // Réservé aux rôles MatchManager / ClubAdmin, écritures auditées, aucune donnée
 // personnelle. Deux volets : modèles réutilisables et check-list par match.
 export default function ChecklistModule({ onError }) {
+  const confirm = useConfirm()
   return <div className="space-y-6">
     <TemplatesPanel onError={onError} />
     <MatchChecklistPanel onError={onError} />
@@ -44,7 +25,7 @@ function TemplatesPanel({ onError }) {
 
   async function load() {
     setLoading(true)
-    try { setTemplates(await api('/admin/checklist-templates')); onError('') }
+    try { setTemplates(await adminApi('/admin/checklist-templates')); onError('') }
     catch (err) { onError(err.message) }
     finally { setLoading(false) }
   }
@@ -60,16 +41,16 @@ function TemplatesPanel({ onError }) {
     e.preventDefault()
     try {
       const body = { label: form.label.trim(), displayOrder: Number(form.displayOrder) || 0, isActive: form.isActive }
-      if (editing) await api('/admin/checklist-templates/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/checklist-templates', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/checklist-templates/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/checklist-templates', { method: 'POST', body: JSON.stringify(body) })
       reset()
       await load()
     } catch (err) { onError(err.message) }
   }
 
   async function remove(id) {
-    if (!confirm('Supprimer cette entrée de modèle ?')) return
-    try { await api('/admin/checklist-templates/' + id, { method: 'DELETE' }); if (editing === id) reset(); await load() }
+    if (!await confirm('Supprimer cette entrée de modèle ?')) return
+    try { await adminApi('/admin/checklist-templates/' + id, { method: 'DELETE' }); if (editing === id) reset(); await load() }
     catch (err) { onError(err.message) }
   }
 
@@ -121,15 +102,15 @@ function MatchChecklistPanel({ onError }) {
   const [editing, setEditing] = useState(null)
 
   async function loadMatches() {
-    try { const data = await api('/admin/matches'); setMatches(data); if (!selected && data[0]) selectMatch(data[0].id); onError('') }
+    try { const data = await adminApi('/admin/matches'); setMatches(data); if (!selected && data[0]) selectMatch(data[0].id); onError('') }
     catch (err) { onError(err.message) }
   }
   async function selectMatch(id) {
     setSelected(id); reset(); setLoading(true)
     try {
       const [list, admins] = await Promise.all([
-        api('/admin/matches/' + id + '/checklist'),
-        api('/admin/matches/' + id + '/checklist/assignees'),
+        adminApi('/admin/matches/' + id + '/checklist'),
+        adminApi('/admin/matches/' + id + '/checklist/assignees'),
       ])
       setItems(list); setAssignees(admins); onError('')
     } catch (err) { onError(err.message) }
@@ -157,8 +138,8 @@ function MatchChecklistPanel({ onError }) {
     if (!selected) return
     try {
       const body = itemBody(form)
-      if (editing) await api('/admin/matches/' + selected + '/checklist/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/matches/' + selected + '/checklist', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/matches/' + selected + '/checklist/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/matches/' + selected + '/checklist', { method: 'POST', body: JSON.stringify(body) })
       reset()
       await selectMatch(selected)
     } catch (err) { onError(err.message) }
@@ -166,27 +147,27 @@ function MatchChecklistPanel({ onError }) {
 
   async function toggle(i) {
     try {
-      await api('/admin/matches/' + selected + '/checklist/' + i.id, { method: 'PUT', body: JSON.stringify(itemBody(i, { done: !i.done })) })
+      await adminApi('/admin/matches/' + selected + '/checklist/' + i.id, { method: 'PUT', body: JSON.stringify(itemBody(i, { done: !i.done })) })
       await selectMatch(selected)
     } catch (err) { onError(err.message) }
   }
 
   async function assign(i, assigneeAdminId) {
     try {
-      await api('/admin/matches/' + selected + '/checklist/' + i.id, { method: 'PUT', body: JSON.stringify(itemBody(i, { assigneeAdminId })) })
+      await adminApi('/admin/matches/' + selected + '/checklist/' + i.id, { method: 'PUT', body: JSON.stringify(itemBody(i, { assigneeAdminId })) })
       await selectMatch(selected)
     } catch (err) { onError(err.message) }
   }
 
   async function remove(id) {
-    if (!confirm('Supprimer cet item de check-list ?')) return
-    try { await api('/admin/matches/' + selected + '/checklist/' + id, { method: 'DELETE' }); if (editing === id) reset(); await selectMatch(selected) }
+    if (!await confirm('Supprimer cet item de check-list ?')) return
+    try { await adminApi('/admin/matches/' + selected + '/checklist/' + id, { method: 'DELETE' }); if (editing === id) reset(); await selectMatch(selected) }
     catch (err) { onError(err.message) }
   }
 
   async function generate() {
     if (!selected) return
-    try { await api('/admin/matches/' + selected + '/checklist/generate', { method: 'POST' }); await selectMatch(selected) }
+    try { await adminApi('/admin/matches/' + selected + '/checklist/generate', { method: 'POST' }); await selectMatch(selected) }
     catch (err) { onError(err.message) }
   }
 

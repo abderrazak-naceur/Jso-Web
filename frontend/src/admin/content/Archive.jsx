@@ -1,27 +1,7 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Plus, Pencil, Save, X } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 // Suggested categories for the digital museum / historical archive (idea C10).
 const CATEGORIES = ['Season', 'Trophy', 'Photo', 'Milestone']
@@ -37,6 +17,7 @@ function Field({ label, ...props }) {
 // period photos and honours board. No sensitive personal data is stored here.
 // Images reuse the existing MediaAsset library instead of new storage.
 export default function ArchiveModule({ onError }) {
+  const confirm = useConfirm()
   const [items, setItems] = useState([])
   const [media, setMedia] = useState([])
   const [loading, setLoading] = useState(true)
@@ -46,7 +27,7 @@ export default function ArchiveModule({ onError }) {
   async function load() {
     setLoading(true)
     try {
-      const [list, mediaList] = await Promise.all([api('/admin/archive'), api('/media')])
+      const [list, mediaList] = await Promise.all([adminApi('/admin/archive'), adminApi('/media')])
       setItems(list)
       setMedia(mediaList)
       onError('')
@@ -81,16 +62,16 @@ export default function ArchiveModule({ onError }) {
         displayOrder: Number(form.displayOrder) || 0,
         isPublished: form.isPublished,
       }
-      if (editing) await api('/admin/archive/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/archive', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/archive/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/archive', { method: 'POST', body: JSON.stringify(body) })
       reset()
       await load()
     } catch (err) { onError(err.message) }
   }
 
   async function remove(id) {
-    if (!confirm('Supprimer cet élément d’archive ?')) return
-    try { await api('/admin/archive/' + id, { method: 'DELETE' }); if (editing === id) reset(); await load() }
+    if (!await confirm('Supprimer cet élément d’archive ?')) return
+    try { await adminApi('/admin/archive/' + id, { method: 'DELETE' }); if (editing === id) reset(); await load() }
     catch (err) { onError(err.message) }
   }
 

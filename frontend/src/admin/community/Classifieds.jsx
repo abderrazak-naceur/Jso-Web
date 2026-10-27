@@ -1,27 +1,7 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Plus, Pencil, Save, X, Megaphone, Check, Ban } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const emptyAd = { title: '', body: '', category: '', price: '', contactInfo: '', showContact: false, expiresAt: '', status: 'Pending' }
 const STATUSES = ['Pending', 'Approved', 'Rejected']
@@ -45,6 +25,7 @@ function toInputDate(d) { return d ? new Date(d).toISOString().slice(0, 10) : ''
 // Paiements HORS PÉRIMÈTRE cette itération : le prix est la valeur déclarée de
 // l'objet vendu, jamais une commission encaissée (TODO : passerelle TND).
 export default function ClassifiedsModule({ onError }) {
+  const confirm = useConfirm()
   const [ads, setAds] = useState([])
   const [filter, setFilter] = useState('Pending')
   const [loading, setLoading] = useState(false)
@@ -56,7 +37,7 @@ export default function ClassifiedsModule({ onError }) {
     setLoading(true)
     try {
       const q = filter ? '?status=' + encodeURIComponent(filter) : ''
-      setAds(await api('/admin/classifieds' + q))
+      setAds(await adminApi('/admin/classifieds' + q))
       onError('')
     } catch (err) { onError(err.message) }
     finally { setLoading(false) }
@@ -91,21 +72,21 @@ export default function ClassifiedsModule({ onError }) {
         expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : null,
         status: form.status,
       }
-      if (editing) await api('/admin/classifieds/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/classifieds', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/classifieds/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/classifieds', { method: 'POST', body: JSON.stringify(body) })
       reset()
       await load()
     } catch (err) { onError(err.message) }
   }
 
   async function moderate(id, action) {
-    try { await api('/admin/classifieds/' + id + '/' + action, { method: 'POST' }); await load() }
+    try { await adminApi('/admin/classifieds/' + id + '/' + action, { method: 'POST' }); await load() }
     catch (err) { onError(err.message) }
   }
 
   async function remove(id) {
-    if (!confirm('Supprimer définitivement cette annonce ?')) return
-    try { await api('/admin/classifieds/' + id, { method: 'DELETE' }); if (editing === id) reset(); await load() }
+    if (!await confirm('Supprimer définitivement cette annonce ?')) return
+    try { await adminApi('/admin/classifieds/' + id, { method: 'DELETE' }); if (editing === id) reset(); await load() }
     catch (err) { onError(err.message) }
   }
 

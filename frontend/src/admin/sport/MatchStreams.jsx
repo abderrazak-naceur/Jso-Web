@@ -1,19 +1,8 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
 import { Save } from 'lucide-react'
 import { publicApi } from '../../lib/api'
-import { API_BASE_URL } from '../../lib/apiConfig'
 
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, { ...options, headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}), ...options.headers } })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 const emptyStream = { provider: 'Livepeer', streamUrl: '', isPaid: true, price: '5', currency: 'TND', startsAt: '', endsAt: '', isPublished: false }
 function toLocalInput(value) {
   if (!value) return ''
@@ -33,7 +22,7 @@ export default function MatchStreamsModule({ onError }) {
   async function refresh() {
     setLoading(true)
     try {
-      const [matchData, streamData] = await Promise.all([publicApi.getMatches(), api('/admin/match-streams')])
+      const [matchData, streamData] = await Promise.all([publicApi.getMatches(), adminApi('/admin/match-streams')])
       const matchRows = Array.isArray(matchData) ? matchData : (matchData?.items || matchData?.matches || [])
       setMatches(matchRows); setStreams(Array.isArray(streamData) ? streamData : [])
       setMatchId(current => current || matchRows[0]?.id || ''); onError('')
@@ -52,7 +41,7 @@ export default function MatchStreamsModule({ onError }) {
     setSaved(false)
     try {
       const body = { provider: form.provider, streamUrl: form.streamUrl.trim() || null, isPaid: form.isPaid, price: form.isPaid ? (Number(form.price) || 0) : 0, currency: form.currency === 'EUR' ? 'EUR' : 'TND', startsAt: toIsoOrNull(form.startsAt), endsAt: toIsoOrNull(form.endsAt), isPublished: form.isPublished }
-      const savedStream = await api('/admin/match-streams/' + matchId, { method: 'PUT', body: JSON.stringify(body) })
+      const savedStream = await adminApi('/admin/match-streams/' + matchId, { method: 'PUT', body: JSON.stringify(body) })
       setStreams(current => [...current.filter(item => item.matchId !== matchId), savedStream]); setSaved(true); onError('')
     } catch (error) { onError(error.message || 'Impossibile salvare la diretta.') }
   }

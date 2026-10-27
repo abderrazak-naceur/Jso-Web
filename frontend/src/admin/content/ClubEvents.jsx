@@ -1,28 +1,9 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Link2, Save, Pencil, X, Plus } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
 import { adminEditIdFromPath, adminEditUrl, navigateAdminEdit } from '../adminRoutes'
 import { sharePreviewUrl } from '../../lib/sharePreviewUrl'
-
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const empty = { title: '', slug: '', description: '', startAt: '', endAt: '', location: '', isPublished: false }
 
@@ -31,6 +12,7 @@ function slugify(s) {
 }
 
 export default function ClubEventsModule({ onError }) {
+  const confirm = useConfirm()
   const [items, setItems] = useState([])
   const [form, setForm] = useState(empty)
   const [editing, setEditing] = useState(null)
@@ -39,7 +21,7 @@ export default function ClubEventsModule({ onError }) {
 
   async function load() {
     setLoading(true)
-    try { setItems(await api('/admin/events')); onError('') }
+    try { setItems(await adminApi('/admin/events')); onError('') }
     catch (e) { onError(e.message) }
     finally { setLoading(false) }
   }
@@ -83,16 +65,16 @@ export default function ClubEventsModule({ onError }) {
         location: form.location.trim() || null,
         isPublished: form.isPublished,
       }
-      if (editing) await api('/admin/events/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/events', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/events/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/events', { method: 'POST', body: JSON.stringify(body) })
       reset()
       await load()
     } catch (e) { onError(e.message) }
   }
 
   async function remove(id) {
-    if (!confirm('Supprimer cet événement ?')) return
-    try { await api('/admin/events/' + id, { method: 'DELETE' }); if (editing === id) reset(); await load() }
+    if (!await confirm('Supprimer cet événement ?')) return
+    try { await adminApi('/admin/events/' + id, { method: 'DELETE' }); if (editing === id) reset(); await load() }
     catch (e) { onError(e.message) }
   }
 

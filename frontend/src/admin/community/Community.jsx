@@ -1,27 +1,7 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { MessageSquare, Check, Ban, X, Flag } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const STATUS_LABELS = { Pending: 'En attente', Approved: 'Approuvé', Rejected: 'Refusé' }
 const STATUS_STYLES = {
@@ -45,6 +25,7 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR') : '—'
 // d'email) ; côté public seul le nom d'affichage est montré. Le texte est
 // rendu comme texte (échappé par React) pour éviter tout XSS stocké.
 export default function CommunityModule({ onError }) {
+  const confirm = useConfirm()
   const [tab, setTab] = useState('comments')
   const [comments, setComments] = useState([])
   const [commentFilter, setCommentFilter] = useState('Pending')
@@ -56,7 +37,7 @@ export default function CommunityModule({ onError }) {
     setLoading(true)
     try {
       const q = commentFilter ? '?status=' + encodeURIComponent(commentFilter) : ''
-      setComments(await api('/admin/community/comments' + q))
+      setComments(await adminApi('/admin/community/comments' + q))
       onError('')
     } catch (err) { onError(err.message) }
     finally { setLoading(false) }
@@ -65,7 +46,7 @@ export default function CommunityModule({ onError }) {
   async function loadReports() {
     setLoading(true)
     try {
-      setReports(await api('/admin/community/reports?status=' + encodeURIComponent(reportFilter)))
+      setReports(await adminApi('/admin/community/reports?status=' + encodeURIComponent(reportFilter)))
       onError('')
     } catch (err) { onError(err.message) }
     finally { setLoading(false) }
@@ -75,18 +56,18 @@ export default function CommunityModule({ onError }) {
   useEffect(() => { if (tab === 'reports') loadReports() }, [tab, reportFilter])
 
   async function moderateComment(id, action) {
-    try { await api('/admin/community/comments/' + id + '/' + action, { method: 'POST' }); await loadComments() }
+    try { await adminApi('/admin/community/comments/' + id + '/' + action, { method: 'POST' }); await loadComments() }
     catch (err) { onError(err.message) }
   }
 
   async function removeComment(id) {
-    if (!confirm('Supprimer définitivement ce commentaire ?')) return
-    try { await api('/admin/community/comments/' + id, { method: 'DELETE' }); await loadComments() }
+    if (!await confirm('Supprimer définitivement ce commentaire ?')) return
+    try { await adminApi('/admin/community/comments/' + id, { method: 'DELETE' }); await loadComments() }
     catch (err) { onError(err.message) }
   }
 
   async function handleReport(id, action) {
-    try { await api('/admin/community/reports/' + id + '/' + action, { method: 'POST' }); await loadReports() }
+    try { await adminApi('/admin/community/reports/' + id + '/' + action, { method: 'POST' }); await loadReports() }
     catch (err) { onError(err.message) }
   }
 

@@ -1,31 +1,13 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Save, Pencil, X, Plus } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const empty = { title: '', category: '', fileUrl: '', isPublished: false }
 const CATEGORIES = ['Communiqué', 'Règlement', 'Formulaire', 'Autre']
 
 export default function DocumentsModule({ onError }) {
+  const confirm = useConfirm()
   const [items, setItems] = useState([])
   const [form, setForm] = useState(empty)
   const [editing, setEditing] = useState(null)
@@ -34,7 +16,7 @@ export default function DocumentsModule({ onError }) {
 
   async function load() {
     setLoading(true)
-    try { setItems(await api('/admin/documents')); onError('') }
+    try { setItems(await adminApi('/admin/documents')); onError('') }
     catch (e) { onError(e.message) }
     finally { setLoading(false) }
   }
@@ -55,16 +37,16 @@ export default function DocumentsModule({ onError }) {
         fileUrl: form.fileUrl.trim(),
         isPublished: form.isPublished,
       }
-      if (editing) await api('/admin/documents/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/documents', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/documents/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/documents', { method: 'POST', body: JSON.stringify(body) })
       reset()
       await load()
     } catch (e) { onError(e.message) }
   }
 
   async function remove(id) {
-    if (!confirm('Supprimer ce document ?')) return
-    try { await api('/admin/documents/' + id, { method: 'DELETE' }); await load() }
+    if (!await confirm('Supprimer ce document ?')) return
+    try { await adminApi('/admin/documents/' + id, { method: 'DELETE' }); await load() }
     catch (e) { onError(e.message) }
   }
 

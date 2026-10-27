@@ -1,27 +1,6 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
 import { Plus, Pencil, Save, X } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const emptySeason = { name: '', isActive: false }
 const emptyCompetition = { name: '', country: '' }
@@ -49,8 +28,8 @@ export default function SeasonsCompetitionsModule({ onError }) {
     setLoading(true)
     try {
       const [seasonList, competitionList] = await Promise.all([
-        api('/admin/seasons'),
-        api('/admin/competitions'),
+        adminApi('/admin/seasons'),
+        adminApi('/admin/competitions'),
       ])
       setSeasons(seasonList)
       setCompetitions(competitionList)
@@ -71,8 +50,8 @@ export default function SeasonsCompetitionsModule({ onError }) {
     e.preventDefault()
     try {
       const body = { name: seasonForm.name.trim(), isActive: seasonForm.isActive }
-      if (editingSeason) await api('/admin/seasons/' + editingSeason, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/seasons', { method: 'POST', body: JSON.stringify(body) })
+      if (editingSeason) await adminApi('/admin/seasons/' + editingSeason, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/seasons', { method: 'POST', body: JSON.stringify(body) })
       resetSeason()
       await load()
     } catch (err) { onError(err.message) }
@@ -81,7 +60,7 @@ export default function SeasonsCompetitionsModule({ onError }) {
   async function removeSeason(id) {
     if (!confirm('Supprimer cette saison ?')) return
     try {
-      await api('/admin/seasons/' + id, { method: 'DELETE' })
+      await adminApi('/admin/seasons/' + id, { method: 'DELETE' })
       if (editingSeason === id) resetSeason()
       await load()
     } catch (err) { onError(err.message) }
@@ -101,8 +80,8 @@ export default function SeasonsCompetitionsModule({ onError }) {
         name: competitionForm.name.trim(),
         country: competitionForm.country.trim() === '' ? null : competitionForm.country.trim(),
       }
-      if (editingCompetition) await api('/admin/competitions/' + editingCompetition, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/competitions', { method: 'POST', body: JSON.stringify(body) })
+      if (editingCompetition) await adminApi('/admin/competitions/' + editingCompetition, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/competitions', { method: 'POST', body: JSON.stringify(body) })
       resetCompetition()
       await load()
     } catch (err) { onError(err.message) }
@@ -111,7 +90,7 @@ export default function SeasonsCompetitionsModule({ onError }) {
   async function removeCompetition(id) {
     if (!confirm('Supprimer cette compétition ?')) return
     try {
-      await api('/admin/competitions/' + id, { method: 'DELETE' })
+      await adminApi('/admin/competitions/' + id, { method: 'DELETE' })
       if (editingCompetition === id) resetCompetition()
       await load()
     } catch (err) { onError(err.message) }

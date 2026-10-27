@@ -4,7 +4,10 @@ import Field from '../components/Field'
 import { adminApi } from '../api'
 import { adminEditIdFromPath, adminEditUrl, navigateAdminEdit } from '../adminRoutes'
 import { sharePreviewUrl } from '../../lib/sharePreviewUrl'
+import { useToast } from '../components/ui/Toast'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 export default function MatchesModule({ onError }) {
+  const toast=useToast(); const confirm=useConfirm()
   const [matches,setMatches]=useState([]); const [refs,setRefs]=useState({seasons:[],competitions:[],teams:[]}); const [editing,setEditing]=useState(null); const [modalOpen,setModalOpen]=useState(false)
   const [form,setForm]=useState({opponentName:'',kickoffAt:'',venue:'',opponentLogoUrl:'',isHome:true,homeScore:'',awayScore:'',status:'Scheduled',isPublished:false,seasonId:'',competitionId:'',teamId:''})
   const [ticketArtworkUrl,setTicketArtworkUrl]=useState('')
@@ -15,7 +18,7 @@ export default function MatchesModule({ onError }) {
     if (!url) return ''
     if (url.startsWith('/')) return 'https://media.jsoudhref.com' + url
     if (/^https?:\/\//i.test(url)) return url
-    throw new Error('Inserisci un URL completo (https://...) oppure un percorso che inizi con /.')
+    throw new Error('Saisissez une URL complète (https://…) ou un chemin commençant par /.')
   }
 
   async function load(){try{const [m,r]=await Promise.all([adminApi('/admin/matches'),adminApi('/admin/matches/references')]);setMatches(m);setRefs(r);if(!form.seasonId&&r.seasons[0])setForm(f=>({...f,seasonId:r.seasons[0].id,competitionId:r.competitions[0]?.id||'',teamId:r.teams[0]?.id||''}))}catch(e){onError(e.message)}}
@@ -80,11 +83,12 @@ export default function MatchesModule({ onError }) {
   async function copyPublicLink(m){try{await navigator.clipboard.writeText(sharePreviewUrl('match',m.id))}catch{onError('Impossible de copier le lien public.')}}
   async function removeMatch(match){
     const label = `${match.isHome ? 'JSO' : 'Ext.'} — ${match.opponentName}`
-    if (!window.confirm(`Supprimer définitivement le match « ${label} » ? Cette action est irréversible.`)) return
+    if (!await confirm({title:'Supprimer ce match ?',message:`Le match « ${label} » sera supprimé définitivement. Cette action est irréversible.`,confirmLabel:'Supprimer',danger:true})) return
     try {
       await adminApi('/admin/matches/' + match.id, { method: 'DELETE' })
       if (String(editing) === String(match.id)) closeModal()
       await load()
+      toast.success('Match supprimé.')
     } catch (e) { onError(e.message) }
   }
   async function save(e){e.preventDefault();try{const body={...form,opponentLogoUrl:normalizeMediaUrl(form.opponentLogoUrl)||null,ticketArtworkUrl:normalizeMediaUrl(ticketArtworkUrl)||null,kickoffAt:new Date(form.kickoffAt).toISOString(),homeScore:form.homeScore===''?null:Number(form.homeScore),awayScore:form.awayScore===''?null:Number(form.awayScore),isPublished:Boolean(form.isPublished)};if(editing)await adminApi('/admin/matches/'+editing,{method:'PUT',body:JSON.stringify(body)});else await adminApi('/admin/matches',{method:'POST',body:JSON.stringify(body)});navigateAdminEdit('matches',null);setEditing(null);setModalOpen(false);setForm(f=>({...f,opponentName:'',venue:'',opponentLogoUrl:'',homeScore:'',awayScore:''}));await load()}catch(e){onError(e.message)}}

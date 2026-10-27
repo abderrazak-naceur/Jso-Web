@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
+import { adminApi } from '../api'
 import { Pin, Plus, Save, Trash2, X } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
 
 // Composant autonome pour le live blog (second écran) d'un match.
 // Il n'est pas encore câblé dans AdminApp.jsx : voir la note d'intégration en bas de fichier.
@@ -8,26 +8,6 @@ import { API_BASE_URL } from '../../lib/apiConfig'
 // Utilisation :
 //   <LiveBlog matchId={match.id} onError={setError} />
 // Le composant gère lui-même le jeton admin et les états chargement / vide / erreur.
-
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Échec de la requête : ' + response.status
-    try { message = (await response.json()).message || message } catch { /* corps non JSON */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const KINDS = [
   { value: 'Text', label: 'Commentaire' },
@@ -59,7 +39,7 @@ export default function LiveBlog({ matchId, onError }) {
     setLoading(true)
     setError('')
     try {
-      setEntries(await api('/admin/matches/' + matchId + '/liveblog'))
+      setEntries(await adminApi('/admin/matches/' + matchId + '/liveblog'))
     } catch (e) {
       report(e.message)
     } finally {
@@ -94,9 +74,9 @@ export default function LiveBlog({ matchId, onError }) {
         isPinned: Boolean(form.isPinned),
       }
       if (editing) {
-        await api('/admin/matches/' + matchId + '/liveblog/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+        await adminApi('/admin/matches/' + matchId + '/liveblog/' + editing, { method: 'PUT', body: JSON.stringify(body) })
       } else {
-        await api('/admin/matches/' + matchId + '/liveblog', { method: 'POST', body: JSON.stringify(body) })
+        await adminApi('/admin/matches/' + matchId + '/liveblog', { method: 'POST', body: JSON.stringify(body) })
       }
       resetForm()
       await load()
@@ -107,7 +87,7 @@ export default function LiveBlog({ matchId, onError }) {
 
   async function remove(id) {
     try {
-      await api('/admin/matches/' + matchId + '/liveblog/' + id, { method: 'DELETE' })
+      await adminApi('/admin/matches/' + matchId + '/liveblog/' + id, { method: 'DELETE' })
       if (editing === id) resetForm()
       await load()
     } catch (e) {

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Pencil, X, Save, Plus, ImagePlus, Trash2 } from 'lucide-react'
 import { API_BASE_URL } from '../../lib/apiConfig'
 import Field from '../components/Field'
 import { adminApi } from '../api'
 import { emptySponsor, SPONSOR_TIERS, SPONSOR_PLACEMENTS } from '../constants'
 export default function SponsorsModule({ onError }) {
+  const confirm = useConfirm()
   const [sponsors, setSponsors] = useState([])
   const [form, setForm] = useState(emptySponsor)
   const [editing, setEditing] = useState(null)
@@ -83,7 +85,7 @@ export default function SponsorsModule({ onError }) {
 
   async function remove(id) {
     const sponsor = sponsors.find(item => item.id === id)
-    if (!window.confirm(`Supprimer le sponsor « ${sponsor?.name || ''} » ?`)) return
+    if (!await confirm(`Supprimer le sponsor « ${sponsor?.name || ''} » ?`)) return
     try { await adminApi('/admin/sponsors/' + id, { method: 'DELETE' }); await load() }
     catch (e) { onError(e.message) }
   }

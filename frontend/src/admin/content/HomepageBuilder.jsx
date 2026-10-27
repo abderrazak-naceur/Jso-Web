@@ -1,26 +1,7 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Save, Pencil, X, Plus, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const SECTION_TYPES = ['Hero', 'Highlights', 'SellingBand', 'AppDownload', 'News', 'Matches', 'Media', 'Sponsors']
 const POSITIONS = ['Header', 'Footer']
@@ -34,6 +15,7 @@ const emptyNav = { label: '', url: '', position: 'Header', displayOrder: 0, isAc
 // PayloadJson is stored/validated as opaque JSON: it is never rendered as raw
 // HTML by the public site, which mitigates XSS for CustomHtml/Text sections.
 export default function HomepageBuilderModule({ onError }) {
+  const confirm = useConfirm()
   const [sections, setSections] = useState([])
   const [navItems, setNavItems] = useState([])
   const [visibility, setVisibility] = useState([])
@@ -47,9 +29,9 @@ export default function HomepageBuilderModule({ onError }) {
     setLoading(true)
     try {
       const [s, n, v] = await Promise.all([
-        api('/admin/home-sections'),
-        api('/admin/navigation'),
-        api('/admin/home-visibility'),
+        adminApi('/admin/home-sections'),
+        adminApi('/admin/navigation'),
+        adminApi('/admin/home-visibility'),
       ])
       setSections(s)
       setNavItems(n)
@@ -68,7 +50,7 @@ export default function HomepageBuilderModule({ onError }) {
     setVisibility(next)
     try {
       const hidden = next.filter((s) => !s.enabled).map((s) => s.id)
-      await api('/admin/home-visibility', { method: 'PUT', body: JSON.stringify({ hidden }) })
+      await adminApi('/admin/home-visibility', { method: 'PUT', body: JSON.stringify({ hidden }) })
       onError('')
     } catch (e) { onError(e.message); await load() }
   }
@@ -94,22 +76,22 @@ export default function HomepageBuilderModule({ onError }) {
         displayOrder: Number(sectionForm.displayOrder) || 0,
         isPublished: sectionForm.isPublished,
       }
-      if (editingSection) await api('/admin/home-sections/' + editingSection, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/home-sections', { method: 'POST', body: JSON.stringify(body) })
+      if (editingSection) await adminApi('/admin/home-sections/' + editingSection, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/home-sections', { method: 'POST', body: JSON.stringify(body) })
       resetSection()
       await load()
     } catch (e) { onError(e.message) }
   }
 
   async function removeSection(id) {
-    if (!confirm('Supprimer cette section ?')) return
-    try { await api('/admin/home-sections/' + id, { method: 'DELETE' }); await load() }
+    if (!await confirm('Supprimer cette section ?')) return
+    try { await adminApi('/admin/home-sections/' + id, { method: 'DELETE' }); await load() }
     catch (e) { onError(e.message) }
   }
 
   async function togglePublish(x) {
     try {
-      await api('/admin/home-sections/' + x.id, {
+      await adminApi('/admin/home-sections/' + x.id, {
         method: 'PUT',
         body: JSON.stringify({ type: x.type, title: x.title, payloadJson: x.payloadJson, displayOrder: x.displayOrder, isPublished: !x.isPublished }),
       })
@@ -123,7 +105,7 @@ export default function HomepageBuilderModule({ onError }) {
     if (target < 0 || target >= next.length) return
     const tmp = next[index]; next[index] = next[target]; next[target] = tmp
     setSections(next)
-    try { await api('/admin/home-sections/reorder', { method: 'POST', body: JSON.stringify({ ids: next.map(s => s.id) }) }) }
+    try { await adminApi('/admin/home-sections/reorder', { method: 'POST', body: JSON.stringify({ ids: next.map(s => s.id) }) }) }
     catch (e) { onError(e.message); await load() }
   }
 
@@ -145,16 +127,16 @@ export default function HomepageBuilderModule({ onError }) {
         isActive: navForm.isActive,
         opensInNewTab: navForm.opensInNewTab,
       }
-      if (editingNav) await api('/admin/navigation/' + editingNav, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/navigation', { method: 'POST', body: JSON.stringify(body) })
+      if (editingNav) await adminApi('/admin/navigation/' + editingNav, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/navigation', { method: 'POST', body: JSON.stringify(body) })
       resetNav()
       await load()
     } catch (e) { onError(e.message) }
   }
 
   async function removeNav(id) {
-    if (!confirm('Supprimer cette entr\u00e9e de menu ?')) return
-    try { await api('/admin/navigation/' + id, { method: 'DELETE' }); await load() }
+    if (!await confirm('Supprimer cette entr\u00e9e de menu ?')) return
+    try { await adminApi('/admin/navigation/' + id, { method: 'DELETE' }); await load() }
     catch (e) { onError(e.message) }
   }
 
@@ -165,7 +147,7 @@ export default function HomepageBuilderModule({ onError }) {
     const reordered = [...positionItems]
     const tmp = reordered[index]; reordered[index] = reordered[target]; reordered[target] = tmp
     try {
-      await api('/admin/navigation/reorder', { method: 'POST', body: JSON.stringify({ ids: reordered.map(n => n.id) }) })
+      await adminApi('/admin/navigation/reorder', { method: 'POST', body: JSON.stringify({ ids: reordered.map(n => n.id) }) })
       await load()
     } catch (e) { onError(e.message) }
   }

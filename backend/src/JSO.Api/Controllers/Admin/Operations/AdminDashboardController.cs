@@ -51,7 +51,12 @@ public sealed class AdminDashboardController(JsoDbContext db) : ControllerBase
             matches = new
             {
                 upcoming = await db.Matches.CountAsync(x => x.IsPublished && x.KickoffAt >= now, ct),
-                finished = await db.Matches.CountAsync(x => x.IsPublished && x.Status == "Finished", ct)
+                finished = await db.Matches.CountAsync(x => x.IsPublished && x.Status == "Finished", ct),
+                // Actionable KPI for the admin home: published upcoming matches
+                // that have NO active ticket type yet (billetterie to create).
+                upcomingWithoutTickets = await db.Matches.CountAsync(
+                    x => x.IsPublished && x.KickoffAt >= now
+                        && !db.TicketTypes.Any(t => t.MatchId == x.Id && t.IsActive), ct)
             },
             news = new
             {
@@ -60,8 +65,23 @@ public sealed class AdminDashboardController(JsoDbContext db) : ControllerBase
             },
             teams = await db.Teams.CountAsync(x => x.IsActive, ct),
             players = await db.Players.CountAsync(x => x.IsActive, ct),
+            // Moderation queues (community): pending items needing a decision.
+            // Powers the sidebar badges and the "À traiter" action cards.
+            moderation = new
+            {
+                comments = await db.CommunityComments.CountAsync(x => x.Status == "Pending", ct),
+                reports = await db.CommunityReports.CountAsync(x => x.Status == "Open", ct),
+                fanPhotos = await db.FanPhotos.CountAsync(x => x.Status == "Pending", ct),
+                classifieds = await db.ClassifiedAds.CountAsync(x => x.Status == "Pending", ct),
+                supporters = await db.SupporterBricks.CountAsync(x => x.PaymentStatus == "Pending", ct)
+            },
             todayActivity,
             recentActivity,
+            // Daily revenue for the last 30 days, split by engine (tickets /
+            // shop / memberships). Drives the dashboard bar chart. Rows are
+            // projected then grouped in memory: a club's paid-order volume over
+            // 30 days stays small and this keeps the query provider-agnostic.
+            revenueSeries = await BuildRevenueSeriesAsync(db, now, ct),
             // Real sales metrics from paid boutique orders (Paid/Shipped/
             // Delivered count as revenue). "enabled" reflects that there is at
             // least one active product to sell; revenue/orders stay 0 until real
@@ -111,6 +131,51 @@ public sealed class AdminDashboardController(JsoDbContext db) : ControllerBase
 
     private static readonly string[] PaidStatuses = ["Paid", "Shipped", "Delivered"];
 
+    private static async Task<object> BuildRevenueSeriesAsync(JsoDbContext db, DateTimeOffset now, CancellationToken ct)
+    {
+        var from = new DateTimeOffset(now.UtcDateTime.Date.AddDays(-29), TimeSpan.Zero);
+
+        var ticketRows = await db.TicketOrders.AsNoTracking()
+            .Where(x => SoldTicketStatuses.Contains(x.Status) && x.PaidAt >= from)
+            .Select(x => new { x.PaidAt, x.Total })
+            .ToListAsync(ct);
+        var orderRows = await db.Orders.AsNoTracking()
+            .Where(x => PaidStatuses.Contains(x.Status) && x.PaidAt >= from)
+            .Select(x => new { x.PaidAt, x.Total })
+            .ToListAsync(ct);
+        var membershipRows = await db.Memberships.AsNoTracking()
+            .Where(x => x.PaymentStatus == "Paid" && x.PaidAt >= from)
+            .Select(x => new { x.PaidAt, x.Price })
+            .ToListAsync(ct);
+
+        var ticketByDay = ticketRows
+            .Where(x => x.PaidAt.HasValue)
+            .GroupBy(x => x.PaidAt!.Value.UtcDateTime.Date)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Total));
+        var orderByDay = orderRows
+            .Where(x => x.PaidAt.HasValue)
+            .GroupBy(x => x.PaidAt!.Value.UtcDateTime.Date)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Total));
+        var membershipByDay = membershipRows
+            .Where(x => x.PaidAt.HasValue)
+            .GroupBy(x => x.PaidAt!.Value.UtcDateTime.Date)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Price));
+
+        var days = new List<object>(30);
+        for (var i = 29; i >= 0; i--)
+        {
+            var day = now.UtcDateTime.Date.AddDays(-i);
+            days.Add(new
+            {
+                date = day.ToString("yyyy-MM-dd"),
+                tickets = ticketByDay.GetValueOrDefault(day),
+                shop = orderByDay.GetValueOrDefault(day),
+                memberships = membershipByDay.GetValueOrDefault(day)
+            });
+        }
+        return days;
+    }
+
     private static async Task<object> BuildSalesAsync(JsoDbContext db, CancellationToken ct)
     {
         var paidOrders = db.Orders.AsNoTracking().Where(x => PaidStatuses.Contains(x.Status));
@@ -127,6 +192,8 @@ public sealed class AdminDashboardController(JsoDbContext db) : ControllerBase
             currency = "TND",
             revenue,
             orders,
+            // Orders waiting for the shop team to act (paid workflow not started).
+            pending = await db.Orders.AsNoTracking().CountAsync(x => x.Status == "Pending", ct),
             activeProducts = await db.Products.CountAsync(x => x.IsActive, ct),
             productsSold,
             conversionRate = 0d

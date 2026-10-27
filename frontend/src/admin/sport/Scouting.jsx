@@ -1,27 +1,7 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Plus, Pencil, Save, X, ScanSearch, Star } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const emptyNote = { subject: '', subjectType: 'Opponent', matchId: '', rating: '', body: '' }
 const SUBJECT_TYPES = ['Opponent', 'Player']
@@ -39,6 +19,7 @@ function ratingStars(r) { return r ? '★'.repeat(r) + '☆'.repeat(5 - r) : '�
 // technical-staff tool restricted to MatchManager / ClubAdmin, writes audited,
 // never exposed publicly. Notes on youth-sector minors stay within these roles.
 export default function ScoutingModule({ onError }) {
+  const confirm = useConfirm()
   const [notes, setNotes] = useState([])
   const [matches, setMatches] = useState([])
   const [filter, setFilter] = useState('')
@@ -50,13 +31,13 @@ export default function ScoutingModule({ onError }) {
     setLoading(true)
     try {
       const path = '/admin/scouting-notes' + (filter ? '?subjectType=' + filter : '')
-      setNotes(await api(path))
+      setNotes(await adminApi(path))
       onError('')
     } catch (err) { onError(err.message) }
     finally { setLoading(false) }
   }
   async function loadMatches() {
-    try { setMatches(await api('/admin/matches')); onError('') }
+    try { setMatches(await adminApi('/admin/matches')); onError('') }
     catch (err) { onError(err.message) }
   }
   useEffect(() => { loadMatches() }, [])
@@ -84,16 +65,16 @@ export default function ScoutingModule({ onError }) {
         rating: form.rating === '' ? null : Number(form.rating),
         body: form.body.trim() || null,
       }
-      if (editing) await api('/admin/scouting-notes/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/scouting-notes', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/scouting-notes/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/scouting-notes', { method: 'POST', body: JSON.stringify(body) })
       reset()
       await load()
     } catch (err) { onError(err.message) }
   }
 
   async function remove(id) {
-    if (!confirm('Supprimer cette note de scouting ?')) return
-    try { await api('/admin/scouting-notes/' + id, { method: 'DELETE' }); if (editing === id) reset(); await load() }
+    if (!await confirm('Supprimer cette note de scouting ?')) return
+    try { await adminApi('/admin/scouting-notes/' + id, { method: 'DELETE' }); if (editing === id) reset(); await load() }
     catch (err) { onError(err.message) }
   }
 

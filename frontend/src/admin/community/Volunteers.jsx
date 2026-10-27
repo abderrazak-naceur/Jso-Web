@@ -1,27 +1,7 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Plus, Pencil, Save, X, Check } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const emptyVolunteer = { name: '', role: '', contact: '', contactConsent: false, isActive: true }
 const emptyAssignment = { volunteerId: '', task: '', status: 'Proposed', notes: '' }
@@ -55,16 +35,16 @@ function VolunteerDirectory({ volunteers, loading, onSaved, onError }) {
         contactConsent: form.contactConsent,
         isActive: form.isActive,
       }
-      if (editing) await api('/admin/volunteers/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/volunteers', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/volunteers/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/volunteers', { method: 'POST', body: JSON.stringify(body) })
       reset()
       await onSaved()
     } catch (err) { onError(err.message) }
   }
 
   async function remove(id) {
-    if (!confirm('Supprimer ce bénévole ? Ses affectations seront également supprimées.')) return
-    try { await api('/admin/volunteers/' + id, { method: 'DELETE' }); if (editing === id) reset(); await onSaved() }
+    if (!await confirm('Supprimer ce bénévole ? Ses affectations seront également supprimées.')) return
+    try { await adminApi('/admin/volunteers/' + id, { method: 'DELETE' }); if (editing === id) reset(); await onSaved() }
     catch (err) { onError(err.message) }
   }
 
@@ -113,12 +93,12 @@ function AssignmentGrid({ volunteers, onError }) {
   const [editing, setEditing] = useState(null)
 
   async function loadMatches() {
-    try { const data = await api('/admin/matches'); setMatches(data); if (!selected && data[0]) selectMatch(data[0].id) }
+    try { const data = await adminApi('/admin/matches'); setMatches(data); if (!selected && data[0]) selectMatch(data[0].id) }
     catch (err) { onError(err.message) }
   }
   async function selectMatch(id) {
     setSelected(id); setEditing(null); setForm(emptyAssignment); setLoading(true)
-    try { setAssignments(await api('/admin/matches/' + id + '/assignments')); onError('') }
+    try { setAssignments(await adminApi('/admin/matches/' + id + '/assignments')); onError('') }
     catch (err) { onError(err.message) }
     finally { setLoading(false) }
   }
@@ -135,15 +115,15 @@ function AssignmentGrid({ volunteers, onError }) {
     if (!selected) return
     try {
       const body = { volunteerId: form.volunteerId, task: form.task.trim(), status: form.status, notes: form.notes.trim() || null }
-      if (editing) await api('/admin/matches/' + selected + '/assignments/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/matches/' + selected + '/assignments', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/matches/' + selected + '/assignments/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/matches/' + selected + '/assignments', { method: 'POST', body: JSON.stringify(body) })
       cancelEdit()
       await selectMatch(selected)
     } catch (err) { onError(err.message) }
   }
 
   async function remove(id) {
-    try { await api('/admin/matches/' + selected + '/assignments/' + id, { method: 'DELETE' }); if (editing === id) cancelEdit(); await selectMatch(selected) }
+    try { await adminApi('/admin/matches/' + selected + '/assignments/' + id, { method: 'DELETE' }); if (editing === id) cancelEdit(); await selectMatch(selected) }
     catch (err) { onError(err.message) }
   }
 
@@ -200,13 +180,14 @@ function AssignmentGrid({ volunteers, onError }) {
 }
 
 export default function VolunteersModule({ onError }) {
+  const confirm = useConfirm()
   const [tab, setTab] = useState('grid')
   const [volunteers, setVolunteers] = useState([])
   const [loading, setLoading] = useState(true)
 
   async function loadVolunteers() {
     setLoading(true)
-    try { setVolunteers(await api('/admin/volunteers')); onError('') }
+    try { setVolunteers(await adminApi('/admin/volunteers')); onError('') }
     catch (err) { onError(err.message) }
     finally { setLoading(false) }
   }

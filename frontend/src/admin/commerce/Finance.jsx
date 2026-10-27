@@ -1,27 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Plus, Pencil, Save, X, Wallet, TrendingUp, TrendingDown, Download, FileSpreadsheet, Printer, RefreshCw } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 // Finances du club (piano Area B). Registre entrées/dépenses avec catégories et
 // transactions, plus un résumé de la période dont le NET est affiché en rouge
@@ -44,6 +24,7 @@ function monthStart() { const d = new Date(); return new Date(d.getFullYear(), d
 function today() { return new Date().toISOString().slice(0, 10) }
 
 export default function FinanceModule({ onError }) {
+  const confirm = useConfirm()
   const [categories, setCategories] = useState([])
   const [transactions, setTransactions] = useState([])
   const [summary, setSummary] = useState(null)
@@ -68,16 +49,16 @@ export default function FinanceModule({ onError }) {
   }
 
   async function loadCategories() {
-    setCategories(await api('/admin/finance/categories'))
+    setCategories(await adminApi('/admin/finance/categories'))
   }
   async function loadTransactions() {
     const params = periodQuery()
     if (filterCategory) params.set('categoryId', filterCategory)
     if (filterType) params.set('type', filterType)
-    setTransactions(await api('/admin/finance/transactions?' + params.toString()))
+    setTransactions(await adminApi('/admin/finance/transactions?' + params.toString()))
   }
   async function loadSummary() {
-    setSummary(await api('/admin/finance/summary?' + periodQuery().toString()))
+    setSummary(await adminApi('/admin/finance/summary?' + periodQuery().toString()))
   }
   async function loadAll() {
     setLoading(true)
@@ -100,16 +81,16 @@ export default function FinanceModule({ onError }) {
     e.preventDefault()
     try {
       const body = { name: catForm.name.trim(), type: catForm.type, isActive: catForm.isActive }
-      if (editingCat) await api('/admin/finance/categories/' + editingCat, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/finance/categories', { method: 'POST', body: JSON.stringify(body) })
+      if (editingCat) await adminApi('/admin/finance/categories/' + editingCat, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/finance/categories', { method: 'POST', body: JSON.stringify(body) })
       resetCategory()
       await loadCategories()
       await reloadData()
     } catch (e) { onError(e.message) }
   }
   async function removeCategory(id) {
-    if (!confirm('Supprimer cette catégorie ?')) return
-    try { await api('/admin/finance/categories/' + id, { method: 'DELETE' }); if (editingCat === id) resetCategory(); await loadCategories(); await reloadData() }
+    if (!await confirm('Supprimer cette catégorie ?')) return
+    try { await adminApi('/admin/finance/categories/' + id, { method: 'DELETE' }); if (editingCat === id) resetCategory(); await loadCategories(); await reloadData() }
     catch (e) { onError(e.message) }
   }
 
@@ -143,15 +124,15 @@ export default function FinanceModule({ onError }) {
         currency: (txForm.currency || CURRENCY).trim().toUpperCase(),
         description: txForm.description.trim() || null,
       }
-      if (editingTx) await api('/admin/finance/transactions/' + editingTx, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/finance/transactions', { method: 'POST', body: JSON.stringify(body) })
+      if (editingTx) await adminApi('/admin/finance/transactions/' + editingTx, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/finance/transactions', { method: 'POST', body: JSON.stringify(body) })
       resetTransaction()
       await reloadData()
     } catch (e) { onError(e.message) }
   }
   async function removeTransaction(id) {
-    if (!confirm('Supprimer cette transaction ?')) return
-    try { await api('/admin/finance/transactions/' + id, { method: 'DELETE' }); if (editingTx === id) resetTransaction(); await reloadData() }
+    if (!await confirm('Supprimer cette transaction ?')) return
+    try { await adminApi('/admin/finance/transactions/' + id, { method: 'DELETE' }); if (editingTx === id) resetTransaction(); await reloadData() }
     catch (e) { onError(e.message) }
   }
 

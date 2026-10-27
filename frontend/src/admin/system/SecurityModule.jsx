@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Plus, ShieldCheck, Trash2, RefreshCw } from 'lucide-react'
 import { adminApi } from '../api'
 
@@ -18,6 +19,7 @@ const empty = {
 }
 
 export default function SecurityModule({ onError }) {
+  const confirm = useConfirm()
   const [users,setUsers] = useState([])
   const [fanAccounts,setFanAccounts] = useState([])
   const [selectedFanId,setSelectedFanId] = useState('')
@@ -55,13 +57,16 @@ export default function SecurityModule({ onError }) {
   async function promoteRegisteredUser(e) {
     e.preventDefault()
     const fan = fanAccounts.find(x => x.id === selectedFanId)
-    if (!fan) { onError('Seleziona un account supporter.'); return }
-    if (!fan.isActive) { onError('L’account deve essere attivo prima della promozione.'); return }
-    const confirmed = window.confirm(
-      promotionRole === 'SuperAdmin'
-        ? 'Confermi di promuovere ' + fan.displayName + ' (' + fan.email + ') a SUPERADMIN? Avrà accesso completo all’amministrazione.'
-        : 'Confermi di promuovere ' + fan.displayName + ' (' + fan.email + ') al ruolo ' + promotionRole + '?'
-    )
+    if (!fan) { onError('Sélectionnez un compte supporter.'); return }
+    if (!fan.isActive) { onError('Le compte doit être actif avant la promotion.'); return }
+    const confirmed = await confirm({
+      title: promotionRole === 'SuperAdmin' ? 'Promouvoir en SuperAdmin ?' : 'Promouvoir ce compte ?',
+      message: promotionRole === 'SuperAdmin'
+        ? 'Confirmez-vous la promotion de ' + fan.displayName + ' (' + fan.email + ') en SUPERADMIN ? Il aura un accès complet à l’administration.'
+        : 'Confirmez-vous la promotion de ' + fan.displayName + ' (' + fan.email + ') au rôle ' + promotionRole + ' ?',
+      confirmLabel: 'Promouvoir',
+      danger: promotionRole === 'SuperAdmin',
+    })
     if (!confirmed) return
     setPromoting(true)
     setPromotionNotice('')
@@ -70,10 +75,10 @@ export default function SecurityModule({ onError }) {
         method: 'POST',
         body: JSON.stringify({ role: promotionRole })
       })
-      setPromotionNotice('Account amministrativo creato: ' + created.displayName + ' — ' + created.role + '.')
+      setPromotionNotice('Compte administratif créé : ' + created.displayName + ' — ' + created.role + '.')
       setFanAccounts(current => current.filter(x => x.id !== fan.id))
       await load()
-    } catch (e) { onError(e.message || 'Impossibile promuovere questo account.') }
+    } catch (e) { onError(e.message || 'Impossible de promouvoir ce compte.') }
     finally { setPromoting(false) }
   }
 
@@ -99,7 +104,7 @@ export default function SecurityModule({ onError }) {
   }
 
   async function deactivate(id) {
-    if (!confirm('Désactiver cette affectation staff ?')) return
+    if (!await confirm('Désactiver cette affectation staff ?')) return
     try { await adminApi('/admin/security/staff-assignments/'+id, {method:'DELETE'}); await load() }
     catch(e) { onError(e.message) }
   }

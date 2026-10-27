@@ -1,30 +1,12 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Save, Pencil, X, Plus } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const empty = { question: '', answer: '', category: '', sortOrder: 0, isPublished: false }
 
 export default function FaqModule({ onError }) {
+  const confirm = useConfirm()
   const [items, setItems] = useState([])
   const [form, setForm] = useState(empty)
   const [editing, setEditing] = useState(null)
@@ -33,7 +15,7 @@ export default function FaqModule({ onError }) {
 
   async function load() {
     setLoading(true)
-    try { setItems(await api('/admin/faq')); onError('') }
+    try { setItems(await adminApi('/admin/faq')); onError('') }
     catch (e) { onError(e.message) }
     finally { setLoading(false) }
   }
@@ -55,16 +37,16 @@ export default function FaqModule({ onError }) {
         sortOrder: Number(form.sortOrder) || 0,
         isPublished: form.isPublished,
       }
-      if (editing) await api('/admin/faq/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/faq', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/faq/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/faq', { method: 'POST', body: JSON.stringify(body) })
       reset()
       await load()
     } catch (e) { onError(e.message) }
   }
 
   async function remove(id) {
-    if (!confirm('Supprimer cette question ?')) return
-    try { await api('/admin/faq/' + id, { method: 'DELETE' }); await load() }
+    if (!await confirm('Supprimer cette question ?')) return
+    try { await adminApi('/admin/faq/' + id, { method: 'DELETE' }); await load() }
     catch (e) { onError(e.message) }
   }
 

@@ -1,27 +1,6 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
 import { ShieldCheck, Download, UserX, RefreshCw } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 function fmtDate(d) { return d ? new Date(d).toLocaleString('fr-FR') : '—' }
 
@@ -51,7 +30,7 @@ export default function GdprModule({ onError }) {
   async function load() {
     setLoading(true)
     try {
-      setData(await api('/admin/gdpr'))
+      setData(await adminApi('/admin/gdpr'))
       onError('')
     } catch (err) { onError(err.message) }
     finally { setLoading(false) }

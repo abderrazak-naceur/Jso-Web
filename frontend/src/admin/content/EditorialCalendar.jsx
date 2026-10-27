@@ -1,27 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { adminApi } from '../api'
 import { CalendarClock, RefreshCw, Save, Send, X } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const STATUSES = ['Draft', 'Scheduled', 'Published']
 const STATUS_LABELS = { Draft: 'Brouillon', Scheduled: 'Programmé', Published: 'Publié' }
@@ -54,7 +33,7 @@ export default function EditorialCalendarModule({ onError }) {
 
   async function load() {
     setLoading(true)
-    try { setItems(await api('/admin/editorial-calendar')); onError('') }
+    try { setItems(await adminApi('/admin/editorial-calendar')); onError('') }
     catch (err) { onError(err.message) }
     finally { setLoading(false) }
   }
@@ -80,7 +59,7 @@ export default function EditorialCalendarModule({ onError }) {
           ? new Date(form.scheduledAt).toISOString()
           : null,
       }
-      await api('/admin/editorial-calendar/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      await adminApi('/admin/editorial-calendar/' + editing, { method: 'PUT', body: JSON.stringify(body) })
       reset()
       await load()
     } catch (err) { onError(err.message) }
@@ -89,7 +68,7 @@ export default function EditorialCalendarModule({ onError }) {
   async function publishDue() {
     setPublishing(true)
     try {
-      const result = await api('/admin/editorial-calendar/publish-due', { method: 'POST' })
+      const result = await adminApi('/admin/editorial-calendar/publish-due', { method: 'POST' })
       onError('')
       await load()
       alert(result.published > 0 ? `${result.published} article(s) publié(s).` : 'Aucun article à publier pour le moment.')

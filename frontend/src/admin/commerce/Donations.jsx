@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Copy, ExternalLink, HeartHandshake, RefreshCw } from 'lucide-react'
 import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 
 function money(n) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'TND', maximumFractionDigits: 2 }).format(Number(n) || 0)
 }
 
 export default function DonationsModule({ onError }) {
+  const confirm = useConfirm()
   const [data, setData] = useState(null)
   const [configuration, setConfiguration] = useState(null)
   const [form, setForm] = useState(null)
@@ -45,7 +47,7 @@ export default function DonationsModule({ onError }) {
   const cashProgress = data?.goalTnd ? Math.min(100, Math.max(0, Number(data.monthlyCashPaidTnd || 0) / Number(data.goalTnd) * 100)) : 0
 
   async function confirmCashDonation(item) {
-    if (!window.confirm(`Confirmer que les ${money(item.amount)} de ${item.displayName || 'ce donateur'} ont bien été reçus en espèces ?`)) return
+    if (!await confirm({ title: 'Confirmer la réception ?', message: `Confirmer que les ${money(item.amount)} de ${item.displayName || 'ce donateur'} ont bien été reçus en espèces ?`, confirmLabel: 'Confirmer la réception' })) return
     setConfirmingCashId(item.id)
     try {
       await adminApi('/admin/donations/' + item.id + '/confirm-cash', { method: 'POST' })

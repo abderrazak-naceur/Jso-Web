@@ -1,27 +1,6 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
 import { RefreshCw } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const STATUS_STYLES = {
   Confirmed: 'bg-emerald-100 text-emerald-700',
@@ -48,7 +27,7 @@ export default function NewsletterModule({ onError }) {
   async function load() {
     setLoading(true)
     try {
-      const data = await api('/admin/newsletter/subscriptions')
+      const data = await adminApi('/admin/newsletter/subscriptions')
       setCounts(data.counts)
       setSubscriptions(data.subscriptions)
       onError('')

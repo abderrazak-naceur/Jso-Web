@@ -1,27 +1,8 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Images, Check, Ban, X } from 'lucide-react'
 import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const STATUS_LABELS = { Pending: 'En attente', Approved: 'Approuvée', Rejected: 'Refusée' }
 const STATUS_STYLES = {
@@ -42,6 +23,7 @@ function mediaSrc(url) { return url && url.startsWith('/') ? API_BASE_URL.replac
 // peut demander le retrait. Attention aux visages de mineurs : refuser toute
 // photo douteuse. La galerie publique n'expose aucune donnée personnelle.
 export default function FanPhotosModule({ onError }) {
+  const confirm = useConfirm()
   const [photos, setPhotos] = useState([])
   const [filter, setFilter] = useState('Pending')
   const [loading, setLoading] = useState(false)
@@ -50,7 +32,7 @@ export default function FanPhotosModule({ onError }) {
     setLoading(true)
     try {
       const q = filter ? '?status=' + encodeURIComponent(filter) : ''
-      setPhotos(await api('/admin/fan-photos' + q))
+      setPhotos(await adminApi('/admin/fan-photos' + q))
       onError('')
     } catch (err) { onError(err.message) }
     finally { setLoading(false) }
@@ -58,13 +40,13 @@ export default function FanPhotosModule({ onError }) {
   useEffect(() => { load() }, [filter])
 
   async function moderate(id, action) {
-    try { await api('/admin/fan-photos/' + id + '/' + action, { method: 'POST' }); await load() }
+    try { await adminApi('/admin/fan-photos/' + id + '/' + action, { method: 'POST' }); await load() }
     catch (err) { onError(err.message) }
   }
 
   async function remove(id) {
-    if (!confirm('Supprimer définitivement cette photo ? Le fichier stocké sera aussi effacé.')) return
-    try { await api('/admin/fan-photos/' + id, { method: 'DELETE' }); await load() }
+    if (!await confirm('Supprimer définitivement cette photo ? Le fichier stocké sera aussi effacé.')) return
+    try { await adminApi('/admin/fan-photos/' + id, { method: 'DELETE' }); await load() }
     catch (err) { onError(err.message) }
   }
 

@@ -1,27 +1,7 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Plus, Pencil, Save, X, GraduationCap, Eye, EyeOff } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 const emptyProgram = {
   title: '', partnerName: '', description: '',
@@ -39,6 +19,7 @@ function toDateInput(d) { return d ? new Date(d).toISOString().slice(0, 10) : ''
 // organisation only and is never exposed on the public feed. No data about
 // minors is kept here (consent is handled on the school side).
 export default function CommunityProgramsModule({ onError }) {
+  const confirm = useConfirm()
   const [programs, setPrograms] = useState([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState(emptyProgram)
@@ -47,7 +28,7 @@ export default function CommunityProgramsModule({ onError }) {
   async function load() {
     setLoading(true)
     try {
-      setPrograms(await api('/admin/community-programs'))
+      setPrograms(await adminApi('/admin/community-programs'))
       onError('')
     } catch (err) { onError(err.message) }
     finally { setLoading(false) }
@@ -80,16 +61,16 @@ export default function CommunityProgramsModule({ onError }) {
         contactEmail: form.contactEmail.trim() || null,
         isPublished: form.isPublished,
       }
-      if (editing) await api('/admin/community-programs/' + editing, { method: 'PUT', body: JSON.stringify(body) })
-      else await api('/admin/community-programs', { method: 'POST', body: JSON.stringify(body) })
+      if (editing) await adminApi('/admin/community-programs/' + editing, { method: 'PUT', body: JSON.stringify(body) })
+      else await adminApi('/admin/community-programs', { method: 'POST', body: JSON.stringify(body) })
       reset()
       await load()
     } catch (err) { onError(err.message) }
   }
 
   async function remove(id) {
-    if (!confirm('Supprimer ce programme communauté ?')) return
-    try { await api('/admin/community-programs/' + id, { method: 'DELETE' }); if (editing === id) reset(); await load() }
+    if (!await confirm('Supprimer ce programme communauté ?')) return
+    try { await adminApi('/admin/community-programs/' + id, { method: 'DELETE' }); if (editing === id) reset(); await load() }
     catch (err) { onError(err.message) }
   }
 

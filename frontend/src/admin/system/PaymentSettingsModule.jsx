@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { CheckCircle2, CreditCard, Landmark, Pencil, Plus, Power, RefreshCw, Smartphone, Trash2, X } from 'lucide-react'
 import { adminApi } from '../api'
 
@@ -123,7 +124,7 @@ export default function PaymentSettingsModule({ onError = () => {} }) {
   }
 
   async function remove(p) {
-    if (!window.confirm('Supprimer « ' + p.name + ' » ? Cette action est définitive.')) return
+    if (!await confirm('Supprimer « ' + p.name + ' » ? Cette action est définitive.')) return
     try { await adminApi('/admin/payment-config/' + p.id, { method: 'DELETE' }); await load() }
     catch (e) { onError(e.message) }
   }

@@ -1,33 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { adminApi } from '../api'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import QRCode from 'qrcode'
 import { Ticket, Download, Save, RefreshCw, Trash2, ImagePlus, Upload } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
 import { CREST_SRC } from '../../features/site/brand'
 import { teamInitials } from '../../features/matches/matchUtils'
 import { slugifyMatchPart } from '../../features/site/publicRoutes'
-import { TICKET_TEMPLATES, TICKET_BACKGROUNDS, TICKET_ACCENTS, backgroundUrl, backgroundFill, TICKET_WIDTH, TICKET_HEIGHT, paintTicket } from './ticketTemplates'
+import { TICKET_TEMPLATES, TICKET_BACKGROUNDS, TICKET_ACCENTS, backgroundUrl, backgroundFill, TICKET_WIDTH, TICKET_HEIGHT, paintTicket, ensureTicketFonts } from './ticketTemplates'
 
-// Admin API helper scoped to this module (same shape as the other commerce
 // modules so it keeps working independently of AdminApp internals).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 // Upload an image (blob or File) to the persistent media microservice, the same
 // endpoint the match admin already uses. Returns the public absolute URL.
@@ -141,6 +122,7 @@ function matchBody(match, fields, overrides) {
 }
 
 export default function TicketDesignerModule({ onError }) {
+  const confirm = useConfirm()
   const [matches, setMatches] = useState([])
   // Preselect the match passed by the billetterie screen (?match=<id>).
   const [matchId, setMatchId] = useState(() => {
@@ -163,6 +145,11 @@ export default function TicketDesignerModule({ onError }) {
   // Taille du titre et position verticale du bloc texte (texte + logos).
   const [titleSize, setTitleSize] = useState('normal')
   const [textPos, setTextPos] = useState('normal')
+  // Détails du billet imprimé : numéro de série (barcode) et placement.
+  const [serial, setSerial] = useState('')
+  const [tribune, setTribune] = useState('')
+  const [gate, setGate] = useState('')
+  const [seat, setSeat] = useState('')
   // Lets us pre-fill the text fields from a match once, without clobbering edits.
   const [prefillFor, setPrefillFor] = useState('')
   const [saving, setSaving] = useState(false)
@@ -176,7 +163,7 @@ export default function TicketDesignerModule({ onError }) {
 
   async function loadMatches(selectId) {
     try {
-      const list = await api('/admin/matches')
+      const list = await adminApi('/admin/matches')
       const sorted = (Array.isArray(list) ? list : []).slice().sort((a, b) => {
         const ta = read(a, 'KickoffAt', 'kickoffAt') ? new Date(read(a, 'KickoffAt', 'kickoffAt')).getTime() : Infinity
         const tb = read(b, 'KickoffAt', 'kickoffAt') ? new Date(read(b, 'KickoffAt', 'kickoffAt')).getTime() : Infinity
@@ -202,8 +189,13 @@ export default function TicketDesignerModule({ onError }) {
     setAwayTeam(fields.isHome ? fields.opponentName : 'JSO Oudhref')
     setDateText(fields.dateText)
     setVenueText(fields.venue)
+    // Serial derivato dallo UUID del match: stabile, unico, pronto per il barcode.
+    setSerial('JSO-' + String(fields.id).replace(/-/g, '').slice(0, 8).toUpperCase())
     setPrefillFor(fields.id)
   }, [fields, prefillFor])
+
+  // Load the display fonts once, then repaint so the preview uses them.
+  useEffect(() => { ensureTicketFonts().then(() => setImagesReady((n) => n + 1)) }, [])
 
   // Public URL encoded in the QR: the exact match page. The path ends with the
   // match UUID so the public app resolves it directly via matchIdFromPath
@@ -272,6 +264,10 @@ export default function TicketDesignerModule({ onError }) {
       showLogos,
       titleScale: titleSize === 'small' ? 0.8 : titleSize === 'large' ? 1.25 : 1,
       textDy: textPos === 'top' ? -80 : textPos === 'bottom' ? 80 : 0,
+      serial,
+      tribune,
+      gate,
+      seat,
       priceText: priceText || '5 DT',
       crestImage: imgs.crest,
       opponentImage: imgs.opponent,
@@ -279,7 +275,7 @@ export default function TicketDesignerModule({ onError }) {
       backgroundImage: imgs.background,
       backgroundFill: activeBackgroundFill,
     })
-  }, [fields, templateId, priceText, activeBackgroundFill, homeTeam, awayTeam, titleText, dateText, venueText, accent, showQr, showLogos, titleSize, textPos])
+  }, [fields, templateId, priceText, activeBackgroundFill, homeTeam, awayTeam, titleText, dateText, venueText, accent, showQr, showLogos, titleSize, textPos, serial, tribune, gate, seat])
 
   useEffect(() => { repaint() }, [repaint, imagesReady])
 
@@ -309,7 +305,7 @@ export default function TicketDesignerModule({ onError }) {
     setUploadingLogo(true)
     try {
       const url = await uploadMedia(file, `logo-${fields.opponentName}.png`, `Logo adversaire — ${fields.opponentName}`)
-      await api('/admin/matches/' + fields.id, { method: 'PUT', body: JSON.stringify(matchBody(match, fields, { opponentLogoUrl: url })) })
+      await adminApi('/admin/matches/' + fields.id, { method: 'PUT', body: JSON.stringify(matchBody(match, fields, { opponentLogoUrl: url })) })
       await loadMatches(fields.id)
       onError('')
     } catch (e) { onError(e.message) }
@@ -349,7 +345,7 @@ export default function TicketDesignerModule({ onError }) {
     try {
       const blob = await exportBlob()
       const url = await uploadMedia(blob, `billet-${fields.opponentName}.jpg`, 'Visuel de billet généré depuis le designer')
-      await api('/admin/matches/' + fields.id, { method: 'PUT', body: JSON.stringify(matchBody(match, fields, { ticketArtworkUrl: url })) })
+      await adminApi('/admin/matches/' + fields.id, { method: 'PUT', body: JSON.stringify(matchBody(match, fields, { ticketArtworkUrl: url })) })
       setSavedUrl(url)
       await loadMatches(fields.id)
       onError('')
@@ -359,10 +355,10 @@ export default function TicketDesignerModule({ onError }) {
 
   async function clearArtwork() {
     if (!match || !fields) return
-    if (!window.confirm('Retirer le visuel de billet enregistré pour ce match ?')) return
+    if (!await confirm('Retirer le visuel de billet enregistré pour ce match ?')) return
     setSaving(true)
     try {
-      await api('/admin/matches/' + fields.id, { method: 'PUT', body: JSON.stringify(matchBody(match, fields, { ticketArtworkUrl: null })) })
+      await adminApi('/admin/matches/' + fields.id, { method: 'PUT', body: JSON.stringify(matchBody(match, fields, { ticketArtworkUrl: null })) })
       setSavedUrl('')
       await loadMatches(fields.id)
       onError('')
@@ -451,6 +447,26 @@ export default function TicketDesignerModule({ onError }) {
             <input value={venueText} onChange={(e) => setVenueText(e.target.value)} placeholder="Stade Oudhref" className="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm font-normal outline-none focus:border-jso-blue"/>
           </label>
           {fields && <button type="button" onClick={() => setPrefillFor('')} className="mt-2 text-xs font-bold text-jso-blue">Reprendre les infos du match</button>}
+        </div>
+
+        {/* Numéro de série (barcode) et placement, comme sur un vrai billet. */}
+        <div className="rounded-xl border border-slate-200 p-3">
+          <p className="text-sm font-bold">Détails du billet</p>
+          <label className="mt-2 block text-xs font-bold text-slate-600">Numéro de série (code-barres)
+            <input value={serial} onChange={(e) => setSerial(e.target.value.toUpperCase())} maxLength={20} placeholder="JSO-1A2B3C4D" className="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm font-normal uppercase outline-none focus:border-jso-blue"/>
+          </label>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            <label className="text-xs font-bold text-slate-600">Tribune
+              <input value={tribune} onChange={(e) => setTribune(e.target.value)} maxLength={12} placeholder="A" className="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm font-normal outline-none focus:border-jso-blue"/>
+            </label>
+            <label className="text-xs font-bold text-slate-600">Porte
+              <input value={gate} onChange={(e) => setGate(e.target.value)} maxLength={12} placeholder="3" className="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm font-normal outline-none focus:border-jso-blue"/>
+            </label>
+            <label className="text-xs font-bold text-slate-600">Place
+              <input value={seat} onChange={(e) => setSeat(e.target.value)} maxLength={12} placeholder="12" className="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm font-normal outline-none focus:border-jso-blue"/>
+            </label>
+          </div>
+          <p className="mt-2 text-xs text-slate-400">Le numéro de série devient un vrai code-barres sur le stub. Les champs vides ne sont pas affichés.</p>
         </div>
 
         {/* Couleur d’accent + options d’affichage. */}

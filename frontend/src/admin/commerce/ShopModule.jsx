@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Link2, Pencil, X, Save, Plus } from 'lucide-react'
 import Field from '../components/Field'
 import { adminApi } from '../api'
@@ -6,6 +7,7 @@ import { emptyProduct } from '../constants'
 import { adminEditIdFromPath, adminEditUrl, navigateAdminEdit } from '../adminRoutes'
 import { sharePreviewUrl } from '../../lib/sharePreviewUrl'
 export default function ShopModule({ onError }) {
+  const confirm = useConfirm()
   const [products, setProducts] = useState([])
   const [form, setForm] = useState(emptyProduct)
   const [editing, setEditing] = useState(null)
@@ -94,7 +96,7 @@ export default function ShopModule({ onError }) {
   }
 
   async function remove(id) {
-    if (!confirm('Supprimer ce produit ?')) return
+    if (!await confirm('Supprimer ce produit ?')) return
     try { await adminApi('/admin/shop/products/' + id, { method: 'DELETE' }); if (editing === id) reset(); await load() }
     catch (e) { onError(e.message) }
   }

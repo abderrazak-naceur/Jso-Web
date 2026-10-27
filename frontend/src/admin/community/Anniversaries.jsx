@@ -1,27 +1,6 @@
 import { useEffect, useState } from 'react'
+import { adminApi } from '../api'
 import { Cake, Gift, PartyPopper, RefreshCw } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/apiConfig'
-
-// Admin API helper scoped to this module (mirrors the one in AdminApp.jsx).
-async function api(path, options = {}) {
-  const token = localStorage.getItem('jso_admin_token')
-  const response = await fetch(API_BASE_URL + path, {
-    ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    let message = 'Request failed: ' + response.status
-    try { message = (await response.json()).message || message } catch { /* ignore */ }
-    throw new Error(message)
-  }
-  if (response.status === 204) return null
-  return response.json()
-}
 
 // Aujourd'hui au format YYYY-MM-DD (UTC) pour préremplir le sélecteur de date.
 function todayIso() {
@@ -51,7 +30,7 @@ export default function AnniversariesModule({ onError }) {
     setLoading(true)
     try {
       const q = date ? '?date=' + encodeURIComponent(date) : ''
-      setData(await api('/admin/anniversaries/today' + q))
+      setData(await adminApi('/admin/anniversaries/today' + q))
       onError('')
     } catch (err) { onError(err.message) }
     finally { setLoading(false) }

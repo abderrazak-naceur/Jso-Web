@@ -32,9 +32,36 @@ let SHOW_LOGOS = true
 let TITLE_SCALE = 1
 let TEXT_DY = 0
 
-// Headline font scaled by the admin's title-size control.
+// Headline font scaled by the admin's title-size control. Uses the display
+// face loaded by ensureTicketFonts() (Archivo Black) with Arial as fallback.
 function hf(weight, size) {
-  return `${weight} ${Math.round(size * TITLE_SCALE)}px Arial, sans-serif`
+  return `${weight} ${Math.round(size * TITLE_SCALE)}px 'Archivo Black', Arial, sans-serif`
+}
+
+// The matte colour used to "punch" the ticket notches. It matches the admin
+// page background so the exported JPEG reads as a die-cut ticket stub.
+const MATTE = '#f4f7fc'
+
+// Loads the display faces used by the templates from Google Fonts and waits
+// for them before the first paint. Falls back silently to Arial if offline.
+let fontsPromise = null
+export function ensureTicketFonts() {
+  if (!fontsPromise) {
+    fontsPromise = (async () => {
+      if (typeof document === 'undefined' || !document.fonts) return
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = 'https://fonts.googleapis.com/css2?family=Archivo+Black&family=Oswald:wght@500;600;700&display=swap'
+      document.head.appendChild(link)
+      await Promise.all([
+        document.fonts.load('400 40px "Archivo Black"'),
+        document.fonts.load('700 32px Oswald'),
+        document.fonts.load('600 24px Oswald'),
+        document.fonts.load('500 20px Oswald'),
+      ])
+    })().catch(() => {})
+  }
+  return fontsPromise
 }
 
 export const TICKET_ACCENTS = [
@@ -138,29 +165,92 @@ function drawLogoBadge(ctx, img, initials, cx, cy, radius, ring) {
 }
 
 function dashedPerforation(ctx, x, top, bottom, color) {
+  // Dotted perforation (small round holes) with punched semicircle notches at
+  // the top and bottom edges, like a real die-cut ticket stub.
   ctx.save()
-  ctx.strokeStyle = color
-  ctx.lineWidth = 3
-  ctx.setLineDash([10, 12])
+  ctx.fillStyle = color
+  for (let y = top; y <= bottom; y += 14) {
+    ctx.beginPath()
+    ctx.arc(x, y, 2.6, 0, Math.PI * 2)
+    ctx.fill()
+  }
+  ctx.restore()
+  // Notches punched into the matte so the stub looks detachable.
+  ctx.save()
+  ctx.fillStyle = MATTE
   ctx.beginPath()
-  ctx.moveTo(x, top)
-  ctx.lineTo(x, bottom)
-  ctx.stroke()
+  ctx.arc(x, 0, 16, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.arc(x, TICKET_HEIGHT, 16, 0, Math.PI * 2)
+  ctx.fill()
   ctx.restore()
 }
 
-// Right-hand stub: JSO wordmark, framed QR, price. `dark` chooses the palette.
+// Soft vignette over the photo area so edges fall off like a studio light.
+function vignette(ctx, w, h, strength = 0.38) {
+  const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.75)
+  g.addColorStop(0, 'rgba(0,0,0,0)')
+  g.addColorStop(1, `rgba(4,9,20,${strength})`)
+  ctx.save()
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, w, h)
+  ctx.restore()
+}
+
+// Minimal CODE39 encoder (uppercase A–Z, 0–9, dash, point, space, star guards).
+const CODE39 = {
+  '0': 'nnnwwnwnn', '1': 'wnnwnnnnw', '2': 'nnwwnnnnw', '3': 'wnwwnnnnn', '4': 'nnnwwnnnw',
+  '5': 'wnnwwnnnn', '6': 'nnwwwnnnn', '7': 'nnnwnnwnw', '8': 'wnnwnnwnn', '9': 'nnwwnnwnn',
+  A: 'wnnnnwnnw', B: 'nnwnnwnnw', C: 'wnwnnwnnn', D: 'nnnnwwnnw', E: 'wnnnwwnnn',
+  F: 'nnwnwwnnn', G: 'nnnnnwwnw', H: 'wnnnnwwnn', I: 'nnwnnwwnn', J: 'nnnnwwwnn',
+  K: 'wnnnnnnww', L: 'nnwnnnnww', M: 'wnwnnnnwn', N: 'nnnnwnnww', O: 'wnnnwnnwn',
+  P: 'nnwwnnnwn', Q: 'nnnnnnwww', R: 'wnnnnnwwn', S: 'nnwnnnwwn', T: 'nnnnwnwwn',
+  U: 'wwnnnnnnw', V: 'nwwnnnnnw', W: 'wwwnnnnnn', X: 'nwnnwnnnw', Y: 'wwnnwnnnn',
+  Z: 'nwwnwnnnn', '-': 'nwnnnnwnw', '.': 'wwnnnnwnn', ' ': 'nwwnnnwnn', '*': 'nwnnwnwnn',
+}
+
+// Draw a CODE39 barcode for `text` centred inside the given box.
+function drawBarcode(ctx, text, cx, y, width, height, color) {
+  const value = `*${String(text).toUpperCase().replace(/[^0-9A-Z.\- ]/g, '')}*`
+  const narrow = 2
+  const wide = 5
+  let totalUnits = 0
+  for (const ch of value) totalUnits += [...(CODE39[ch] || '')].reduce((n, c) => n + (c === 'w' ? wide : narrow), 0) + narrow
+  if (!totalUnits) return
+  const scale = Math.min(1, width / totalUnits)
+  let x = cx - (totalUnits * scale) / 2
+  ctx.save()
+  ctx.fillStyle = color
+  for (const ch of value) {
+    const pattern = CODE39[ch] || ''
+    let isBar = true
+    for (const c of pattern) {
+      const w = (c === 'w' ? wide : narrow) * scale
+      if (isBar) ctx.fillRect(x, y, Math.max(1, w - 0.4), height)
+      x += w
+      isBar = !isBar
+    }
+    x += narrow * scale
+  }
+  ctx.restore()
+}
+
+// Right-hand stub: JSO wordmark, framed QR, price, seat info and a real
+// barcode with the ticket serial, punched like a die-cut ticket. `dark`
+// chooses the palette.
 function drawStub(ctx, data, x, w, dark) {
   const fg = dark ? WHITE : NAVY
-  dashedPerforation(ctx, x, 36, TICKET_HEIGHT - 36, dark ? 'rgba(255,255,255,0.5)' : 'rgba(11,23,48,0.3)')
+  const sub = dark ? 'rgba(255,255,255,0.65)' : 'rgba(11,23,48,0.65)'
+  dashedPerforation(ctx, x, 40, TICKET_HEIGHT - 40, dark ? 'rgba(255,255,255,0.5)' : 'rgba(11,23,48,0.3)')
   ctx.textAlign = 'center'
   ctx.fillStyle = fg
-  ctx.font = '800 26px Arial, sans-serif'
-  ctx.fillText('JSO', x + w / 2, 72)
+  ctx.font = '700 24px Oswald, Arial, sans-serif'
+  ctx.fillText('JSO', x + w / 2, 66)
   const showQr = data.showQr !== false
-  const qrSize = Math.min(w - 56, 196)
+  const qrSize = Math.min(w - 56, 168)
   const qrX = x + (w - qrSize) / 2
-  const qrY = 96
+  const qrY = 84
   if (showQr) {
     ctx.fillStyle = WHITE
     ctx.shadowColor = 'rgba(0,0,0,0.3)'
@@ -173,14 +263,43 @@ function drawStub(ctx, data, x, w, dark) {
   // price pill (sits under the QR, or centred vertically when the QR is hidden)
   const pillW = w - 64
   const pillX = x + 32
-  const pillY = showQr ? qrY + qrSize + 24 : TICKET_HEIGHT / 2 - 27
+  const pillY = showQr ? qrY + qrSize + 16 : 150
   ctx.fillStyle = GOLD
-  roundRect(ctx, pillX, pillY, pillW, 54, 14)
+  roundRect(ctx, pillX, pillY, pillW, 50, 14)
   ctx.fill()
   ctx.fillStyle = NAVY
-  ctx.font = '900 34px Arial, sans-serif'
+  ctx.font = `900 ${Math.round(32 * TITLE_SCALE)}px Oswald, Arial, sans-serif`
   ctx.textAlign = 'center'
-  ctx.fillText(data.priceText, x + w / 2, pillY + 37)
+  ctx.fillText(data.priceText, x + w / 2, pillY + 35)
+
+  // Seat info (tribune / porte / place), only the fields the admin filled in.
+  const seatParts = [
+    data.tribune ? `TRIBUNE ${data.tribune}` : '',
+    data.gate ? `PORTE ${data.gate}` : '',
+    data.seat ? `PLACE ${data.seat}` : '',
+  ].filter(Boolean)
+  if (seatParts.length) {
+    ctx.fillStyle = fg
+    ctx.font = '600 19px Oswald, Arial, sans-serif'
+    ctx.fillText(seatParts.join('  ·  '), x + w / 2, pillY + 84)
+  }
+
+  // Serial + real CODE39 barcode pinned to the bottom of the stub.
+  const serial = (data.serial || '').trim()
+  if (serial) {
+    const barcodeY = TICKET_HEIGHT - 84
+    ctx.fillStyle = dark ? 'rgba(255,255,255,0.92)' : '#ffffff'
+    roundRect(ctx, x + 24, barcodeY - 10, w - 48, 74, 10)
+    ctx.fill()
+    drawBarcode(ctx, serial, x + w / 2, barcodeY, w - 72, 40, '#0b1730')
+    ctx.fillStyle = '#0b1730'
+    ctx.font = '600 15px Oswald, Arial, sans-serif'
+    ctx.fillText(serial.toUpperCase(), x + w / 2, barcodeY + 58)
+  } else {
+    ctx.fillStyle = sub
+    ctx.font = '500 15px Oswald, Arial, sans-serif'
+    ctx.fillText('Vivez chaque match avec la JSO', x + w / 2, TICKET_HEIGHT - 36)
+  }
 }
 
 // The two teams as shown on the ticket. Uses the admin's manual names when
@@ -216,6 +335,8 @@ function paintBackground(ctx, data, overlay) {
     ctx.fillRect(0, 0, TICKET_WIDTH, TICKET_HEIGHT)
   }
   overlay(ctx)
+  // Soft vignette so edges fall off like a studio light on every template.
+  vignette(ctx, TICKET_WIDTH, TICKET_HEIGHT)
 }
 
 // ---- templates ------------------------------------------------------------
@@ -238,20 +359,20 @@ function paintStadium(ctx, data) {
   ctx.translate(0, TEXT_DY)
   drawLogoBadge(ctx, data.crestImage, 'JSO', 110, 120, 60, GOLD)
   ctx.fillStyle = WHITE
-  ctx.font = '800 26px Arial, sans-serif'
+  ctx.font = '800 26px Oswald, Arial, sans-serif'
   ctx.textAlign = 'center'
   ctx.fillText('VS', bodyW / 2 + 40, 128)
   drawLogoBadge(ctx, data.opponentImage, data.opponentInitials, bodyW - 120, 120, 60, GOLD)
 
   ctx.textAlign = 'left'
   ctx.fillStyle = GOLD
-  ctx.font = '800 22px Arial, sans-serif'
+  ctx.font = '800 22px Oswald, Arial, sans-serif'
   ctx.fillText(titleText(data, true), 56, 320)
   ctx.fillStyle = WHITE
   ctx.font = hf(900, 50)
   ctx.fillText(fitText(ctx, matchHeadline(data), bodyW - 110), 56, 375)
   ctx.fillStyle = 'rgba(255,255,255,0.82)'
-  ctx.font = '600 25px Arial, sans-serif'
+  ctx.font = '600 25px Oswald, Arial, sans-serif'
   ctx.fillText(fitText(ctx, `${data.dateText}  ·  ${data.venue}`, bodyW - 110), 56, 418)
   ctx.restore()
 
@@ -283,7 +404,7 @@ function paintSpotlight(ctx, data) {
   drawLogoBadge(ctx, data.opponentImage, data.opponentInitials, 130, 150, 72, GOLD)
   ctx.textAlign = 'left'
   ctx.fillStyle = GOLD
-  ctx.font = '800 22px Arial, sans-serif'
+  ctx.font = '800 22px Oswald, Arial, sans-serif'
   ctx.fillText(titleText(data, false), 230, 110)
   ctx.fillStyle = WHITE
   ctx.font = hf(900, 46)
@@ -291,7 +412,7 @@ function paintSpotlight(ctx, data) {
   ctx.font = hf(900, 40)
   ctx.fillText(fitText(ctx, `vs ${data.opponentName}`, bodyW - 260), 230, 215)
   ctx.fillStyle = 'rgba(255,255,255,0.82)'
-  ctx.font = '600 25px Arial, sans-serif'
+  ctx.font = '600 25px Oswald, Arial, sans-serif'
   ctx.fillText(fitText(ctx, data.dateText, bodyW - 90), 56, 400)
   ctx.fillText(fitText(ctx, data.venue, bodyW - 90), 56, 435)
   ctx.restore()
@@ -328,13 +449,13 @@ function paintTifo(ctx, data) {
   drawLogoBadge(ctx, data.opponentImage, data.opponentInitials, bodyW - 120, 120, 64, GOLD)
   ctx.textAlign = 'left'
   ctx.fillStyle = WHITE
-  ctx.font = '800 22px Arial, sans-serif'
+  ctx.font = '800 22px Oswald, Arial, sans-serif'
   ctx.fillText(titleText(data, false), 56, 90)
   ctx.font = hf(900, 56)
   ctx.fillText(fitText(ctx, matchHeadline(data), bodyW - 110), 56, 180)
   // text on the gold ribbon
   ctx.fillStyle = NAVY
-  ctx.font = '800 26px Arial, sans-serif'
+  ctx.font = '800 26px Oswald, Arial, sans-serif'
   ctx.fillText(fitText(ctx, `${data.dateText} · ${data.venue}`, bodyW - 90), 56, TICKET_HEIGHT - 105)
   ctx.restore()
 
@@ -363,17 +484,17 @@ function paintClassicPhoto(ctx, data) {
   drawLogoBadge(ctx, data.opponentImage, data.opponentInitials, bodyW - 110, 90, 56, GOLD)
   ctx.textAlign = 'left'
   ctx.fillStyle = WHITE
-  ctx.font = '800 22px Arial, sans-serif'
+  ctx.font = '800 22px Oswald, Arial, sans-serif'
   ctx.fillText(titleText(data, true), 56, 60)
   ctx.font = hf(900, 44)
   ctx.fillText(fitText(ctx, matchHeadline(data), bodyW - 200), 56, 210)
 
   ctx.fillStyle = GOLD
-  ctx.font = '800 22px Arial, sans-serif'
+  ctx.font = '800 22px Oswald, Arial, sans-serif'
   ctx.fillText('DATE', 56, photoH + 70)
   ctx.fillText('STADE', 56, photoH + 140)
   ctx.fillStyle = WHITE
-  ctx.font = '700 26px Arial, sans-serif'
+  ctx.font = '700 26px Oswald, Arial, sans-serif'
   ctx.fillText(fitText(ctx, data.dateText, bodyW - 110), 56, photoH + 105)
   ctx.fillText(fitText(ctx, data.venue, bodyW - 110), 56, photoH + 175)
   ctx.restore()
@@ -401,12 +522,12 @@ function paintBanner(ctx, data) {
   drawLogoBadge(ctx, data.opponentImage, data.opponentInitials, 220, 90, 56, GOLD)
   ctx.textAlign = 'left'
   ctx.fillStyle = WHITE
-  ctx.font = '800 20px Arial, sans-serif'
+  ctx.font = '800 20px Oswald, Arial, sans-serif'
   ctx.fillText(titleText(data, false), 56, TICKET_HEIGHT - 100)
   ctx.font = hf(900, 40)
   ctx.fillText(fitText(ctx, matchHeadline(data), bodyW - 110), 56, TICKET_HEIGHT - 55)
   ctx.fillStyle = 'rgba(255,255,255,0.8)'
-  ctx.font = '600 22px Arial, sans-serif'
+  ctx.font = '600 22px Oswald, Arial, sans-serif'
   ctx.fillText(fitText(ctx, `${data.dateText} · ${data.venue}`, bodyW - 110), 56, TICKET_HEIGHT - 24)
   ctx.restore()
 
@@ -425,18 +546,18 @@ function paintMinimal(ctx, data) {
   ctx.translate(0, TEXT_DY)
   ctx.textAlign = 'center'
   ctx.fillStyle = GOLD
-  ctx.font = '800 22px Arial, sans-serif'
+  ctx.font = '800 22px Oswald, Arial, sans-serif'
   ctx.fillText(titleText(data, true), bodyW / 2, 70)
 
   drawLogoBadge(ctx, data.crestImage, 'JSO', bodyW / 2 - 170, 190, 66, GOLD)
   drawLogoBadge(ctx, data.opponentImage, data.opponentInitials, bodyW / 2 + 170, 190, 66, GOLD)
   ctx.fillStyle = WHITE
-  ctx.font = '900 54px Arial, sans-serif'
+  ctx.font = '900 54px Oswald, Arial, sans-serif'
   ctx.fillText('VS', bodyW / 2, 208)
   ctx.font = hf(900, 34)
   ctx.fillText(fitText(ctx, matchHeadline(data), bodyW - 120), bodyW / 2, 330)
   ctx.fillStyle = 'rgba(255,255,255,0.8)'
-  ctx.font = '600 24px Arial, sans-serif'
+  ctx.font = '600 24px Oswald, Arial, sans-serif'
   ctx.fillText(fitText(ctx, `${data.dateText} · ${data.venue}`, bodyW - 120), bodyW / 2, 375)
   ctx.restore()
 
@@ -466,11 +587,11 @@ function paintGold(ctx, data) {
   drawLogoBadge(ctx, data.opponentImage, data.opponentInitials, bodyW - 120, 130, 68, NAVY)
   ctx.textAlign = 'left'
   ctx.fillStyle = NAVY
-  ctx.font = '800 24px Arial, sans-serif'
+  ctx.font = '800 24px Oswald, Arial, sans-serif'
   ctx.fillText(titleText(data, false), 56, 120)
   ctx.font = hf(900, 52)
   ctx.fillText(fitText(ctx, matchHeadline(data), bodyW - 110), 56, 200)
-  ctx.font = '700 25px Arial, sans-serif'
+  ctx.font = '700 25px Oswald, Arial, sans-serif'
   ctx.fillText(fitText(ctx, data.dateText, bodyW - 110), 56, 300)
   ctx.fillText(fitText(ctx, data.venue, bodyW - 110), 56, 338)
   ctx.restore()

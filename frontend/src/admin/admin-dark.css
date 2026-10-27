@@ -1,0 +1,106 @@
+/* Dark theme for the back office (P3).
+   Applied when the admin root wrapper carries .admin-dark. Instead of touching
+   every module, we remap the neutral Tailwind utilities the whole admin is
+   built with (bg-white, bg-slate-*, border-slate-*, text-slate-*) to a navy
+   dark scale. Brand accents (jso-navy / jso-blue / jso-gold) stay unchanged,
+   which keeps the club identity in dark mode too. */
+
+/* ——— Surfaces ——— */
+.admin-dark .bg-jso-paper { background-color: #0a1322 !important; }
+.admin-dark .bg-white { background-color: #101e32 !important; }
+.admin-dark .bg-white\/90 { background-color: rgb(16 30 50 / 0.92) !important; }
+.admin-dark .bg-slate-50 { background-color: #152741 !important; }
+.admin-dark .bg-slate-100 { background-color: #1b3050 !important; }
+.admin-dark .bg-slate-200 { background-color: #223a5c !important; }
+.admin-dark .bg-slate-950 { background-color: #060c16 !important; }
+
+/* ——— Borders ——— */
+.admin-dark .border-slate-100,
+.admin-dark .border-slate-200,
+.admin-dark .border-slate-300 { border-color: #233a5a !important; }
+.admin-dark .border-jso-gold\/40 { border-color: rgb(245 197 24 / 0.35) !important; }
+
+/* ——— Text ——— */
+.admin-dark .text-jso-ink,
+.admin-dark .text-slate-900,
+.admin-dark .text-slate-800 { color: #eef4fb !important; }
+.admin-dark .text-slate-700 { color: #cbd8e6 !important; }
+.admin-dark .text-slate-600 { color: #b3c3d6 !important; }
+.admin-dark .text-slate-500 { color: #8fa4bc !important; }
+.admin-dark .text-slate-400 { color: #7690ac !important; }
+
+/* ——— Hover states ——— */
+.admin-dark .hover\:bg-slate-50:hover { background-color: #152741 !important; }
+.admin-dark .hover\:bg-slate-100:hover { background-color: #1b3050 !important; }
+.admin-dark .hover\:bg-slate-200:hover { background-color: #223a5c !important; }
+.admin-dark .hover\:bg-red-50:hover { background-color: rgb(127 29 29 / 0.25) !important; }
+
+/* ——— Form fields ——— */
+.admin-dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.admin-dark select,
+.admin-dark textarea {
+  background-color: #152741;
+  border-color: #2a4265;
+  color: #e6eef8;
+}
+.admin-dark input::placeholder,
+.admin-dark textarea::placeholder { color: #63799a; }
+.admin-dark input:focus,
+.admin-dark select:focus,
+.admin-dark textarea:focus { border-color: #3b82c4; }
+
+/* ——— Status tints (success / warning / error / info) ——— */
+.admin-dark .bg-emerald-50 { background-color: rgb(6 78 59 / 0.22) !important; }
+.admin-dark .bg-emerald-100 { background-color: rgb(6 78 59 / 0.35) !important; }
+.admin-dark .bg-amber-50 { background-color: rgb(120 53 15 / 0.22) !important; }
+.admin-dark .bg-amber-100 { background-color: rgb(120 53 15 / 0.35) !important; }
+.admin-dark .bg-red-50 { background-color: rgb(127 29 29 / 0.22) !important; }
+.admin-dark .bg-red-100 { background-color: rgb(127 29 29 / 0.35) !important; }
+.admin-dark .bg-blue-50 { background-color: rgb(29 78 216 / 0.18) !important; }
+.admin-dark .bg-blue-100 { background-color: rgb(29 78 216 / 0.30) !important; }
+.admin-dark .bg-blue-950 { background-color: #0a1a33 !important; }
+.admin-dark .bg-rose-50 { background-color: rgb(136 19 55 / 0.22) !important; }
+
+.admin-dark .text-emerald-600 { color: #34d399 !important; }
+.admin-dark .text-emerald-700,
+.admin-dark .text-emerald-800 { color: #6ee7b7 !important; }
+.admin-dark .text-amber-600 { color: #fbbf24 !important; }
+.admin-dark .text-amber-700,
+.admin-dark .text-amber-800,
+.admin-dark .text-amber-900 { color: #fcd34d !important; }
+.admin-dark .text-red-600 { color: #f87171 !important; }
+.admin-dark .text-red-700,
+.admin-dark .text-red-800,
+.admin-dark .text-red-900 { color: #fca5a5 !important; }
+.admin-dark .text-blue-700,
+.admin-dark .text-blue-800,
+.admin-dark .text-blue-900,
+.admin-dark .text-blue-950 { color: #93c5fd !important; }
+.admin-dark .text-rose-700 { color: #fda4af !important; }
+
+.admin-dark .border-emerald-200 { border-color: rgb(6 78 59 / 0.5) !important; }
+.admin-dark .border-amber-200,
+.admin-dark .border-amber-300 { border-color: rgb(120 53 15 / 0.5) !important; }
+.admin-dark .border-red-200,
+.admin-dark .border-red-300,
+.admin-dark .border-red-400 { border-color: rgb(220 38 38 / 0.45) !important; }
+.admin-dark .border-blue-200 { border-color: rgb(29 78 216 / 0.4) !important; }
+
+/* ——— Shadows & misc ——— */
+.admin-dark .shadow-sm,
+.admin-dark .shadow,
+.admin-dark .shadow-md,
+.admin-dark .shadow-lg,
+.admin-dark .shadow-xl,
+.admin-dark .shadow-2xl { --tw-shadow-color: rgb(0 0 0 / 0.45); }
+
+.admin-dark kbd { background-color: #152741; border-color: #2a4265; color: #8fa4bc; }
+
+/* Mobile bottom navigation (styles live in admin-responsive.css). */
+.admin-dark .jso-admin-mobile-nav {
+  background-color: #101e32;
+  border-color: #233a5a;
+}
+
+/* Sidebar scrollbar on dark surfaces. */
+.admin-dark .jso-scroll::-webkit-scrollbar-thumb { background-color: #2a4265; }
