@@ -5,7 +5,7 @@ import { API_BASE_URL } from '../../lib/apiConfig'
 import { CREST_SRC } from '../../features/site/brand'
 import { teamInitials } from '../../features/matches/matchUtils'
 import { slugifyMatchPart } from '../../features/site/publicRoutes'
-import { TICKET_TEMPLATES, TICKET_BACKGROUNDS, backgroundUrl, TICKET_WIDTH, TICKET_HEIGHT, paintTicket } from './ticketTemplates'
+import { TICKET_TEMPLATES, TICKET_BACKGROUNDS, backgroundUrl, backgroundFill, TICKET_WIDTH, TICKET_HEIGHT, paintTicket } from './ticketTemplates'
 
 // Admin API helper scoped to this module (same shape as the other commerce
 // modules so it keeps working independently of AdminApp internals).
@@ -57,15 +57,41 @@ async function uploadMedia(file, filename, caption) {
 // Load an image for canvas use. crossOrigin lets us export the canvas without
 // tainting it when the media host sends CORS headers. Resolves null on error
 // so the templates can fall back to initials / plain backgrounds.
-function loadImage(src) {
-  return new Promise((resolve) => {
-    if (!src) { resolve(null); return }
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => resolve(img)
-    img.onerror = () => resolve(null)
-    img.src = src
-  })
+async function loadImage(src) {
+  // Decode an <img> from a source. Marks __cors=true when the pixels are
+  // safe to export (same-origin, data:, blob:, or a CORS-enabled load).
+  function decode(source, cors) {
+    return new Promise((resolve) => {
+      const img = new Image()
+      if (cors) img.crossOrigin = 'anonymous'
+      img.onload = () => { img.__cors = cors; resolve(img) }
+      img.onerror = () => resolve(null)
+      img.src = source
+    })
+  }
+
+  if (!src) return null
+  // data:/blob: and same-origin URLs are always exportable.
+  const sameOrigin = /^(data:|blob:)/i.test(src) || (typeof window !== 'undefined' && src.startsWith(window.location.origin)) || src.startsWith('/')
+  if (sameOrigin) return decode(src, false).then((img) => { if (img) img.__cors = true; return img })
+
+  // Cross-origin (media host): fetch the bytes and wrap them in a same-origin
+  // blob: URL. A blob: image never taints the canvas, so export keeps working
+  // regardless of the host's CORS headers. If the fetch is blocked, fall back
+  // to a direct load for the preview (canvas then tainted → export via URL).
+  try {
+    const response = await fetch(src, { mode: 'cors' })
+    if (response.ok) {
+      const blob = await response.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      const img = await decode(objectUrl, false)
+      if (img) { img.__cors = true; img.__objectUrl = objectUrl; return img }
+      URL.revokeObjectURL(objectUrl)
+    }
+  } catch { /* fall through to a tainting load */ }
+
+  // Try a CORS <img> load, then a plain one so the preview still shows.
+  return (await decode(src, true)) || (await decode(src, false))
 }
 
 const read = (match, pascal, camel) => match?.[pascal] ?? match?.[camel]
@@ -163,8 +189,9 @@ export default function TicketDesignerModule({ onError }) {
   }, [fields])
 
   // The background actually used: a custom uploaded photo takes priority,
-  // otherwise the chosen bundled background.
+  // otherwise the chosen bundled background (a photo URL or a colour gradient).
   const activeBackgroundUrl = customBackgroundUrl || backgroundUrl(backgroundId)
+  const activeBackgroundFill = customBackgroundUrl ? null : backgroundFill(backgroundId)
 
   // Preload crest, opponent logo and QR when the match (or its logo) changes.
   useEffect(() => {
@@ -196,7 +223,8 @@ export default function TicketDesignerModule({ onError }) {
     return () => { active = false }
   }, [activeBackgroundUrl])
 
-  // Repaint the canvas on any change to the template, match or price.
+  // Repaint the canvas on any change to the template, match, price or
+  // background colour.
   const repaint = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas || !fields) return
@@ -209,8 +237,9 @@ export default function TicketDesignerModule({ onError }) {
       opponentImage: imgs.opponent,
       qrImage: imgs.qr,
       backgroundImage: imgs.background,
+      backgroundFill: activeBackgroundFill,
     })
-  }, [fields, templateId, priceText])
+  }, [fields, templateId, priceText, activeBackgroundFill])
 
   useEffect(() => { repaint() }, [repaint, imagesReady])
 
@@ -218,7 +247,12 @@ export default function TicketDesignerModule({ onError }) {
     return new Promise((resolve, reject) => {
       const canvas = canvasRef.current
       if (!canvas) { reject(new Error('Aperçu indisponible.')); return }
-      canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Impossible de générer l’image.')), type, quality)
+      try {
+        canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Impossible de générer l’image.')), type, quality)
+      } catch {
+        // SecurityError: a non-CORS image tainted the canvas.
+        reject(new Error('Une des images (logo ou fond) ne peut pas être exportée depuis son hébergeur. Téléversez-la à nouveau depuis le designer puis réessayez.'))
+      }
     })
   }
 

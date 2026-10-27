@@ -20,16 +20,25 @@ const NAVY = '#0b1730'
 const GOLD = '#f5c518'
 const WHITE = '#ffffff'
 
-// Bundled professional backgrounds shipped with the app (public/). The admin
-// can also upload a custom background from the designer.
+// Bundled backgrounds shown in the designer. Photo backgrounds reference a
+// same-origin image in public/; colour backgrounds carry no URL and are painted
+// as a gradient (via `fill`). The admin can also upload a custom photo.
 export const TICKET_BACKGROUNDS = [
   { id: 'stadium', label: 'Stade (nuit)', url: '/jso-stadium-hero.png' },
   { id: 'bus', label: 'Supporters & bus', url: '/jso-bus-campaign.png' },
-  { id: 'none', label: 'Aucune (dégradé)', url: '' },
+  { id: 'navy', label: 'Bleu nuit', url: '', fill: ['#0b1730', '#13233f'] },
+  { id: 'blue', label: 'Bleu royal', url: '', fill: ['#0b1730', '#1d4ed8'] },
+  { id: 'gold', label: 'Dégradé or', url: '', fill: ['#13233f', '#8a6d08'] },
+  { id: 'none', label: 'Aucune', url: '', fill: ['#0b1730', '#13233f'] },
 ]
 
 export function backgroundUrl(id) {
   return (TICKET_BACKGROUNDS.find((item) => item.id === id) || TICKET_BACKGROUNDS[0]).url
+}
+
+// The gradient stops for a colour background id (empty for photo backgrounds).
+export function backgroundFill(id) {
+  return (TICKET_BACKGROUNDS.find((item) => item.id === id) || {}).fill || null
 }
 
 // ---- small canvas helpers -------------------------------------------------
@@ -155,9 +164,12 @@ function paintBackground(ctx, data, overlay) {
   if (data.backgroundImage) {
     drawCover(ctx, data.backgroundImage, 0, 0, TICKET_WIDTH, TICKET_HEIGHT)
   } else {
+    const stops = Array.isArray(data.backgroundFill) && data.backgroundFill.length >= 2
+      ? data.backgroundFill
+      : ['#0b1730', '#13233f']
     const grad = ctx.createLinearGradient(0, 0, TICKET_WIDTH, TICKET_HEIGHT)
-    grad.addColorStop(0, '#0b1730')
-    grad.addColorStop(1, '#13233f')
+    grad.addColorStop(0, stops[0])
+    grad.addColorStop(1, stops[1])
     ctx.fillStyle = grad
     ctx.fillRect(0, 0, TICKET_WIDTH, TICKET_HEIGHT)
   }
@@ -316,11 +328,105 @@ function paintClassicPhoto(ctx, data) {
   drawStub(ctx, data, bodyW, stubW, true)
 }
 
+// 5. Bannière — grande photo pleine largeur, bandeau navy translucide en bas.
+function paintBanner(ctx, data) {
+  paintBackground(ctx, data, (c) => {
+    c.fillStyle = 'rgba(7,14,32,0.25)'
+    c.fillRect(0, 0, TICKET_WIDTH, TICKET_HEIGHT)
+  })
+  const stubW = 300
+  const bodyW = TICKET_WIDTH - stubW
+  // bottom navy band
+  ctx.fillStyle = 'rgba(7,14,32,0.86)'
+  ctx.fillRect(0, TICKET_HEIGHT - 150, bodyW, 150)
+  ctx.fillStyle = GOLD
+  ctx.fillRect(0, TICKET_HEIGHT - 150, bodyW, 6)
+
+  drawLogoBadge(ctx, data.crestImage, 'JSO', 90, 90, 56, GOLD)
+  drawLogoBadge(ctx, data.opponentImage, data.opponentInitials, 220, 90, 56, GOLD)
+  ctx.textAlign = 'left'
+  ctx.fillStyle = WHITE
+  ctx.font = '800 20px Arial, sans-serif'
+  ctx.fillText('BILLET DE MATCH', 56, TICKET_HEIGHT - 100)
+  ctx.font = '900 40px Arial, sans-serif'
+  ctx.fillText(fitText(ctx, matchHeadline(data), bodyW - 110), 56, TICKET_HEIGHT - 55)
+  ctx.fillStyle = 'rgba(255,255,255,0.8)'
+  ctx.font = '600 22px Arial, sans-serif'
+  ctx.fillText(fitText(ctx, `${data.dateText} · ${data.venue}`, bodyW - 110), 56, TICKET_HEIGHT - 24)
+
+  drawStub(ctx, data, bodyW, stubW, true)
+}
+
+// 6. Minimal — photo centrée très assombrie, grand "VS" central, épuré.
+function paintMinimal(ctx, data) {
+  paintBackground(ctx, data, (c) => {
+    c.fillStyle = 'rgba(7,14,32,0.78)'
+    c.fillRect(0, 0, TICKET_WIDTH, TICKET_HEIGHT)
+  })
+  const stubW = 300
+  const bodyW = TICKET_WIDTH - stubW
+  ctx.textAlign = 'center'
+  ctx.fillStyle = GOLD
+  ctx.font = '800 22px Arial, sans-serif'
+  ctx.fillText('BILLET DE MATCH · STADE OUDHREF', bodyW / 2, 70)
+
+  drawLogoBadge(ctx, data.crestImage, 'JSO', bodyW / 2 - 170, 190, 66, GOLD)
+  drawLogoBadge(ctx, data.opponentImage, data.opponentInitials, bodyW / 2 + 170, 190, 66, GOLD)
+  ctx.fillStyle = WHITE
+  ctx.font = '900 54px Arial, sans-serif'
+  ctx.fillText('VS', bodyW / 2, 208)
+  ctx.font = '900 34px Arial, sans-serif'
+  ctx.fillText(fitText(ctx, matchHeadline(data), bodyW - 120), bodyW / 2, 330)
+  ctx.fillStyle = 'rgba(255,255,255,0.8)'
+  ctx.font = '600 24px Arial, sans-serif'
+  ctx.fillText(fitText(ctx, `${data.dateText} · ${data.venue}`, bodyW - 120), bodyW / 2, 375)
+
+  drawStub(ctx, data, bodyW, stubW, true)
+}
+
+// 7. Or — fond or vif (ou photo), texte navy, look premium à fort contraste.
+function paintGold(ctx, data) {
+  if (data.backgroundImage) {
+    drawCover(ctx, data.backgroundImage, 0, 0, TICKET_WIDTH, TICKET_HEIGHT)
+    ctx.fillStyle = 'rgba(245,197,24,0.86)'
+    ctx.fillRect(0, 0, TICKET_WIDTH, TICKET_HEIGHT)
+  } else {
+    const g = ctx.createLinearGradient(0, 0, TICKET_WIDTH, TICKET_HEIGHT)
+    g.addColorStop(0, '#f5c518')
+    g.addColorStop(1, '#e0a800')
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, TICKET_WIDTH, TICKET_HEIGHT)
+  }
+  const stubW = 300
+  const bodyW = TICKET_WIDTH - stubW
+  ctx.fillStyle = NAVY
+  ctx.fillRect(0, 0, bodyW, 8)
+
+  drawLogoBadge(ctx, data.opponentImage, data.opponentInitials, bodyW - 120, 130, 68, NAVY)
+  ctx.textAlign = 'left'
+  ctx.fillStyle = NAVY
+  ctx.font = '800 24px Arial, sans-serif'
+  ctx.fillText('BILLET DE MATCH', 56, 120)
+  ctx.font = '900 52px Arial, sans-serif'
+  ctx.fillText(fitText(ctx, matchHeadline(data), bodyW - 110), 56, 200)
+  ctx.font = '700 25px Arial, sans-serif'
+  ctx.fillText(fitText(ctx, data.dateText, bodyW - 110), 56, 300)
+  ctx.fillText(fitText(ctx, data.venue, bodyW - 110), 56, 338)
+
+  // navy stub for contrast
+  ctx.fillStyle = NAVY
+  ctx.fillRect(bodyW, 0, stubW, TICKET_HEIGHT)
+  drawStub(ctx, data, bodyW, stubW, true)
+}
+
 export const TICKET_TEMPLATES = [
   { id: 'stadium', label: 'Stade', paint: paintStadium, usesPhoto: true },
   { id: 'spotlight', label: 'Projecteur', paint: paintSpotlight, usesPhoto: true },
   { id: 'tifo', label: 'Tifo', paint: paintTifo, usesPhoto: true },
   { id: 'classic', label: 'Classique', paint: paintClassicPhoto, usesPhoto: true },
+  { id: 'banner', label: 'Bannière', paint: paintBanner, usesPhoto: true },
+  { id: 'minimal', label: 'Minimal', paint: paintMinimal, usesPhoto: true },
+  { id: 'gold', label: 'Or premium', paint: paintGold, usesPhoto: true },
 ]
 
 export function getTemplate(id) {
