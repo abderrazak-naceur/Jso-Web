@@ -95,7 +95,11 @@ export default function FundraisingProjects({ onError = noop }) {
   const [mutationError, setMutationError] = useState('')
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteAcknowledged, setDeleteAcknowledged] = useState(false)
+  const [canForceDelete, setCanForceDelete] = useState(false)
   const [contactTarget, setContactTarget] = useState(null)
+  // The force-delete override (bypassing the payment-history guard) is only
+  // offered to a SuperAdmin, matching the server-side restriction.
+  const isSuperAdmin = (() => { try { return JSON.parse(localStorage.getItem('jso_admin_user') || '{}').role === 'SuperAdmin' } catch { return false } })()
   const formRef = useRef(form)
   const editingRef = useRef(editingId)
   formRef.current = form
@@ -195,26 +199,35 @@ export default function FundraisingProjects({ onError = noop }) {
   function askDelete(project, commitment = null) {
     setDeleteTarget({ project, commitment })
     setDeleteAcknowledged(false)
+    setCanForceDelete(false)
     setMutationError('')
   }
 
-  async function deleteConfirmed() {
+  async function deleteConfirmed(force = false) {
     if (!deleteTarget || !deleteAcknowledged || mutationBusy) return
     const { project, commitment } = deleteTarget
     setMutationBusy(commitment?.id || project.id)
     setMutationError('')
     try {
-      await adminApi(`/admin/fundraising/projects/${project.id}${commitment ? `/commitments/${commitment.id}` : ''}`, { method: 'DELETE' })
+      // `force=true` (SuperAdmin only, project-level) bypasses the server's
+      // payment-history guard to permanently delete an archived project.
+      const base = `/admin/fundraising/projects/${project.id}${commitment ? `/commitments/${commitment.id}` : ''}`
+      await adminApi(base + (force && !commitment ? '?force=true' : ''), { method: 'DELETE' })
       if (commitment) setCommitments(current => current.filter(item => item.id !== commitment.id))
       else {
         if (editingId === project.id) closeEditor()
         if (managedProject === project.id) { setManagedProject(null); setCommitments([]) }
       }
       setDeleteTarget(null)
+      setCanForceDelete(false)
       await loadProjects()
-      setMessage(commitment ? 'Inscription sans paiement supprimée, avec ses échéances non réglées.' : 'Projet de test supprimé avec ses inscriptions et échéances non réglées. Vous pouvez le recréer.')
+      setMessage(commitment ? 'Inscription sans paiement supprimée, avec ses échéances non réglées.'
+        : force ? 'Projet supprimé définitivement (SuperAdmin), avec son historique.'
+          : 'Projet de test supprimé avec ses inscriptions et échéances non réglées. Vous pouvez le recréer.')
       onError('')
     } catch (error) {
+      // A 409 on a project delete may offer a SuperAdmin force override.
+      setCanForceDelete(Boolean(error.payload?.canForceDelete) && !commitment)
       const detail = error.status === 409 ? `${error.message} Pour recommencer les essais, archivez ce projet puis dupliquez-le en brouillon. Les traces financières restent conservées.` : error.message
       setMutationError(detail)
       onError(detail)
@@ -346,11 +359,12 @@ export default function FundraisingProjects({ onError = noop }) {
     {contactTarget && <ContactDialog commitment={contactTarget} onClose={() => setContactTarget(null)} onSave={saveContact}/>}
     {deleteTarget && <ManagementDialog title={deleteTarget.commitment ? 'Supprimer cette inscription ?' : 'Supprimer ce projet ?'} onClose={() => { setDeleteTarget(null); setMutationError('') }} busy={Boolean(mutationBusy)} footer={<>
       <button type="button" disabled={Boolean(mutationBusy)} onClick={() => { setDeleteTarget(null); setMutationError('') }} className="rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold">Annuler</button>
-      <button type="button" disabled={!deleteAcknowledged || Boolean(mutationBusy) || Boolean(confirmingId)} onClick={deleteConfirmed} className="rounded-xl bg-red-700 px-4 py-3 text-sm font-bold text-white disabled:opacity-50">{mutationBusy ? 'Suppression…' : deleteTarget.commitment ? 'Supprimer définitivement l’inscription' : 'Supprimer définitivement le projet'}</button>
+      <button type="button" disabled={!deleteAcknowledged || Boolean(mutationBusy) || Boolean(confirmingId)} onClick={() => deleteConfirmed(false)} className="rounded-xl bg-red-700 px-4 py-3 text-sm font-bold text-white disabled:opacity-50">{mutationBusy ? 'Suppression…' : deleteTarget.commitment ? 'Supprimer définitivement l’inscription' : 'Supprimer définitivement le projet'}</button>
     </>}>
-      <p className="text-sm leading-6 text-slate-600">{deleteTarget.commitment ? <>L’inscription de <strong>{deleteTarget.commitment.displayName}</strong> au projet <strong>{deleteTarget.project.title}</strong> et ses échéances non réglées seront supprimées.</> : <>Le projet <strong>{deleteTarget.project.title}</strong>, ses inscriptions et ses échéances non réglées seront supprimés.</>} Cette opération est définitive et sera refusée si un paiement ou une tentative de paiement existe.</p>
+      <p className="text-sm leading-6 text-slate-600">{deleteTarget.commitment ? <>L’inscription de <strong>{deleteTarget.commitment.displayName}</strong> au projet <strong>{deleteTarget.project.title}</strong> et ses échéances non réglées seront supprimées.</> : <>Le projet <strong>{deleteTarget.project.title}</strong>, ses inscriptions et ses échéances non réglées seront supprimés.</>} Cette opération est définitive et sera refusée si un paiement ou une tentative de paiement existe{!deleteTarget.commitment && isSuperAdmin ? ', sauf suppression forcée par un SuperAdmin' : ''}.</p>
       <label className="mt-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-900"><input type="checkbox" checked={deleteAcknowledged} onChange={event => setDeleteAcknowledged(event.target.checked)} className="mt-1 h-4 w-4 shrink-0"/><span>Je confirme vouloir supprimer définitivement {deleteTarget.commitment ? 'cette inscription de test' : 'ce projet de test'} sans effacer de trace de paiement.</span></label>
       {mutationError && <div role="alert" className="mt-4 rounded-xl bg-amber-50 p-4 text-sm leading-6 text-amber-950"><p>{mutationError}</p><div className="mt-3 flex flex-wrap gap-2">{deleteTarget.project.status !== 'Archived' && <button type="button" disabled={Boolean(mutationBusy)} onClick={() => changeStatus(deleteTarget.project, 'Archived')} className="rounded-lg bg-blue-950 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Archiver le projet</button>}<button type="button" disabled={Boolean(mutationBusy)} onClick={() => duplicate(deleteTarget.project)} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-bold disabled:opacity-50">Préparer une copie en brouillon</button></div></div>}
+      {canForceDelete && isSuperAdmin && <div className="mt-4 rounded-xl border border-red-300 bg-red-50 p-4"><p className="text-sm font-bold text-red-900">Suppression définitive (SuperAdmin)</p><p className="mt-1 text-sm leading-6 text-red-800">Ce projet a un historique de paiement. En tant que SuperAdmin, vous pouvez le supprimer définitivement avec toutes ses inscriptions et échéances. Cette action est irréversible et effacera aussi ces traces financières.</p><button type="button" disabled={!deleteAcknowledged || Boolean(mutationBusy)} onClick={() => deleteConfirmed(true)} className="mt-3 rounded-lg bg-red-800 px-4 py-2.5 text-xs font-black text-white disabled:opacity-50">{mutationBusy ? 'Suppression…' : 'Forcer la suppression définitive'}</button></div>}
     </ManagementDialog>}
     {preview && previewProject && <PreviewDialog project={previewProject} onClose={() => setPreview(false)}/>}
   </div>

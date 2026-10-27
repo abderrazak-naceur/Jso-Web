@@ -43,9 +43,18 @@ public sealed class AdminFundraisingController(JsoDbContext db, AuditService aud
         return Ok(await FundraisingQueries.Projects(db, id).SingleAsync(ct));
     }
 
+    // Deleting a project is normally refused when it has any payment or payment
+    // attempt, so its financial history is preserved (archive instead). A
+    // SuperAdmin may override that guard with `force=true` to permanently
+    // delete an archived/obsolete project and ALL its dependent data. The
+    // override is restricted to SuperAdmin and separately audited.
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid id, bool force, CancellationToken ct)
     {
+        var superAdminForce = force && User.IsInRole("SuperAdmin");
+        if (force && !User.IsInRole("SuperAdmin"))
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "La suppression définitive d’un projet avec historique est réservée au SuperAdmin." });
+
         // The financial guard and all dependent removals share one transaction.
         // A restrictive FK also prevents a concurrent registration from being orphaned.
         await using var transaction = db.Database.IsRelational()
@@ -56,16 +65,17 @@ public sealed class AdminFundraisingController(JsoDbContext db, AuditService aud
         var commitmentIds = commitments.Select(c => c.Id).ToArray();
         var installments = await db.SupporterBricks.Where(b => b.FundraisingProjectId == id ||
             (b.FundraisingCommitmentId.HasValue && commitmentIds.Contains(b.FundraisingCommitmentId.Value))).ToListAsync(ct);
-        if (await HasPaymentHistory(installments, ct))
-            return Conflict(new { message = "Ce projet contient un paiement ou une tentative de paiement. Archivez-le pour conserver son historique.", canArchive = true });
+        var hadPaymentHistory = await HasPaymentHistory(installments, ct);
+        if (hadPaymentHistory && !superAdminForce)
+            return Conflict(new { message = "Ce projet contient un paiement ou une tentative de paiement. Archivez-le pour conserver son historique.", canArchive = true, canForceDelete = User.IsInRole("SuperAdmin") });
         db.SupporterBricks.RemoveRange(installments);
         db.FundraisingCommitments.RemoveRange(commitments);
         db.FundraisingProjects.Remove(project);
         try
         {
-            await audit.LogAsync("FUNDRAISING_PROJECT_DELETED", "FundraisingProject", id.ToString(),
+            await audit.LogAsync(superAdminForce && hadPaymentHistory ? "FUNDRAISING_PROJECT_FORCE_DELETED" : "FUNDRAISING_PROJECT_DELETED", "FundraisingProject", id.ToString(),
                 User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value, HttpContext.Connection.RemoteIpAddress?.ToString(),
-                new { project.Title, commitmentCount = commitments.Count, installmentCount = installments.Count }, ct);
+                new { project.Title, commitmentCount = commitments.Count, installmentCount = installments.Count, forced = superAdminForce && hadPaymentHistory }, ct);
             if (transaction is not null) await transaction.CommitAsync(ct);
         }
         catch (Exception error) when (error is DbUpdateException || error is PostgresException { SqlState: PostgresErrorCodes.SerializationFailure })

@@ -35,12 +35,16 @@ export async function adminApi(path, options = {}) {
           : response.status === 401
             ? 'Votre session a expiré. Reconnectez-vous.'
             : `La requête a échoué (${response.status}).`
+    let payload = null
     try {
-      const payload = await response.json()
+      payload = await response.json()
       message = payload.message || (response.status < 500 ? payload.title : null) || message
     } catch {}
     const error = new Error(message)
     error.status = response.status
+    // Expose the parsed body so callers can read structured flags (e.g. a 409
+    // from the fundraising delete carries { canArchive, canForceDelete }).
+    error.payload = payload
     throw error
   }
 
