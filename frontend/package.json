@@ -12,7 +12,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",
     "konva": "9.3.22",
-    "lucide-react": "^0.468.0",
+    "lucide-react": "^1.61.0",
     "qrcode": "^1.5.4",
     "react": "18.3.1",
     "react-dom": "18.3.1",
