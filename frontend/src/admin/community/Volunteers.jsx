@@ -15,6 +15,7 @@ function Field({ label, ...props }) {
 // Volunteer directory: personal contact data is minimised and only kept when the
 // volunteer consents. Nothing here is exposed on the public site.
 function VolunteerDirectory({ volunteers, loading, onSaved, onError }) {
+  const confirm = useConfirm()
   const [form, setForm] = useState(emptyVolunteer)
   const [editing, setEditing] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -180,7 +181,6 @@ function AssignmentGrid({ volunteers, onError }) {
 }
 
 export default function VolunteersModule({ onError }) {
-  const confirm = useConfirm()
   const [tab, setTab] = useState('grid')
   const [volunteers, setVolunteers] = useState([])
   const [loading, setLoading] = useState(true)

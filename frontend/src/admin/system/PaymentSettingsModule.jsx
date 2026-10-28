@@ -38,6 +38,7 @@ function emptyForm() {
 }
 
 export default function PaymentSettingsModule({ onError = () => {} }) {
+  const confirm = useConfirm()
   const [providers, setProviders] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)

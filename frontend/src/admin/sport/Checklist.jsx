@@ -7,7 +7,6 @@ import { Plus, Pencil, Save, X, ListChecks, Sparkles } from 'lucide-react'
 // Réservé aux rôles MatchManager / ClubAdmin, écritures auditées, aucune donnée
 // personnelle. Deux volets : modèles réutilisables et check-list par match.
 export default function ChecklistModule({ onError }) {
-  const confirm = useConfirm()
   return <div className="space-y-6">
     <TemplatesPanel onError={onError} />
     <MatchChecklistPanel onError={onError} />
@@ -18,6 +17,7 @@ const emptyTemplate = { label: '', displayOrder: 0, isActive: true }
 
 // Volet modèles : voci di template riutilizzabili qui gestite comme une liste CRUD.
 function TemplatesPanel({ onError }) {
+  const confirm = useConfirm()
   const [templates, setTemplates] = useState([])
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState(emptyTemplate)
@@ -93,6 +93,7 @@ const emptyItem = { label: '', assigneeAdminId: '', displayOrder: 0 }
 // Volet par match : sélection du match puis liste d'items avec cases à cocher,
 // affectation d'un responsable et génération depuis les modèles actifs.
 function MatchChecklistPanel({ onError }) {
+  const confirm = useConfirm()
   const [matches, setMatches] = useState([])
   const [selected, setSelected] = useState('')
   const [items, setItems] = useState([])

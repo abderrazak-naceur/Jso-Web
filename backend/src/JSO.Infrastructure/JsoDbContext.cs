@@ -96,6 +96,7 @@ public sealed class JsoDbContext(DbContextOptions<JsoDbContext> options) : DbCon
   modelBuilder.Entity<Article>().Property(x=>x.EditorialStatus).HasDefaultValue("Draft");
   modelBuilder.Entity<Article>().HasIndex(x=>new{x.EditorialStatus,x.ScheduledAt});
   modelBuilder.Entity<Match>().HasIndex(x=>new{x.KickoffAt,x.Status});
+  modelBuilder.Entity<Match>().Property(x=>x.TicketDesignJson).HasColumnType("jsonb");
   modelBuilder.Entity<Player>().HasIndex(x=>new{x.TeamId,x.ShirtNumber});
   modelBuilder.Entity<AdminUser>().HasIndex(x=>x.Email).IsUnique();
   modelBuilder.Entity<StaffAssignment>().HasIndex(x=>new{x.AdminUserId,x.IsActive});

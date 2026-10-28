@@ -1,4 +1,17 @@
 import { LayoutDashboard, Trophy, CreditCard, UserRound, Wallet, HeartHandshake, ShoppingBag, Receipt, Handshake, QrCode, Users, CalendarDays, Radio, BarChart3, HeartPulse, ScanSearch, ListChecks, Newspaper, CalendarClock, Images, Pencil, PartyPopper, FileText, HelpCircle, MessageSquare, BrickWall, Megaphone, Mail, ClipboardList, GraduationCap, CalendarRange, ShieldCheck, Flag, Gauge, ShieldAlert, Server, Ticket, Landmark, Banknote } from 'lucide-react'
+
+// Seven stable workspaces replace the long accordion navigation. Existing
+// section IDs and URLs stay unchanged; a workspace is only an information-
+// architecture layer that groups related modules into contextual tabs.
+export const ADMIN_WORKSPACES = Object.freeze([
+  { id: 'home', label: 'Accueil', shortLabel: 'Accueil', Icon: LayoutDashboard, sections: ['dashboard'] },
+  { id: 'sport', label: 'Matchs & équipe', shortLabel: 'Matchs', Icon: Trophy, sections: ['matches', 'match-events', 'match-sheet', 'formations', 'teams', 'seasons-competitions', 'match-streams', 'analytics', 'injuries', 'scouting', 'checklist'] },
+  { id: 'ticketing', label: 'Billetterie', shortLabel: 'Billets', Icon: Ticket, sections: ['tickets', 'ticket-designer', 'memberships'] },
+  { id: 'content', label: 'Contenu', shortLabel: 'Contenu', Icon: Newspaper, sections: ['news', 'editorial', 'media', 'homepage-templates', 'content', 'club-events', 'documents', 'faq', 'archive'] },
+  { id: 'community', label: 'Communauté', shortLabel: 'Communauté', Icon: Users, sections: ['fan-accounts', 'community-moderation', 'fan-photos', 'supporters', 'classifieds', 'anniversaries', 'newsletter', 'volunteers', 'community', 'facilities'] },
+  { id: 'commerce', label: 'Commerce & finances', shortLabel: 'Commerce', Icon: Wallet, sections: ['finance', 'fundraising-projects', 'donations', 'cash-donations', 'shop', 'orders', 'sponsors', 'sponsorqr'] },
+  { id: 'settings', label: 'Configuration', shortLabel: 'Réglages', Icon: Server, sections: ['club', 'security', 'featureflags', 'apiusage', 'gdpr', 'settings'] },
+])
 export const ADMIN_NAVIGATION = [
     ['dashboard', 'Dashboard', LayoutDashboard, ['SuperAdmin','ClubAdmin','Editor','MatchManager','CommunityManager','ShopManager'], 'Tableau de bord'],
     ['fan-accounts', 'Profils supporters', UserRound, ['SuperAdmin','ClubAdmin','CommunityManager'], 'Communauté'],
@@ -105,14 +118,9 @@ export const ADMIN_PERMISSION_BY_ID = Object.freeze({
   gdpr: 'system:gdpr',
   settings: 'system:settings',
 })
-export const ADMIN_CATEGORY_ORDER = ['Tableau de bord', 'Billetterie & Abonnements', 'Finances & dons', 'Boutique & partenaires', 'Équipe & Matchs', 'Contenu & Site', 'Communauté', 'Système']
-
-// The most common tasks stay one tap away on narrow screens and on the dashboard.
-// Permissions are still resolved through visibleAdminItems before rendering.
-export const ADMIN_QUICK_SECTION_IDS = ['tickets', 'matches', 'news', 'donations', 'cash-donations', 'orders', 'media', 'fan-accounts', 'settings']
-
 export const ADMIN_PUBLIC_PATHS = Object.freeze({
   tickets: '/billetterie',
+  'ticket-designer': '/billetterie',
   memberships: '/abonnements',
   donations: '/nos-projets',
   'fundraising-projects': '/nos-projets',
@@ -123,12 +131,33 @@ export const ADMIN_PUBLIC_PATHS = Object.freeze({
   sponsorqr: '/partenaires',
   matches: '/matchs',
   'match-events': '/matchs',
+  'match-sheet': '/matchs',
+  formations: '/matchs',
+  'match-streams': '/matchs',
+  analytics: '/matchs',
+  injuries: '/matchs',
+  scouting: '/matchs',
+  checklist: '/matchs',
   teams: '/equipe',
+  'seasons-competitions': '/matchs',
   news: '/actualites',
+  editorial: '/actualites',
   media: '/medias',
+  'homepage-templates': '/',
+  content: '/',
   'club-events': '/agenda',
+  documents: '/infos',
+  faq: '/infos',
   archive: '/musee',
+  'fan-accounts': '/communaute',
+  'community-moderation': '/communaute',
+  'fan-photos': '/communaute',
   supporters: '/communaute',
+  classifieds: '/communaute',
+  anniversaries: '/communaute',
+  newsletter: '/communaute',
+  volunteers: '/communaute',
+  facilities: '/communaute',
   community: '/communaute',
   club: '/club',
 })
@@ -138,4 +167,41 @@ export function visibleAdminItems(role, query = '') {
   return ADMIN_NAVIGATION.filter(([id, label, , roles, category]) =>
     roles.includes(role) && Boolean(ADMIN_PERMISSION_BY_ID[id]) &&
     (!search || `${label} ${category} ${id}`.toLocaleLowerCase('fr').includes(search)))
+}
+
+
+const ADMIN_ITEM_BY_ID = new Map(ADMIN_NAVIGATION.map((item) => [item[0], item]))
+const ADMIN_WORKSPACE_BY_SECTION = new Map(
+  ADMIN_WORKSPACES.flatMap((workspace) => workspace.sections.map((section) => [section, workspace])),
+)
+
+export function adminItemById(section) {
+  return ADMIN_ITEM_BY_ID.get(section) || null
+}
+
+export function adminWorkspaceForSection(section) {
+  return ADMIN_WORKSPACE_BY_SECTION.get(section) || null
+}
+
+export function adminWorkspaceLabelForSection(section) {
+  return adminWorkspaceForSection(section)?.label || ''
+}
+
+// Returns only workspaces that contain at least one section visible to the
+// current role. Each returned workspace carries its role-filtered `items`, so
+// sidebar destinations and tabs can never point to an inaccessible module.
+export function visibleAdminWorkspaces(role) {
+  const visible = new Map(visibleAdminItems(role).map((item) => [item[0], item]))
+  return ADMIN_WORKSPACES
+    .map((workspace) => ({
+      ...workspace,
+      items: workspace.sections.map((id) => visible.get(id)).filter(Boolean),
+    }))
+    .filter((workspace) => workspace.items.length > 0)
+}
+
+export function adminLandingSection(role) {
+  const workspaces = visibleAdminWorkspaces(role)
+  const home = workspaces.find((workspace) => workspace.id === 'home')
+  return home?.items[0]?.[0] || workspaces[0]?.items[0]?.[0] || null
 }

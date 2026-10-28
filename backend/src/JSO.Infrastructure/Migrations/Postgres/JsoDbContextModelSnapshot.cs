@@ -1175,6 +1175,9 @@ namespace JSO.Infrastructure.Migrations.Postgres
                     b.Property<string>("TicketArtworkUrl")
                         .HasColumnType("text");
 
+                    b.Property<string>("TicketDesignJson")
+                        .HasColumnType("jsonb");
+
                     b.Property<Guid>("SeasonId")
                         .HasColumnType("uuid");
 

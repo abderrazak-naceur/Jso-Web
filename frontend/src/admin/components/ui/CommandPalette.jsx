@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUpRight, CornerDownLeft, Search, Zap } from 'lucide-react'
 import { adminSectionUrl } from '../../adminRoutes'
+import { adminWorkspaceLabelForSection } from '../../navigation'
 
 // Quick-create / navigation shortcuts offered on top of the section search.
 const ACTIONS = [
-  { label: 'Nouvel article', hint: 'Rédiger une actualité', section: 'news' },
-  { label: 'Créer un match', hint: 'Ajouter une rencontre au calendrier', section: 'matches' },
+  { label: 'Ouvrir les actualités', hint: 'Gérer et rédiger les articles', section: 'news' },
+  { label: 'Ouvrir le calendrier', hint: 'Gérer les rencontres', section: 'matches' },
   { label: 'Designer un billet', hint: 'Composer le visuel d’un match', section: 'ticket-designer' },
-  { label: 'Créer des billets', hint: 'Billetterie par match', section: 'tickets' },
-  { label: 'Nouvelle annonce', hint: 'Publier une petite annonce', section: 'classifieds' },
-  { label: 'Nouveau produit', hint: 'Ajouter un article à la boutique', section: 'shop' },
-  { label: 'Nouvel objectif de collecte', hint: 'Créer un projet de dons', section: 'fundraising-projects' },
+  { label: 'Ouvrir la billetterie', hint: 'Billets et réservations par match', section: 'tickets' },
+  { label: 'Ouvrir les annonces', hint: 'Gérer les petites annonces', section: 'classifieds' },
+  { label: 'Ouvrir la boutique', hint: 'Gérer les produits', section: 'shop' },
+  { label: 'Ouvrir les collectes', hint: 'Gérer les projets de dons', section: 'fundraising-projects' },
   { label: 'Voir le site public', hint: 'Ouvrir jsoudhref.com', href: '/' },
 ]
 
@@ -31,11 +32,14 @@ export default function CommandPalette({ open, onClose, items, onNavigate }) {
 
   const results = useMemo(() => {
     const q = query.trim().toLocaleLowerCase('fr')
+    const visibleIds = new Set(items.map(([id]) => id))
     const sections = items
-      .filter(([id, label, , , category]) => !q || `${label} ${category} ${id}`.toLocaleLowerCase('fr').includes(q))
-      .map(([id, label, Icon, , category]) => ({ kind: 'section', id, label, hint: category, Icon }))
-    const actions = ACTIONS.filter((a) => !q || `${a.label} ${a.hint}`.toLocaleLowerCase('fr').includes(q))
-      .map((a) => ({ kind: 'action', ...a, Icon: Zap }))
+      .filter(([id, label]) => !q || `${label} ${adminWorkspaceLabelForSection(id)} ${id}`.toLocaleLowerCase('fr').includes(q))
+      .map(([id, label, Icon]) => ({ kind: 'section', id, label, hint: adminWorkspaceLabelForSection(id), Icon }))
+    const actions = ACTIONS
+      .filter((action) => !action.section || visibleIds.has(action.section))
+      .filter((action) => !q || `${action.label} ${action.hint}`.toLocaleLowerCase('fr').includes(q))
+      .map((action) => ({ kind: 'action', ...action, Icon: Zap }))
     return [...actions, ...sections].slice(0, 12)
   }, [items, query])
 
@@ -61,7 +65,7 @@ export default function CommandPalette({ open, onClose, items, onNavigate }) {
     onClose()
     if (target.href) { window.location.href = target.href; return }
     const url = adminSectionUrl(target.section ?? target.id)
-    if (window.location.pathname !== url) window.history.pushState({}, '', url)
+    if (window.location.pathname !== url || window.location.search) window.history.pushState({}, '', url)
     onNavigate(target.section ?? target.id)
   }
 

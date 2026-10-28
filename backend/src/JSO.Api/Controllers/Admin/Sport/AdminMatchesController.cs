@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using JSO.Domain;
 using JSO.Infrastructure;
+using System.Text;
+using System.Text.Json;
 
 namespace JSO.Api.Controllers;
 
@@ -36,6 +38,7 @@ public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) 
                 x.AwayScore,
                 x.Status,
                 x.IsPublished,
+                HasTicketDesign = x.TicketDesignJson != null,
                 TicketTypeCount = db.TicketTypes.Count(t => t.MatchId == x.Id),
                 ActiveTicketTypeCount = db.TicketTypes.Count(t => t.MatchId == x.Id && t.IsActive)
             })
@@ -49,6 +52,90 @@ public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) 
         var teams = await db.Teams.AsNoTracking().Where(x => x.IsActive).OrderBy(x => x.Name).ToListAsync(ct);
 
         return Ok(new { seasons, competitions, teams });
+    }
+
+    // Editable ticket-design document. It is private admin data and deliberately
+    // excluded from public match DTOs and the admin list projection.
+    [HttpGet("{id:guid}/ticket-design")]
+    public async Task<IActionResult> GetTicketDesign(Guid id, CancellationToken ct)
+    {
+        var match = await db.Matches.AsNoTracking()
+            .Where(x => x.Id == id)
+            .Select(x => new { x.Id, x.TicketDesignJson, x.TicketArtworkUrl })
+            .SingleOrDefaultAsync(ct);
+        if (match is null) return NotFound();
+
+        JsonElement? document = null;
+        if (!string.IsNullOrWhiteSpace(match.TicketDesignJson))
+        {
+            try
+            {
+                using var parsed = JsonDocument.Parse(match.TicketDesignJson);
+                document = parsed.RootElement.Clone();
+            }
+            catch (JsonException)
+            {
+                // A malformed legacy value must never break the admin screen.
+                document = null;
+            }
+        }
+
+        return Ok(new { matchId = match.Id, document, match.TicketArtworkUrl });
+    }
+
+    [HttpPut("{id:guid}/ticket-design")]
+    [RequestSizeLimit(320 * 1024)]
+    public async Task<IActionResult> SaveTicketDesign(Guid id, TicketDesignRequest request, CancellationToken ct)
+    {
+        var match = await db.Matches.SingleOrDefaultAsync(x => x.Id == id, ct);
+        if (match is null) return NotFound();
+
+        if (request.Document.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return BadRequest(new { message = "Le projet du designer est requis." });
+        var raw = request.Document.GetRawText();
+        if (Encoding.UTF8.GetByteCount(raw) > 256 * 1024)
+            return BadRequest(new { message = "Le projet dépasse la limite de 256 Ko." });
+        if (TicketDesignDocumentValidator.Validate(request.Document) is { } error)
+            return BadRequest(new { message = error });
+
+        match.TicketDesignJson = raw;
+        await db.SaveChangesAsync(ct);
+        await audit.LogAsync("UPDATE_TICKET_DESIGN", "Match", id.ToString(),
+            User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value,
+            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            new { schemaVersion = 1, byteCount = Encoding.UTF8.GetByteCount(raw) }, ct);
+        return Ok(new { matchId = id, document = request.Document.Clone() });
+    }
+
+    [HttpDelete("{id:guid}/ticket-design")]
+    public async Task<IActionResult> ClearTicketDesign(Guid id, CancellationToken ct)
+    {
+        var match = await db.Matches.SingleOrDefaultAsync(x => x.Id == id, ct);
+        if (match is null) return NotFound();
+        match.TicketDesignJson = null;
+        await db.SaveChangesAsync(ct);
+        await audit.LogAsync("DELETE_TICKET_DESIGN", "Match", id.ToString(),
+            User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value,
+            HttpContext.Connection.RemoteIpAddress?.ToString(), ct: ct);
+        return NoContent();
+    }
+
+    // Narrow publication endpoint: the designer updates only the flattened
+    // public artwork URL, avoiding a stale full Match PUT during editing.
+    [HttpPut("{id:guid}/ticket-artwork")]
+    public async Task<IActionResult> SaveTicketArtwork(Guid id, TicketArtworkRequest request, CancellationToken ct)
+    {
+        var match = await db.Matches.SingleOrDefaultAsync(x => x.Id == id, ct);
+        if (match is null) return NotFound();
+        if (TicketDesignDocumentValidator.ValidateAssetUrl(request.Url) is { } error)
+            return BadRequest(new { message = error });
+        match.TicketArtworkUrl = string.IsNullOrWhiteSpace(request.Url) ? null : request.Url.Trim();
+        await db.SaveChangesAsync(ct);
+        await audit.LogAsync("UPDATE_TICKET_ARTWORK", "Match", id.ToString(),
+            User.FindFirst("sub")?.Value, User.FindFirst("email")?.Value,
+            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            new { hasArtwork = match.TicketArtworkUrl is not null }, ct);
+        return Ok(new { matchId = id, match.TicketArtworkUrl });
     }
 
     [HttpPost]
@@ -210,4 +297,6 @@ public sealed class AdminMatchesController(JsoDbContext db, AuditService audit) 
 }
 
 public sealed record MatchRequest(Guid SeasonId, Guid CompetitionId, Guid TeamId, string OpponentName, DateTimeOffset KickoffAt, string? Venue, bool IsHome, int? HomeScore, int? AwayScore, string? Status, bool IsPublished, string? OpponentLogoUrl = null, string? TicketArtworkUrl = null);
+public sealed record TicketDesignRequest(JsonElement Document);
+public sealed record TicketArtworkRequest(string? Url);
 public sealed record MatchEventRequest(int Minute, string Type, string? PlayerName, string? SecondaryPlayerName, string? Team, string? Notes);

@@ -41,3 +41,17 @@
   .jso-admin-shell section .text-sm { font-size: 14px; }
   .jso-admin-login form { padding: 22px 16px; }
 }
+
+
+/* Flat workspace navigation redesign. */
+.admin-sidebar { box-shadow: 8px 0 28px rgb(15 23 42 / 4%); }
+.admin-workspace-tabs .jso-scroll { scroll-padding-inline: 24px; scrollbar-width: thin; }
+.admin-workspace-tabs a[aria-current="page"] { scroll-margin-inline: 24px; }
+@media (max-width: 1023px) {
+  .admin-sidebar { box-shadow: 16px 0 40px rgb(15 23 42 / 24%); }
+  .admin-workspace-tabs { top: 70px; }
+}
+@media (max-width: 767px) {
+  .admin-workspace-tabs .jso-scroll { padding-inline: 14px; }
+  .admin-workspace-tabs a { min-height: 42px; }
+}

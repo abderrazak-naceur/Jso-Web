@@ -65,6 +65,7 @@ public sealed class AdminDashboardController(JsoDbContext db) : ControllerBase
             },
             teams = await db.Teams.CountAsync(x => x.IsActive, ct),
             players = await db.Players.CountAsync(x => x.IsActive, ct),
+            fanAccounts = await db.FanUsers.CountAsync(x => x.IsActive, ct),
             // Moderation queues (community): pending items needing a decision.
             // Powers the sidebar badges and the "À traiter" action cards.
             moderation = new

@@ -8,7 +8,7 @@ namespace JSO.Media.Api.Controllers;
 
 [ApiController]
 [Route("api/media")]
-[Authorize(Roles = "SuperAdmin,ClubAdmin,Editor")]
+[Authorize(Roles = "SuperAdmin,ClubAdmin,Editor,MatchManager")]
 public sealed class MediaController(MediaDbContext db, MediaStorageService storage, ILogger<MediaController> logger) : ControllerBase
 {
     private static readonly Dictionary<string, (string Extension, byte[] Signature)> AllowedTypes = new(StringComparer.OrdinalIgnoreCase)
@@ -20,6 +20,7 @@ public sealed class MediaController(MediaDbContext db, MediaStorageService stora
     };
 
     [HttpGet]
+    [Authorize(Roles = "SuperAdmin,ClubAdmin,Editor")]
     public async Task<IActionResult> List([FromQuery] string? q, [FromQuery] int page = 1, [FromQuery] int pageSize = 24, CancellationToken ct = default)
     {
         page = Math.Max(1, page);
@@ -108,6 +109,7 @@ public sealed class MediaController(MediaDbContext db, MediaStorageService stora
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "SuperAdmin,ClubAdmin,Editor")]
     public async Task<IActionResult> Update(Guid id, UpdateMediaRequest request, CancellationToken ct)
     {
         var asset = await db.MediaAssets.SingleOrDefaultAsync(x => x.Id == id, ct);
@@ -138,6 +140,7 @@ public sealed class MediaController(MediaDbContext db, MediaStorageService stora
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "SuperAdmin,ClubAdmin,Editor")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var asset = await db.MediaAssets.SingleOrDefaultAsync(x => x.Id == id, ct);
