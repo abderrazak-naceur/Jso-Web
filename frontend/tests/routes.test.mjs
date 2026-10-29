@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { adminEditIdFromPath, adminEditUrl, adminSectionFromPath, adminSectionUrl } from '../src/admin/adminRoutes.js'
-import { ADMIN_CATEGORY_ORDER, ADMIN_NAVIGATION, ADMIN_PERMISSION_BY_ID, ADMIN_PUBLIC_PATHS, ADMIN_QUICK_SECTION_IDS, visibleAdminItems } from '../src/admin/navigation.js'
+import { ADMIN_WORKSPACES, ADMIN_NAVIGATION, ADMIN_PERMISSION_BY_ID, ADMIN_PUBLIC_PATHS, visibleAdminWorkspaces, visibleAdminItems } from '../src/admin/navigation.js'
 import { ADMIN_MODULES } from '../src/admin/moduleRegistry.js'
 import { SECTION_PATHS, eventSlugFromPath, matchIdFromPath, matchSlugFromPath, matchSlugFor, matchOpponentName, productSlugFromPath, sectionFromPath, sectionUrl } from '../src/features/site/publicRoutes.js'
 
@@ -10,6 +10,7 @@ test('admin sections and edit links survive a direct page load', () => {
   assert.equal(adminSectionFromPath('/admin'), 'dashboard')
   assert.equal(adminSectionFromPath('/admin/donations'), 'donations')
   assert.equal(adminSectionFromPath('/admin/fundraising-projects'), 'fundraising-projects')
+  assert.equal(adminSectionFromPath('/admin/ticket-designer'), 'ticket-designer')
   const fundraisingEdit = adminEditUrl('fundraising-projects', 'project-id')
   assert.equal(adminSectionFromPath(fundraisingEdit), 'fundraising-projects')
   assert.equal(adminEditIdFromPath('fundraising-projects', fundraisingEdit), 'project-id')
@@ -21,11 +22,13 @@ test('admin sections and edit links survive a direct page load', () => {
   assert.equal(adminSectionFromPath('/admin/news/id/delete'), null)
 })
 
-test('every admin section has a module, permission and known category', () => {
+test('every admin section has a module, permission and exactly one workspace', () => {
   const ids = ADMIN_NAVIGATION.map(([id]) => id)
   assert.equal(new Set(ids).size, ids.length)
-  for (const [id, , , , category] of ADMIN_NAVIGATION) {
-    assert.ok(ADMIN_CATEGORY_ORDER.includes(category), `${id} has an unknown category`)
+  const workspaceSections = ADMIN_WORKSPACES.flatMap(workspace => workspace.sections)
+  assert.deepEqual([...workspaceSections].sort(), [...ids].sort())
+  for (const [id] of ADMIN_NAVIGATION) {
+    assert.equal(workspaceSections.filter(section => section === id).length, 1, `${id} must belong to one workspace`)
     assert.ok(ADMIN_PERMISSION_BY_ID[id], `${id} has no permission`)
     if (id !== 'dashboard') assert.ok(ADMIN_MODULES[id], `${id} has no module`)
   }
@@ -40,10 +43,14 @@ test('admin search only shows sections available to the role', () => {
   assert.ok(visibleAdminItems('MatchManager', 'matchs').some(([id]) => id === 'matches'))
 })
 
-test('admin quick destinations exist and remain role gated', () => {
+test('admin workspace destinations exist and remain role gated', () => {
   const ids = new Set(ADMIN_NAVIGATION.map(([id]) => id))
-  assert.equal(new Set(ADMIN_QUICK_SECTION_IDS).size, ADMIN_QUICK_SECTION_IDS.length)
-  for (const id of ADMIN_QUICK_SECTION_IDS) assert.ok(ids.has(id), `${id} is not an admin section`)
+  for (const role of ['SuperAdmin', 'Editor', 'FinanceManager', 'MatchManager', 'TicketSupervisor']) {
+    const destinations = visibleAdminWorkspaces(role).flatMap(workspace => workspace.items.map(([id]) => id))
+    assert.equal(new Set(destinations).size, destinations.length)
+    for (const id of destinations) assert.ok(ids.has(id), `${id} is not an admin section`)
+    assert.deepEqual(destinations.sort(), visibleAdminItems(role).map(([id]) => id).sort())
+  }
   const editorIds = new Set(visibleAdminItems('Editor').map(([id]) => id))
   assert.ok(editorIds.has('news'))
   assert.ok(!editorIds.has('donations'))
@@ -51,7 +58,7 @@ test('admin quick destinations exist and remain role gated', () => {
 
 test('admin public links lead to known site pages', () => {
   const sectionIds = new Set(ADMIN_NAVIGATION.map(([id]) => id))
-  const publicPaths = new Set([...Object.values(SECTION_PATHS), '/billetterie'])
+  const publicPaths = new Set([...Object.values(SECTION_PATHS), '/', '/billetterie'])
   for (const [id, path] of Object.entries(ADMIN_PUBLIC_PATHS)) {
     assert.ok(sectionIds.has(id), `${id} is not an admin section`)
     assert.ok(publicPaths.has(path), `${id} links to an unknown public page`)

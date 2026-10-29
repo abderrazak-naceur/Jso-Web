@@ -1,8 +1,9 @@
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from 'react-konva'
 import QRCode from 'qrcode'
 import { resolveSource, resolveTemplate } from './document'
 import { useCanvasImage } from './media'
+import { assetKey, pendingAssets } from './assetReadiness'
 
 function preparedBitmap(image, width, height, fit) {
   if (!image || !width || !height) return null
@@ -95,10 +96,10 @@ function LayerNode({ layer, context, variables, onSelect, onChange, onAssetStatu
   }
   if (layer.type === 'image') {
     const src = resolveSource(layer.source, context, variables)
-    return <Group {...common} clipFunc={(ctx) => { ctx.beginPath(); ctx.rect(0, 0, layer.width, layer.height); ctx.closePath() }}><ImageContent layer={layer} src={src} onReady={(ready) => onAssetStatus(layer.id, ready)} /></Group>
+    return <Group {...common} clipFunc={(ctx) => { ctx.beginPath(); ctx.rect(0, 0, layer.width, layer.height); ctx.closePath() }}><ImageContent key={src} layer={layer} src={src} onReady={(ready) => onAssetStatus(layer.id, assetKey(layer, context, variables), ready)} /></Group>
   }
   if (layer.type === 'qr') {
-    return <Group {...common}><QrContent layer={layer} value={resolveTemplate(layer.value, context, variables)} onReady={(ready) => onAssetStatus(layer.id, ready)} /></Group>
+    return <Group {...common}><QrContent key={assetKey(layer, context, variables)} layer={layer} value={resolveTemplate(layer.value, context, variables)} onReady={(ready) => onAssetStatus(layer.id, assetKey(layer, context, variables), ready)} /></Group>
   }
   return null
 }
@@ -107,6 +108,10 @@ const TicketStage = forwardRef(function TicketStage({ artboard, context, variabl
   const containerRef = useRef(null)
   const stageRef = useRef(null)
   const transformerRef = useRef(null)
+  const assetStatus = useRef(new Map())
+  const reportAssetStatus = useCallback((id, key, ready) => {
+    assetStatus.current.set(id, { key, ready })
+  }, [])
   const [containerWidth, setContainerWidth] = useState(900)
 
   useEffect(() => {
@@ -152,32 +157,31 @@ const TicketStage = forwardRef(function TicketStage({ artboard, context, variabl
   }, [selectedId, artboard.layers, onDelete, onLayerChange, onSelect])
 
   useImperativeHandle(ref, () => ({
-    exportBlob: (mimeType = 'image/jpeg', quality = 0.94) => new Promise((resolve, reject) => {
+    exportBlob: async (mimeType = 'image/jpeg', quality = 0.94) => {
       const stage = stageRef.current
-      if (!stage) { reject(new Error('Le canevas n’est pas prêt.')); return }
+      if (!stage) throw new Error('Le canevas n’est pas prêt.')
+      const pending = pendingAssets(artboard.layers, context, variables, assetStatus.current)
+      if (pending.length) throw new Error('Images ou QR non chargés : ' + pending.map(layer => layer.name).join(', ') + '. Attendez leur chargement ou remplacez les médias indisponibles.')
       const ui = stage.findOne('.editor-ui')
       ui?.hide()
       stage.draw()
-      stage.toBlob({
-        mimeType,
-        quality,
-        pixelRatio: 1,
-        callback: (blob) => {
-          ui?.show()
-          stage.draw()
-          if (blob) resolve(blob)
-          else reject(new Error('Impossible d’exporter le visuel.'))
-        },
-      })
-    }),
+      try {
+        const blob = await stage.toBlob({ mimeType, quality, pixelRatio: 1 })
+        if (!blob) throw new Error('Impossible d’exporter le visuel.')
+        return blob
+      } finally {
+        ui?.show()
+        stage.draw()
+      }
+    },
     getDataUrl: () => stageRef.current?.toDataURL({ pixelRatio: 0.25 }) || '',
-  }), [artboard.id])
+  }), [artboard, context, variables])
 
   const fitScale = Math.min(1, Math.max(0.12, (containerWidth - 48) / artboard.width), Math.max(0.12, 620 / artboard.height))
   const displayScale = fitScale * zoom
 
   return (
-    <div ref={containerRef} className="ticket-stage-shell jso-scroll min-h-[680px] overflow-auto rounded-2xl bg-slate-200/70 p-6">
+    <div ref={containerRef} className="ticket-stage-shell jso-scroll min-h-[320px] xl:min-h-[520px] overflow-auto rounded-2xl bg-slate-200/70 p-6">
       <div className="mx-auto" style={{ width: artboard.width * displayScale, height: artboard.height * displayScale }}>
         <div style={{ width: artboard.width, height: artboard.height, transform: `scale(${displayScale})`, transformOrigin: 'top left' }}>
           <Stage
@@ -189,12 +193,13 @@ const TicketStage = forwardRef(function TicketStage({ artboard, context, variabl
             style={{ background: artboard.backgroundColor || '#0b1730', boxShadow: '0 18px 50px rgba(8, 23, 48, .2)' }}
           >
             <Layer>
-              {artboard.layers.map((layer) => <LayerNode key={layer.id} layer={layer} context={context} variables={variables} onSelect={onSelect} onChange={onLayerChange} />)}
+              <Rect width={artboard.width} height={artboard.height} fill={artboard.backgroundColor || '#0b1730'} listening={false} />
+              {artboard.layers.map((layer) => <LayerNode key={layer.id} layer={layer} context={context} variables={variables} onSelect={onSelect} onChange={onLayerChange} onAssetStatus={reportAssetStatus} />)}
             </Layer>
-            <Layer name="editor-ui" listening={false}>
-              <Rect x={24} y={24} width={Math.max(1, artboard.width - 48)} height={Math.max(1, artboard.height - 48)} stroke="#55a0ee" strokeWidth={1 / Math.max(displayScale, 0.1)} dash={[8 / Math.max(displayScale, 0.1), 7 / Math.max(displayScale, 0.1)]} opacity={0.42} />
-              <Line points={[artboard.width / 2, 0, artboard.width / 2, artboard.height]} stroke="#55a0ee" strokeWidth={1 / Math.max(displayScale, 0.1)} dash={[5 / Math.max(displayScale, 0.1), 6 / Math.max(displayScale, 0.1)]} opacity={selectedId ? 0.24 : 0} />
-              <Line points={[0, artboard.height / 2, artboard.width, artboard.height / 2]} stroke="#55a0ee" strokeWidth={1 / Math.max(displayScale, 0.1)} dash={[5 / Math.max(displayScale, 0.1), 6 / Math.max(displayScale, 0.1)]} opacity={selectedId ? 0.24 : 0} />
+            <Layer name="editor-ui">
+              <Rect listening={false} x={24} y={24} width={Math.max(1, artboard.width - 48)} height={Math.max(1, artboard.height - 48)} stroke="#55a0ee" strokeWidth={1 / Math.max(displayScale, 0.1)} dash={[8 / Math.max(displayScale, 0.1), 7 / Math.max(displayScale, 0.1)]} opacity={0.42} />
+              <Line listening={false} points={[artboard.width / 2, 0, artboard.width / 2, artboard.height]} stroke="#55a0ee" strokeWidth={1 / Math.max(displayScale, 0.1)} dash={[5 / Math.max(displayScale, 0.1), 6 / Math.max(displayScale, 0.1)]} opacity={selectedId ? 0.24 : 0} />
+              <Line listening={false} points={[0, artboard.height / 2, artboard.width, artboard.height / 2]} stroke="#55a0ee" strokeWidth={1 / Math.max(displayScale, 0.1)} dash={[5 / Math.max(displayScale, 0.1), 6 / Math.max(displayScale, 0.1)]} opacity={selectedId ? 0.24 : 0} />
               <Transformer ref={transformerRef} rotateEnabled enabledAnchors={['top-left', 'top-center', 'top-right', 'middle-left', 'middle-right', 'bottom-left', 'bottom-center', 'bottom-right']} anchorFill="#ffffff" anchorStroke="#2c75d4" borderStroke="#2c75d4" anchorSize={10 / Math.max(displayScale, 0.1)} borderStrokeWidth={1.5 / Math.max(displayScale, 0.1)} boundBoxFunc={(oldBox, newBox) => newBox.width < 20 || newBox.height < 20 ? oldBox : newBox} />
             </Layer>
           </Stage>

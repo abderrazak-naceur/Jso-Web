@@ -25,10 +25,10 @@ function ContentFields({ variables, onVariables }) {
 }
 
 export default function PropertiesPanel({ layer, variables, onVariables, onPatch, onReplaceImage }) {
-  if (!layer) return <div className="space-y-4"><ContentFields variables={variables} onVariables={onVariables} /><aside className="rounded-2xl border border-slate-200 bg-white p-5"><h3 className="text-sm font-black text-slate-900">Propriétés du calque</h3><p className="mt-2 text-sm leading-6 text-slate-500">Sélectionnez un texte, une image, une forme ou le QR dans le canevas.</p></aside></div>
+  if (!layer) return <div className="space-y-4 xl:sticky xl:top-28 xl:max-h-[calc(100dvh-8rem)] xl:overflow-y-auto"><ContentFields variables={variables} onVariables={onVariables} /><aside className="rounded-2xl border border-slate-200 bg-white p-5"><h3 className="text-sm font-black text-slate-900">Propriétés du calque</h3><p className="mt-2 text-sm leading-6 text-slate-500">Sélectionnez un texte, une image, une forme ou le QR dans le canevas.</p></aside></div>
 
   const patch = (value) => onPatch(layer.id, value)
-  return <div className="space-y-4">
+  return <div className="space-y-4 xl:sticky xl:top-28 xl:max-h-[calc(100dvh-8rem)] xl:overflow-y-auto">
     <ContentFields variables={variables} onVariables={onVariables} />
     <aside className="rounded-2xl border border-slate-200 bg-white p-5">
       <div className="flex items-start justify-between gap-3">

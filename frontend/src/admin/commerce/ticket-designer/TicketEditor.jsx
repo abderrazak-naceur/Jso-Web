@@ -62,11 +62,11 @@ export default function TicketEditor({
         onPublish={onPublish}
       />
 
-      <div className="grid min-w-0 gap-4 xl:grid-cols-[270px_minmax(0,1fr)_300px]">
-        <aside className="space-y-5 rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[270px_minmax(0,1fr)_300px]">
+        <aside className="space-y-5 rounded-2xl border border-slate-200 bg-white p-4 xl:sticky xl:top-28 xl:max-h-[calc(100dvh-8rem)] xl:overflow-y-auto">
           <section>
             <div className="mb-3 flex items-center gap-2"><LayoutTemplate size={16} className="text-jso-blue" /><h3 className="text-sm font-black text-slate-900">Modèles</h3></div>
-            <div className="grid grid-cols-2 gap-2 xl:grid-cols-1">
+            <div className="grid grid-cols-2 gap-2">
               {DESIGN_PRESETS.map((preset) => (
                 <button key={preset.id} type="button" onClick={() => onPreset(preset.id)} className={'group overflow-hidden rounded-xl border p-2 text-left transition ' + (document.presetId === preset.id ? 'border-jso-blue bg-blue-50' : 'border-slate-200 hover:border-jso-blue')}>
                   <span className="flex h-12 overflow-hidden rounded-lg">{preset.swatches.map((color, index) => <span key={color + index} className="flex-1" style={{ backgroundColor: color }} />)}</span>
@@ -93,7 +93,7 @@ export default function TicketEditor({
           </section>
         </aside>
 
-        <main className="min-w-0 space-y-2">
+        <main className="min-w-0 space-y-2 xl:sticky xl:top-28">
           <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs font-semibold text-slate-500">
             <span>{artboard.name} · {artboard.width} × {artboard.height}px</span>
             <span>{autoSaving ? '● Enregistrement automatique…' : dirty ? '● Modifications non enregistrées' : '✓ Projet enregistré'}</span>
