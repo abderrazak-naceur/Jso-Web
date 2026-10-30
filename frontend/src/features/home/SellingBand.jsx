@@ -43,7 +43,7 @@ export default function SellingBand({ nextMatch }) {
           <div className="absolute inset-0 bg-gradient-to-t from-jso-blue via-jso-blue/70 to-jso-blue/25" aria-hidden="true" />
           <CreditCard className="absolute right-6 top-6 text-white/30" size={72} aria-hidden="true" />
           <div className="relative">
-            <span className="w-fit rounded-full bg-jso-gold px-3 py-1 text-[11px] font-black uppercase tracking-[0.15em] text-jso-navy">Saison 2026/27</span>
+            <span className="w-fit rounded-full bg-jso-gold px-3 py-1 text-[11px] font-black uppercase tracking-[0.15em] text-jso-navy">Abonnements</span>
             <h3 className="mt-4 text-3xl font-black leading-tight">Devenez abonné</h3>
             <p className="mt-1 text-white/85">Soutenez la JSO toute la saison.</p>
             <a href="/abonnements" className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-white px-6 py-3 font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-jso-gold">

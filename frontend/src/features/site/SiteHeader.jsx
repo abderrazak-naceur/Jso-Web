@@ -1,18 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, ChevronDown, HeartHandshake, LayoutDashboard, LogIn, LogOut, Menu, Newspaper, Settings, ShieldCheck, ShoppingBag, Ticket, User, UserPlus, X } from 'lucide-react'
+import { ArrowUpRight, CalendarDays, ChevronDown, HeartHandshake, House, LayoutDashboard, LogIn, LogOut, Menu, Newspaper, Settings, ShieldCheck, ShoppingBag, Ticket, User, UserPlus, X } from 'lucide-react'
 import UserMenu from '../account/UserMenu'
 import { NEWS_LIST_PATH } from '../news/articleUrl'
 import { BILLETTERIE_PATH } from '../tickets/ticketsUrl'
 import { CREST_SRC } from './brand'
 import { useI18n } from '../../i18n/index.jsx'
 import { sectionUrl } from './publicRoutes'
+import '../home/signature-home.css'
 
 const desktopLinkClass = (active) =>
   `rounded-full px-3 py-2 text-sm font-bold transition ${active ? 'bg-white/10 text-jso-gold' : 'text-white/75 hover:bg-white/10 hover:text-white'}`
 
 const panelButtonClass = 'flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold text-white/85 transition hover:bg-white/10'
 
-const sectionHref = (section) => section.id === 'donation' ? '/soutenir' : sectionUrl(section.id)
+const sectionHref = (section) => sectionUrl(section.id)
 
 // Public site header. Primary sections are always visible on desktop, the others
 // are grouped under "Plus"; below 1024px everything (account included) lives in
@@ -30,6 +31,7 @@ export default function SiteHeader({
   onOpenProfile,
   onOpenSettings,
   onLogout,
+  signature = false,
 }) {
   const { t, language, setLanguage, languages } = useI18n()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -38,15 +40,15 @@ export default function SiteHeader({
   const moreButtonRef = useRef(null)
   const menuButtonRef = useRef(null)
 
-  const primary = sections.filter((section) => section.primary)
-  const secondary = sections.filter((section) => !section.primary)
+  const signaturePrimaryIds = new Set(['matches', 'news', 'shop'])
+  const primary = sections.filter((section) => signature ? signaturePrimaryIds.has(section.id) : section.primary)
+  const secondary = sections.filter((section) => signature ? !signaturePrimaryIds.has(section.id) && section.id !== 'donation' : !section.primary)
   const moreActive = secondary.some((section) => section.id === activeId)
   const mobileQuickLinks = [
     [t('common.ticketing'), BILLETTERIE_PATH, Ticket],
-    [t('common.news'), NEWS_LIST_PATH, Newspaper],
+    ...(sections.some((section) => section.id === 'news') ? [[t('common.news'), NEWS_LIST_PATH, Newspaper]] : []),
     ...(sections.some((section) => section.id === 'shop') ? [['Boutique', sectionUrl('shop'), ShoppingBag]] : []),
-    ['Nos projets', '/nos-projets', HeartHandshake],
-    ...(sections.some((section) => section.id === 'donation') ? [['Soutenir', '/soutenir', HeartHandshake]] : []),
+    ...(sections.some((section) => section.id === 'donation') ? [['Nos projets', '/nos-projets', HeartHandshake]] : []),
   ]
 
   // Escape closes whichever menu is open (and gives focus back to its button);
@@ -93,21 +95,28 @@ export default function SiteHeader({
   const current = (id) => (activeId === id ? 'true' : undefined)
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-jso-navy/95 text-white backdrop-blur-xl">
+    <>
+    <header className={`sticky top-0 z-50 border-b border-white/10 bg-jso-navy/95 text-white backdrop-blur-xl${signature ? ' jso-signature-site-header' : ''}`}>
       <div className="mx-auto flex h-18 max-w-7xl items-center gap-3 px-5 lg:px-8">
         <a href="/" onClick={closeMenus} aria-label={`JSO Oudhref — ${t('common.home')}`} className="flex shrink-0 items-center gap-3 rounded-xl">
           <img src={CREST_SRC} alt="" className="h-11 w-11 object-contain" />
           <span className="leading-none">
-            <span className="block text-lg font-black tracking-tight">JSO</span>
-          <span className="mt-1 hidden whitespace-nowrap text-[10px] font-bold tracking-[0.2em] text-white/55 sm:block">OUDHREF · TUNISIE</span>
+            <span className="block text-lg font-black tracking-tight">{signature ? 'Jeunesse Sportive' : 'JSO'}</span>
+          <span className="mt-1 hidden whitespace-nowrap text-[10px] font-bold tracking-[0.2em] text-white/55 sm:block">{signature ? 'D’OUDHREF · DEPUIS 1973' : 'OUDHREF · TUNISIE'}</span>
           </span>
         </a>
 
         <nav aria-label={t('common.mainNavigation')} className="ml-4 hidden items-center gap-1 lg:flex xl:ml-8">
-          {primary.map((section) => (
+          {signature && <a href="/" onClick={closeMenus} aria-current={activeId === 'home' ? 'page' : undefined} className={desktopLinkClass(activeId === 'home')}>{t('common.home')}</a>}
+          {primary.filter((section) => !signature || section.id === 'matches').map((section) => (
             <a key={section.id} href={sectionHref(section)} onClick={closeMenus} aria-current={current(section.id)} className={desktopLinkClass(activeId === section.id)}>
               {section.label}
             </a>
+          ))}
+          {signature && <a href={BILLETTERIE_PATH} onClick={closeMenus} className={desktopLinkClass(false)}>{t('common.ticketing')}</a>}
+          {signature && sections.some((section) => section.id === 'donation') && <a href="/nos-projets" onClick={closeMenus} className={desktopLinkClass(activeId === 'donation')}>Nos projets</a>}
+          {signature && primary.filter((section) => section.id !== 'matches').map((section) => (
+            <a key={section.id} href={sectionHref(section)} onClick={closeMenus} aria-current={current(section.id)} className={desktopLinkClass(activeId === section.id)}>{section.label}</a>
           ))}
           {(secondary.length > 0 || extraLinks.length > 0) && (
             <div ref={moreRef} className="relative">
@@ -125,7 +134,7 @@ export default function SiteHeader({
               {moreOpen && (
                 <div id="jso-more-menu" className="absolute left-0 top-full mt-3 w-64 rounded-2xl border border-slate-200 bg-white p-2 text-jso-ink shadow-2xl">
                   <ul>
-                    <li>
+                    {!signature && <li>
                       <a
                         href={BILLETTERIE_PATH}
                         onClick={closeMenus}
@@ -133,17 +142,13 @@ export default function SiteHeader({
                       >
                         {t('common.ticketing')}                        <Ticket size={15} aria-hidden="true" className="text-slate-300" />
                       </a>
-                    </li>
-                    <li>
-                      <a
-                        href={NEWS_LIST_PATH}
-                        onClick={closeMenus}
-                        className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold text-jso-ink transition hover:bg-slate-100"
-                      >
-                        {t('common.news')}                        <Newspaper size={15} aria-hidden="true" className="text-slate-300" />
+                    </li>}
+                    {!signature && sections.some((section) => section.id === 'news') && <li>
+                      <a href={NEWS_LIST_PATH} onClick={closeMenus} className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold text-jso-ink transition hover:bg-slate-100">
+                        {t('common.news')} <Newspaper size={15} aria-hidden="true" className="text-slate-300" />
                       </a>
-                    </li>
-                    <li>
+                    </li>}
+                    {!signature && sections.some((section) => section.id === 'donation') && <li>
                       <a
                         href="/nos-projets"
                         onClick={closeMenus}
@@ -152,7 +157,7 @@ export default function SiteHeader({
                       >
                         Nos projets <HeartHandshake size={15} aria-hidden="true" className="text-slate-300" />
                       </a>
-                    </li>
+                    </li>}
                     {secondary.map((section) => (
                       <li key={section.id}>
                         <a
@@ -210,7 +215,7 @@ export default function SiteHeader({
               onOpenCart()
             }}
             aria-label={cartCount > 0 ? `${t('common.cart')} (${cartCount})` : t('common.cart')}
-            className="relative grid h-11 w-11 place-items-center rounded-full border border-white/20 text-white transition hover:bg-white/10"
+            className="jso-header-cart relative grid h-11 w-11 place-items-center rounded-full border border-white/20 text-white transition hover:bg-white/10"
           >
             <ShoppingBag size={18} aria-hidden="true" />
             {cartCount > 0 && (
@@ -237,11 +242,11 @@ export default function SiteHeader({
           </div>
 
           <a
-            href="/matchs"
+            href={signature ? BILLETTERIE_PATH : '/matchs'}
             onClick={closeMenus}
             className="hidden h-11 items-center gap-2 rounded-full bg-jso-gold px-5 text-sm font-extrabold text-jso-navy transition hover:-translate-y-0.5 hover:bg-white xl:inline-flex"
           >
-            {t('common.matchCenter')} <ArrowUpRight size={16} aria-hidden="true" />
+            {signature ? t('common.ticketing') : t('common.matchCenter')} <ArrowUpRight size={16} aria-hidden="true" />
           </a>
 
           <button
@@ -271,6 +276,7 @@ export default function SiteHeader({
               </a>
               <div className="mb-3 grid grid-cols-2 gap-2" aria-label="Accès rapide">
                 {mobileQuickLinks.map(([label, url, Icon]) => <a key={label} href={url} onClick={closeMenus} className="flex min-h-12 items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm font-bold text-white hover:bg-white/20"><Icon size={17} aria-hidden="true" />{label}</a>)}
+                {signature && <button type="button" onClick={closeThen(onOpenCart)} className="flex min-h-12 items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-left text-sm font-bold text-white hover:bg-white/20"><ShoppingBag size={17} aria-hidden="true" />{t('common.cart')}{cartCount > 0 ? ` (${cartCount})` : ''}</button>}
               </div>
               <details className="group mt-4 rounded-2xl border border-white/15 bg-white/5 px-4">
                 <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between text-sm font-extrabold">Toutes les rubriques <ChevronDown size={18} className="transition group-open:rotate-180" aria-hidden="true" /></summary>
@@ -373,5 +379,12 @@ export default function SiteHeader({
         </div>
       )}
     </header>
+    {signature && <nav className="jso-signature-mobile-nav" aria-label="Accès rapide">
+      <a href="/" aria-current={activeId === 'home' ? 'page' : undefined}><House size={20} aria-hidden="true" />{t('common.home')}</a>
+      <a href="/matchs" aria-current={activeId === 'matches' ? 'page' : undefined}><CalendarDays size={20} aria-hidden="true" />Matchs</a>
+      <a href={BILLETTERIE_PATH}><Ticket size={20} aria-hidden="true" />{t('common.ticketing')}</a>
+      <a href="/mon-espace"><User size={20} aria-hidden="true" />Compte</a>
+    </nav>}
+    </>
   )
 }

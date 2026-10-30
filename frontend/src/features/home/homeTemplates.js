@@ -9,11 +9,11 @@ export const HOME_TEMPLATES = [
   },
   {
     id: 'modern-2026',
-    name: 'Modern 2026',
-    badge: 'Moderne',
-    description: 'Accueil lumineux avec les contenus importants, les résultats et les actions du club.',
-    preview: 'modern',
-    sectionOrder: ['hero', 'highlights', 'matches', 'news', 'media', 'team', 'club', 'events', 'shop', 'donation', 'memberships', 'community', 'sponsors', 'archive', 'mobile', 'infos', 'selling-band', 'app-download'],
+    name: 'JSO Signature',
+    badge: 'Nouveau design',
+    description: 'Identité sportive premium avec le blason en grand, les matchs et les actions du club.',
+    preview: 'signature',
+    sectionOrder: ['hero', 'highlights', 'media', 'news', 'donation', 'sponsors', 'matches', 'team', 'club', 'events', 'shop', 'memberships', 'community', 'archive', 'mobile', 'infos', 'selling-band', 'app-download'],
   },
   {
     id: 'stadium',
@@ -74,8 +74,18 @@ export const HOME_LAYOUT_TYPE_TO_SECTION = {
   AppDownload: 'app-download',
   News: 'news',
   Matches: 'matches',
+  Team: 'team',
+  Club: 'club',
+  Shop: 'shop',
+  Donation: 'donation',
+  Memberships: 'memberships',
   Media: 'media',
+  Events: 'events',
+  Community: 'community',
+  Archive: 'archive',
+  Mobile: 'mobile',
   Sponsors: 'sponsors',
+  Infos: 'infos',
 }
 
 export function getHomeTemplate(id) {

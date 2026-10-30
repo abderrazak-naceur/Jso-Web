@@ -17,7 +17,7 @@ public sealed class FundraisingManagementTests
         var (project, commitment, installments) = await Seed(db);
         var (otherProject, otherCommitment, otherInstallments) = await Seed(db);
 
-        Assert.IsType<NoContentResult>(await Admin(db).Delete(project.Id, default));
+        Assert.IsType<NoContentResult>(await Admin(db).Delete(project.Id, false, default));
 
         Assert.Equal(otherProject.Id, Assert.Single(await db.FundraisingProjects.ToListAsync()).Id);
         Assert.Equal(otherCommitment.Id, Assert.Single(await db.FundraisingCommitments.ToListAsync()).Id);
@@ -51,7 +51,7 @@ public sealed class FundraisingManagementTests
 
         var api = Admin(db);
         Assert.IsType<ConflictObjectResult>(await api.DeleteCommitment(project.Id, commitment.Id, default));
-        Assert.IsType<ConflictObjectResult>(await api.Delete(project.Id, default));
+        Assert.IsType<ConflictObjectResult>(await api.Delete(project.Id, false, default));
 
         Assert.Single(await db.FundraisingProjects.ToListAsync());
         Assert.Single(await db.FundraisingCommitments.ToListAsync());

@@ -126,6 +126,7 @@ export function CommunitySection({ section, programs }) {
       <div className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
         <SectionHeading section={section} title="Ensemble pour" muted="Oudhref." description="Les initiatives sportives et citoyennes portées par le club et ses partenaires." />
         <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {programs.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600 md:col-span-2 lg:col-span-3">Les initiatives de la communauté apparaîtront ici dès leur publication par le club.</p>}
           {programs.map((program) => (
             <article key={pick(program, 'id', 'Id')} className="rounded-[2rem] border border-slate-200 bg-white p-7 shadow-lg shadow-slate-200/35">
               <span className="grid h-12 w-12 place-items-center rounded-2xl bg-jso-navy text-jso-gold"><HeartHandshake size={24} aria-hidden="true" /></span>
@@ -145,6 +146,7 @@ export function ArchiveSection({ section, archive }) {
     <section id="archive" aria-labelledby="archive-title" className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
       <SectionHeading section={section} title="La mémoire" muted="du club." description="Archives, images et histoires qui construisent l’identité de la JSO." />
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {archive.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600 sm:col-span-2 lg:col-span-3">Les archives du club apparaîtront ici dès leur publication.</p>}
         {archive.map((item) => {
           const mediaUrl = pick(item, 'mediaUrl', 'MediaUrl')
           return (

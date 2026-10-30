@@ -186,11 +186,9 @@ function App() {
     .map((id) => id.trim())
     .filter(Boolean)
 
-  const visibility = {
-    community: data.community.length > 0,
-    archive: data.archive.length > 0,
-    sponsors: data.sponsors.length > 0,
-  }
+  // Admin visibility is authoritative. An enabled section may show a helpful
+  // empty state while its first content is being prepared.
+  const visibility = {}
   for (const id of hiddenSections) visibility[id] = false
 
   const sections = visibleSections(visibility)
@@ -198,6 +196,7 @@ function App() {
   const headerLinks = useNavigation('Header')
   const footerLinks = useNavigation('Footer')
   const homeLayout = useHomeLayout()
+  const signatureTemplate = (templatePreview || data.content?.home_template || 'modern-2026') === 'modern-2026'
   const focusSection = sectionFromPath()
   const isMatchListRoute = window.location.pathname === '/matchs' || window.location.pathname === '/matchs/'
   const isAdminStreamsRoute = window.location.pathname === '/admin/live-streams'
@@ -218,6 +217,7 @@ function App() {
       <a href="#main-content" className="jso-skip-link">{t('common.skipToContent')}</a>
 
       <SiteHeader
+        signature={signatureTemplate}
         sections={sections}
         extraLinks={headerLinks}
         activeId={focusSection || activeSection}

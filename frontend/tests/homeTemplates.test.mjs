@@ -12,7 +12,7 @@ test('each homepage template has one complete, distinct section order', () => {
   for (const template of HOME_TEMPLATES) {
     assert.ok(template.name.trim(), `${template.id} needs a name`)
     assert.ok(template.description.trim(), `${template.id} needs a description`)
-    assert.equal(template.preview, template.id === 'modern-2026' ? 'modern' : template.id)
+    assert.equal(template.preview, template.id === 'modern-2026' ? 'signature' : template.id)
   }
 
   const baseline = [...HOME_TEMPLATES[0].sectionOrder].sort()
@@ -37,6 +37,7 @@ test('homepage layout reorders selected sections and leaves omitted sections vis
 
 test('every admin-managed homepage layout type maps to a rendered section', () => {
   const allSections = new Set(HOME_TEMPLATES.flatMap((template) => template.sectionOrder))
+  assert.equal(Object.keys(HOME_LAYOUT_TYPE_TO_SECTION).length, allSections.size)
   for (const [type, section] of Object.entries(HOME_LAYOUT_TYPE_TO_SECTION)) {
     assert.ok(allSections.has(section), `${type} maps to missing section ${section}`)
   }

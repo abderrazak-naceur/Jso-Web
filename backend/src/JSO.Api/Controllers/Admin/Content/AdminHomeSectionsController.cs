@@ -17,8 +17,15 @@ namespace JSO.Api.Controllers;
 [Route("api/admin/home-sections")]
 public sealed class AdminHomeSectionsController(JsoDbContext db, AuditService audit) : ControllerBase
 {
+    // Keep these renderable types aligned with HOME_LAYOUT_TYPE_TO_SECTION in
+    // the web client. Legacy CustomHtml/Text rows remain valid but are not
+    // rendered as arbitrary HTML by the public client.
     private static readonly string[] AllowedTypes =
-        ["Hero", "News", "Matches", "Media", "Sponsors", "CustomHtml", "Text"];
+    [
+        "Hero", "SellingBand", "Highlights", "AppDownload", "Matches", "News",
+        "Team", "Club", "Shop", "Donation", "Memberships", "Media", "Events",
+        "Community", "Archive", "Mobile", "Sponsors", "Infos", "CustomHtml", "Text"
+    ];
 
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct) =>

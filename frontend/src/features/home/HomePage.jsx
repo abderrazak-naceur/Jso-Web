@@ -15,6 +15,7 @@ import MediaSection from '../media/MediaSection'
 import MatchdaySection from './MatchdaySection'
 import NewsSection from './NewsSection'
 import HighlightsCarousel from './HighlightsCarousel'
+import SignatureHighlights from './SignatureHighlights'
 import SellingBand from './SellingBand'
 import { ArrowUpRight, HeartHandshake } from 'lucide-react'
 import ProductDetail from '../shop/ProductDetail'
@@ -23,6 +24,7 @@ import Reveal from '../site/Reveal'
 import { formatDate } from '../../lib/format'
 import { orderHomeSections } from './useHomeLayout'
 import { getHomeTemplate, HOME_TEMPLATE_IDS } from './homeTemplates'
+import './premium-home-sections.css'
 
 function buildHighlights({ data, onOpenMatch, onOpenArticle }) {
   const items = []
@@ -95,16 +97,25 @@ export default function HomePage({
   eventSlug,
   templatePreview = null,
 }) {
-  const sectionById = Object.fromEntries(sections.map((section) => [section.id, section]))
+  const requestedTemplate = templatePreview || data.content?.home_template
+  const template = HOME_TEMPLATE_IDS.has(requestedTemplate) ? requestedTemplate : 'modern-2026'
+  const defaultSectionOrder = getHomeTemplate(template).sectionOrder
+  const orderedSections = orderHomeSections(defaultSectionOrder, homeLayout)
+    .filter((key) => !hiddenSections.includes(key))
+  const visibleIds = new Set(sections.map((section) => section.id))
+  const numberedOrder = orderedSections.filter((key) =>
+    key !== 'hero' && (visibleIds.has(key) || ['highlights', 'selling-band', 'app-download'].includes(key)))
+  const sectionById = Object.fromEntries(sections.map((section) => [section.id, {
+    ...section,
+    number: String(numberedOrder.indexOf(section.id) + 1).padStart(2, '0'),
+  }]))
 
   const sectionRenderers = {
-    hero: () => <HeroSection variant={template} content={data.content} club={data.club} />,
+    hero: () => <HeroSection variant={template} content={data.content} club={data.club} nextMatch={data.nextMatch} showMatch={!hiddenSections.includes('matches')} showDonation={!hiddenSections.includes('donation')} />,
     'selling-band': () => <SellingBand nextMatch={data.nextMatch} />,
-    highlights: () => (
-      <HighlightsCarousel
-        items={buildHighlights({ data, onOpenMatch, onOpenArticle })}
-      />
-    ),
+    highlights: () => template === 'modern-2026'
+      ? <SignatureHighlights showDonation={!hiddenSections.includes('donation')} />
+      : <HighlightsCarousel items={buildHighlights({ data, onOpenMatch, onOpenArticle })} />,
     'app-download': () => (
       <section aria-labelledby="mobile-app-download-title" className="mx-auto max-w-7xl px-5 pb-8 lg:px-8">
         <div className="rounded-[2rem] bg-jso-navy p-6 text-white shadow-sm sm:p-8">
@@ -160,18 +171,18 @@ export default function HomePage({
       />
     ),
     donation: () => (
-      <section id="donation" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
-        <div className="rounded-[2rem] bg-jso-gold p-7 text-jso-navy shadow-sm sm:p-10">
-          <p className="text-xs font-black uppercase tracking-[0.16em] opacity-60">Soutenir la JSO</p>
+      <section id="donation" aria-labelledby="donation-title" className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
+        <div className="rounded-[2rem] bg-jso-navy p-7 text-white shadow-sm sm:p-10">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-jso-gold">Nos projets</p>
           <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-3xl font-black">1 000 supporters · 10 TND par mois.</h2>
-              <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 opacity-70">
-                L’objectif est de construire un soutien régulier pour le club : 10 000 TND par mois et 120 000 TND sur 12 mois si 1 000 personnes participent.
+              <h2 id="donation-title" className="text-3xl font-black">Chaque soutien compte.</h2>
+              <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-white/70">
+                Découvrez les projets publiés par la JSO, leurs objectifs et la progression réelle des collectes.
               </p>
             </div>
-            <a href="/nos-projets#faire-un-don" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-jso-navy px-6 py-3 font-extrabold text-white hover:bg-white hover:text-jso-navy">
-              Participer <HeartHandshake size={17} aria-hidden="true" />
+            <a href="/nos-projets" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-jso-gold px-6 py-3 font-extrabold text-jso-navy hover:bg-white">
+              Voir les projets <HeartHandshake size={17} aria-hidden="true" />
             </a>
           </div>
         </div>
@@ -230,18 +241,12 @@ export default function HomePage({
     ),
   }
 
-  const requestedTemplate = templatePreview || data.content?.home_template
-  const template = HOME_TEMPLATE_IDS.has(requestedTemplate) ? requestedTemplate : 'modern-2026'
-  const defaultSectionOrder = getHomeTemplate(template).sectionOrder
-  const orderedSections = orderHomeSections(defaultSectionOrder, homeLayout)
-    .filter((key) => !hiddenSections.includes(key))
-
   const pageSections = focusSection
     ? defaultSectionOrder.filter((key) => key === focusSection && !hiddenSections.includes(key))
     : orderedSections
 
   return (
-    <main id="main-content" tabIndex={-1} className={`home-template-${template}`}>
+    <main id="main-content" tabIndex={-1} className={`home-template-${template}${template === 'modern-2026' ? ' home-template-premium' : ''}`}>
       {templatePreview && <div className="mx-auto max-w-7xl px-5 pt-4 lg:px-8"><p role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-900">Anteprima del modello · non ancora pubblicata</p></div>}
       {focusSection && <div className="mx-auto max-w-7xl px-5 pt-8 lg:px-8"><a href="/" className="text-sm font-bold text-jso-blue underline">← Accueil</a></div>}
       {focusSection && !pageSections.includes(focusSection) && <div role="alert" className="mx-auto max-w-7xl px-5 py-16 text-slate-600 lg:px-8">Cette page n'est pas disponible pour le moment.</div>}

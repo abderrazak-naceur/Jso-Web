@@ -168,6 +168,7 @@ export default function FundraisingPage() {
   return <div className="jso-fundraising">
     <a href="#le-projet" className="jso-skip-link">{tr('skipProject')}</a>
     <SiteHeader
+      signature
       sections={sections}
       extraLinks={headerLinks}
       activeId="donation"

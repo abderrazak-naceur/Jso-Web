@@ -564,6 +564,10 @@ html[dir="rtl"] .jso-a11y-launcher {
 .home-template-mini-card { background: #fff; color: #0f172a; }
 .home-template-mini-classic { background: #e2e8f0; }
 .home-template-mini-modern { background: linear-gradient(145deg, #fff, #dbeafe); }
+.home-template-mini-signature { color: #fff; background: linear-gradient(145deg, #06152d, #164885); }
+.home-template-mini-signature .home-template-mini-hero { background: linear-gradient(135deg, #08152d, #174b8e); }
+.home-template-mini-signature .home-template-mini-side { color: #f8c81e; background: #102b52; }
+.home-template-mini-signature .home-template-mini-card { color: #fff; background: #163b6b; }
 .home-template-mini-stadium { color: #fff; background: linear-gradient(145deg, #071a3a, #0b1020); }
 .home-template-mini-stadium .home-template-mini-hero { background: linear-gradient(135deg, #0b1020, #1769e0); }
 .home-template-mini-stadium .home-template-mini-side { color: #fff; background: #172554; }

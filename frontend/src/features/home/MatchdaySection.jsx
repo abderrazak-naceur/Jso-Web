@@ -86,7 +86,7 @@ function NextMatchTicket({ match, onOpenMatch }) {
         </div>
       )}
       <div className="flex items-center justify-between gap-3 p-4">
-        <p className="text-xs leading-5 text-slate-500">Stade Oudhref · Tarif indicatif 5 DT</p>
+        <p className="text-xs leading-5 text-slate-500">{match.venue || 'Lieu à confirmer'} · Tarifs dans la billetterie</p>
         <button type="button" onClick={() => onOpenMatch(match)} className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#ffc629] px-4 py-2.5 text-xs font-black text-[#071a35] transition hover:bg-[#123b78] hover:text-white">
           Billetterie <ArrowUpRight size={14} aria-hidden="true" />
         </button>

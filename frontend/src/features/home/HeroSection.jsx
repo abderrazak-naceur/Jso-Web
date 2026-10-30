@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUpRight } from 'lucide-react'
 import { CLUB_FOUNDED, CLUB_FULL_NAME, CLUB_NAME, CREST_SRC } from '../site/brand'
+import SignatureHero from './SignatureHero'
 import './premium-home.css'
 
 function HeroClubEmblem() {
@@ -16,7 +17,8 @@ function HeroClubEmblem() {
   )
 }
 
-export default function HeroSection({ content, club, variant }) {
+export default function HeroSection({ content, club, variant, nextMatch, showMatch, showDonation }) {
+  if (variant === 'modern-2026') return <SignatureHero content={content} club={club} nextMatch={nextMatch} showMatch={showMatch} showDonation={showDonation} />
   const premium = variant === 'premium-2026'
   const city = club?.city || club?.City || 'Oudhref'
   const heroTitle = content.hero_title || (premium ? 'Plus qu’un club,' : 'Une ville.')

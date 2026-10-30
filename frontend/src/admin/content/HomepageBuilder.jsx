@@ -3,7 +3,11 @@ import { adminApi } from '../api'
 import { useConfirm } from '../components/ui/ConfirmDialog'
 import { Save, Pencil, X, Plus, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react'
 
-const SECTION_TYPES = ['Hero', 'Highlights', 'SellingBand', 'AppDownload', 'News', 'Matches', 'Media', 'Sponsors']
+const SECTION_TYPES = [
+  'Hero', 'SellingBand', 'Highlights', 'AppDownload', 'Matches', 'News',
+  'Team', 'Club', 'Shop', 'Donation', 'Memberships', 'Media', 'Events',
+  'Community', 'Archive', 'Mobile', 'Sponsors', 'Infos',
+]
 const POSITIONS = ['Header', 'Footer']
 
 const emptySection = { type: 'Hero', title: '', payloadJson: '', displayOrder: 0, isPublished: false }

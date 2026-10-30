@@ -67,8 +67,8 @@ export default function TeamSection({ section, players = [], status = 'ready' })
             <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-white/25 sm:via-white/90 sm:to-transparent" aria-hidden="true" />
             <div className="relative z-10 flex min-h-[250px] items-center py-10 sm:w-3/5 lg:w-2/3">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-jso-blue">Équipe première · Saison 2026/2027</p>
-                <h2 id="team-title" className="mt-3 text-5xl font-black tracking-[-0.045em] text-jso-navy sm:text-6xl">
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-jso-blue">Équipe première · JSO</p>
+                <h2 id="team-intro-title" className="mt-3 text-5xl font-black tracking-[-0.045em] text-jso-navy sm:text-6xl">
                   Les visages <span className="text-jso-gold">de la JSO</span>
                 </h2>
                 <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
@@ -128,7 +128,7 @@ export default function TeamSection({ section, players = [], status = 'ready' })
           />
           <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 shadow-sm">
             <CalendarDays size={16} className="text-jso-blue" aria-hidden="true" />
-            Saison 2026/2027
+            Effectif JSO
           </div>
         </div>
 

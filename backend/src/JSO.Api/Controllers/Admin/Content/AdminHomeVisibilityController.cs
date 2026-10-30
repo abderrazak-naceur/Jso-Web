@@ -31,6 +31,7 @@ public sealed class AdminHomeVisibilityController(JsoDbContext db, AuditService 
         ("team", "Équipe"),
         ("club", "Le Club"),
         ("shop", "Boutique"),
+        ("donation", "Soutenir"),
         ("memberships", "Abonnements"),
         ("media", "Médias"),
         ("events", "Agenda"),

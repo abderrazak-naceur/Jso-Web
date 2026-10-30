@@ -1,0 +1,332 @@
+/* Public homepage blocks controlled by Admin > Page d'accueil.
+   Scoped to the premium template so the seven existing templates keep their own styling. */
+.home-template-premium {
+  --premium-navy: #06152d;
+  --premium-blue: #164885;
+  --premium-gold: #f8c81e;
+  --premium-paper: #f8f5ec;
+  --premium-line: #dce4ec;
+  background: var(--premium-paper);
+}
+
+.home-template-premium [data-home-section] {
+  min-width: 0;
+}
+
+.home-template-premium [data-home-section] > section[id] {
+  scroll-margin-top: 6rem;
+}
+
+.home-template-premium :is(#matches, #news, #media, #events, #archive, #sponsors, #infos, #community, #shop) {
+  border-color: var(--premium-line);
+}
+
+.home-template-premium :is(#matches, #events, #archive, #sponsors, #shop) {
+  background: var(--premium-paper);
+}
+
+.home-template-premium :is(#matches, #events, #archive, #sponsors, #shop) > .mx-auto,
+.home-template-premium :is(#news, #media, #community, #infos) > .mx-auto {
+  max-width: 86rem;
+}
+
+/* A consistent editorial heading system for every Admin-controlled block. */
+.home-template-premium :is(#matches, #news, #team, #club, #shop, #media, #events, #community, #archive, #mobile, #sponsors, #infos) h2 {
+  font-family: Impact, "Arial Narrow", Arial, sans-serif;
+  font-weight: 900;
+  font-stretch: condensed;
+  line-height: 0.98;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.home-template-premium :is(#matches, #news, #club, #shop, #media, #events, #community, #archive, #mobile, #sponsors, #infos) h2[id] {
+  font-size: clamp(2.65rem, 5.25vw, 5rem);
+}
+
+.home-template-premium :is(#matches, #news, #team, #club, #shop, #media, #events, #community, #archive, #mobile, #sponsors, #infos) h2[id] + p {
+  max-width: 42rem;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.home-template-premium :is(#matches, #news, #club, #shop, #media, #events, #community, #archive, #mobile, #sponsors, #infos) h2[id] span {
+  color: var(--premium-blue);
+}
+
+.home-template-premium :is(#matches, #news, #club, #shop, #media, #events, #community, #archive, #mobile, #sponsors, #infos) [class*="tracking-[0.22em]"] {
+  color: var(--premium-blue);
+  font-weight: 900;
+  letter-spacing: 0.19em;
+  text-transform: uppercase;
+}
+
+/* Modern editorial blocks: a featured article and real club photography. */
+.home-template-premium #news {
+  background: #0b2446;
+  color: #fff;
+  border: 0;
+}
+
+.home-template-premium #news h2[id],
+.home-template-premium #club h2[id],
+.home-template-premium #community h2[id],
+.home-template-premium #mobile h2[id] {
+  color: white;
+}
+
+.home-template-premium #news h2[id] span,
+.home-template-premium #club h2[id] span,
+.home-template-premium #community h2[id] span,
+.home-template-premium #mobile h2[id] span {
+  color: var(--premium-gold);
+}
+
+.home-template-premium #news h2[id] + p,
+.home-template-premium #club h2[id] + p,
+.home-template-premium #community h2[id] + p,
+.home-template-premium #mobile h2[id] + p {
+  color: #c6d4e6;
+}
+
+.home-template-premium #news [class*="tracking-[0.22em]"],
+.home-template-premium #club [class*="tracking-[0.22em]"],
+.home-template-premium #community [class*="tracking-[0.22em]"],
+.home-template-premium #mobile [class*="tracking-[0.22em]"] {
+  color: var(--premium-gold);
+}
+
+.home-template-premium #news article,
+.home-template-premium #media article,
+.home-template-premium #events article,
+.home-template-premium #archive article,
+.home-template-premium #community article,
+.home-template-premium #shop article {
+  border-radius: 0.75rem;
+  border-color: var(--premium-line);
+  box-shadow: 0 12px 30px rgb(3 22 47 / 9%);
+}
+
+.home-template-premium #news article {
+  color: #10213c;
+  border: 0;
+}
+
+.home-template-premium #news article h3 {
+  font-size: clamp(1.35rem, 2vw, 2.35rem);
+  line-height: 1.1;
+}
+
+.home-template-premium #news article button,
+.home-template-premium #media article a {
+  color: var(--premium-blue);
+}
+
+.home-template-premium #news a[href],
+.home-template-premium #matches button:not([aria-pressed]),
+.home-template-premium #shop button,
+.home-template-premium #events a[href] {
+  border-radius: 0.5rem;
+}
+
+/* Matchday cards use the same sharp, navy-and-gold language as the homepage. */
+.home-template-premium #matches > section,
+.home-template-premium #matches article,
+.home-template-premium #matches > div.rounded-\[2rem\] {
+  border-radius: 0.8rem;
+}
+
+.home-template-premium #matches > section {
+  box-shadow: 0 10px 25px rgb(3 22 47 / 6%);
+}
+
+.home-template-premium #matches [aria-pressed="true"] {
+  background: var(--premium-navy);
+  color: #fff;
+}
+
+.home-template-premium #matches .jso-next-match-ticket {
+  border-radius: 0.65rem;
+}
+
+/* Team: a strong masthead with filters and portraits that feel part of one site. */
+.home-template-premium #team {
+  background: var(--premium-paper);
+}
+
+.home-template-premium #team > div:first-child {
+  background: var(--premium-paper);
+}
+
+.home-template-premium #team > div:first-child > div > div.relative.mt-5 {
+  border-radius: 0.75rem;
+  background: linear-gradient(100deg, rgb(6 21 45 / 98%) 5%, rgb(9 34 68 / 90%) 66%, rgb(9 34 68 / 56%)), url('/jso-stadium-hero.png') center / cover;
+}
+
+.home-template-premium #team > div:first-child > div > div.relative.mt-5 > div.absolute {
+  display: none;
+}
+
+.home-template-premium #team #team-intro-title {
+  color: white;
+  font-size: clamp(3rem, 5vw, 5.5rem);
+}
+
+.home-template-premium #team #team-intro-title span {
+  color: var(--premium-gold);
+}
+
+.home-template-premium #team #team-intro-title + p {
+  color: #d3e0ef;
+}
+
+.home-template-premium #team > div:first-child > div > div.relative.mt-5 p:first-child {
+  color: var(--premium-gold);
+}
+
+.home-template-premium #team article {
+  border-radius: 0.7rem;
+  border-color: var(--premium-line);
+  box-shadow: 0 12px 30px rgb(3 22 47 / 8%);
+}
+
+.home-template-premium #team article h3 {
+  font-size: 1.2rem;
+}
+
+.home-template-premium #team button:not(:disabled),
+.home-template-premium #team input {
+  border-radius: 0.5rem;
+}
+
+/* Gold shop block, with enough contrast for product text and empty states. */
+.home-template-premium #shop > div {
+  border-radius: 0.8rem;
+  background: var(--premium-gold);
+}
+
+.home-template-premium #shop h2[id] span {
+  color: #274a72;
+}
+
+.home-template-premium #shop article {
+  background: white;
+}
+
+.home-template-premium #shop article img {
+  object-fit: cover;
+}
+
+.home-template-premium #shop article button {
+  background: var(--premium-navy);
+  color: white;
+}
+
+/* Heritage, community and mobile are large navy editorial pauses. */
+.home-template-premium #club,
+.home-template-premium #community,
+.home-template-premium #mobile {
+  background: #0b2446;
+}
+
+.home-template-premium #club article,
+.home-template-premium #community article {
+  border-radius: 0.7rem;
+  border-color: rgb(255 255 255 / 20%);
+}
+
+.home-template-premium #community article {
+  background: #15375e;
+  color: white;
+}
+
+.home-template-premium #community article p:not([class*="text-jso-blue"]) {
+  color: #c2d2e6;
+}
+
+.home-template-premium #archive article img,
+.home-template-premium #media article img {
+  transition: transform 0.35s ease;
+}
+
+.home-template-premium #archive article:hover img,
+.home-template-premium #media article:hover img {
+  transform: scale(1.04);
+}
+
+.home-template-premium #media {
+  background: #fff;
+}
+
+.home-template-premium #mobile .max-w-\[38rem\] {
+  border-radius: 0.8rem;
+}
+
+/* Sponsor placements are legible even when no logo has been published yet. */
+.home-template-premium #sponsors > div > div:last-child {
+  border-radius: 0.8rem;
+  border-style: dashed;
+  border-color: #afc4db;
+  background: linear-gradient(130deg, #fff, #eef4fa);
+}
+
+.home-template-premium #sponsors a[href^="mailto:"] {
+  background: var(--premium-navy);
+  border-radius: 0.5rem;
+}
+
+.home-template-premium #sponsors img {
+  object-fit: contain;
+}
+
+.home-template-premium #infos {
+  background: #f2f5f9;
+}
+
+.home-template-premium #infos article,
+.home-template-premium #infos details {
+  border-radius: 0.65rem;
+}
+
+/* The membership purchase flow and its payment states remain untouched. */
+.home-template-premium #memberships {
+  background: #081c3b;
+}
+
+.home-template-premium #memberships h2 {
+  font-family: Impact, "Arial Narrow", Arial, sans-serif;
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  line-height: 0.98;
+  text-transform: uppercase;
+}
+
+.home-template-premium #memberships h2 span {
+  color: var(--premium-gold);
+}
+
+@media (max-width: 640px) {
+  .home-template-premium :is(#matches, #news, #club, #shop, #media, #events, #community, #archive, #mobile, #sponsors, #infos) h2[id] {
+    font-size: clamp(2.3rem, 11vw, 3.5rem);
+  }
+
+  .home-template-premium #team #team-intro-title {
+    font-size: clamp(2.6rem, 11vw, 3.6rem);
+  }
+
+  .home-template-premium #matches article,
+  .home-template-premium #news article,
+  .home-template-premium #media article,
+  .home-template-premium #team article,
+  .home-template-premium #events article,
+  .home-template-premium #archive article {
+    border-radius: 0.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-template-premium #archive article img,
+  .home-template-premium #media article img {
+    transition: none;
+  }
+}

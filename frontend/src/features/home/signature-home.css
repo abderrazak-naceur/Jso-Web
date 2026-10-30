@@ -1,0 +1,138 @@
+.home-template-premium {
+  --signature-navy: #06152d;
+  --signature-gold: #f8c81e;
+  --signature-paper: #f8f5ec;
+  --signature-ink: #0b1d37;
+  background: var(--signature-paper);
+}
+.jso-signature-site-header { background: #081b36f7; box-shadow: 0 4px 20px #06152d1a; }
+.jso-signature-site-header > div { max-width: 1392px; }
+.jso-signature-site-header nav a { border-radius: 7px; }
+.jso-signature-site-header > div > a:first-child span .text-lg { font-size: 12px; line-height: 1.1; text-transform: uppercase; }
+.jso-signature-site-header > div > a:first-child img { width: 48px; height: 55px; }
+.jso-signature-site-header nav[aria-label] > a { font-size: 12px; }
+.jso-signature-site-header nav[aria-label] > a[aria-current] { color: #f8c81e; }
+.jso-signature-mobile-nav { display: none; }
+.jso-signature-hero { position: relative; isolation: isolate; overflow: visible; color: #fff; background: var(--signature-navy); }
+.jso-signature-hero::before { content: ''; position: absolute; inset: 0; z-index: -2; background: linear-gradient(90deg,#06152dfa 0%,#081c38ea 46%,#071a34c7 100%),url('/jso-stadium-hero.png') center 57%/cover; }
+.jso-signature-hero::after { content: ''; position: absolute; inset: auto 0 0; height: 7px; background: linear-gradient(90deg,#f8c81e 0 25%,#1c4c88 25% 75%,#f8c81e 75%); pointer-events: none; }
+.jso-signature-hero-lines { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: repeating-linear-gradient(118deg,transparent 0 95px,#5380b51c 96px 97px); }
+.jso-signature-hero-inner { width: min(1320px, calc(100% - 64px)); min-height: 630px; margin: auto; display: grid; grid-template-columns: 1fr .86fr; align-items: center; gap: 50px; padding: 58px 0 91px; }
+.jso-signature-hero-copy { position: relative; z-index: 2; min-width: 0; }
+.jso-signature-eyebrow { display: flex; align-items: center; gap: 12px; color: var(--signature-gold); font-size: 11px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; }
+.jso-signature-eyebrow::before { content: ''; display: block; width: 34px; height: 2px; background: currentColor; }
+.jso-signature-hero h1 { margin: 25px 0 0; max-width: 740px; font: 900 clamp(65px,7vw,116px)/.91 Impact,'Arial Narrow',Arial,sans-serif; letter-spacing: -.035em; text-transform: uppercase; }
+.jso-signature-hero h1 span { display: block; white-space: pre-line; }
+.jso-signature-hero h1 em { display: block; color: var(--signature-gold); font-style: normal; }
+.jso-signature-lede { max-width: 565px; margin: 31px 0 0; padding-left: 18px; border-left: 3px solid var(--signature-gold); color: #d2dfec; font-size: 16px; line-height: 1.75; }
+.jso-signature-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 31px; }
+.jso-signature-button { display: inline-flex; min-height: 55px; align-items: center; justify-content: center; gap: 12px; padding: 14px 23px; border-radius: 7px; font-size: 13px; font-weight: 900; transition: transform .2s, background .2s; }
+.jso-signature-button:hover { transform: translateY(-2px); }
+.jso-signature-button-gold { background: var(--signature-gold); color: var(--signature-navy); box-shadow: 0 4px 0 #b88d0d; }
+.jso-signature-button-gold:hover { background: #ffdc4e; }
+.jso-signature-button-outline { border: 1px solid #ffffff66; color: #fff; background: #ffffff08; }
+.jso-signature-button-outline:hover { background: #ffffff1d; }
+.jso-signature-hero-foot { display: flex; align-items: center; gap: 14px; margin-top: 45px; color: #acbfd7; font-size: 10px; font-weight: 850; letter-spacing: .15em; text-transform: uppercase; }
+.jso-signature-hero-foot::before { content: ''; width: 31px; height: 1px; background: var(--signature-gold); }
+.jso-signature-crest-zone { position: relative; min-height: 520px; display: grid; place-items: center; }
+.jso-signature-crest-zone::before { content: '1973'; position: absolute; right: 0; bottom: -40px; color: #ffffff08; font: 900 clamp(180px,19vw,310px)/1 Impact,'Arial Narrow',Arial,sans-serif; letter-spacing: -.09em; }
+.jso-signature-crest-halo { width: min(500px,100%); aspect-ratio: 1; display: grid; place-items: center; border: 1px solid #ffffff16; border-radius: 50%; background: radial-gradient(circle,#1e4d8b88 0 29%,#0d2b5655 42%,transparent 70%); box-shadow: 0 0 0 48px #ffffff06,0 0 0 95px #ffffff03; }
+.jso-signature-crest-halo img { width: 69%; max-height: 410px; object-fit: contain; filter: drop-shadow(0 20px 16px #0009); }
+.jso-signature-crest-caption { position: absolute; right: 1%; bottom: 23px; margin: 0; color: var(--signature-gold); font-size: 10px; font-weight: 900; letter-spacing: .19em; text-align: right; }
+.jso-signature-crest-caption span { display: block; color: #dbe6f5; font-size: 11px; }
+.jso-signature-match-wrap { position: relative; z-index: 3; width: min(1320px,calc(100% - 64px)); margin: -57px auto 0; transform: translateY(57px); }
+.jso-signature-match-card { display: grid; grid-template-columns: 170px 55px minmax(0,1fr) auto; align-items: center; gap: 22px; min-height: 114px; padding: 20px 27px; border: 1px solid #e6ebf0; border-radius: 11px; background: #fff; color: var(--signature-ink); box-shadow: 0 18px 40px #07152d30; }
+.jso-signature-match-label { display: flex; min-height: 75px; flex-direction: column; align-items: center; justify-content: center; border-radius: 7px; background: var(--signature-gold); color: var(--signature-navy); font-size: 10px; font-weight: 950; line-height: 1.3; letter-spacing: .13em; text-align: center; }
+.jso-signature-match-label svg { margin-bottom: 5px; }
+.jso-signature-match-crest { width: 55px; height: 64px; object-fit: contain; }
+.jso-signature-match-details { min-width: 0; }
+.jso-signature-match-details span { display: block; color: #49709f; font-size: 10px; font-weight: 900; letter-spacing: .16em; }
+.jso-signature-match-details strong { display: block; margin: 4px 0; font-size: 20px; line-height: 1.18; }
+.jso-signature-match-details small { display: block; color: #60718a; font-size: 12px; font-weight: 700; }
+.jso-signature-match-link { display: inline-flex; align-items: center; gap: 13px; color: var(--signature-navy); font-size: 12px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.jso-signature-match-link:hover { color: #20579b; }
+.home-template-premium [data-home-section="hero"]:has(.jso-signature-match-card) { margin-bottom: 56px; }
+.jso-signature-highlights { padding: 92px 0 97px; background: var(--signature-paper); color: var(--signature-ink); }
+.jso-signature-section-inner { width: min(1320px,calc(100% - 64px)); margin: auto; }
+.jso-signature-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 25px; margin-bottom: 27px; }
+.jso-signature-section-heading p { color: #20579b; font-size: 11px; font-weight: 900; letter-spacing: .19em; }
+.jso-signature-section-heading h2 { margin: 10px 0 0; font: 900 clamp(44px,4.6vw,70px)/.96 Impact,'Arial Narrow',Arial,sans-serif; letter-spacing: -.03em; text-transform: uppercase; }
+.jso-signature-section-heading > span { max-width: 400px; color: #60718a; font-size: 14px; }
+.jso-signature-journey { display: grid; grid-template-columns: 1.13fr .87fr .87fr; gap: 15px; }
+.jso-signature-journey-card { position: relative; min-height: 350px; display: flex; flex-direction: column; justify-content: space-between; padding: 27px; border-radius: 12px; overflow: hidden; transition: transform .2s, box-shadow .2s; }
+.jso-signature-journey-card:hover { transform: translateY(-5px); box-shadow: 0 19px 34px #132c5226; }
+.jso-signature-journey-top { position: relative; z-index: 2; display: flex; align-items: start; justify-content: space-between; gap: 10px; font-size: 10px; font-weight: 900; letter-spacing: .17em; }
+.jso-signature-journey-top svg { box-sizing: content-box; padding: 8px; border: 1px solid currentColor; border-radius: 50%; }
+.jso-signature-journey-copy { position: relative; z-index: 2; }
+.jso-signature-journey-copy h3 { margin: 0 0 10px; font: 900 clamp(36px,3.5vw,52px)/.96 Impact,'Arial Narrow',Arial,sans-serif; text-transform: uppercase; }
+.jso-signature-journey-copy p { max-width: 290px; margin: 0; font-size: 13px; line-height: 1.45; }
+.jso-signature-journey-tickets { background: #0b2851; color: #fff; }
+.jso-signature-journey-tickets::before { content: ''; position: absolute; width: 310px; height: 210px; right: -90px; top: 58px; border: 1px solid #ffffff40; border-radius: 15px; background: linear-gradient(145deg,#174b8d,#0a1c38); box-shadow: 0 20px 25px #0005; transform: rotate(-19deg); }
+.jso-signature-ticket-art { position: absolute; right: 10px; top: 135px; z-index: 1; width: 195px; padding: 11px 17px; border-left: 2px dashed var(--signature-gold); color: var(--signature-gold); font-size: 25px; font-weight: 900; transform: rotate(-19deg); }
+.jso-signature-ticket-art b { color: #fff; }
+.jso-signature-ticket-art small { display: block; color: #a9bdd8; font-size: 8px; letter-spacing: .15em; }
+.jso-signature-journey-projects { background: linear-gradient(180deg,#f8c81e 0%,#f8c81edb 51%,#f8c81e3b 100%),url('/jso-bus-campaign.png') 67% 70%/cover; color: var(--signature-navy); }
+.jso-signature-journey-projects .jso-signature-journey-icon { position: absolute; right: 24px; top: 30%; opacity: .32; }
+.jso-signature-journey-account { background: #e3eaf2; color: var(--signature-navy); }
+.jso-signature-account-art { position: relative; display: grid; place-items: center; height: 130px; }
+.jso-signature-account-art::before { content: ''; position: absolute; width: 132px; height: 132px; border-radius: 50%; background: #b8cde5; }
+.jso-signature-account-art img { position: relative; width: 72px; filter: drop-shadow(0 9px 9px #14345c50); }
+@media (max-width: 1023px) {
+  .jso-signature-hero-inner { grid-template-columns: 1fr .7fr; gap: 15px; min-height: 575px; }
+  .jso-signature-hero h1 { font-size: clamp(60px,7.6vw,85px); }
+  .jso-signature-crest-zone { min-height: 420px; }
+  .jso-signature-journey { grid-template-columns: 1fr 1fr; }
+  .jso-signature-journey-tickets { grid-row: span 2; min-height: 560px; }
+  .jso-signature-journey-projects,.jso-signature-journey-account { min-height: 270px; }
+}
+@media (max-width: 767px) {
+  body:has(.jso-signature-mobile-nav) { padding-bottom: 65px; }
+  .jso-signature-mobile-nav { position: fixed; z-index: 49; inset: auto 0 0; display: grid; grid-template-columns: repeat(4,1fr); padding: 6px 4px max(6px,env(safe-area-inset-bottom)); border-top: 1px solid #d7e1eb; background: #fff; box-shadow: 0 -6px 22px #07152d22; }
+  .jso-signature-mobile-nav a { display: grid; justify-items: center; gap: 1px; padding: 2px; color: #5d7088; font-size: 10px; font-weight: 850; }
+  .jso-signature-mobile-nav a[aria-current] { color: #174b8e; }
+  .jso-signature-hero-inner { width: calc(100% - 32px); min-height: 0; display: flex; flex-direction: column; gap: 0; padding: 30px 0 91px; }
+  .jso-signature-crest-zone { order: 0; min-height: 240px; width: 100%; }
+  .jso-signature-crest-halo { width: 250px; box-shadow: 0 0 0 27px #ffffff05,0 0 0 52px #ffffff03; }
+  .jso-signature-crest-halo img { max-height: 210px; }
+  .jso-signature-crest-zone::before { right: 2px; bottom: -4px; font-size: 165px; }
+  .jso-signature-crest-caption { display: none; }
+  .jso-signature-hero-copy { order: 1; width: 100%; }
+  .jso-signature-eyebrow { gap: 10px; margin-top: 11px; font-size: 9px; }
+  .jso-signature-eyebrow::before { width: 25px; }
+  .jso-signature-hero h1 { margin-top: 16px; font-size: clamp(48px,13vw,71px); line-height: .91; }
+  .jso-signature-lede { margin-top: 21px; padding-left: 12px; font-size: 13px; line-height: 1.55; }
+  .jso-signature-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 22px; }
+  .jso-signature-button { min-height: 49px; gap: 4px; padding: 10px 7px; font-size: 11px; }
+  .jso-signature-button svg { width: 15px; }
+  .jso-signature-hero-foot { display: none; }
+  .jso-signature-match-wrap { width: calc(100% - 32px); margin-top: -54px; transform: translateY(54px); }
+  .jso-signature-match-card { grid-template-columns: 69px minmax(0,1fr); gap: 10px; padding: 13px; }
+  .jso-signature-match-label { min-height: 74px; font-size: 8px; letter-spacing: .07em; }
+  .jso-signature-match-label svg { width: 19px; }
+  .jso-signature-match-crest { display: none; }
+  .jso-signature-match-details span { font-size: 8px; }
+  .jso-signature-match-details strong { font-size: 14px; }
+  .jso-signature-match-details small { font-size: 10px; }
+  .jso-signature-match-link { grid-column: 1/-1; justify-content: space-between; padding-top: 10px; border-top: 1px solid #dce4ee; font-size: 10px; }
+  .jso-signature-highlights { padding: 62px 0 65px; }
+  .jso-signature-section-inner { width: calc(100% - 32px); }
+  .jso-signature-section-heading { display: block; margin-bottom: 19px; }
+  .jso-signature-section-heading h2 { font-size: clamp(42px,12vw,57px); }
+  .jso-signature-section-heading > span { display: block; margin-top: 12px; font-size: 13px; }
+  .jso-signature-journey { gap: 10px; }
+  .jso-signature-journey-card { min-height: 225px; padding: 17px; }
+  .jso-signature-journey-tickets { grid-column: 1/-1; grid-row: auto; min-height: 290px; }
+  .jso-signature-journey-copy h3 { font-size: clamp(30px,8vw,44px); }
+  .jso-signature-journey-copy h3 { overflow-wrap: anywhere; }
+  .jso-signature-journey-copy p { font-size: 11px; }
+  .jso-signature-journey-top { font-size: 8px; }
+  .jso-signature-journey-top svg { width: 16px; padding: 6px; }
+  .jso-signature-ticket-art { top: 105px; }
+  .jso-signature-journey-projects { background: linear-gradient(180deg,#f8c81e 0%,#f8c81ee0 60%,#f8c81e69 100%),url('/jso-bus-campaign.png') 60% center/cover; }
+  .jso-signature-account-art { height: 60px; }
+  .jso-signature-account-art::before { width: 65px; height: 65px; }
+  .jso-signature-account-art img { width: 38px; }
+}
+@media (max-width: 380px) { .jso-signature-hero h1 { font-size: 48px; } .jso-signature-journey-card { padding: 14px; } .jso-signature-journey-copy h3 { font-size: 29px; } }
+@media (max-width: 767px) { .jso-signature-site-header .jso-header-cart { display: none; } }
+@media (prefers-reduced-motion: reduce) { .jso-signature-button,.jso-signature-journey-card { transition: none; } }
